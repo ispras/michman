@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 	"testing"
 	"time"
 
-	ansible_service "../ansible-pb"
-//	model "../model"
+	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
@@ -17,11 +17,20 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
+type mockAnsibleRunner struct{}
+
+func (mockAnsRunner mockAnsibleRunner) Run(c *protobuf.Cluster) error {
+	log.Print("MOCK gRPC call for cluster creating")
+	return nil
+}
+
 // creating server in goroutine
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	ansible_service.RegisterGreeterServer(s, &ansibleServer{})
+	testLogger := log.New(os.Stdout, "test_logger: ", log.Ldate|log.Ltime)
+	testAnsibleRunner := mockAnsibleRunner{}
+	protobuf.RegisterAnsibleRunnerServer(s, &ansibleService{testLogger, testAnsibleRunner})
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -35,7 +44,6 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestCreateCluster(t *testing.T) {
-	// creating a connection to testi ng server
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
 	if err != nil {
@@ -43,19 +51,16 @@ func TestCreateCluster(t *testing.T) {
 	}
 	defer conn.Close()
 
-	client := ansible_service.NewGreeterClient(conn)
+	client := protobuf.NewAnsibleRunnerClient(conn)
 
-	// test data
-	clusterName := "MY_TEST_CLASTER"
-	clusterType := "MASTER-SLAVE"
-
-	resp, err := client.CreateCluster(ctx, &ansible_service.ClusterDataRequest{Name: clusterName, Type: clusterType})
+	respStream, err := client.RunAnsible(ctx, &protobuf.Cluster{Name: "test-cluster"})
 	if err != nil {
 		t.Fatalf("CreateCluster failed: %v", err)
 	}
 
-	// Testing output
-	if resp.State != "Success" {
-		t.Fatal("Cluster was not created")
+	message, err := respStream.Recv()
+
+	if err != nil || message.Status != "OK" {
+		t.Fatalf("Didn't get OK message: %v", err)
 	}
 }

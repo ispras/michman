@@ -1,93 +1,81 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
+	"os"
 
-	"google.golang.org/grpc"
-
-	model "./model"
-
-	grpc_ansible "./protobuf/ansible_runner"
+	grpc_client "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/grpcclients"
+	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 )
 
 const (
-	address = "localhost:5000"
+	addressAnsibleService = "localhost:5000"
+	addressDBService      = "localhost:5001"
+	NEW_CLUSTER           = -1
 )
 
-type grpcAnsibleClient struct {
-	ansibleService grpc_ansible.AnsibleRunnerClient
+type grpcClient interface {
+	GetID(c *protobuf.Cluster) (int32, error)
+	StartClusterCreation(c *protobuf.Cluster)
 }
 
-func (gac *grpcAnsibleClient) getConnection(addr string) {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
-
-	if err != nil {
-		log.Fatalf("gRPC client connection error: %v", err)
-	}
-
-	gac.ansibleService = grpc_ansible.NewAnsibleRunnerClient(conn)
+type httpServer struct {
+	gc     grpcClient
+	logger *log.Logger
 }
 
-func (gac grpcAnsibleClient) sendToServer(c model.Cluster) (*model.Cluster, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
-	defer cancel()
-
-	stream, err := gac.ansibleService.RunAnsible(ctx, &grpc_ansible.Cluster{Name: c.Name, Slaves: c.Slaves, Status: "WANTED"})
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	message, err := stream.Recv()
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	log.Printf("Write to database new status (%s) for %s with %d slaves\n", message.Status, message.Name, message.Slaves)
-
-	result := &model.Cluster{Name: message.Name, Slaves: message.Slaves, Status: message.Status}
-
-	updated, err := stream.Recv()
-	if err != nil {
-		log.Println(err)
-	}
-	log.Printf("Write to database new status (%s) for %s with %d slaves\n", updated.Status, updated.Name, updated.Slaves)
-	return result, nil
-}
-
-func (gac grpcAnsibleClient) clustersHandler(w http.ResponseWriter, r *http.Request) {
+func (hS httpServer) clustersHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
+		hS.logger.Print("Get /clusters POST")
 		w.WriteHeader(http.StatusOK)
+
 	case "POST":
-		var c model.Cluster
+		hS.logger.Print("Get /clusters POST")
+		var c protobuf.Cluster
 		err := json.NewDecoder(r.Body).Decode(&c)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
-		result, err := gac.sendToServer(c)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			enc := json.NewEncoder(w)
-			enc.Encode(result)
+
+		// validate struct?
+
+		if c.ID == NEW_CLUSTER {
+			hS.logger.Print("Sending request to db-service to get cluster ID")
+			newID, err := hS.gc.GetID(&c)
+			if err != nil {
+				hS.logger.Print("DB server don't ...")
+			}
+			//newID = 1
+			c.ID = newID
 		}
+
+		c.EntityStatus = "INITED"
+		go hS.gc.StartClusterCreation(&c)
+
+		w.Header().Set("Content-Type", "application/json")
+		enc := json.NewEncoder(w)
+		enc.Encode(c)
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
 func main() {
-	srv := grpcAnsibleClient{}
-	srv.getConnection(address)
+	// creating grpc client for communicating with services
+	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
+	gc := grpc_client.GrpcClient{}
+	gc.SetLogger(grpcClientLogger)
+	gc.SetConnection(addressAnsibleService, addressDBService)
 
-	http.HandleFunc("/clusters", srv.clustersHandler)
-	log.Print("Server starts to work")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	httpServerLogger := log.New(os.Stdout, "HTTP_SERVER: ", log.Ldate|log.Ltime)
+	hS := httpServer{gc, httpServerLogger}
+
+	http.HandleFunc("/clusters", hS.clustersHandler)
+	httpServerLogger.Print("Server starts to work")
+	httpServerLogger.Fatal(http.ListenAndServe(":8080", nil))
 }

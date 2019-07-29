@@ -14,7 +14,7 @@ Server that handles HTTP requests(probably from Envoy, that will take tham from 
 # How to get it worked
 Launch ansible_runner service:
 ```
-go run src/services/ansible_runner/grpc_server.go
+go run services/ansible_runner/grpc_server.go services/ansible_runner/ansible_launch.go
 ```
 
 Launch http_server:
@@ -24,5 +24,5 @@ go run src/http_server.go
 
 Send request to localhost:8080/clusters":
 ```
-curl localhost:8080/clusters -XPOST -d '{"name": "test", "slaves":3}'
+curl localhost:8080/clusters -XPOST -d '{"Name": "test"}'
 ```
