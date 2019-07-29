@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	ansible_service "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/app/ansible-pb"
+	ansible_service "../ansible-pb"
+//	model "../model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )

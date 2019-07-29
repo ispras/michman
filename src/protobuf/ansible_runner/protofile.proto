@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package ansible;
+
+service AnsibleRunner {
+    rpc RunAnsible (Cluster) returns (stream Cluster) {}
+}
+
+message Service {
+    string Name = 1;
+    string Version = 2;
+}
+
+message Cluster {
+    string Name = 1;
+    int32 Slaves = 2;
+//    repeated Service services = 3;
+    string Status = 3;
+}
