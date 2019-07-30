@@ -7,7 +7,7 @@
 
 - name: Check if instances really got floating IPs
   local_action: fail msg="One of the instances didn't get floating IP address"
-  when: hostvars[inventory_hostname].openstack.public_v4 == ''
+  when: hostvars[inventory_hostname].openstack.public_v4 == '' and floating_ip_pool != 'None'
 #  fail: msg="One of the instances didn't get floating IP address"
   tags: prepare
 
@@ -21,6 +21,18 @@
       timeout=300
   #    - debug: msg="Checking ssh for {{ hostvars[inventory_hostname].openstack.public_v4 }}"
   tags: prepare
+  when: floating_ip_pool != 'None'
+
+- name: Wait for ssh-server to start
+  local_action:
+    module: wait_for
+      host="{{ hostvars[inventory_hostname].openstack.private_v4 }}"
+      port=22
+      search_regex=OpenSSH
+      delay=3
+      timeout=300
+  tags: prepare
+  when: floating_ip_pool == 'None'
 
 - name: install Python 2 if missing
   raw: test -e /usr/bin/python || (sudo apt -y update && sudo apt install -y python-minimal)
@@ -63,7 +75,7 @@
 - name: modify /etc/hosts
   become: yes
   become_user: root
-  lineinfile: dest=/etc/hosts state=present line="{{ hostvars[item].openstack.private_v4}} {{ hostvars[item].openstack.name }}"
+  lineinfile: dest=/etc/hosts state=present line="{{ hostvars[item].openstack.private_v4 }} {{ hostvars[item].openstack.name }}"
   with_items: "{{ play_hosts }}"
     #  template: src=templates/hosts.j2 dest=/etc/hosts
   tags: prepare

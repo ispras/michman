@@ -7,6 +7,7 @@
 *.sha512
 *.md5
 *.mds
+*.deb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
