@@ -105,6 +105,9 @@ ENV/
 #idea
 .idea
 
+#eclipse
+.project
+
 packages.txt
 sandbox-openrc.sh
 ansible/files/keys/
