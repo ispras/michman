@@ -76,7 +76,11 @@ paths:
       tags:
         - cluster
       summary: Creates a collection of clusters
-      operationId: createClisters
+      description: "Метод создает кластеры по описаниям, переданным в теле запроса.
+                    Возможно создание как одного кластера, так и несколько кластеров сразу, число узлов в кластере указывается в теле запроса.
+                    При создании кластера можно указать список сервисов, которые должны быть развернуты на указанном кластере.
+                    В качестве ответа возвращается список кластеров, находящихся на этапе развертывания. Статус таких кластеров установлен как INITED"
+      operationId: createClusters
       consumes:
         - application/json
       produces:
@@ -90,7 +94,7 @@ paths:
         200:
           description: "OK"
         201:
-          description: "OK. Возвращает список созданных кластеров"
+          description: "OK. Возвращает список кластеров, которые должны быть созданы."
           schema:
             $ref: '#/definitions/Clusters'
         202:
@@ -1077,57 +1081,68 @@ definitions:
     example:
       {
         "items": [{
-          "name": "...",
-          "displayName": "...",
-          "fullVersion": "...",
-          "maintenanceMode": true,
-          "maintenanceOwners": [ "HOST", "ROLE" ],
-          "services": [    {
-            "name": "...",
-            "type": "...",
-            "clusterRef": { },
-            "serviceState": "UNKNOWN",
-            "healthSummary": "HISTORY_NOT_AVAILABLE",
-            "configStalenessStatus": "STALE_REFRESHABLE",
-            "clientConfigStalenessStatus": "STALE",
-            "healthChecks": [ { }, { } ],
-            "serviceUrl": "...",
-            "roleInstancesUrl": "...",
-            "maintenanceMode": true,
-            "maintenanceOwners": [ "SERVICE", "SERVICE" ],
-            "config": { },
-            "roles": [ { }, { } ],
-            "displayName": "...",
-            "roleConfigGroups": [ { }, { } ],
-            "replicationSchedules": [ { }, { } ],
-            "snapshotPolicies": [ { }, { } ],
-            "entityStatus": "STOPPING"
-          }, {
-            "name": "etc"
-          } ],
-          "parcels": [    {
-            "product": "...",
-            "version": "...",
-            "stage": "...",
-            "state": { },
-            "clusterRef": { }
-          }],
-          "clusterUrl": "...",
-          "hostsUrl": "...",
-          "entityStatus": "HISTORY_NOT_AVAILABLE",
-          "uuid": "...",
-          "dataContextRefs": [{
-            "name": "..."
-          }, {
-            "name": "..."
-          } ],
-          "clusterType": "..."
-        }, {
-          "name": "etc"
-        } ]
+                    "ID": "...",
+                    "Name": "...",
+                    "DisplayName": "...",
+                    "HostURL": "...",
+                    "EntityStatus": ,
+                    "ClusterType": "...",
+                    "Services": [
+                    {
+                      "Name": "...",
+                      "Type": "...",
+                      "Config": { },
+                      "ServiceState": "UNKNOWN",
+                      "ServiceURL": "...",
+                      "DisplayName": "...",
+                      "EntityStatus": "...",
+                      "Version": "..."
+                    }
+                    ],
+                    "NHosts": 5
+                  } ]
       }
   Cluster:
     type: object
+    example:
+      {
+        {
+          "ID": "...",
+          "Name": "...",
+          "DisplayName": "...",
+          "HostURL": "...",
+          "EntityStatus": ,
+          "ClusterType": "...",
+          "Services": [
+          {
+            "Name": "...",
+            "Type": "...",
+            "Config": { },
+            "ServiceState": "UNKNOWN",
+            "ServiceURL": "...",
+            "DisplayName": "...",
+            "EntityStatus": "...",
+            "Version": "..."
+          }
+          ],
+          "NHosts": 5
+        }
+      }
+  Service:
+    type: object
+    example:
+      {
+        {
+          "Name": "...",
+          "Type": "...",
+          "Config": { },
+          "ServiceState": "UNKNOWN",
+          "ServiceURL": "...",
+          "DisplayName": "...",
+          "EntityStatus": "...",
+          "Version": "..."
+        }
+      }
   ClusterHost:
     type: object
   ClusterServices:

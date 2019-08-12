@@ -1,0 +1,3 @@
+token: ROOT_TOKEN
+vault_addr: VAUT_ADDR
+os_key: BUCKET_PATH

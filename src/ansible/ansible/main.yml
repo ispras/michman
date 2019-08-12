@@ -38,7 +38,7 @@
     - name: install ignite
       include_role:
         name:
-          - ignite_prapare
+          - ignite_prepare
           - ignite_config
       when: deploy_ignite
     - name: mountnfs

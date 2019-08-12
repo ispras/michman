@@ -62,7 +62,7 @@ func TestClustersPost(t *testing.T) {
 			t.Fatalf("Get invalid JSON")
 		}
 
-		if c.EntityStatus != "INITED" {
+		if c.EntityStatus != protobuf.Cluster_INITED {
 			t.Fatalf("Expected EntityStatus %s, but received: %s", "INITED", c.EntityStatus)
 		}
 	})

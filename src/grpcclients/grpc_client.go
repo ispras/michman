@@ -68,7 +68,7 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	stream, err := gc.ansibleServiceClient.RunAnsible(ctx, c)
 	if err != nil {
 		gc.logger.Println(err)
-		c.EntityStatus = "FAILED"
+		c.EntityStatus = protobuf.Cluster_FAILED
 		gc.updateClusterState(c)
 		return
 	}
@@ -79,13 +79,13 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	if err != nil || message.Status != "OK" {
 		gc.logger.Println(err)
 		// request to db-service about errors with ansible service
-		c.EntityStatus = "FAILED"
+		c.EntityStatus = protobuf.Cluster_FAILED
 		gc.updateClusterState(c)
 		return
 	}
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = "CREATED"
+	c.EntityStatus = protobuf.Cluster_CREATED
 	gc.updateClusterState(c)
 }
 

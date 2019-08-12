@@ -37,6 +37,9 @@ func (hS httpServer) clustersHandler(w http.ResponseWriter, r *http.Request) {
 		var c protobuf.Cluster
 		err := json.NewDecoder(r.Body).Decode(&c)
 		if err != nil {
+			hS.logger.Print("ERROR:")
+			hS.logger.Print(err)
+			hS.logger.Print(r.Body)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -53,7 +56,7 @@ func (hS httpServer) clustersHandler(w http.ResponseWriter, r *http.Request) {
 			c.ID = newID
 		}
 
-		c.EntityStatus = "INITED"
+		c.EntityStatus = protobuf.Cluster_INITED
 		go hS.gc.StartClusterCreation(&c)
 
 		w.Header().Set("Content-Type", "application/json")

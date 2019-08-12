@@ -109,4 +109,5 @@ ENV/
 packages.txt
 sandbox-openrc.sh
 ansible/files/keys/
-
+src/ansible/files/keys/
+ansible_output.txt
