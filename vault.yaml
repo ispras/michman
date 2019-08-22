@@ -1,7 +1,7 @@
 #####################################
 ## Configure your vault connection ##
 #####################################
-
 token: ROOT_TOKEN
 vault_addr: VAULT_ADDR
 os_key: BUCKET_PATH
+ssh_key: BUCKET_PATH

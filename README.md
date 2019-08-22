@@ -18,6 +18,11 @@ YAML:
 go get -u gopkg.in/yaml.v2
 ```
 
+httprouting:
+```
+go get github.com/julienschmidt/httprouter
+```
+
 Ansible version >= 2.8.1 
 
 ## Configurations
@@ -26,7 +31,22 @@ Configuration of vault server is stored in **vault.yaml** file. Example:
 token: MY-TOKEN
 vault_addr: http://127.0.0.1:8200
 os_key: kv/openstack
+ssh_key: kv/ssh-keys
 ```
+
+Openstack (os_key) secrets includes following keys:
+* **OS_AUTH_URL**
+* **OS_PASSWORD**
+* **OS_PROJECT_NAME**
+* **OS_REGION_NAME**
+* **OS_TENANT_ID**
+* **OS_TENANT_NAME**
+* **OS_USERNAME** 
+* **OS_SWIFT_USERNAME** -- optional
+* **OS_SWIFT_PASSWORD** -- optional 
+
+Ssh (ssh_key) secrets includes following keys:
+* **id_rsa** -- private ssh key for Ansible commands
 
 Configuration of Openstack is stored in **openstack_config.yaml** file. Example:
 ```yaml

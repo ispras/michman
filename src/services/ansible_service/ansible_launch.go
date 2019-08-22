@@ -1,16 +1,13 @@
 package main
 
 import (
-	"archive/zip"
+	"bufio"
 	"encoding/json"
-	"fmt"
-	"io"
+	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
-	"bufio"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -99,92 +96,6 @@ type AnsibleExtraVars struct {
 	YarnMasterMemMb int `json:"yarn_master_mem_mb,omitempty"`
 }
 
-func downloadFile(filepath string, url string) (err error) {
-
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil  {
-		return err
-	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
-		return err
-	}
-
-	return nil
-}
-
-func Unzip(src string, dest string) ([]string, error) {
-
-	var filenames []string
-
-	r, err := zip.OpenReader(src)
-	if err != nil {
-		return filenames, err
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-
-		// Store filename/path for returning and using later on
-		fpath := filepath.Join(dest, f.Name)
-
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
-			return filenames, fmt.Errorf("%s: illegal file path", fpath)
-		}
-
-		filenames = append(filenames, fpath)
-
-		if f.FileInfo().IsDir() {
-			// Make Folder
-			os.MkdirAll(fpath, os.ModePerm)
-			continue
-		}
-
-		// Make File
-		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-			return filenames, err
-		}
-
-		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-		if err != nil {
-			return filenames, err
-		}
-
-		rc, err := f.Open()
-		if err != nil {
-			return filenames, err
-		}
-
-		_, err = io.Copy(outFile, rc)
-
-		// Close the file without defer to close before next iteration of loop
-		outFile.Close()
-		rc.Close()
-
-		if err != nil {
-			return filenames, err
-		}
-	}
-	return filenames, nil
-}
-
 func GetElasticConnectorJar() string {
 	elasticHadoopUrl := "http://download.elastic.co/hadoop/elasticsearch-hadoop-5.5.0.zip"
 	elasticHadoopFilename := filepath.Join("/tmp", filepath.Base(elasticHadoopUrl))
@@ -195,9 +106,9 @@ func GetElasticConnectorJar() string {
 		if os.IsNotExist(err) {
 			// file does not exist
 			log.Print("Downloading ElasticSearch Hadoop integration")
-			downloadFile(elasticHadoopUrl, elasticHadoopFilename)
+			utils.DownloadFile(elasticHadoopUrl, elasticHadoopFilename)
 
-			if _, err := Unzip(elasticHadoopFilename, elasticDir); err != nil {
+			if _, err := utils.Unzip(elasticHadoopFilename, elasticDir); err != nil {
 				log.Print(err)
 			}
 		}
@@ -219,7 +130,7 @@ func GetCassandraConnectorJar(sparkVersion string) string {
 		if os.IsNotExist(err) {
 			// file does not exist
 			log.Print("Downloading Spark Cassandra Connector for Spark version ", sparkVersion)
-			downloadFile(sparkCassandraConnectorFile, sparkCassandraConnectorUrl)
+			utils.DownloadFile(sparkCassandraConnectorFile, sparkCassandraConnectorUrl)
 		}
 	}
 
@@ -239,30 +150,30 @@ func AddJar(path string) map[string]string {
 	return newElem
 }
 
-func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *osConfig) AnsibleExtraVars {
+func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *osConfig, action string) AnsibleExtraVars {
 	//available services types
 	var serviceTypes = map[string]ServiceExists {
-		"cassandra": {
+		utils.ServiceTypeCassandra: {
 			exists:  false,
 			service: nil,
 		},
-		"spark": {
+		utils.ServiceTypeSpark: {
 			exists: false,
 			service: nil,
 		},
-		"elastic": {
+		utils.ServiceTypeElastic: {
 			exists: false,
 			service: nil,
 		},
-		"jupyter": {
+		utils.ServiceTypeJupyter: {
 			exists: false,
 			service: nil,
 		},
-		"ignite": {
+		utils.ServiceTypeIgnite: {
 			exists: false,
 			service: nil,
 		},
-		"jupyterhub": {
+		utils.ServiceTypeJupyterhub: {
 			exists: false,
 			service: nil,
 		},
@@ -279,32 +190,33 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 	}
 
 	var extraVars AnsibleExtraVars
+
 	//must be True in method "/clusters" POST, else False
 	extraVars.CreateCluster = false
-	if cluster.EntityStatus == protobuf.Cluster_INITED {
+	if action == actionCreate {
 		extraVars.CreateCluster = true
 	}
 
 	//filling services
-	extraVars.DeployCassandra = serviceTypes["cassandra"].exists
-	extraVars.DeploySpark = serviceTypes["spark"].exists
-	extraVars.DeployElastic = serviceTypes["elastic"].exists
-	extraVars.DeployJupyter = serviceTypes["jupyter"].exists
-	extraVars.DeployIgnite = serviceTypes["ignite"].exists
-	extraVars.DeployJupyterhub = serviceTypes["jupyterhub"].exists
+	extraVars.DeployCassandra = serviceTypes[utils.ServiceTypeCassandra].exists
+	extraVars.DeploySpark = serviceTypes[utils.ServiceTypeSpark].exists
+	extraVars.DeployElastic = serviceTypes[utils.ServiceTypeElastic].exists
+	extraVars.DeployJupyter = serviceTypes[utils.ServiceTypeJupyter].exists
+	extraVars.DeployIgnite = serviceTypes[utils.ServiceTypeIgnite].exists
+	extraVars.DeployJupyterhub = serviceTypes[utils.ServiceTypeJupyterhub].exists
 
 	//must be always async mode
 	extraVars.Sync = "async"
 	extraVars.AnsibleUser = "ubuntu"
 
 	extraVars.IgniteVersion = "2.7.5"
-	if serviceTypes["ignite"].exists && serviceTypes["ignite"].service.Version != "" {
-		extraVars.IgniteVersion = serviceTypes["ignite"].service.Version
+	if serviceTypes[utils.ServiceTypeIgnite].exists && serviceTypes[utils.ServiceTypeIgnite].service.Version != "" {
+		extraVars.IgniteVersion = serviceTypes[utils.ServiceTypeIgnite].service.Version
 	}
 
 	extraVars.EsHeapSize = "1g"
-	if serviceTypes["elastic"].exists && serviceTypes["elastic"].service.Config != nil {
-		if size, ok := serviceTypes["elastic"].service.Config["es-heap-size"]; ok {
+	if serviceTypes[utils.ServiceTypeElastic].exists && serviceTypes[utils.ServiceTypeElastic].service.Config != nil {
+		if size, ok := serviceTypes[utils.ServiceTypeElastic].service.Config[utils.ElasticHeapSize]; ok {
 			extraVars.EsHeapSize = size
 		}
 	}
@@ -320,8 +232,8 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 	extraVars.ClusterName = cluster.Name
 
 	extraVars.SparkVersion = "1.6.2"
-	if serviceTypes["spark"].exists && serviceTypes["spark"].service.Version != "" {
-		extraVars.SparkVersion = serviceTypes["spark"].service.Version
+	if serviceTypes[utils.ServiceTypeSpark].exists && serviceTypes[utils.ServiceTypeSpark].service.Version != "" {
+		extraVars.SparkVersion = serviceTypes[utils.ServiceTypeSpark].service.Version
 	}
 
 	extraVars.OsImage = osConfig.OsImage
@@ -334,8 +246,8 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 	hadoopVersions := sparkVersions[extraVars.SparkVersion]["hadoop_versions"]
 	extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions) - 1]
 	//checking spark config params
-	if serviceTypes["spark"].exists && serviceTypes["spark"].service.Config != nil {
-		if yarn, ok := serviceTypes["spark"].service.Config["use-yarn"]; ok {
+	if serviceTypes[utils.ServiceTypeSpark].exists && serviceTypes[utils.ServiceTypeSpark].service.Config != nil {
+		if yarn, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkUseYarn]; ok {
 			b, err := strconv.ParseBool(yarn)
 			if err != nil {
 				log.Fatalln(err)
@@ -343,17 +255,29 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 			extraVars.UseYarn = b
 			extraVars.YarnMasterMemMb = 10240 //change it
 		}
-		if version, ok := serviceTypes["spark"].service.Config["hadoop-version"]; ok {
-			extraVars.HadoopVersion = version
+		if version, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkHadoopVersion]; ok {
+			hadoopVersions := sparkVersions[extraVars.SparkVersion]["hadoop_versions"]
+			versionOk := false
+			for _, v := range hadoopVersions {
+				if v == version {
+					extraVars.HadoopVersion = version
+					versionOk = true
+				}
+			}
+			if !versionOk {
+				log.Print("Bad Hadoop version in Spark config")
+				extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions) - 1]
+			}
 		}
-		if mem, ok := serviceTypes["spark"].service.Config["spark-worker-mem-mb"]; ok {
+
+		if mem, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkWorkerMemMb]; ok {
 			memInt, err := strconv.Atoi(mem)
 			if err != nil {
 				log.Fatalln(err)
 			}
 			extraVars.SparkWorkerMemMb = memInt
 		}
-		if mem, ok := serviceTypes["spark"].service.Config["yarn-master-mem-mb"]; ok {
+		if mem, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkYarnMasterMemMb]; ok {
 			memInt, err := strconv.Atoi(mem)
 			if err != nil {
 				log.Fatalln(err)
@@ -365,23 +289,28 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 	extraVars.FloatingIpPool = osConfig.FloatingIP
 	extraVars.OsAuthUrl = osCreds.OsAuthUrl
 	extraVars.UseOracleJava = false //must be always false
-	extraVars.AnsibleSshPrivateKeyFile = "/home/lenaaxenova/.ssh/id_rsa.pub" //TODO: get ssh key from vault
+	extraVars.AnsibleSshPrivateKeyFile = utils.SshKeyPath
 
-	extraVars.CassandraVersion = "3.11.4"
-	if serviceTypes["cassandra"].exists && serviceTypes["cassandra"].service.Version != "" {
-		extraVars.CassandraVersion = serviceTypes["cassandra"].service.Version
+	extraVars.CassandraVersion = utils.CassandraDefaultVersion
+	if serviceTypes[utils.ServiceTypeCassandra].exists && serviceTypes[utils.ServiceTypeCassandra].service.Version != "" {
+		extraVars.CassandraVersion = serviceTypes[utils.ServiceTypeCassandra].service.Version
 	}
 
-	if serviceTypes["jupyter"].exists && serviceTypes["jupyter"].service.Config != nil {
-		if version, ok := serviceTypes["jupyter"].service.Config["toree-version"]; ok {
-			extraVars.ToreeVersion = version
+	if serviceTypes[utils.ServiceTypeJupyter].exists && serviceTypes[utils.ServiceTypeJupyter].service.Config != nil {
+		if version, ok := serviceTypes[utils.ServiceTypeJupyter].service.Config[utils.JupyterToreeVersion]; ok {
+			if v, ok := toreeVersions[version]; ok {
+				extraVars.ToreeVersion = v
+			} else {
+				log.Print("Bad Toree version in Jupyter config")
+				extraVars.ToreeVersion = toreeVersions[string(extraVars.SparkVersion[0])]
+			}
 		}
-	} else if serviceTypes["jupyter"].exists {
+	} else if serviceTypes[utils.ServiceTypeJupyter].exists {
 		extraVars.ToreeVersion = toreeVersions[string(extraVars.SparkVersion[0])]
 	}
 
-	if serviceTypes["ignite"].exists && serviceTypes["ignite"].service.Config != nil {
-		if mem, ok := serviceTypes["ignite"].service.Config["ignite-memory"]; ok {
+	if serviceTypes[utils.ServiceTypeIgnite].exists && serviceTypes[utils.ServiceTypeIgnite].service.Config != nil {
+		if mem, ok := serviceTypes[utils.ServiceTypeIgnite].service.Config[utils.IgniteMemory]; ok {
 			memInt, err := strconv.Atoi(mem)
 			if err != nil {
 				log.Fatalln(err)
@@ -390,7 +319,14 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 		}
 	}
 
-	extraVars.Act = "launch" ///must be always "launch" in method "/clusters" POST
+	//action must be "launch" in method "/clusters" POST and /clusters/{clusterName} PUT
+	//action must be "destroy" in method /clusters/{clusterName} DELETE
+	if action == actionCreate || action == actionUpdate {
+		extraVars.Act = utils.AnsibleLaunch
+	} else if action == actionDelete {
+		extraVars.Act = utils.AnsibleDestroy
+	}
+
 	extraVars.VirtualNetwork = osConfig.VirtualNetwork
 	extraVars.OsKeyName = osConfig.Key
 
@@ -419,7 +355,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *
 
 type AnsibleLauncher struct{}
 
-func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *osCredentials, osConfig *osConfig) error {
+func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *osConfig, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object
@@ -427,6 +363,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *osCredentials,
 	log.Print("Running ansible...")
 	log.Print(cluster)
 
+	//exporting ansible variables
 	err := os.Setenv("OS_AUTH_URL", osCreds.OsAuthUrl)
 	if err != nil {
 		log.Fatalln(err)
@@ -470,7 +407,8 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *osCredentials,
 		}
 	}
 
-	ansibleArgs, err := json.Marshal(MakeExtraVars(cluster, osCreds, osConfig))
+	//constructing ansible-playbook command
+	ansibleArgs, err := json.Marshal(MakeExtraVars(cluster, osCreds, osConfig, action))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -497,12 +435,15 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *osCredentials,
 		}
 	}()
 
+	ansibleOk := true
 	if err := ansibleCmd.Start(); err != nil {
-		log.Fatalln(err)
+		ansibleOk = false
+		log.Print("Error: ", err)
 	}
 
 	if err := ansibleCmd.Wait(); err != nil {
-		log.Fatal(err)
+		ansibleOk = false
+		log.Print("Error: ", err)
 	}
 
 	err = f.Close()
@@ -510,6 +451,11 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *osCredentials,
 		log.Fatalln(err)
 	}
 
-	log.Print("Launch: OK")
-	return nil
+	if ansibleOk {
+		log.Print("Launch: OK")
+		return utils.AnsibleOk
+	} else {
+		log.Print("Ansible has failed, check logs for mor information.")
+		return utils.AnsibleFail
+	}
 }

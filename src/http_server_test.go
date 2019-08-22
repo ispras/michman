@@ -28,7 +28,7 @@ func TestClustersGet(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/", nil)
 	response := httptest.NewRecorder()
 
-	hS := httpServer{}
+	hS := HttpServer{}
 
 	hS.clustersHandler(response, request)
 
@@ -41,14 +41,27 @@ func TestClustersPost(t *testing.T) {
 	l := log.New(os.Stdout, "TEST_LOGGER: ", log.Ldate|log.Ltime)
 
 	t.Run("Valid JSON", func(t *testing.T) {
-		testBody := []byte(`{"Name": "test-cluster"}`)
+		testBody := []byte(`{
+								"Name":"spark-test",
+								"EntityStatus":1,
+								"services":[
+								{
+									"Name":"spark-test",
+									"Type":"spark",
+									"Config":{
+										"hadoop-version":"2.6"
+									},
+									"Version":"2.1.0"
+								}],
+								"NHosts":1
+							}`)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 
 		response := httptest.NewRecorder()
 
 		mockClient := mockGrpcClient{}
-		hS := httpServer{mockClient, l}
+		hS := HttpServer{mockClient, l}
 
 		hS.clustersHandler(response, request)
 
@@ -74,7 +87,7 @@ func TestClustersPost(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockClient := mockGrpcClient{}
-		hS := httpServer{mockClient, l}
+		hS := HttpServer{mockClient, l}
 
 		hS.clustersHandler(response, request)
 		if response.Code != http.StatusBadRequest {

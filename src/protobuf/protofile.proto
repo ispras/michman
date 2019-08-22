@@ -3,7 +3,9 @@ syntax = "proto3";
 package ansible;
 
 service AnsibleRunner {
-    rpc RunAnsible (Cluster) returns (stream TaskStatus) {}
+    rpc Create (Cluster) returns (stream TaskStatus) {}
+    rpc Delete (Cluster) returns (stream TaskStatus) {}
+    rpc Update (Cluster) returns (stream TaskStatus) {}
 }
 
 service DB {
@@ -22,6 +24,8 @@ message Cluster {
         FAILED = 2;
         CREATED = 3;
         DOWN = 4; //other statuses could be added
+        STOPPING = 5;
+        STOPPED = 6;
     }
     EntityStatusTypes EntityStatus = 5;
     string ClusterType = 6;

@@ -50,6 +50,7 @@ func (gc GrpcClient) GetID(c *protobuf.Cluster) (int32, error) {
 	defer cancel()
 
 	gc.logger.Print("Sending request to db-service for clusterID")
+
 	newID, err := gc.dbServiceClient.GetID(ctx, c)
 	if err != nil {
 		gc.logger.Println(err)
@@ -65,7 +66,7 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	defer cancel()
 
 	gc.logger.Print("Sending request to ansible-service")
-	stream, err := gc.ansibleServiceClient.RunAnsible(ctx, c)
+	stream, err := gc.ansibleServiceClient.Create(ctx, c)
 	if err != nil {
 		gc.logger.Println(err)
 		c.EntityStatus = protobuf.Cluster_FAILED
@@ -77,7 +78,9 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	gc.logger.Printf("From ansible-service: %s", message.Status)
 
 	if err != nil || message.Status != "OK" {
-		gc.logger.Println(err)
+		if err != nil {
+			gc.logger.Println(err)
+		}
 		// request to db-service about errors with ansible service
 		c.EntityStatus = protobuf.Cluster_FAILED
 		gc.updateClusterState(c)
@@ -86,6 +89,70 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
 	c.EntityStatus = protobuf.Cluster_CREATED
+	gc.updateClusterState(c)
+}
+
+// StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
+func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
+	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
+	defer cancel()
+
+	gc.logger.Print("Sending request to ansible-service")
+	stream, err := gc.ansibleServiceClient.Delete(ctx, c)
+	if err != nil {
+		gc.logger.Println(err)
+		c.EntityStatus = protobuf.Cluster_FAILED
+		gc.updateClusterState(c)
+		return
+	}
+
+	message, err := stream.Recv()
+	gc.logger.Printf("From ansible-service: %s", message.Status)
+
+	if err != nil || message.Status != "OK" {
+		if err != nil {
+			gc.logger.Println(err)
+		}
+		// request to db-service about errors with ansible service
+		c.EntityStatus = protobuf.Cluster_FAILED
+		gc.updateClusterState(c)
+		return
+	}
+
+	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
+	c.EntityStatus = protobuf.Cluster_DOWN
+	gc.updateClusterState(c)
+}
+
+// StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
+func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
+	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
+	defer cancel()
+
+	gc.logger.Print("Sending request to ansible-service")
+	stream, err := gc.ansibleServiceClient.Update(ctx, c)
+	if err != nil {
+		gc.logger.Println(err)
+		c.EntityStatus = protobuf.Cluster_FAILED
+		gc.updateClusterState(c)
+		return
+	}
+
+	message, err := stream.Recv()
+	gc.logger.Printf("From ansible-service: %s", message.Status)
+
+	if err != nil || message.Status != "OK" {
+		if err != nil {
+			gc.logger.Println(err)
+		}
+		// request to db-service about errors with ansible service
+		c.EntityStatus = protobuf.Cluster_FAILED
+		gc.updateClusterState(c)
+		return
+	}
+
+	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
+	c.EntityStatus = protobuf.Cluster_DOWN
 	gc.updateClusterState(c)
 }
 
