@@ -5,6 +5,8 @@
 *.pub
 *.zip
 *.sha512
+*.md5
+*.mds
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -105,9 +107,13 @@ ENV/
 
 #eclipse
 .project
+.pydevproject
+.settings/
 
 packages.txt
 sandbox-openrc.sh
 ansible/files/keys/
 src/ansible/files/keys/
 ansible_output.txt
+openstack_config.yaml
+vault.yaml

@@ -1,5 +1,9 @@
-os_key_name: key_lenaaxenova
-virtual_network: test-two-routers
-os_image: 731c8c7d-47fd-4b69-bdb4-00415e3ccb00
-floating_ip_pool: ispras
-flavor: keystone.medium
+###############################
+## Configure yours variables ##
+###############################
+
+os_key_name: OS_KEY_NAME
+virtual_network: NETWORK
+os_image: OS_IMAGE
+floating_ip_pool: IP_POOL
+flavor: FLAVOR
