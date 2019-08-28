@@ -30,7 +30,7 @@ paths:
       description: "Метод возращает список существующих кластеров.
                     Предусмотрены возможности типизации кластеров и формирования краткого описания.
                     Пример ответа требует доработки."
-      operationId: listClusters
+      operationId: ClustersList
       parameters:
         - name: clusterType
           description: "Тип кластера. Возможные значения: any (все), base (основные), compute (вычислительный). Значение по умолчанию - base"
@@ -80,7 +80,7 @@ paths:
                     Возможно создание как одного кластера, так и несколько кластеров сразу, число узлов в кластере указывается в теле запроса.
                     При создании кластера можно указать список сервисов, которые должны быть развернуты на указанном кластере.
                     В качестве ответа возвращается список кластеров, находящихся на этапе развертывания. Статус таких кластеров установлен как INITED"
-      operationId: createClusters
+      operationId: ClustersCreate
       consumes:
         - application/json
       produces:
@@ -128,9 +128,11 @@ paths:
       tags:
         - cluster
       summary: Reads information about cluster
-      operationId: getCluster
+      description: "Метод возращает список кластер с именем clusterName."
+      operationId: ClustersGet
       parameters:
         - name: clusterName
+          description: "Имя кластера."
           in: path
           type: integer
           required: true
@@ -138,7 +140,19 @@ paths:
         - application/json
       responses:
         200:
-          description: OK
+          description: "OK"
+          schema:
+            $ref: '#/definitions/Clusters'
+        204:
+          description: "Нет результатов, соответствующих запросу."
+        400:
+          description: "Некорректный запрос, проверьте параметры"
+        401:
+          description: "Не пройдена авторизация"
+        403:
+          description: "Не достаточно прав"
+        404:
+          description: "Not found. (может заменять 401, 403)"
     put:
       tags:
         - cluster

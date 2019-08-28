@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 )
 
 const (
@@ -77,7 +78,18 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 		c.ID = newID
 	}
 
+	//saving cluster to database
+	hS.Logger.Print("Writing new cluster to db...")
+	db := database.CouchDatabase{}
+	err = db.WriteCluster(&c)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	c.EntityStatus = protobuf.Cluster_INITED
+
 	go hS.Gc.StartClusterCreation(&c)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -87,13 +99,61 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 
 func (hS HttpServer) ClustersGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /clusters GET")
+	//reading cluster info from database
+	hS.Logger.Print("Reading cluster information from db...")
+	db := database.CouchDatabase{}
+	clusters, err := db.ListClusters()
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	err = enc.Encode(clusters)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	clusterName := params.ByName("clusterName")
 	hS.Logger.Print("Get /clusters/", clusterName, " GET")
+
+	//reading cluster info from database
+	hS.Logger.Print("Reading cluster information from db...")
+	db := database.CouchDatabase{}
+	cluster, err := db.ReadCluster(clusterName)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if cluster.Name == "" {
+		hS.Logger.Print("Cluster not found")
+		w.WriteHeader(http.StatusNoContent)
+		enc := json.NewEncoder(w)
+		err := enc.Encode("Cluster with this name not found")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	err = enc.Encode(cluster)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

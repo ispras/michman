@@ -26,6 +26,7 @@ type AuthConfig struct {
 	VaultAddr string `yaml:"vault_addr"`
 	OsKey     string `yaml:"os_key"`
 	SshKey    string `yaml:"ssh_key"`
+	CbKey     string `yaml:"cb_key"`
 }
 
 func ConnectVault() (*vaultapi.Client, *AuthConfig) {

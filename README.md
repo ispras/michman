@@ -18,9 +18,14 @@ YAML:
 go get -u gopkg.in/yaml.v2
 ```
 
-httprouting:
+HTTP routing:
 ```
 go get github.com/julienschmidt/httprouter
+```
+
+Couchbase SDK:
+```
+go get -u gopkg.in/couchbase/gocb.v1
 ```
 
 Ansible version >= 2.8.1 

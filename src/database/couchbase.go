@@ -2,14 +2,9 @@ package database
 
 import (
 	"errors"
-	vaultapi "github.com/hashicorp/vault/api"
 	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"gopkg.in/couchbase/gocb.v1"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 const (
@@ -40,34 +35,12 @@ type CouchDatabase struct {
 
 func (db *CouchDatabase) getCouchCluster() error {
 	if db.auth == nil {
-		path, err := os.Getwd() //file must be executed from spark-openstack directory
-		if err != nil {
-			log.Fatalln(err)
+		client, vaultCfg := utils.ConnectVault()
+		if client == nil {
+			return errors.New("Error: can't connect to vault secrets storage")
 		}
 
-		workDir := filepath.Base(path)
-		if workDir != "spark-openstack" {
-			return errors.New("Error: working directory must be spark-openstack")
-		}
-
-		vaultFile, err := ioutil.ReadFile(filepath.Join(workDir, "vault.yaml"))
-		if err != nil {
-			return errors.New("Error: cannot read vault file")
-		}
-
-		var vault vaultAuth
-		if err := yaml.Unmarshal(vaultFile, &vault); err != nil {
-			return err
-		}
-
-		client, err := vaultapi.NewClient(&vaultapi.Config{
-			Address: vault.VaultAddr,
-		})
-		if err != nil {
-			return err
-		}
-		client.SetToken(vault.Token)
-		couchSecrets, err := client.Logical().Read(vault.cbKey)
+		couchSecrets, err := client.Logical().Read(vaultCfg.CbKey)
 		if err != nil {
 			return err
 		}
@@ -110,6 +83,9 @@ func (db *CouchDatabase) getBucket(name string) error {
 
 func (db *CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
 		if err := db.getBucket(db.clusterBucketName); err != nil {
 			return err
 		}
@@ -124,10 +100,14 @@ func (db *CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 
 func (db *CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
 		if err := db.getBucket(db.clusterBucketName); err != nil {
 			return nil, err
 		}
 	}
+
 	err := db.getBucket(db.clusterBucketName)
 	if err != nil {
 		return nil, err
@@ -139,10 +119,14 @@ func (db *CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 
 func (db *CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
 		if err := db.getBucket(db.clusterBucketName); err != nil {
 			return nil, err
 		}
 	}
+
 	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services FROM " + db.clusterBucketName)
 	rows, err := db.clusterBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
