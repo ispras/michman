@@ -9,6 +9,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/julienschmidt/httprouter"
+	handlers "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/handlers"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 )
 
@@ -24,13 +26,23 @@ func (mockCl mockGrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	log.Print("MOCK gRPC call for cluster creating")
 }
 
+func (mockCl mockGrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
+	log.Print("MOCK gRPC call for cluster destroying")
+}
+
+func (mockCl mockGrpcClient) StartClusterModification(c *protobuf.Cluster) {
+	log.Print("MOCK gRPC call for cluster modification")
+}
+
 func TestClustersGet(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/", nil)
 	response := httptest.NewRecorder()
 
-	hS := HttpServer{}
+	l := log.New(os.Stdout, "TEST_LOGGER: ", log.Ldate|log.Ltime)
+	mockClient := mockGrpcClient{}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l}
 
-	hS.clustersHandler(response, request)
+	hS.ClustersGetList(response, request, httprouter.Params{})
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -61,9 +73,9 @@ func TestClustersPost(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockClient := mockGrpcClient{}
-		hS := HttpServer{mockClient, l}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l}
 
-		hS.clustersHandler(response, request)
+		hS.ClusterCreate(response, request, httprouter.Params{})
 
 		if response.Code != http.StatusOK {
 			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -87,9 +99,9 @@ func TestClustersPost(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockClient := mockGrpcClient{}
-		hS := HttpServer{mockClient, l}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l}
 
-		hS.clustersHandler(response, request)
+		hS.ClusterCreate(response, request, httprouter.Params{})
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
 		}

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/julienschmidt/httprouter"
 	grpc_client "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/grpcclients"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/handlers"
-	"github.com/julienschmidt/httprouter"
 )
 
 const (
