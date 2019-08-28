@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var sparkVersions = map[string]map[string][]string {
+var sparkVersions = map[string]map[string][]string{
 	"2.3.0": {"hadoop_versions": {"2.6", "2.7"}},
 	"2.2.1": {"hadoop_versions": {"2.6", "2.7"}},
 	"2.2.0": {"hadoop_versions": {"2.6", "2.7"}},
@@ -41,59 +41,58 @@ var sparkVersions = map[string]map[string][]string {
 	"1.0.0": {"hadoop_versions": {"1", "cdh4"}},
 }
 
-var toreeVersions = map[string]string {
-	"1" : "https://www.apache.org/dist/incubator/toree/0.1.0-incubating/toree-pip/apache-toree-0.1.0.tar.gz",
-	"2" : "https://www.apache.org/dist/incubator/toree/0.2.0-incubating/toree-pip/toree-0.2.0.tar.gz",
-	"3" : "https://www.apache.org/dist/incubator/toree/0.3.0-incubating/toree-pip/toree-0.3.0.tar.gz",
+var toreeVersions = map[string]string{
+	"1": "https://www.apache.org/dist/incubator/toree/0.1.0-incubating/toree-pip/apache-toree-0.1.0.tar.gz",
+	"2": "https://www.apache.org/dist/incubator/toree/0.2.0-incubating/toree-pip/toree-0.2.0.tar.gz",
+	"3": "https://www.apache.org/dist/incubator/toree/0.3.0-incubating/toree-pip/toree-0.3.0.tar.gz",
 }
 
 type ServiceExists struct {
-	exists bool
+	exists  bool
 	service *protobuf.Service
 }
 
-
 type AnsibleExtraVars struct {
-	IgniteVersion string `json:"ignite_version"`
-	EsHeapSize string `json:"es_heap_size"`
-	CreateCluster bool `json:"create_cluster"`
-	DeployCassandra bool `json:"deploy_cassandra"`
-	Sync string `json:"sync"`
-	AnsibleUser string `json:"ansible_user"`
-	DeploySpark bool `json:"deploy_spark"`
-	DeployElastic bool `json:"deploy_elastic"`
-	Mountnfs bool `json:"mountnfs"`
-	Flavor string `json:"flavor"`
-	BootFromVolume bool `json:"boot_from_volume"`
-	DeployJupyter bool `json:"deploy_jupyter"`
-	ToreeVersion string `json:"toree_version,omitempty"`
-	HadoopUser string `json:"hadoop_user"`
-	MasterFlavor string `json:"master_flavor"`
-	NSlaves int32 `json:"n_slaves"`
-	DeployIgnite bool `json:"deploy_ignite"`
-	ClusterName string `json:"cluster_name"`
-	SparkVersion string `json:"spark_version"`
-	OsImage string `json:"os_image"`
-	SkipPackages bool `json:"skip_packages"`
-	OsProjectName string `json:"os_project_name"`
-	NfsShares []string `json:"nfs_shares"` //check if type is correct
-	UseYarn bool `json:"use_yarn"`
-	FloatingIpPool string `json:"floating_ip_pool"`
-	OsAuthUrl string `json:"os_auth_url"`
-	UseOracleJava bool `json:"use_oracle_java"`
-	AnsibleSshPrivateKeyFile string `json:"ansible_ssh_private_key_file"`
-	HadoopVersion string `json:"hadoop_version"`
-	CassandraVersion string `json:"cassandra_version"`
-	ExtraJars []map[string]string `json:"extra_jars"`
-	Act string `json:"act"`
-	VirtualNetwork string `json:"virtual_network"`
-	OsKeyName string `json:"os_key_name"`
-	DeployJupyterhub bool `json:"deploy_jupyterhub"`
-	OsSwiftUserName string `json:"os_swift_user_name,omitempty"`
-	OsSwiftPassword string `json:"os_swift_password,omitempty"`
-	SparkWorkerMemMb int `json:"spark_worker_mem_mb,omitempty"`
-	IgniteMemory int `json:"ignite_memory,omitempty"`
-	YarnMasterMemMb int `json:"yarn_master_mem_mb,omitempty"`
+	IgniteVersion            string              `json:"ignite_version"`
+	EsHeapSize               string              `json:"es_heap_size"`
+	CreateCluster            bool                `json:"create_cluster"`
+	DeployCassandra          bool                `json:"deploy_cassandra"`
+	Sync                     string              `json:"sync"`
+	AnsibleUser              string              `json:"ansible_user"`
+	DeploySpark              bool                `json:"deploy_spark"`
+	DeployElastic            bool                `json:"deploy_elastic"`
+	Mountnfs                 bool                `json:"mountnfs"`
+	Flavor                   string              `json:"flavor"`
+	BootFromVolume           bool                `json:"boot_from_volume"`
+	DeployJupyter            bool                `json:"deploy_jupyter"`
+	ToreeVersion             string              `json:"toree_version,omitempty"`
+	HadoopUser               string              `json:"hadoop_user"`
+	MasterFlavor             string              `json:"master_flavor"`
+	NSlaves                  int32               `json:"n_slaves"`
+	DeployIgnite             bool                `json:"deploy_ignite"`
+	ClusterName              string              `json:"cluster_name"`
+	SparkVersion             string              `json:"spark_version"`
+	OsImage                  string              `json:"os_image"`
+	SkipPackages             bool                `json:"skip_packages"`
+	OsProjectName            string              `json:"os_project_name"`
+	NfsShares                []string            `json:"nfs_shares"` //check if type is correct
+	UseYarn                  bool                `json:"use_yarn"`
+	FloatingIpPool           string              `json:"floating_ip_pool"`
+	OsAuthUrl                string              `json:"os_auth_url"`
+	UseOracleJava            bool                `json:"use_oracle_java"`
+	AnsibleSshPrivateKeyFile string              `json:"ansible_ssh_private_key_file"`
+	HadoopVersion            string              `json:"hadoop_version"`
+	CassandraVersion         string              `json:"cassandra_version"`
+	ExtraJars                []map[string]string `json:"extra_jars"`
+	Act                      string              `json:"act"`
+	VirtualNetwork           string              `json:"virtual_network"`
+	OsKeyName                string              `json:"os_key_name"`
+	DeployJupyterhub         bool                `json:"deploy_jupyterhub"`
+	OsSwiftUserName          string              `json:"os_swift_user_name,omitempty"`
+	OsSwiftPassword          string              `json:"os_swift_password,omitempty"`
+	SparkWorkerMemMb         int                 `json:"spark_worker_mem_mb,omitempty"`
+	IgniteMemory             int                 `json:"ignite_memory,omitempty"`
+	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
 }
 
 func GetElasticConnectorJar() string {
@@ -144,37 +143,37 @@ func AddJar(path string) map[string]string {
 	} else {
 		absPath = v
 	}
-	var newElem = map[string]string {
+	var newElem = map[string]string{
 		"name": filepath.Base(path), "path": absPath,
 	}
 	return newElem
 }
 
-func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *osConfig, action string) AnsibleExtraVars {
+func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) AnsibleExtraVars {
 	//available services types
-	var serviceTypes = map[string]ServiceExists {
+	var serviceTypes = map[string]ServiceExists{
 		utils.ServiceTypeCassandra: {
 			exists:  false,
 			service: nil,
 		},
 		utils.ServiceTypeSpark: {
-			exists: false,
+			exists:  false,
 			service: nil,
 		},
 		utils.ServiceTypeElastic: {
-			exists: false,
+			exists:  false,
 			service: nil,
 		},
 		utils.ServiceTypeJupyter: {
-			exists: false,
+			exists:  false,
 			service: nil,
 		},
 		utils.ServiceTypeIgnite: {
-			exists: false,
+			exists:  false,
 			service: nil,
 		},
 		utils.ServiceTypeJupyterhub: {
-			exists: false,
+			exists:  false,
 			service: nil,
 		},
 	}
@@ -244,7 +243,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	extraVars.UseYarn = false
 	//getting latest hadoop version for selected spark version
 	hadoopVersions := sparkVersions[extraVars.SparkVersion]["hadoop_versions"]
-	extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions) - 1]
+	extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions)-1]
 	//checking spark config params
 	if serviceTypes[utils.ServiceTypeSpark].exists && serviceTypes[utils.ServiceTypeSpark].service.Config != nil {
 		if yarn, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkUseYarn]; ok {
@@ -266,7 +265,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 			}
 			if !versionOk {
 				log.Print("Bad Hadoop version in Spark config")
-				extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions) - 1]
+				extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions)-1]
 			}
 		}
 
@@ -355,7 +354,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 
 type AnsibleLauncher struct{}
 
-func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *osConfig, action string) string {
+func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object

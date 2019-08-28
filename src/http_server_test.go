@@ -11,36 +11,17 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	handlers "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/handlers"
+	mocks "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/mocks"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 )
-
-type mockGrpcClient struct{}
-
-func (mockCl mockGrpcClient) GetID(c *protobuf.Cluster) (int32, error) {
-	log.Print("MOCK gRPC call for getting ID")
-
-	return 0, nil
-}
-
-func (mockCl mockGrpcClient) StartClusterCreation(c *protobuf.Cluster) {
-	log.Print("MOCK gRPC call for cluster creating")
-}
-
-func (mockCl mockGrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
-	log.Print("MOCK gRPC call for cluster destroying")
-}
-
-func (mockCl mockGrpcClient) StartClusterModification(c *protobuf.Cluster) {
-	log.Print("MOCK gRPC call for cluster modification")
-}
 
 func TestClustersGet(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/", nil)
 	response := httptest.NewRecorder()
 
 	l := log.New(os.Stdout, "TEST_LOGGER: ", log.Ldate|log.Ltime)
-	mockClient := mockGrpcClient{}
-	hS := handlers.HttpServer{Gc: mockClient, Logger: l}
+	mockClient := mocks.MockGrpcClient{}
+	hS := handlers.HttpServer{Gc: &mockClient, Logger: l}
 
 	hS.ClustersGetList(response, request, httprouter.Params{})
 
@@ -72,8 +53,8 @@ func TestClustersPost(t *testing.T) {
 
 		response := httptest.NewRecorder()
 
-		mockClient := mockGrpcClient{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l}
+		mockClient := mocks.MockGrpcClient{}
+		hS := handlers.HttpServer{Gc: &mockClient, Logger: l}
 
 		hS.ClusterCreate(response, request, httprouter.Params{})
 
@@ -98,8 +79,8 @@ func TestClustersPost(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockClient := mockGrpcClient{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l}
+		mockClient := mocks.MockGrpcClient{}
+		hS := handlers.HttpServer{Gc: &mockClient, Logger: l}
 
 		hS.ClusterCreate(response, request, httprouter.Params{})
 		if response.Code != http.StatusBadRequest {

@@ -6,8 +6,6 @@ import (
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -23,21 +21,14 @@ const (
 )
 
 type ansibleLaunch interface {
-	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *osConfig, action string) string
+	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string
 }
 
 // ansibleService implements ansible service
 type ansibleService struct {
-	logger        *log.Logger
-	ansibleRunner ansibleLaunch
-}
-
-type osConfig struct {
-	Key     string `yaml:"os_key_name"`
-	VirtualNetwork string `yaml:"virtual_network"`
-	OsImage     string `yaml:"os_image"`
-	FloatingIP     string `yaml:"floating_ip_pool"`
-	Flavor     string `yaml:"flavor"`
+	logger            *log.Logger
+	ansibleRunner     ansibleLaunch
+	vaultCommunicator utils.SecretStorage
 }
 
 func makeOsCreds(keyName string, vaultClient *vaultapi.Client) *utils.OsCredentials {
@@ -67,27 +58,6 @@ func makeOsCreds(keyName string, vaultClient *vaultapi.Client) *utils.OsCredenti
 		osCreds.OsSwiftPassword = ""
 	}
 	return &osCreds
-}
-
-func (osCfg *osConfig) makeOsCfg() error {
-	path, err := os.Getwd() //file must be executed from spark-openstack directory
-	if err != nil {
-		log.Fatalln(err)
-		return err
-	}
-
-	workingDir := filepath.Base(path)
-	if workingDir != utils.BasePath { //checking that current directory is correct
-		log.Fatalln("Error: working directory must be spark-openstack")
-		return errors.New("Error: working directory must be spark-openstack")
-	}
-
-	osConfigPath := filepath.Join(path, utils.OpenstackCfg)
-	osBs, err := ioutil.ReadFile(osConfigPath)
-	if err := yaml.Unmarshal(osBs, &osCfg); err != nil {
-		log.Fatalln(err)
-	}
-	return nil
 }
 
 func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
@@ -139,7 +109,7 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 	aS.logger.Print("Getting vault secrets...")
 
-	vaultClient, vaultCfg := utils.ConnectVault()
+	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
 	if vaultClient == nil {
 		log.Fatalln("Error: can't connect to vault secrets storage")
 		return nil
@@ -154,8 +124,8 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	//aS.logger.Print(osCreds)
 
 	//getting openstack config info
-	var osCfg osConfig
-	err := osCfg.makeOsCfg()
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
 	if err != nil {
 		log.Fatalln(err)
 		return nil
@@ -188,7 +158,7 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 	aS.logger.Print("Getting vault secrets...")
 
-	vaultClient, vaultCfg := utils.ConnectVault()
+	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
 	if vaultClient == nil {
 		log.Fatalln("Error: can't connect to vault secrets storage")
 		return nil
@@ -201,8 +171,8 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	//aS.logger.Print(osCreds)
 
 	//getting openstack config info
-	var osCfg osConfig
-	err := osCfg.makeOsCfg()
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
 	if err != nil {
 		log.Fatalln(err)
 		return nil
@@ -235,7 +205,7 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 	aS.logger.Print("Getting vault secrets...")
 
-	vaultClient, vaultCfg := utils.ConnectVault()
+	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
 	if vaultClient == nil {
 		log.Fatalln("Error: can't connect to vault secrets storage")
 		return nil
@@ -248,8 +218,8 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	//aS.logger.Print(osCreds)
 
 	//getting openstack config info
-	var osCfg osConfig
-	err := osCfg.makeOsCfg()
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
 	if err != nil {
 		log.Fatalln(err)
 		return nil
@@ -278,6 +248,7 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 func main() {
 	ansibleServiceLogger := log.New(os.Stdout, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
 	ansibleLaunch := AnsibleLauncher{}
+	vaultCommunicator := utils.VaultCommunicator{}
 
 	lis, err := net.Listen("tcp", inputPort)
 	if err != nil {
@@ -285,7 +256,7 @@ func main() {
 	}
 
 	gas := grpc.NewServer()
-	protobuf.RegisterAnsibleRunnerServer(gas, &ansibleService{ansibleServiceLogger, ansibleLaunch})
+	protobuf.RegisterAnsibleRunnerServer(gas, &ansibleService{ansibleServiceLogger, &ansibleLaunch, &vaultCommunicator})
 
 	ansibleServiceLogger.Print("Ansible runner start work...\n")
 	if err := gas.Serve(lis); err != nil {
