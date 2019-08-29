@@ -2,11 +2,12 @@ package grpcclient
 
 import (
 	"context"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"time"
 
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	"google.golang.org/grpc"
 )
 
@@ -67,10 +68,14 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 
 	gc.logger.Print("Sending request to ansible-service")
 	stream, err := gc.ansibleServiceClient.Create(ctx, c)
+	db := database.CouchDatabase{}
 	if err != nil {
 		gc.logger.Println(err)
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
@@ -82,14 +87,20 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 			gc.logger.Println(err)
 		}
 		// request to db-service about errors with ansible service
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = protobuf.Cluster_CREATED
-	gc.updateClusterState(c)
+	c.EntityStatus = utils.StatusCreated
+	err = db.WriteCluster(c)
+	if err != nil {
+		gc.logger.Print(err)
+	}
 }
 
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
@@ -99,10 +110,14 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 
 	gc.logger.Print("Sending request to ansible-service")
 	stream, err := gc.ansibleServiceClient.Delete(ctx, c)
+	db := database.CouchDatabase{}
 	if err != nil {
 		gc.logger.Println(err)
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
@@ -114,14 +129,19 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 			gc.logger.Println(err)
 		}
 		// request to db-service about errors with ansible service
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
-	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = protobuf.Cluster_DOWN
-	gc.updateClusterState(c)
+	gc.logger.Printf("Sending to db-service delete request for %s cluster\n", c.Name)
+	err = db.DeleteCluster(c.Name)
+	if err != nil {
+		gc.logger.Print(err)
+	}
 }
 
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
@@ -131,10 +151,14 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 
 	gc.logger.Print("Sending request to ansible-service")
 	stream, err := gc.ansibleServiceClient.Update(ctx, c)
+	db := database.CouchDatabase{}
 	if err != nil {
 		gc.logger.Println(err)
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
@@ -146,14 +170,20 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 			gc.logger.Println(err)
 		}
 		// request to db-service about errors with ansible service
-		c.EntityStatus = protobuf.Cluster_FAILED
-		gc.updateClusterState(c)
+		c.EntityStatus = utils.StatusFailed
+		err = db.WriteCluster(c)
+		if err != nil {
+			gc.logger.Print(err)
+		}
 		return
 	}
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = protobuf.Cluster_DOWN
-	gc.updateClusterState(c)
+	c.EntityStatus = utils.StatusCreated
+	err = db.WriteCluster(c)
+	if err != nil {
+		gc.logger.Print(err)
+	}
 }
 
 // updateClusterState will send cluster struct to db-service for update it's state

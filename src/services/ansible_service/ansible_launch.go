@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 )
 
 var sparkVersions = map[string]map[string][]string{
@@ -352,15 +353,14 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	return extraVars
 }
 
-type AnsibleLauncher struct{}
+type AnsibleLauncher struct{
+	couchbaseCommunicator database.CouchDatabase
+}
 
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object
-
-	log.Print("Running ansible...")
-	log.Print(cluster)
 
 	//exporting ansible variables
 	err := os.Setenv("OS_AUTH_URL", osCreds.OsAuthUrl)
@@ -414,8 +414,17 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	log.Print(string(ansibleArgs))
 
 	cmdName := "ansible-playbook"
-	cmdArgs := []string{"-v", "src/ansible/ansible/main.yml", "--extra-vars", string(ansibleArgs)}
+	cmdArgs := []string{"-vvv", "src/ansible/ansible/main.yml", "--extra-vars", string(ansibleArgs)}
 	
+	//saving cluster to database
+	log.Print("Writing new cluster to db...")
+	aL.couchbaseCommunicator = database.CouchDatabase{}
+	err = aL.couchbaseCommunicator.WriteCluster(cluster)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Print("Running ansible...")
 	ansibleCmd := exec.Command(cmdName, cmdArgs...)
 	stdout, err := ansibleCmd.StdoutPipe()
 	if err != nil {

@@ -3,11 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"net/http"
 	"regexp"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 )
 
 const (
@@ -39,7 +40,6 @@ func ValidateCluster(cluster *protobuf.Cluster) bool {
 		log.Print("ERROR: NHosts parameter must be number >= 1.")
 		return false
 	}
-	//check that name is unique, request to couchbase
 
 	for _, service := range cluster.Services {
 		if !ValidateService(service) {
@@ -68,6 +68,27 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
+	//check, that cluster with such name doesn't exist
+	db := database.CouchDatabase{}
+	dbRes, err := db.ReadCluster(c.Name)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if dbRes.Name != "" && dbRes.EntityStatus != utils.StatusFailed {
+		hS.Logger.Print("Cluster with this name exists")
+		w.WriteHeader(http.StatusBadRequest)
+		enc := json.NewEncoder(w)
+		err := enc.Encode("Cluster with this name exists")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+
 	if c.ID == NEW_CLUSTER {
 		hS.Logger.Print("Sending request to db-service to get cluster ID")
 		newID, err := hS.Gc.GetID(&c)
@@ -78,18 +99,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 		c.ID = newID
 	}
 
-	//saving cluster to database
-	hS.Logger.Print("Writing new cluster to db...")
-	db := database.CouchDatabase{}
-	err = db.WriteCluster(&c)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	c.EntityStatus = protobuf.Cluster_INITED
-
+	c.EntityStatus = utils.StatusInited
 	go hS.Gc.StartClusterCreation(&c)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -136,13 +146,6 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	if cluster.Name == "" {
 		hS.Logger.Print("Cluster not found")
 		w.WriteHeader(http.StatusNoContent)
-		enc := json.NewEncoder(w)
-		err := enc.Encode("Cluster with this name not found")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
 		return
 	}
 
@@ -163,8 +166,29 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//check that cluster exists
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
-	var c protobuf.Cluster
-	err := json.NewDecoder(r.Body).Decode(&c)
+	db := database.CouchDatabase{}
+	oldC, err := db.ReadCluster(clusterName)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if oldC.Name == "" {
+		hS.Logger.Print("Cluster not found")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if oldC.EntityStatus != utils.StatusCreated && oldC.EntityStatus != utils.StatusFailed {
+		hS.Logger.Print("ERROR: status of cluster to update must be 'CREATED'")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// validate request struct
+	var newC protobuf.Cluster
+	err = json.NewDecoder(r.Body).Decode(&newC)
 	if err != nil {
 		hS.Logger.Print("ERROR:")
 		hS.Logger.Print(err)
@@ -173,24 +197,16 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	if c.EntityStatus != protobuf.Cluster_CREATED {
-		hS.Logger.Print("ERROR: status of cluster to update must be 'CREATED'")
-		hS.Logger.Print(r.Body)
+	if !ValidateCluster(&newC) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// validate struct
-	if !ValidateCluster(&c) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	c.EntityStatus = protobuf.Cluster_INITED
-	go hS.Gc.StartClusterModification(&c)
+	newC.EntityStatus = utils.StatusInited
+	go hS.Gc.StartClusterModification(&newC)
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(c)
+	enc.Encode(newC)
 }
 
 func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -201,27 +217,31 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
 	//cluster for testing
-	c := protobuf.Cluster{
-		ID: 1,
-		Name: clusterName,
-		NHosts: 1,
-		EntityStatus: protobuf.Cluster_CREATED,
-	}
-
-	if c.EntityStatus == protobuf.Cluster_CREATED {
-		c.EntityStatus = protobuf.Cluster_STOPPING
-		//send changes in status to database
-
-		go hS.Gc.StartClusterDestroying(&c)
-		w.Header().Set("Content-Type", "application/json")
-		enc := json.NewEncoder(w)
-		enc.Encode(c)
-	} else {
+	db := database.CouchDatabase{}
+	c, err := db.ReadCluster(clusterName)
+	if err != nil {
+		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
-		hS.Logger.Print("Error: entity status of destroying cluster must be 'CREATED")
-		enc := json.NewEncoder(w)
-		enc.Encode("Error: entity status of destroying cluster must be 'CREATED")
 		return
 	}
 
+	if c.Name == "" {
+		hS.Logger.Print("Cluster not found")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if c.EntityStatus != utils.StatusCreated && c.EntityStatus != utils.StatusFailed {
+		hS.Logger.Print("ERROR: status of cluster to update must be 'CREATED'")
+		hS.Logger.Print(r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	c.EntityStatus = utils.StatusStopping
+
+	go hS.Gc.StartClusterDestroying(c)
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(c)
 }

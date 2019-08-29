@@ -58,4 +58,9 @@ const (
 	//ssh secrets keys
 	VaultSshKey = "id_rsa"
 
+	//Entity statuses
+	StatusInited = "INITED"
+	StatusCreated = "CREATED"
+	StatusFailed = "FAILED"
+	StatusStopping = "STOPPING"
 )

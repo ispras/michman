@@ -18,16 +18,7 @@ message Cluster {
     string Name = 2;
     string DisplayName = 3;
     string HostURL = 4;
-    enum EntityStatusTypes {
-        UNKNOWN = 0;
-        INITED = 1;
-        FAILED = 2;
-        CREATED = 3;
-        DOWN = 4; //other statuses could be added
-        STOPPING = 5;
-        STOPPED = 6;
-    }
-    EntityStatusTypes EntityStatus = 5;
+    string EntityStatus = 5;
     string ClusterType = 6;
     repeated Service services = 7;
     int32 NHosts = 8;

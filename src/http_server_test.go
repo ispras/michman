@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -68,7 +69,7 @@ func TestClustersPost(t *testing.T) {
 			t.Fatalf("Get invalid JSON")
 		}
 
-		if c.EntityStatus != protobuf.Cluster_INITED {
+		if c.EntityStatus != utils.StatusInited {
 			t.Fatalf("Expected EntityStatus %s, but received: %s", "INITED", c.EntityStatus)
 		}
 	})

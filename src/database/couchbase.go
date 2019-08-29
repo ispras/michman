@@ -31,11 +31,13 @@ type CouchDatabase struct {
 	couchCluster *gocb.Cluster
 	clusterBucket *gocb.Bucket
 	clusterBucketName string
+	vaultCommunicator utils.SecretStorage
 }
 
 func (db *CouchDatabase) getCouchCluster() error {
 	if db.auth == nil {
-		client, vaultCfg := utils.ConnectVault()
+		db.vaultCommunicator = &utils.VaultCommunicator{}
+		client, vaultCfg := db.vaultCommunicator.ConnectVault()
 		if client == nil {
 			return errors.New("Error: can't connect to vault secrets storage")
 		}
@@ -143,6 +145,9 @@ func (db *CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 
 func (db *CouchDatabase) DeleteCluster(name string) error {
 	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
 		if err := db.getBucket(db.clusterBucketName); err != nil{
 			return err
 		}
