@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	vaultapi "github.com/hashicorp/vault/api"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"google.golang.org/grpc"
@@ -247,8 +248,8 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 func main() {
 	ansibleServiceLogger := log.New(os.Stdout, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
-	ansibleLaunch := AnsibleLauncher{}
 	vaultCommunicator := utils.VaultCommunicator{}
+	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
 
 	lis, err := net.Listen("tcp", inputPort)
 	if err != nil {

@@ -354,7 +354,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 }
 
 type AnsibleLauncher struct{
-	couchbaseCommunicator database.CouchDatabase
+	couchbaseCommunicator database.Database
 }
 
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
@@ -418,7 +418,6 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	
 	//saving cluster to database
 	log.Print("Writing new cluster to db...")
-	aL.couchbaseCommunicator = database.CouchDatabase{}
 	err = aL.couchbaseCommunicator.WriteCluster(cluster)
 	if err != nil {
 		log.Fatalln(err)

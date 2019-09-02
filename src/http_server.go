@@ -1,6 +1,8 @@
 package main
 
 import (
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"net/http"
 	"os"
@@ -18,15 +20,14 @@ const (
 func main() {
 	// creating grpc client for communicating with services
 	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
-	gc := grpc_client.GrpcClient{}
+	vaultCommunicator := utils.VaultCommunicator{}
+	gc := grpc_client.GrpcClient{Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
 	gc.SetLogger(grpcClientLogger)
 	gc.SetConnection(addressAnsibleService, addressDBService)
 
 	httpServerLogger := log.New(os.Stdout, "HTTP_SERVER: ", log.Ldate|log.Ltime)
-	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger}
 
-	//http.HandleFunc("/clusters", hS.clustersHandler)
-	//http.HandleFunc("/clusters/{clusterName}", hS.clustersByNameHandler)
+	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
 
 	router := httprouter.New()
 	router.GET("/clusters", hS.ClustersGetList)

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"github.com/google/uuid"
 )
 
 const (
@@ -25,6 +26,12 @@ type GrpcClient interface {
 type HttpServer struct {
 	Gc     GrpcClient
 	Logger *log.Logger
+	Db database.Database
+}
+
+type serviceExists struct {
+	exists  bool
+	service *protobuf.Service
 }
 
 func ValidateCluster(cluster *protobuf.Cluster) bool {
@@ -69,8 +76,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 	}
 
 	//check, that cluster with such name doesn't exist
-	db := database.CouchDatabase{}
-	dbRes, err := db.ReadCluster(c.Name)
+	dbRes, err := hS.Db.ReadCluster(c.Name)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -89,14 +95,27 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	if c.ID == NEW_CLUSTER {
-		hS.Logger.Print("Sending request to db-service to get cluster ID")
-		newID, err := hS.Gc.GetID(&c)
-		if err != nil {
-			hS.Logger.Print("DB server don't ...")
-		}
+	//generating UUID for new cluster
+	if dbRes.EntityStatus != utils.StatusFailed {
 		//newID = 1
-		c.ID = newID
+		cUuid, err := uuid.NewRandom()
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		c.ID = cUuid.String()
+
+		for _, s := range c.Services {
+			sUuid, err := uuid.NewRandom()
+			if err != nil {
+				hS.Logger.Print(err)
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			s.ID = sUuid.String()
+		}
+
+	} else {
+		c = *dbRes
 	}
 
 	c.EntityStatus = utils.StatusInited
@@ -111,8 +130,8 @@ func (hS HttpServer) ClustersGetList(w http.ResponseWriter, r *http.Request, _ h
 	hS.Logger.Print("Get /clusters GET")
 	//reading cluster info from database
 	hS.Logger.Print("Reading cluster information from db...")
-	db := database.CouchDatabase{}
-	clusters, err := db.ListClusters()
+
+	clusters, err := hS.Db.ListClusters()
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -135,8 +154,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 
 	//reading cluster info from database
 	hS.Logger.Print("Reading cluster information from db...")
-	db := database.CouchDatabase{}
-	cluster, err := db.ReadCluster(clusterName)
+	cluster, err := hS.Db.ReadCluster(clusterName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -166,8 +184,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//check that cluster exists
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
-	db := database.CouchDatabase{}
-	oldC, err := db.ReadCluster(clusterName)
+	oldC, err := hS.Db.ReadCluster(clusterName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -201,6 +218,55 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	//appending old services which does not exist in new cluster configuration
+	var serviceTypesNew = map[string] serviceExists{
+		utils.ServiceTypeCassandra: {
+			exists:  false,
+			service: nil,
+		},
+		utils.ServiceTypeSpark: {
+			exists:  false,
+			service: nil,
+		},
+		utils.ServiceTypeElastic: {
+			exists:  false,
+			service: nil,
+		},
+		utils.ServiceTypeJupyter: {
+			exists:  false,
+			service: nil,
+		},
+		utils.ServiceTypeIgnite: {
+			exists:  false,
+			service: nil,
+		},
+		utils.ServiceTypeJupyterhub: {
+			exists:  false,
+			service: nil,
+		},
+	}
+
+	newC.ID = oldC.ID
+	for _, s := range newC.Services {
+		sUuid, err := uuid.NewRandom()
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		s.ID = sUuid.String()
+		serviceTypesNew[s.Type] = serviceExists{
+			exists:  true,
+			service: s,
+		}
+	}
+
+	for _, s := range oldC.Services {
+		if serviceTypesNew[s.Type].exists == false {
+			newC.Services = append(newC.Services, s)
+		}
+	}
+
 	newC.EntityStatus = utils.StatusInited
 	go hS.Gc.StartClusterModification(&newC)
 
@@ -217,8 +283,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
 	//cluster for testing
-	db := database.CouchDatabase{}
-	c, err := db.ReadCluster(clusterName)
+	c, err := hS.Db.ReadCluster(clusterName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)

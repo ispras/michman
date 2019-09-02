@@ -28,6 +28,11 @@ Couchbase SDK:
 go get -u gopkg.in/couchbase/gocb.v1
 ```
 
+UUIDs:
+```
+go get github.com/google/uuid
+```
+
 Ansible version >= 2.8.1 
 
 ## Configurations
@@ -37,6 +42,7 @@ token: MY-TOKEN
 vault_addr: http://127.0.0.1:8200
 os_key: kv/openstack
 ssh_key: kv/ssh-keys
+cb_key: kv/couchbase/
 ```
 
 Openstack (os_key) secrets includes following keys:
@@ -52,6 +58,12 @@ Openstack (os_key) secrets includes following keys:
 
 Ssh (ssh_key) secrets includes following keys:
 * **id_rsa** -- private ssh key for Ansible commands
+
+Couchbase (cb_key) secretes includes following keys:
+* **clusterBucket** -- name of the bucket storing clusters
+* **password** -- password of couchbase
+* **path** -- address of couchbase
+* **username** -- user name of couchbase 
 
 Configuration of Openstack is stored in **openstack_config.yaml** file. Example:
 ```yaml
@@ -149,6 +161,6 @@ go run src/http_server.go
 
 Send request to localhost:8080/clusters":
 ```
-curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test","EntityStatus":1,"services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
+curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test", "services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
 ```
 

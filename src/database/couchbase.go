@@ -31,13 +31,12 @@ type CouchDatabase struct {
 	couchCluster *gocb.Cluster
 	clusterBucket *gocb.Bucket
 	clusterBucketName string
-	vaultCommunicator utils.SecretStorage
+	VaultCommunicator utils.SecretStorage
 }
 
 func (db *CouchDatabase) getCouchCluster() error {
 	if db.auth == nil {
-		db.vaultCommunicator = &utils.VaultCommunicator{}
-		client, vaultCfg := db.vaultCommunicator.ConnectVault()
+		client, vaultCfg := db.VaultCommunicator.ConnectVault()
 		if client == nil {
 			return errors.New("Error: can't connect to vault secrets storage")
 		}
@@ -73,6 +72,7 @@ func (db *CouchDatabase) getBucket(name string) error {
 			return err
 		}
 	}
+
 	bucket, err := db.couchCluster.OpenBucket(name, "")
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (db *CouchDatabase) getBucket(name string) error {
 	return nil
 }
 
-func (db *CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
+func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 	if db.clusterBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
@@ -100,7 +100,7 @@ func (db *CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 	return nil
 }
 
-func (db *CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
+func (db CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 	if db.clusterBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
@@ -119,7 +119,7 @@ func (db *CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 	return &cluster, nil
 }
 
-func (db *CouchDatabase) ListClusters() ([]proto.Cluster, error) {
+func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 	if db.clusterBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
@@ -139,11 +139,12 @@ func (db *CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 
 	for rows.Next(&row) {
 		result = append(result, row)
+		row = proto.Cluster{}
 	}
 	return result, nil
 }
 
-func (db *CouchDatabase) DeleteCluster(name string) error {
+func (db CouchDatabase) DeleteCluster(name string) error {
 	if db.clusterBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName

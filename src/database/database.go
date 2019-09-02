@@ -7,6 +7,6 @@ import (
 type Database interface {
 	WriteCluster (cluster *proto.Cluster) error
 	ReadCluster (name string) (*proto.Cluster, error)
-	ListClusters () []*proto.Cluster
+	ListClusters () ([]proto.Cluster, error)
 	DeleteCluster (name string) error
 }
