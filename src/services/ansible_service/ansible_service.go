@@ -74,7 +74,7 @@ func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
 		return errors.New("Error: working directory must be spark-openstack")
 	}
 
-	sshPath := filepath.Join(path, utils.SshKeyPath)
+	sshPath := filepath.Join(utils.SshKeyPath)
 	if _, err := os.Stat(sshPath); os.IsNotExist(err) {
 		// ssh-key does not exist, getting it from vault
 		secretValues, err := vaultClient.Logical().Read(keyName)
@@ -84,10 +84,14 @@ func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
 		}
 
 		sshKey := secretValues.Data[utils.VaultSshKey].(string)
-		f, err := os.Create(utils.SshKeyPath)
+		f, err := os.Create(sshPath)
 		if err != nil {
 			log.Fatalln(err)
 			return err
+		}
+		err = os.Chmod(sshPath, 0777)
+		if err != nil {
+			log.Fatalln(err)
 		}
 		_, err = f.WriteString(sshKey)
 		if err != nil {
@@ -98,6 +102,10 @@ func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
 		if err != nil {
 			log.Fatalln(err)
 			return err
+		}
+		err = os.Chmod(sshPath, 0400)
+		if err != nil {
+			log.Fatalln(err)
 		}
 	}
 	return nil

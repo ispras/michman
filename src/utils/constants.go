@@ -1,5 +1,7 @@
 package utils
 
+import "os"
+
 const (
 	//list of supported services types
 	ServiceTypeSpark string = "spark"
@@ -41,8 +43,6 @@ const (
 	VaultCfg = "vault.yaml"
 	//openstack config file path
 	OpenstackCfg = "openstack_config.yaml"
-	//ssh-key file path
-	SshKeyPath = "id_rsa"
 
 	//openstack secrets keys
 	OsAuthUrl = "OS_AUTH_URL"
@@ -56,11 +56,15 @@ const (
 	OsSwiftPassword = "OS_SWIFT_PASSWORD"
 
 	//ssh secrets keys
-	VaultSshKey = "id_rsa"
+	VaultSshKey = "key_bgt"
 
 	//Entity statuses
 	StatusInited = "INITED"
 	StatusCreated = "CREATED"
 	StatusFailed = "FAILED"
 	StatusStopping = "STOPPING"
+)
+
+var (
+	SshKeyPath = os.Getenv("PWD") + "/src/ansible/ansible/files/ssh_key"
 )
