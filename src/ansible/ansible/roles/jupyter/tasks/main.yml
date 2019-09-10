@@ -11,6 +11,34 @@
   - install
   - jupyter_install
 
+
+- name: setup sparkmagic_spark_kernel
+  become: yes
+  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkkernel
+  when: not skip_install|default(False)
+  tags:
+  - install
+  - jupyter_install
+
+
+- name: setup sparkmagic_pyspark_kernel
+  become: yes
+  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/pysparkkernel
+  when: not skip_install|default(False)
+  tags:
+  - install
+  - jupyter_install
+
+
+- name: setup sparkmagic_sparkr_kernel
+  become: yes
+  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkrkernel
+  when: not skip_install|default(False)
+  tags:
+  - install
+  - jupyter_install
+
+
 - name: create config
   shell: jupyter notebook --generate-config -y
   when: not skip_install|default(False)

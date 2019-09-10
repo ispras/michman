@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	couchPath     string = "couchbase://couchbase_ip"
-	couchUsername string = "couchbase_user"
-	couchPassword string = "couchbase_password"
+	couchPath         string = "couchbase://couchbase_ip"
+	couchUsername     string = "couchbase_user"
+	couchPassword     string = "couchbase_password"
 	clusterBucketName string = "clusters"
 )
 
@@ -21,15 +21,15 @@ type vaultAuth struct {
 }
 
 type couchAuth struct {
-	Address string `yaml:"cb_address"`
+	Address  string `yaml:"cb_address"`
 	Username string `yaml:"cb_username"`
 	Password string `yaml:"cb_password"`
 }
 
 type CouchDatabase struct {
-	auth *couchAuth
-	couchCluster *gocb.Cluster
-	clusterBucket *gocb.Bucket
+	auth              *couchAuth
+	couchCluster      *gocb.Cluster
+	clusterBucket     *gocb.Bucket
 	clusterBucketName string
 	VaultCommunicator utils.SecretStorage
 }
@@ -149,10 +149,71 @@ func (db CouchDatabase) DeleteCluster(name string) error {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
-		if err := db.getBucket(db.clusterBucketName); err != nil{
+		if err := db.getBucket(db.clusterBucketName); err != nil {
 			return err
 		}
 	}
 	db.clusterBucket.Remove(name, 0)
+	return nil
+}
+
+func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
+	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
+		if err := db.getBucket(db.clusterBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description FROM " + db.clusterBucketName)
+	rows, err := db.clusterBucket.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.Project
+	var result []proto.Project
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.Project{}
+	}
+	return result, nil
+}
+
+func (db CouchDatabase) ReadProject(name string) (*proto.Project, error) {
+	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
+		if err := db.getBucket(db.clusterBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	err := db.getBucket(db.clusterBucketName)
+	if err != nil {
+		return nil, err
+	}
+	var project proto.Project
+	db.clusterBucket.Get(name, &project)
+	return &project, nil
+}
+
+func (db CouchDatabase) WriteProject(project *proto.Project) error {
+	if db.clusterBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
+		if err := db.getBucket(db.clusterBucketName); err != nil {
+			return err
+		}
+	}
+	err := db.getBucket(db.clusterBucketName)
+	if err != nil {
+		return err
+	}
+	db.clusterBucket.Upsert(project.Name, project, 0)
 	return nil
 }

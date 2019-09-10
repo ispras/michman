@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
@@ -9,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"github.com/google/uuid"
 )
 
 const (
@@ -26,7 +26,7 @@ type GrpcClient interface {
 type HttpServer struct {
 	Gc     GrpcClient
 	Logger *log.Logger
-	Db database.Database
+	Db     database.Database
 }
 
 type serviceExists struct {
@@ -220,7 +220,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	//appending old services which does not exist in new cluster configuration
-	var serviceTypesNew = map[string] serviceExists{
+	var serviceTypesNew = map[string]serviceExists{
 		utils.ServiceTypeCassandra: {
 			exists:  false,
 			service: nil,
@@ -309,4 +309,86 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.Encode(c)
+}
+
+func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	hS.Logger.Print("Get /projects GET")
+	//reading cluster info from database
+	hS.Logger.Print("Reading projects information from db...")
+
+	projects, err := hS.Db.ListProjects()
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	err = enc.Encode(projects)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	hS.Logger.Print("Get /projects POST")
+	var p protobuf.Project
+	err := json.NewDecoder(r.Body).Decode(&p)
+	if err != nil {
+		hS.Logger.Print("ERROR:")
+		hS.Logger.Print(err)
+		hS.Logger.Print(r.Body)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// validate struct
+	/*
+		if !ValidateCluster(&c) {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	*/
+
+	//check, that cluster with such name doesn't exist
+	dbRes, err := hS.Db.ReadProject(p.Name)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if dbRes.Name != "" {
+		hS.Logger.Print("Project with this name exists")
+		w.WriteHeader(http.StatusBadRequest)
+		enc := json.NewEncoder(w)
+		err := enc.Encode("Project with this name exists")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+
+	// generating UUID for new project
+	pUuid, err := uuid.NewRandom()
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	p.ID = pUuid.String()
+
+	err = hS.Db.WriteProject(&p)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(p)
 }

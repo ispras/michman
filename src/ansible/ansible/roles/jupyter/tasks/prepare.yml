@@ -22,6 +22,7 @@
       - libfreetype6-dev
       - libpng12-dev
       - pkg-config
+      - libkrb5-dev #needed for sparkmagic
     register: result
     ignore_errors: True
     until: result is success
@@ -58,6 +59,7 @@
         - seaborn
         - scikit-learn
         - pyparsing
+        - sparkmagic
       state: present
       executable: pip{{ python_version }}
 #    with_items:
