@@ -254,6 +254,10 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	return nil
 }
 
+func (aS *ansibleService) GetMasterIP(in *protobuf.Cluster, stream protobuf.AnsibleRunner_GetMasterIPServer) error {
+	return nil
+}
+
 func main() {
 	ansibleServiceLogger := log.New(os.Stdout, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}

@@ -96,13 +96,17 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	}
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = utils.StatusCreated
-	err = gc.Db.WriteCluster(c)
+	newC, err := gc.Db.ReadCluster(c.Name)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	newC.EntityStatus = utils.StatusCreated
+	err = gc.Db.WriteCluster(newC)
 	if err != nil {
 		gc.logger.Print(err)
 	}
 }
-
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
 func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)

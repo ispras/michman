@@ -6,6 +6,7 @@ service AnsibleRunner {
     rpc Create (Cluster) returns (stream TaskStatus) {}
     rpc Delete (Cluster) returns (stream TaskStatus) {}
     rpc Update (Cluster) returns (stream TaskStatus) {}
+    rpc GetMasterIP (Cluster) returns (stream TaskStatus) {}
 }
 
 service DB {
@@ -22,6 +23,7 @@ message Cluster {
     string ClusterType = 6;
     repeated Service services = 7;
     int32 NHosts = 8;
+    string masterIP = 9;
 }
 
 message Service {

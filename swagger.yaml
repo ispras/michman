@@ -2,10 +2,10 @@ swagger: "2.0"
 info:
   version: 0.1.0
   title: Openstack Big Data tools
-  description: "This project provides scripts for Apache Spark cluster autodeploy in any Openstack environment with optional useful tools"
+  description: "Данная система предоставляет REST API для создания кластеров с заданным списком зарегестрированных сервисов в облачной среде OpenStack."
   license:
     name: License Here
-#    url:
+  #    url:
   contact:
     email: modis@ispras.ru
 host: host.here.com
@@ -14,19 +14,104 @@ schemes:
   - http
   - https
 tags:
+  - name: projects
   - name: cluster
-  - name: users
   - name: hosts
   - name: services
-  - name: activities
-  - name: events
-  - name: yarn
+  - name: configs
+  - name: templates
 paths:
-  /clusters:
+  /projects:
+    get:
+      tags:
+        - projects
+      summary: Возвращает список зарегестрированных в системе проектов
+      operationId: listProjects
+      parameters:
+        - name: view
+          in: query
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Projects'
+    post:
+      tags:
+        - projects
+      summary: Создание нового проекта системы
+      description: Создание нового проекта системы
+      operationId: createProject
+      parameters:
+        - name: project
+          in: body
+          schema:
+            $ref: '#/definitions/Project'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Project'
+  /projects/{projectId}:
+    get:
+      tags:
+        - projects
+      summary: Получение информации о выбранном проекте
+      operationId: ProjectGet
+      parameters:
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Project'
+    put:
+      tags:
+        - projects
+      summary: Обновление информации о проекте
+      description: Обновление информации о проекте
+      operationId: updateProject
+      parameters:
+        - name: project
+          in: body
+          schema:
+            $ref: '#/definitions/Project'
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Project'
+    delete:
+      tags:
+        - projects
+      summary: Удаление проекта системы
+      operationId: deleteProject
+      parameters:
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Project'
+
+  /projects/{projectId}/clusters:
     get:
       tags:
         - cluster
-      summary: Lists all known clusters
+      summary: Список всех кластеров проекта
       description: "Метод возращает список существующих кластеров.
                     Предусмотрены возможности типизации кластеров и формирования краткого описания.
                     Пример ответа требует доработки."
@@ -42,11 +127,16 @@ paths:
           type: string
           default: summary
           in: query
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       produces:
         - application/json
       responses:
         200:
-          description: "Ok. Возвращает список кластеров"
+          description: "Ok. Возвращает список кластеров указанного проекта"
           schema:
             $ref: '#/definitions/Clusters'
         204:
@@ -59,27 +149,14 @@ paths:
           description: "Не достаточно прав"
         404:
           description: "Not found. (может заменять 401, 403)"
-#        406:
-#          description: "Ресурс, определяемый запросом, может только формировать ответы, имеющие характеристики, не совместимые с принятыми заголовками, которые были отправлены в запросе."
-#        415:
-#          description: "Unsupported Media Type"
-#        429:
-#          description: "Too many Requests"
-#        500:
-#          description: "Internal server error"
-#        502:
-#          description: "Bad Gateway"
-#        503:
-#          description: "Service Unavailable"
 
     post:
       tags:
         - cluster
-      summary: Creates a collection of clusters
+      summary: Создание нового кластера внутри проекта
       description: "Метод создает кластеры по описаниям, переданным в теле запроса.
-                    Возможно создание как одного кластера, так и несколько кластеров сразу, число узлов в кластере указывается в теле запроса.
                     При создании кластера можно указать список сервисов, которые должны быть развернуты на указанном кластере.
-                    В качестве ответа возвращается список кластеров, находящихся на этапе развертывания. Статус таких кластеров установлен как INITED"
+                    В качестве ответа возвращается структура созданного кластера, находящегося на этапе развертывания. Статус такого кластера установлен как INITED"
       operationId: ClustersCreate
       consumes:
         - application/json
@@ -89,18 +166,23 @@ paths:
         - name: configuration
           in: body
           schema:
-            $ref: '#/definitions/Clusters'
+            $ref: '#/definitions/Cluster'
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: "OK"
         201:
-          description: "OK. Возвращает список кластеров, которые должны быть созданы."
+          description: "OK. Возвращается структура созданного кластера, находящегося на этапе развертывания. Статус такого кластера установлен как INITED."
           schema:
             $ref: '#/definitions/Clusters'
         202:
           description: "OK. Запрос в обработке"
           schema:
-            $ref: '#/definitions/Clusters'
+            $ref: '#/definitions/Cluster'
         204:
           description: "Нет результатов, соответствующих запросу."
         400:
@@ -111,30 +193,24 @@ paths:
           description: "Не достаточно прав"
         404:
           description: "Not found. (может заменять 401, 403)"
-        #        406:
-        #          description: "Ресурс, определяемый запросом, может только формировать ответы, имеющие характеристики, не совместимые с принятыми заголовками, которые были отправлены в запросе."
-        #        415:
-        #          description: "Unsupported Media Type"
-        #        429:
-        #          description: "Too many Requests"
-        #        500:
-        #          description: "Internal server error"
-        #        502:
-        #          description: "Bad Gateway"
-        #        503:
 
-  /clusters/{clusterName}:
+  /projects/{projectId}/clusters/{clusterName}:
     get:
       tags:
         - cluster
-      summary: Reads information about cluster
+      summary: Получение информации о конкретном кластере
       description: "Метод возращает список кластер с именем clusterName."
       operationId: ClustersGet
       parameters:
         - name: clusterName
           description: "Имя кластера."
           in: path
-          type: integer
+          type: string
+          required: true
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
           required: true
       produces:
         - application/json
@@ -142,7 +218,7 @@ paths:
         200:
           description: "OK"
           schema:
-            $ref: '#/definitions/Clusters'
+            $ref: '#/definitions/Cluster'
         204:
           description: "Нет результатов, соответствующих запросу."
         400:
@@ -156,7 +232,7 @@ paths:
     put:
       tags:
         - cluster
-      summary: Update an existing cluster
+      summary: Обновление конфигурации существующего кластера
       operationId: updateCluster
       parameters:
         - name: clusterName
@@ -167,30 +243,39 @@ paths:
           in: body
           schema:
             $ref: '#/definitions/Cluster'
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: OK
     delete:
       tags:
         - cluster
-      summary: Deletes an existing cluster
+      summary: Удаленние существующего кластера
       operationId: deleteCluster
       parameters:
         - name: clusterName
           type: string
           in: path
           required: true
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: OK
 
-  /cluster/{clusterName}/export:
+  /projects/{projectId}/cluster/{clusterName}/export:
     get:
       tags:
         - cluster
-      summary: Export cluster template
-      description: Export the cluster template for the given cluster.
-                    If cluster does not have host templates defined it will export host templates based on roles assignment.
+      summary: Получение шаблона указанного кластера
+      description: Получение шаблона указанного кластера
       operationId: exportCluster
       parameters:
         - name: clusterName
@@ -201,331 +286,97 @@ paths:
           in: query
           type: boolean
           description: Export configs set by the auto configuration
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Template'
+    post:
+      tags:
+        - cluster
+      summary: Создание шаблона по указанному кластеру
+      description: Создание шаблона по указанному кластеру
+      operationId: exportClusterAndSave
+      parameters:
+        - name: clusterName
+          in: path
+          required: true
+          type: string
+        - name: exportAutoConfig
+          in: query
+          type: boolean
+          description: Export configs set by the auto configuration
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+        - name: templateName
+          in: query
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
 
-  /clusters/{clusterName}/hosts:
+  /projects/{projectId}/clusters/{clusterName}/hosts:
     get:
       tags:
         - cluster
         - hosts
-      summary: Lists hosts in cluster
+      summary: Список IP-адресов хостов, ассоциированных с указанным кластером
       operationId: getClusterHosts
       parameters:
         - name: clusterName
           in: path
           required: true
           type: string
-      responses:
-        200:
-          description: OK
-    delete:
-      tags:
-        - cluster
-        - hosts
-      summary: delete hosts from cluster
-      operationId: deleteClusterHosts
-      parameters:
-        - name: clusterName
+        - name: projectId
+          description: "ID проекта."
           in: path
-          required: true
           type: string
+          required: true
       responses:
         200:
           description: OK
-    post:
-      tags:
-        - cluster
-        - hosts
-      summary: Update cluster hosts configuration
-      operationId: updateClusterHosts
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
+          schema:
+            $ref: '#/definitions/Hosts'
 
-  /clusters/{clusterName}/serviceTypes:
+  /projects/{projectId}/clusters/{clusterName}/serviceTypes:
     get:
       tags:
         - cluster
         - services
-      summary: Lists the services for the cluster
+      summary: Список типов сервисов, развернутых на указанном кластере
       operationId: listsClusterServices
       parameters:
         - name: clusterName
           in: path
           required: true
           type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/utilization:
-    get:
-      tags:
-        - cluster
-      summary: Provides the resource utilization
-      operationId: clusterUtilization
-      parameters:
-        - name: clusterName
+        - name: projectId
+          description: "ID проекта."
           in: path
-          required: true
           type: string
-#        - daysOfWeek
-#        - startHourOfDay
-#        - endHourOfDay
-#        - from
-#        - to
-#        - tanantType
+          required: true
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/ServiceTypes'
 
-  /clusters/{clusterName}/commands/restart:
-    post:
+  /projects/{projectId}/clusters/{clusterName}/services:
+    get:
       tags:
         - cluster
         - services
-      summary: Restart all services in cluster
-      operationId: clusterRestartServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: services
-          in: body
-          schema:
-            $ref: '#/definitions/ClusterServices'
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/commands/start:
-    post:
-      tags:
-        - cluster
-        - services
-      summary: Start all services in cluster
-      operationId: clusterStartServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-
-  /clusters/{clusterName}/commands/stop:
-    post:
-      tags:
-        - cluster
-        - services
-      summary: Stop all services in cluster
-      operationId: clusterStopServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /cluster/{clusterName}/hosts/{hostId}:
-    delete:
-      tags:
-        - cluster
-        - hosts
-      summary: Delete host from cluster
-      operationId: clusterDeleteHost
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: hostId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-
-  /users:
-    get:
-      tags:
-        - users
-      summary: Returs a list of the user names configured in cthe system
-      operationId: listUsers
-      parameters:
-        - name: view
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-    post:
-      tags:
-        - users
-      summary: Creates a list of users
-      description: When creating new users,
-                    the password property of each user should be their plain text password.
-                    The returned user information will not contain any password information.
-      operationId: createUsers
-      parameters:
-        - name: configuration
-          in: body
-          schema:
-            $ref: '#/definitions/Users'
-      responses:
-        200:
-          description: OK
-
-  /users/sessions:
-    get:
-      tags:
-        - users
-      summary: Return a list of the sessions associated with interactive authenticetad users.
-      operationId: listsUsersSessions
-      responses:
-        200:
-          description: OK
-
-  /users/{userName}:
-    get:
-      tags:
-        - users
-      summary: Returns detailed information about a user
-      operationId: getUser
-      parameters:
-        - name: userName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-    put:
-      tags:
-        - users
-      summary: Updates the given user's informations.
-      description: Note that the user's name cannot be changed
-      operationId: updateUser
-      parameters:
-        - name: userName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-    delete:
-      tags:
-        - users
-      summary: Deletes a user from system
-      operationId: deleteUser
-      parameters:
-        - name: userName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /hosts:
-    get:
-      tags:
-        - hosts
-      summary: Retutns the hostIds for all hosts in the system
-      operationId: getHosts
-      responses:
-        200:
-          description: OK
-    post:
-      tags:
-        - hosts
-      deprecated: true
-      summary: Create one or more hosts
-      description: You must specify at least the hostname and ipAddress in the request objects.
-                    If no hostId is specified, it will be set to the hostname.
-                    It is an error to try and create host with the same hostId as another host.
-                    (May be used to create clusters with a single host)
-      operationId: createHosts
-      parameters:
-        - name: configuration
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/ClusterHost'
-      responses:
-        200:
-          description: OK
-
-    delete:
-      tags:
-        - hosts
-      summary: Delete all hosts in the system
-      operationId: deleteHosts
-      responses:
-        200:
-          description: OK
-
-  /hosts/{hostId}:
-    get:
-      tags:
-        - hosts
-      summary: Returns a specific Host in the system
-      operationId: getHost
-      parameters:
-        - name: hostId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-    put:
-      tags:
-        - hosts
-      summary: Update an existing host in the system
-      operationId: updateHost
-      parameters:
-        - name: hostId
-          in: path
-          required: true
-          type: integer
-        - name: view
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-    delete:
-      tags:
-        - hosts
-      summary: Delete a host from the system
-      operationId: deleteHost
-      parameters:
-        - name: hostId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services:
-    get:
-      summary: Lists all services registered in cluster
+      summary: Список всех сервисов, развернутых на указанном кластере
       operationId: clusterListServices
       parameters:
         - name: clusterName
@@ -535,10 +386,20 @@ paths:
         - name: view
           in: query
           type: string
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Services'
     post:
+      tags:
+        - cluster
+        - services
       summary: Creates a list of services.
       operationId: clusterCreateServices
       parameters:
@@ -546,20 +407,27 @@ paths:
           in: path
           required: true
           type: string
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
         - name: configuration
           in: body
           schema:
-            $ref: '#/definitions/ClusterServices'
+            $ref: '#/definitions/Service'
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Service'
 
-  /clusters/{clusterName}/services/{serviceName}:
+  /projects/{projectId}/clusters/{clusterName}/services/{serviceName}:
     get:
       tags:
         - cluster
         - services
-      summary: Retrieves details information about a service.
+      summary: Получение информации об указанном сервисе
       operationId: clusterGetServiceInfo
       parameters:
         - name: clusterName
@@ -573,14 +441,21 @@ paths:
         - name: view
           in: query
           type: string
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Service'
     put:
       tags:
         - cluster
         - services
-      summary: Updates service information
+      summary: Обновление информации указанного сервиса
       operationId: clusterUpdateServiceInfo
       parameters:
         - name: clusterName
@@ -591,577 +466,650 @@ paths:
           in: path
           required: true
           type: string
-      responses:
-        200:
-          description: OK
-    delete:
-      tags:
-        - cluster
-        - services
-      summary: Deletes a service from the cluster
-      operationId: clusterDeleteService
-      parameters:
-        - name: clusterName
+        - name: projectId
+          description: "ID проекта."
           in: path
+          type: string
           required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/clientConfig:
-    get:
-      tags:
-        - cluster
-        - services
-      deprecated: true
-      summary: Download a client configuration of service
-      operationId: clusterServiceClientConfiguration
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/config:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: Retrieves the configuration of a specific service.
-      description: The "summary" view contains only the configured parameters, and configuration for role types that contain configured parameters.
-                    The "full" view contains all available configuration parameters for the service and its role types. This mode performs validation on the configuration, which could take a few seconds on a large cluster (around 500 nodes or more).
-      operationId: clusterServiceConfiguration
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: view
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-
-    put:
-      tags:
-        - cluster
-        - services
-      summary: Updates the service configuration with the given values.
-      description: If a value is set in the given configuration, it will be added to the service's configuration, replacing any existing entries. If a value is unset (its value is null), the existing configuration for the attribute will be erased, if any.
-        Attributes that are not listed in the input will maintain their current values in the configuration.
-      operationId: clusterUpdateServiceConfiguration
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: message
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/roleTypes:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: List of supported role types for a service
-      operationId: clusterServiceRoleTypes
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/roles:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: List of all roles of a given service
-      operationId: clusterServiceRoles
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-    post:
-      tags:
-        - cluster
-        - services
-      summary: Create new roles in a given service
-      operationId: clusterServiceCreateRoles
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
         - name: configuration
           in: body
           schema:
-            $ref: '#/definitions/Role'
+            $ref: '#/definitions/Service'
       responses:
         200:
           description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/roles/{roleName}:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: Retrieved detailed information about a role
-      operationId: clusterServiceRole
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: roleName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-    delete:
-      tags:
-        - cluster
-        - services
-      summary: Deletes a role from a given service
-      operationId: clusterServiceRoleDelete
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: roleName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/roles/{roleName}/config:
-    get:
-      tags:
-        - cluster
-        - services
-      deprecated: true
-      summary: Retrieves the configuration of a specific role.
-      operationId: clusterRoleConfig
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: roleName
-          in: path
-          required: true
-          type: string
-        - name: view
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-    put:
-      tags:
-        - cluster
-        - services
-      summary: Updates the role configuration with the given values.
-      description: If a value is set in the given configuration, it will be added to the role's configuration, replacing any existing entries. If a value is unset (its value is null), the existing configuration for the attribute will be erased, if any.
-        Attributes that are not listed in the input will maintain their current values in the configuration.
-      deprecated: true
-      operationId: clusterRoleConfigUpdate
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: roleName
-          in: path
-          required: true
-          type: string
-        - name: message
-          in: query
-          type: string
-        - name: configuration
-          in: body
           schema:
-            $ref: '#/definitions/Role'
-      responses:
-        200:
-          description: OK
+            $ref: '#/definitions/Service'
 
-  /clusters/{clusterName}/services/{serviceName}/roles/{roleName}/logs/full:
+  /templates:
     get:
       tags:
-        - cluster
-        - services
-      deprecated: true
-      summary: Retrieves the log file for the role's main process
-      operationId: clusterServiceRoleLog
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: roleName
-          in: path
-          required: true
-          type: string
+        - templates
+      summary: Возвращает список шаблонов готовых кластеров, общих для всей системы и созданных администраторами системы.
+      description: Возвращает список шаблонов готовых кластеров, общих для всей системы и созданных администраторами системы.
+      operationId: templatesList
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Templates'
 
-  /clusters/{clusterName}/services/{serviceName}/activities:
-    get:
-      tags:
-        - cluster
-        - activities
-      summary: Read all activities in the system
-      operationId: clusterListActivities
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: maxResults
-          description: The maximum number of activities to return.
-          in: query
-          type: integer
-        - name: query
-          description: The query to perform to find activities in the system. By default, this call returns top level (i.e. root) activities that have currently started.
-            The query specifies the intersection of a list of constraints, joined together with semicolons (without spaces).
-            ...
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/activities/{activityId}:
-    get:
-      tags:
-        - cluster
-        - activities
-      summary: Returns a specific activity in the system
-      operationId: clusterGetActivity
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: activityId
-          in: path
-          required: true
-          type: integer
-        - name: view
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/activities/{activityId}/metrics:
-    get:
-      tags:
-        - cluster
-        - activities
-      summary: Fetch metric readings for a particular activity.
-      description: By default, this call will look up all metrics available for the activity. If only specific metrics are desired, use the metrics parameter.
-        By default, the returned results correspond to a 5 minute window based on the provided end time (which defaults to the current server time). The from and to parameters can be used to control the window being queried. A maximum window of 3 hours is enforced.
-        When requesting a "full" view, aside from the extended properties of the returned metric data, the collection will also contain information about all metrics available for the activity, even if no readings are available in the requested window.
-      deprecated: true
-      operationId: clusterGetActivityMetrics
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: activityId
-          in: path
-          required: true
-          type: integer
-        - name: view
-          in: query
-          type: string
-#        - from
-#        - to
-#        - metrics
-      responses:
-        200:
-          description: OK
-
-  /events:
-    get:
-      tags:
-        - events
-      summary: Allows you to query events in the system
-      operationId: queryEvents
-      parameters:
-        - name: maxResults
-          in: query
-          type: integer
-        - name: query
-          description: The query to perform to find events in the system.
-                    It accepts querying the intersection of a list of constraints, joined together with semicolons (without spaces).
-                    ...
-          in: query
-          type: string
-        - name: resultsOffset
-          description: Specified the offset of events to return.
-          in: query
-          type: integer
-      responses:
-        200:
-          description: OK
-
-
-  /events/{eventId}:
-    get:
-      tags:
-        - events
-      summary: Returns a specific event in the system
-      operationId: getEvent
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/yarnApplications:
-    get:
-      tags:
-        - cluster
-        - services
-        - yarn
-      summary: Returns a list of applications that satisfy the filter
-      operationId: clusterServicesYarn
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: filter
-          description: A filter to apply to the applications.
-                A basic filter tests the value of an attribute and looks something like 'executing = true' or 'user = root'.
-                Multiple basic filters can be combined into a complex expression using standard and / or boolean logic and parenthesis.
-                An example of a complex filter is:'application_duration > 5s and (user = root or user = myUserName').
-          in: query
-          type: string
-        - name: from
-          in: query
-          type: string
-        - name: to
-          in: query
-          type: string
-        - name: limit
-          in: query
-          type: integer
-        - name: offset
-          in: query
-          type: integer
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/yarnApplications/attributes:
-    get:
-      tags:
-        - yarn
-      summary: Returns the list of all attributes that the Service Monitor can associate with YARN applications.
-      operationId: clusterServicesYarnAttributes
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: OK
-
-  /clusters/{clusterName}/services/{serviceName}/yarnApplications/{applicationId}/kill:
     post:
       tags:
-        - yarn
-      summary: Kills an YARN Application
-      operationId: clusterServicesYarnKill
+        - templates
+      summary: Создается шаблон готового кластера. Шаблон доступен для всех пользователей системы и создается администраторами системы.
+      description: Создается шаблон готового кластера. Шаблон доступен для всех пользователей системы и создается администраторами системы.
+      operationId: templatesCreate
       parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: applicationId
-          in: path
-          required: true
-          type: integer
+        - name: clusterTemplate
+          in: body
+          schema:
+            $ref: '#/definitions/Template'
       responses:
         200:
           description: OK
+          schema:
+            $ref: '#/definitions/Template'
+
+  /templates/{templateId}:
+    get:
+      tags:
+        - templates
+      summary: Возвращает шаблон готового кластера.
+      description: Возвращает шаблон готового кластера.
+      operationId: templatesGet
+      parameters:
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+
+    put:
+      tags:
+        - templates
+      summary: Обновление шаблона готового кластера. Шаблон обновляется администраторами системы.
+      description: Обновление шаблона готового кластера. Шаблон обновляется администраторами системы.
+      operationId: templatesUpdate
+      parameters:
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+        - name: clusterTemplate
+          in: body
+          schema:
+            $ref: '#/definitions/Template'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+    delete:
+      tags:
+        - templates
+      summary: Удаление шаблона системы
+      operationId: templatesDelete
+      parameters:
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+
+  /projects/{projectId}/templates:
+    get:
+      tags:
+        - templates
+      summary: Возвращает список шаблонов готовых кластеров, созданных внутри конкретного проекта.
+      description: Возвращает список шаблонов готовых кластеров, созданных внутри конкретного проекта.
+      operationId: projectTemplatesList
+      parameters:
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Templates'
+
+    post:
+      tags:
+        - templates
+      summary: Создается шаблон готового кластера. Шаблон доступен для всех пользователей проекта и создается участником проекта.
+      description: Создается шаблон готового кластера. Шаблон доступен для всех пользователей проекта и создается участником проекта.
+      operationId: projectTemplatesCreate
+      parameters:
+        - name: clusterTemplate
+          in: body
+          schema:
+            $ref: '#/definitions/Template'
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+
+  /projects/{projectId}/templates/{templateId}:
+    get:
+      tags:
+        - templates
+      summary: Возвращает шаблон готового кластера.
+      description: Возвращает шаблон готового кластера.
+      operationId: projectTemplatesGet
+      parameters:
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+
+    put:
+      tags:
+        - templates
+      summary: Обновление шаблона готового кластера. Шаблон обновляется участниками проекта.
+      description: Обновление шаблона готового кластера. Шаблон обновляется участниками проекта.
+      operationId: projectTemplatesUpdate
+      parameters:
+        - name: clusterTemplate
+          in: body
+          schema:
+            $ref: '#/definitions/Template'
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+    delete:
+      tags:
+        - templates
+      summary: Удаление шаблона системы
+      operationId: projectTemplatesDelete
+      parameters:
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+        - name: templateId
+          description: "ID шаблона."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+  /configs:
+    get:
+      tags:
+        - configs
+      summary: Возвращает список поддерживаемых в системе типов сервисов.
+      description: Возвращает список поддерживаемых в системе типов сервисов.
+      operationId: ConfigList
+      parameters:
+        - name: view
+          description: "Полнота описания. Возможные значения: full (полное), summary (краткое). Значение по умолчанию - summary"
+          type: string
+          default: summary
+          in: query
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigs'
+
+    post:
+      tags:
+        - configs
+      summary: Создается новый тип поддерживаемого в системе сервиса. В запросе указывается тип нового сервиса и список поддерживаемых версий и конфигураций для каждой версии.
+      description: Создается новый тип поддерживаемого в системе сервиса. В запросе указывается тип нового сервиса и список поддерживаемых версий и конфигураций для каждой версии.
+      operationId: ConfigCreate
+      parameters:
+        - name: serviceConfig
+          in: body
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+
+  /configs/{serviceType}:
+    get:
+      tags:
+        - configs
+      summary: Возвращает информацию об указанном типе сервиса.
+      description: Возвращает информацию об указанном типе сервиса.
+      operationId: configGet
+      parameters:
+        - name: view
+          description: "Полнота описания. Возможные значения: full (полное), summary (краткое). Значение по умолчанию - summary"
+          type: string
+          default: summary
+          in: query
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+    put:
+      tags:
+        - templates
+      summary: Обновление информации о типе сервиса.
+      description: Обновление информации о типе сервиса.
+      operationId: configsUpdate
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: serviceConfig
+          in: body
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Template'
+    delete:
+      tags:
+        - configs
+      summary: Удаление типа сервиса из системы.
+      description: Удаление типа сервиса из системы.
+      operationId: configDelete
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+  /configs/{serviceType}/versions:
+    get:
+      tags:
+        - configs
+      summary: Возвращает информацию о доступных в системе версиях указанного сервиса.
+      description: Возвращает информацию о доступных в системе версиях указанного сервиса.
+      operationId: configVersionsList
+      parameters:
+        - name: view
+          description: "Полнота описания. Возможные значения: full (полное), summary (краткое). Значение по умолчанию - summary"
+          type: string
+          default: summary
+          in: query
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigVersions'
+
+    post:
+      tags:
+        - configs
+      summary: Создание новой версии указанного типа сервиса.
+      description: Создание новой версии указанного типа сервиса.
+      operationId: configVersionCreate
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: serviceConfigVersion
+          in: body
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
+
+  /configs/{serviceType}/versions/{versionId}:
+    get:
+      tags:
+        - configs
+      summary: Возвращает информацию об указанной версии сервиса.
+      description: Возвращает информацию об указанной версии сервиса.
+      operationId: configVersionsGet
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: versionId
+          description: "ID версии сервиса."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
+    put:
+      tags:
+        - configs
+      summary: Обновление версии указанного типа сервиса.
+      description: Обновление версии указанного типа сервиса.
+      operationId: configVersionUpdate
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: versionId
+          description: "ID версии сервиса."
+          in: path
+          type: string
+          required: true
+        - name: serviceConfigVersion
+          in: body
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
+    delete:
+      tags:
+        - configs
+      summary: Удаление указанной версии сервиса.
+      description: Удаление указанной версии сервиса.
+      operationId: configVersionsDelete
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: versionId
+          description: "ID версии сервиса."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfigVersion'
 
 definitions:
   Clusters:
     type: object
     example:
       {
-        "items": [{
-                    "ID": "...",
-                    "Name": "...",
-                    "DisplayName": "...",
-                    "HostURL": "...",
-                    "EntityStatus": ,
-                    "ClusterType": "...",
-                    "Services": [
-                    {
-                      "Name": "...",
-                      "Type": "...",
-                      "Config": { },
-                      "ServiceState": "UNKNOWN",
-                      "ServiceURL": "...",
-                      "DisplayName": "...",
-                      "EntityStatus": "...",
-                      "Version": "..."
-                    }
-                    ],
-                    "NHosts": 5
-                  } ]
+        "items":[
+        {
+          "ID":"uuid",
+          "ProjectID":"projectUuid",
+          "Name":"clusterName-projectName",
+          "DisplayName":"name",
+          "EntityStatus":"status",
+          "Services":[
+          {
+            "ID":"uuid",
+            "Name":"serviceName",
+            "DisplayName":"name",
+            "EntityStatus":"status",
+            "Type":"serviceType",
+            "Version":"version",
+            "Config":{
+
+            },
+            "Description":"someDescription"
+          }
+          ],
+          "NHosts":3,
+          "Hosts":[
+            "host1",
+            "host2",
+            "host3"
+          ],
+          "Description":"someDescription"
+        }
+        ]
       }
   Cluster:
     type: object
     example:
       {
+        "ID":"uuid",
+        "ProjectID":"projectUuid",
+        "Name":"clusterName-projectName",
+        "DisplayName":"name",
+        "EntityStatus":"status",
+        "Services":[
         {
-          "ID": "...",
-          "Name": "...",
-          "DisplayName": "...",
-          "HostURL": "...",
-          "EntityStatus": ,
-          "ClusterType": "...",
-          "Services": [
-          {
-            "Name": "...",
-            "Type": "...",
-            "Config": { },
-            "ServiceState": "UNKNOWN",
-            "ServiceURL": "...",
-            "DisplayName": "...",
-            "EntityStatus": "...",
-            "Version": "..."
-          }
-          ],
-          "NHosts": 5
+          "ID":"uuid",
+          "Name":"serviceName",
+          "DisplayName":"name",
+          "EntityStatus":"status",
+          "Type":"serviceType",
+          "Version":"version",
+          "Config":{
+
+          },
+          "Description":"someDescription"
         }
+        ],
+        "NHosts":3,
+        "Hosts":[
+          "host1",
+          "host2",
+          "host3"
+        ],
+        "Description":"someDescription"
+      }
+  Services:
+    type: object
+    example:
+      {
+        "items":[
+        {
+          "ID":"uuid",
+          "Name":"serviceName",
+          "DisplayName":"name",
+          "EntityStatus":"status",
+          "Type":"serviceType",
+          "Version":"version",
+          "Config":{
+
+          },
+          "Description":"someDescription"
+        }
+        ]
       }
   Service:
     type: object
     example:
       {
-        {
-          "Name": "...",
-          "Type": "...",
-          "Config": { },
-          "ServiceState": "UNKNOWN",
-          "ServiceURL": "...",
-          "DisplayName": "...",
-          "EntityStatus": "...",
-          "Version": "..."
-        }
+        "ID":"uuid",
+        "Name":"serviceName",
+        "DisplayName":"name",
+        "EntityStatus":"status",
+        "Type":"serviceType",
+        "Version":"version",
+        "Config":{
+
+        },
+        "Description":"someDescription"
       }
-  ClusterHost:
+  Hosts:
     type: object
-  ClusterServices:
+    example:
+      {
+        "Hosts":[
+          "host1",
+          "host2",
+          "host3"
+        ]
+      }
+  ServiceTypes:
     type: object
-  Users:
+    example:
+      {
+        "ServiceTypes":[
+          "spark",
+          "jupyter",
+          "cassandra"
+        ]
+      }
+  Projects:
     type: object
-  Role:
+    example:
+      {
+        "items":
+          [
+          {
+            "ID":"uuid",
+            "Name":"projectName",
+            "DisplayName":"projectName",
+            "GroupId": "id",
+            "Description": "someDescription"
+          }
+          ]
+      }
+  Project:
     type: object
+    example:
+      {
+        "ID":"uuid",
+        "Name":"projectName",
+        "DisplayName":"projectName",
+        "GroupId": "id",
+        "Description": "someDescription"
+      }
+  Templates:
+    type: object
+    example:
+      {
+        "items":[
+        {
+          "ID":"templateUuid",
+          "ProjectID":"projectUuid",
+          "Name":"templateName-projectName",
+          "DisplayName":"name",
+          "Services":[
+          {
+            "DisplayName":"name",
+            "Type":"serviceType",
+            "Version":"version",
+            "Config":{
+
+            },
+            "Description":"someDescription"
+          }
+          ],
+          "NHosts":3,
+          "Description":"someDescription"
+        }
+        ]
+      }
+  Template:
+    type: object
+    example:
+      {
+        "ID":"templateUuid",
+        "ProjectID":"projectUuid",
+        "Name":"templateName-projectName",
+        "DisplayName":"name",
+        "Services":[
+        {
+          "DisplayName":"name",
+          "Type":"serviceType",
+          "Version":"version",
+          "Config":{
+
+          },
+          "Description":"someDescription"
+        }
+        ],
+        "NHosts":3,
+        "Description":"someDescription"
+      }
+  ServiceConfigs:
+    type: object
+    example:
+      {
+
+      }
+  ServiceConfig:
+    type: object
+    example:
+      {
+
+      }
+  ServiceConfigVersion:
+    type: object
+    example:
+      {
+
+      }
+  ServiceConfigVersions:
+    type: object
+    example:
+      {
+
+      }

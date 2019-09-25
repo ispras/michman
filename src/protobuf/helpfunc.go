@@ -5,7 +5,7 @@ import (
 )
 
 func (c Cluster) PrintClusterData() {
-	fmt.Printf("Cluster with name: %s, ID: %d,\n", c.Name, c.ID)
+	fmt.Printf("Cluster with name: %s, ID: %s,\n", c.Name, c.ID)
 	fmt.Printf("status: %s, type: %s and services:\n", c.EntityStatus, c.ClusterType)
 
 	for i := 0; i < len(c.Services); i++ {

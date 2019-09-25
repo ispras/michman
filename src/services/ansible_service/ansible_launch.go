@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
@@ -357,6 +359,24 @@ type AnsibleLauncher struct{
 	couchbaseCommunicator database.Database
 }
 
+//def parse_host_ip(resp):
+	//"""parse ansible debug output with var=hostvars[inventory_hostname].ansible_ssh_host and return host"""
+	//parts1 = resp.split("=>")
+	//if len(parts1) != 2: err("unexpected ansible output")
+	//parts2 = parts1[1].split(":")
+	//if len(parts2) != 3: err("unexpected ansible output")
+	//parts3 = parts2[1].split('"')
+	//if len(parts3) != 3: err("unexpected ansible output")
+	//return parts3[1]
+
+func findIP(input string) string {
+	numBlock := "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
+	regexPattern := numBlock + "\\." + numBlock + "\\." + numBlock + "\\." + numBlock
+
+	regEx := regexp.MustCompile(regexPattern)
+	return regEx.FindString(input)
+}
+
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
@@ -456,6 +476,48 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	err = f.Close()
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	if action == actionCreate {
+		var v = map[string]string {
+			"cluster_name": cluster.Name,
+		}
+
+		extraVars, err := json.Marshal(v)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		cmdName := "ansible-playbook"
+		args := []string{"-v", "src/ansible/ansible/get_master.yml", "--extra-vars", string(extraVars)}
+
+		log.Print("Running ansible...")
+		cmd := exec.Command(cmdName, args...)
+		var outb bytes.Buffer
+		cmd.Stdout = &outb
+
+		if err := cmd.Start(); err != nil {
+			log.Print("Error: ", err)
+		}
+
+		if err := cmd.Wait(); err != nil {
+			ansibleOk = false
+			log.Print("Error: ", err)
+		}
+
+		ip := findIP(outb.String())
+		if ip != "" {
+			log.Print("Master IP is: ", ip)
+			cluster.MasterIP = ip
+			log.Print("Saving master IP...")
+			err = aL.couchbaseCommunicator.WriteCluster(cluster)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		} else {
+			log.Print("There is no IP in Ansible output")
+		}
+
 	}
 
 	if ansibleOk {
