@@ -30,11 +30,18 @@ func main() {
 	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
 
 	router := httprouter.New()
-	router.GET("/clusters", hS.ClustersGetList)
-	router.POST("/clusters", hS.ClustersCreate)
-	router.GET("/clusters/:clusterName", hS.ClustersGet)
-	router.PUT("/clusters/:clusterName", hS.ClustersUpdate)
-	router.DELETE("/clusters/:clusterName", hS.ClustersDelete)
+
+	router.GET("/projects", hS.ProjectsGetList)
+	router.POST("/projects", hS.ProjectCreate)
+	router.GET("/projects/:projectName", hS.ProjectGetByName)
+	router.PUT("/projects/:projectName", hS.ProjectUpdate)
+	router.DELETE("/projects/:projectName", hS.ProjectDelete)
+
+	router.GET("/projects/:projectName/clusters", hS.ClustersGet)
+	router.POST("/projects/:projectName/clusters", hS.ClusterCreate)
+	router.GET("/projects/:projectName/clusters/:clusterName", hS.ClustersGetByName)
+	router.PUT("/projects/:projectName/clusters/:clusterName", hS.ClustersUpdate)
+	router.DELETE("/projects/:projectName/clusters/:clusterName", hS.ClustersDelete)
 
 	router.GET("/templates", hS.TemplatesGetList)
 	router.POST("/templates", hS.TemplateCreate)

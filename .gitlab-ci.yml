@@ -22,7 +22,8 @@ stages:
 runtests:
   stage: test
   script:
-    - go test ./...
+    - pwd
+    - go test ./src/handlers/ -cover
 
 
 deployapp:

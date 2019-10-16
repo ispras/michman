@@ -32,7 +32,8 @@ message Cluster {
     repeated Service Services = 7;
     int32 NHosts = 8;
     string MasterIP = 9;
-    string Description = 10;
+    string ProjectID = 10;
+    string Description = 11;
 }
 
 message Service {

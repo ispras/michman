@@ -1,20 +1,20 @@
 package ansible
 
 import (
-	fmt "fmt"
+	"log"
 )
 
-func (c Cluster) PrintClusterData() {
-	fmt.Printf("Cluster with name: %s, ID: %s,\n", c.Name, c.ID)
-	fmt.Printf("status: %s, type: %s and services:\n", c.EntityStatus, c.ClusterType)
+func (c Cluster) PrintClusterData(Logger *log.Logger) {
+	Logger.Printf("Cluster with name: %s, ID: %s,\n", c.Name, c.ID)
+	Logger.Printf("status: %s, type: %s and services:\n", c.EntityStatus, c.ClusterType)
 
 	for i := 0; i < len(c.Services); i++ {
-		c.Services[i].PrintServiceData()
+		c.Services[i].PrintServiceData(Logger)
 	}
 
-	fmt.Print("\n")
+	Logger.Print("\n")
 }
 
-func (s Service) PrintServiceData() {
-	fmt.Printf("----Service with name: %s, state: %s\n", s.Name, s.ServiceState)
+func (s Service) PrintServiceData(Logger *log.Logger) {
+	Logger.Printf("----Service with name: %s, state: %s\n", s.Name, s.ServiceState)
 }
