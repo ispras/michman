@@ -9,7 +9,14 @@ type Database interface {
 	ReadCluster(name string) (*proto.Cluster, error)
 	ListClusters() ([]proto.Cluster, error)
 	DeleteCluster(name string) error
+
 	ListProjects() ([]proto.Project, error)
 	ReadProject(name string) (*proto.Project, error)
 	WriteProject(project *proto.Project) error
+
+	WriteServiceType(sType *proto.ServiceType) error
+	ReadServiceType(sType string) (*proto.ServiceType, error)
+	ListServicesTypes() ([]proto.ServiceType, error)
+	DeleteServiceType(name string) error
 }
+

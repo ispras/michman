@@ -179,10 +179,13 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		return
 	}
-
+	newC, err := gc.Db.ReadCluster(c.Name)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	c.EntityStatus = utils.StatusCreated
-	err = gc.Db.WriteCluster(c)
+	newC.EntityStatus = utils.StatusCreated
+	err = gc.Db.WriteCluster(newC)
 	if err != nil {
 		gc.logger.Print(err)
 	}

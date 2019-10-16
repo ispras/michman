@@ -16,6 +16,10 @@ import (
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 )
 
+const (
+	jupyterPort = "8888"
+)
+
 var sparkVersions = map[string]map[string][]string{
 	"2.3.0": {"hadoop_versions": {"2.6", "2.7"}},
 	"2.2.1": {"hadoop_versions": {"2.6", "2.7"}},
@@ -359,16 +363,6 @@ type AnsibleLauncher struct{
 	couchbaseCommunicator database.Database
 }
 
-//def parse_host_ip(resp):
-	//"""parse ansible debug output with var=hostvars[inventory_hostname].ansible_ssh_host and return host"""
-	//parts1 = resp.split("=>")
-	//if len(parts1) != 2: err("unexpected ansible output")
-	//parts2 = parts1[1].split(":")
-	//if len(parts2) != 3: err("unexpected ansible output")
-	//parts3 = parts2[1].split('"')
-	//if len(parts3) != 3: err("unexpected ansible output")
-	//return parts3[1]
-
 func findIP(input string) string {
 	numBlock := "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
 	regexPattern := numBlock + "\\." + numBlock + "\\." + numBlock + "\\." + numBlock
@@ -427,15 +421,16 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	}
 
 	//constructing ansible-playbook command
-	ansibleArgs, err := json.Marshal(MakeExtraVars(cluster, osCreds, osConfig, action))
+	extraVars := MakeExtraVars(cluster, osCreds, osConfig, action)
+	ansibleArgs, err := json.Marshal(extraVars)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Print(string(ansibleArgs))
 
-	cmdName := "ansible-playbook"
-	cmdArgs := []string{"-vvv", "src/ansible/ansible/main.yml", "--extra-vars", string(ansibleArgs)}
-	
+	cmdName := utils.AnsiblePlaybookCmd
+	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(ansibleArgs)}
+
 	//saving cluster to database
 	log.Print("Writing new cluster to db...")
 	err = aL.couchbaseCommunicator.WriteCluster(cluster)
@@ -478,20 +473,22 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		log.Fatalln(err)
 	}
 
-	if action == actionCreate {
+	//Get Master IP for Cluster create or update action and save it
+	if action == actionCreate || action == actionUpdate {
+
 		var v = map[string]string {
 			"cluster_name": cluster.Name,
 		}
 
-		extraVars, err := json.Marshal(v)
+		ipExtraVars, err := json.Marshal(v)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		cmdName := "ansible-playbook"
-		args := []string{"-v", "src/ansible/ansible/get_master.yml", "--extra-vars", string(extraVars)}
+		cmdName := utils.AnsiblePlaybookCmd
+		args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(extraVars)}
 
-		log.Print("Running ansible...")
+		log.Print("Running ansible for getting master IP...")
 		cmd := exec.Command(cmdName, args...)
 		var outb bytes.Buffer
 		cmd.Stdout = &outb
@@ -509,6 +506,15 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		if ip != "" {
 			log.Print("Master IP is: ", ip)
 			cluster.MasterIP = ip
+
+			//filling services URLs:
+
+			for i, service := range cluster.Services {
+				if service.Type == utils.ServiceTypeJupyter {
+					cluster.Services[i].URL = ip + ":" + jupyterPort
+				}
+			}
+
 			log.Print("Saving master IP...")
 			err = aL.couchbaseCommunicator.WriteCluster(cluster)
 			if err != nil {

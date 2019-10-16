@@ -161,6 +161,6 @@ go run src/http_server.go
 
 Send request to localhost:8080/clusters":
 ```
-curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test", "services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
+curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test", "Services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
 ```
 

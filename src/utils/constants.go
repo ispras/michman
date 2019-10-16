@@ -37,12 +37,20 @@ const (
 	AnsibleLaunch = "launch"
 	AnsibleDestroy = "destroy"
 
+	//ansible-playbook command
+	AnsiblePlaybookCmd = "ansible-playbook"
+
 	//base path
 	BasePath = "spark-openstack"
 	//vault config file path
 	VaultCfg = "vault.yaml"
 	//openstack config file path
 	OpenstackCfg = "openstack_config.yaml"
+
+	//ansible main role path
+	AnsibleMainRole = "src/ansible/ansible/main.yml"
+	//ansible get master ip role path
+	AnsibleMasterIpRole = "src/ansible/ansible/get_master.yml"
 
 	//openstack secrets keys
 	OsAuthUrl = "OS_AUTH_URL"

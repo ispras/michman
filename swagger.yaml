@@ -918,15 +918,12 @@ definitions:
             "Config":{
 
             },
-            "Description":"someDescription"
+            "Description":"someDescription",
+            "URL": "serviceURL"
           }
           ],
           "NHosts":3,
-          "Hosts":[
-            "host1",
-            "host2",
-            "host3"
-          ],
+          "MasterIP": "masterHost",
           "Description":"someDescription"
         }
         ]
@@ -951,15 +948,12 @@ definitions:
           "Config":{
 
           },
-          "Description":"someDescription"
+          "Description":"someDescription",
+          "URL": "serviceURL"
         }
         ],
         "NHosts":3,
-        "Hosts":[
-          "host1",
-          "host2",
-          "host3"
-        ],
+        "MasterIP": "masterHost",
         "Description":"someDescription"
       }
   Services:
@@ -977,7 +971,8 @@ definitions:
           "Config":{
 
           },
-          "Description":"someDescription"
+          "Description":"someDescription",
+          "URL": "serviceURL"
         }
         ]
       }
@@ -994,7 +989,8 @@ definitions:
         "Config":{
 
         },
-        "Description":"someDescription"
+        "Description":"someDescription",
+        "URL": "serviceURL"
       }
   Hosts:
     type: object

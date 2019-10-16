@@ -29,9 +29,10 @@ message Cluster {
     string HostURL = 4;
     string EntityStatus = 5;
     string ClusterType = 6;
-    repeated Service services = 7;
+    repeated Service Services = 7;
     int32 NHosts = 8;
-    string masterIP = 9;
+    string MasterIP = 9;
+    string Description = 10;
 }
 
 message Service {
@@ -45,8 +46,14 @@ message Service {
     string DisplayName = 8;
     string EntityStatus = 9;
     string Version = 10;
+    string URL = 11;
 }
 
+message ServiceType {
+    string ID = 1;
+    string Type = 2;
+    string Description = 3;
+}
 message TaskStatus {
     string Status = 1;
 }

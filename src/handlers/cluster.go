@@ -57,7 +57,7 @@ func ValidateCluster(cluster *protobuf.Cluster) bool {
 	return true
 }
 
-func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (hS HttpServer) ClustersCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /clusters POST")
 	var c protobuf.Cluster
 	err := json.NewDecoder(r.Body).Decode(&c)
@@ -248,6 +248,8 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	newC.ID = oldC.ID
+	newC.MasterIP = oldC.MasterIP
+
 	for _, s := range newC.Services {
 		sUuid, err := uuid.NewRandom()
 		if err != nil {

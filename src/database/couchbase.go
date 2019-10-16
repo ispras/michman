@@ -12,6 +12,9 @@ const (
 	couchUsername     string = "couchbase_user"
 	couchPassword     string = "couchbase_password"
 	clusterBucketName string = "clusters"
+	projectBucketName string = "projects"
+	serviceTypeBucketName string = "service_types"
+
 )
 
 type vaultAuth struct {
@@ -29,8 +32,11 @@ type couchAuth struct {
 type CouchDatabase struct {
 	auth              *couchAuth
 	couchCluster      *gocb.Cluster
+	currentBucket     *gocb.Bucket
 	clusterBucket     *gocb.Bucket
 	clusterBucketName string
+	projectBucketName string
+	serviceTypeBucketName string
 	VaultCommunicator utils.SecretStorage
 }
 
@@ -78,13 +84,12 @@ func (db *CouchDatabase) getBucket(name string) error {
 		return err
 	}
 
-	db.clusterBucket = bucket
-	db.clusterBucketName = name
+	db.currentBucket = bucket
 	return nil
 }
 
 func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -96,12 +101,12 @@ func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 	if err != nil {
 		return err
 	}
-	db.clusterBucket.Upsert(cluster.Name, cluster, 0)
+	db.currentBucket.Upsert(cluster.Name, cluster, 0)
 	return nil
 }
 
 func (db CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -115,12 +120,12 @@ func (db CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 		return nil, err
 	}
 	var cluster proto.Cluster
-	db.clusterBucket.Get(name, &cluster)
+	db.currentBucket.Get(name, &cluster)
 	return &cluster, nil
 }
 
 func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -129,7 +134,7 @@ func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 		}
 	}
 
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services FROM " + db.clusterBucketName)
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Services, MasterIP FROM " + db.clusterBucketName)
 	rows, err := db.clusterBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
@@ -145,7 +150,7 @@ func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
 }
 
 func (db CouchDatabase) DeleteCluster(name string) error {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -153,12 +158,12 @@ func (db CouchDatabase) DeleteCluster(name string) error {
 			return err
 		}
 	}
-	db.clusterBucket.Remove(name, 0)
+	db.currentBucket.Remove(name, 0)
 	return nil
 }
 
 func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -168,7 +173,7 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 	}
 
 	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description FROM " + db.clusterBucketName)
-	rows, err := db.clusterBucket.ExecuteN1qlQuery(query, []interface{}{})
+	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
@@ -182,27 +187,25 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 	return result, nil
 }
 
-func (db CouchDatabase) ReadProject(name string) (*proto.Project, error) {
-	if db.clusterBucket == nil {
-		if db.clusterBucketName == "" {
-			db.clusterBucketName = clusterBucketName
+func (db CouchDatabase) ReadProject(projectName string) (*proto.Project, error) {
+	if db.currentBucket == nil {
+		if db.projectBucketName == "" {
+			db.projectBucketName = projectBucketName
 		}
-		if err := db.getBucket(db.clusterBucketName); err != nil {
+		if err := db.getBucket(db.projectBucketName); err != nil {
 			return nil, err
 		}
 	}
 
-	err := db.getBucket(db.clusterBucketName)
-	if err != nil {
-		return nil, err
-	}
 	var project proto.Project
-	db.clusterBucket.Get(name, &project)
+	db.currentBucket.Get(projectName, &project)
+
 	return &project, nil
 }
 
+
 func (db CouchDatabase) WriteProject(project *proto.Project) error {
-	if db.clusterBucket == nil {
+	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
 		}
@@ -214,6 +217,80 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 	if err != nil {
 		return err
 	}
-	db.clusterBucket.Upsert(project.Name, project, 0)
+	db.currentBucket.Upsert(project.Name, project, 0)
+	return nil
+}
+
+func (db CouchDatabase) ReadServiceType(sTypeName string) (*proto.ServiceType, error) {
+	if db.currentBucket == nil {
+		if db.serviceTypeBucketName == "" {
+			db.serviceTypeBucketName = serviceTypeBucketName
+		}
+		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	err := db.getBucket(db.serviceTypeBucketName)
+	if err != nil {
+		return nil, err
+	}
+	var sType proto.ServiceType
+	db.currentBucket.Get(sTypeName, &sType)
+	return &sType, nil
+}
+
+func (db CouchDatabase) WriteServiceType(sType *proto.ServiceType) error {
+	if db.currentBucket == nil {
+		if db.serviceTypeBucketName == "" {
+			db.serviceTypeBucketName = serviceTypeBucketName
+		}
+		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+			return err
+		}
+	}
+	err := db.getBucket(db.serviceTypeBucketName)
+	if err != nil {
+		return err
+	}
+	db.currentBucket.Upsert(sType.Type, sType, 0)
+	return nil
+}
+
+func (db CouchDatabase) ListServicesTypes() ([]proto.ServiceType, error) {
+	if db.currentBucket == nil {
+		if db.serviceTypeBucketName == "" {
+			db.serviceTypeBucketName = serviceTypeBucketName
+		}
+		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	query := gocb.NewN1qlQuery("SELECT ID, Type, Description FROM " + db.serviceTypeBucketName)
+	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.ServiceType
+	var result []proto.ServiceType
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.ServiceType{}
+	}
+	return result, nil
+}
+
+func (db CouchDatabase) DeleteServiceType(name string) error {
+	if db.currentBucket == nil {
+		if db.serviceTypeBucketName == "" {
+			db.serviceTypeBucketName = serviceTypeBucketName
+		}
+		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+			return err
+		}
+	}
+	db.currentBucket.Remove(name, 0)
 	return nil
 }

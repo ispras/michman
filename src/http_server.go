@@ -31,10 +31,22 @@ func main() {
 
 	router := httprouter.New()
 	router.GET("/clusters", hS.ClustersGetList)
-	router.POST("/clusters", hS.ClusterCreate)
+	router.POST("/clusters", hS.ClustersCreate)
 	router.GET("/clusters/:clusterName", hS.ClustersGet)
 	router.PUT("/clusters/:clusterName", hS.ClustersUpdate)
 	router.DELETE("/clusters/:clusterName", hS.ClustersDelete)
+
+	// Routes for Configs module
+	router.POST("/configs", hS.ConfigsCreateService)
+	router.GET("/configs", hS.ConfigsGetServices)
+	router.GET("/configs/:serviceType", hS.ConfigsGetService)
+	router.DELETE("/configs/:serviceType", hS.ConfigsDeleteService)
+	router.GET("/configs/:serviceType/versions", hS.ConfigsGetVersions)
+	router.POST("/configs/:serviceType/versions", hS.ConfigsCreateVersion)
+	router.GET("/configs/:serviceType/versions/:versionId", hS.ConfigsGetVersion)
+	router.PUT("/configs/:serviceType/versions/:versionId", hS.ConfigsUpdateVersion)
+	router.DELETE("/configs/:serviceType/versions/:versionId", hS.ConfigsDeleteVersion)
+
 
 	httpServerLogger.Print("Server starts to work")
 	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))

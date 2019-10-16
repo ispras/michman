@@ -49,10 +49,11 @@
 
 - name: change jupyter_notebook_config.py
 
+#TODO: authentification is disabled,NotebookApp.token must be changed
   lineinfile:
     dest=/home/{{ hadoop_user }}/.jupyter/jupyter_notebook_config.py
     state=present insertafter=EOF
-    line="c.NotebookApp.ip = '0.0.0.0'"
+    line="c.NotebookApp.ip = '0.0.0.0'\nc.NotebookApp.token = ''"
     create=true
   tags:
   - install
