@@ -4,17 +4,17 @@ import "os"
 
 const (
 	//list of supported services types
-	ServiceTypeSpark string = "spark"
-	ServiceTypeIgnite string = "ignite"
-	ServiceTypeCassandra string = "cassandra"
-	ServiceTypeJupyter string = "jupyter"
+	ServiceTypeSpark      string = "spark"
+	ServiceTypeIgnite     string = "ignite"
+	ServiceTypeCassandra  string = "cassandra"
+	ServiceTypeJupyter    string = "jupyter"
 	ServiceTypeJupyterhub string = "jupyterhub"
-	ServiceTypeElastic string = "elastic"
+	ServiceTypeElastic    string = "elastic"
 
 	//supported spark configurations
-	SparkUseYarn string = "use-yarn"
-	SparkHadoopVersion string = "hadoop-version"
-	SparkWorkerMemMb string = "worker-mem-mb"
+	SparkUseYarn         string = "use-yarn"
+	SparkHadoopVersion   string = "hadoop-version"
+	SparkWorkerMemMb     string = "worker-mem-mb"
 	SparkYarnMasterMemMb string = "yarn-master-mem-mb"
 
 	//supported jupyter configurations
@@ -30,11 +30,11 @@ const (
 	CassandraDefaultVersion string = "3.11.4"
 
 	//statuses for ansible runner
-	AnsibleOk string = "OK"
+	AnsibleOk   string = "OK"
 	AnsibleFail string = "FAIL"
 
 	//supported actions for ansible
-	AnsibleLaunch = "launch"
+	AnsibleLaunch  = "launch"
 	AnsibleDestroy = "destroy"
 
 	//ansible-playbook command
@@ -53,13 +53,13 @@ const (
 	AnsibleMasterIpRole = "src/ansible/ansible/get_master.yml"
 
 	//openstack secrets keys
-	OsAuthUrl = "OS_AUTH_URL"
-	OsPassword = "OS_PASSWORD"
-	OsProjectName = "OS_PROJECT_NAME"
-	OsRegionName = "OS_REGION_NAME"
-	OsTenantId = "OS_TENANT_ID"
-	OsTenantName = "OS_TENANT_NAME"
-	OsUsername = "OS_USERNAME"
+	OsAuthUrl       = "OS_AUTH_URL"
+	OsPassword      = "OS_PASSWORD"
+	OsProjectName   = "OS_PROJECT_NAME"
+	OsRegionName    = "OS_REGION_NAME"
+	OsTenantId      = "OS_TENANT_ID"
+	OsTenantName    = "OS_TENANT_NAME"
+	OsUsername      = "OS_USERNAME"
 	OsSwiftUsername = "OS_SWIFT_USERNAME"
 	OsSwiftPassword = "OS_SWIFT_PASSWORD"
 
@@ -67,10 +67,13 @@ const (
 	VaultSshKey = "key_bgt"
 
 	//Entity statuses
-	StatusInited = "INITED"
-	StatusCreated = "CREATED"
-	StatusFailed = "FAILED"
+	StatusInited   = "INITED"
+	StatusCreated  = "CREATED"
+	StatusFailed   = "FAILED"
 	StatusStopping = "STOPPING"
+
+	//default IDs
+	CommonProjectID string = "None"
 )
 
 var (

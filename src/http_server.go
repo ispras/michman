@@ -36,17 +36,17 @@ func main() {
 	router.PUT("/clusters/:clusterName", hS.ClustersUpdate)
 	router.DELETE("/clusters/:clusterName", hS.ClustersDelete)
 
-	// Routes for Configs module
-	router.POST("/configs", hS.ConfigsCreateService)
-	router.GET("/configs", hS.ConfigsGetServices)
-	router.GET("/configs/:serviceType", hS.ConfigsGetService)
-	router.DELETE("/configs/:serviceType", hS.ConfigsDeleteService)
-	router.GET("/configs/:serviceType/versions", hS.ConfigsGetVersions)
-	router.POST("/configs/:serviceType/versions", hS.ConfigsCreateVersion)
-	router.GET("/configs/:serviceType/versions/:versionId", hS.ConfigsGetVersion)
-	router.PUT("/configs/:serviceType/versions/:versionId", hS.ConfigsUpdateVersion)
-	router.DELETE("/configs/:serviceType/versions/:versionId", hS.ConfigsDeleteVersion)
+	router.GET("/templates", hS.TemplatesGetList)
+	router.POST("/templates", hS.TemplateCreate)
+	router.GET("/templates/:templateID", hS.TemplateGet)
+	router.PUT("/templates/:templateID", hS.TemplateUpdate)
+	router.DELETE("/templates/:templateID", hS.TemplateDelete)
 
+	router.GET("/projects/:projectID/templates", hS.TemplatesGetList)
+	router.POST("/projects/:projectID/templates", hS.TemplateCreate)
+	router.GET("/projects/:projectID/templates/:templateID", hS.TemplateGet)
+	router.PUT("/projects/:projectID/templates/:templateID", hS.TemplateUpdate)
+	router.DELETE("/projects/:projectID/templates/:templateID", hS.TemplateDelete)
 
 	httpServerLogger.Print("Server starts to work")
 	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))

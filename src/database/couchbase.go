@@ -2,19 +2,19 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"gopkg.in/couchbase/gocb.v1"
 )
 
 const (
-	couchPath         string = "couchbase://couchbase_ip"
-	couchUsername     string = "couchbase_user"
-	couchPassword     string = "couchbase_password"
-	clusterBucketName string = "clusters"
+	couchPath          string = "couchbase://couchbase_ip"
+	couchUsername      string = "couchbase_user"
+	couchPassword      string = "couchbase_password"
+	clusterBucketName  string = "clusters"
+	templateBucketName string = "templates"
 	projectBucketName string = "projects"
-	serviceTypeBucketName string = "service_types"
-
 )
 
 type vaultAuth struct {
@@ -33,11 +33,10 @@ type CouchDatabase struct {
 	auth              *couchAuth
 	couchCluster      *gocb.Cluster
 	currentBucket     *gocb.Bucket
-	clusterBucket     *gocb.Bucket
 	clusterBucketName string
+	templateBucketName string
 	projectBucketName string
-	serviceTypeBucketName string
-	VaultCommunicator utils.SecretStorage
+	VaultCommunicator  utils.SecretStorage
 }
 
 func (db *CouchDatabase) getCouchCluster() error {
@@ -187,10 +186,10 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 	return result, nil
 }
 
-func (db CouchDatabase) ReadProject(projectName string) (*proto.Project, error) {
+func (db CouchDatabase) ReadProject(name string) (*proto.Project, error) {
 	if db.currentBucket == nil {
-		if db.projectBucketName == "" {
-			db.projectBucketName = projectBucketName
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
 		}
 		if err := db.getBucket(db.projectBucketName); err != nil {
 			return nil, err
@@ -198,8 +197,7 @@ func (db CouchDatabase) ReadProject(projectName string) (*proto.Project, error) 
 	}
 
 	var project proto.Project
-	db.currentBucket.Get(projectName, &project)
-
+	db.currentBucket.Get(name, &project)
 	return &project, nil
 }
 
@@ -221,76 +219,89 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 	return nil
 }
 
-func (db CouchDatabase) ReadServiceType(sTypeName string) (*proto.ServiceType, error) {
+func (db CouchDatabase) WriteTemplate(template *proto.Template) error {
 	if db.currentBucket == nil {
-		if db.serviceTypeBucketName == "" {
-			db.serviceTypeBucketName = serviceTypeBucketName
+		if db.templateBucketName == "" {
+			db.templateBucketName = templateBucketName
 		}
-		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
-			return nil, err
-		}
-	}
-
-	err := db.getBucket(db.serviceTypeBucketName)
-	if err != nil {
-		return nil, err
-	}
-	var sType proto.ServiceType
-	db.currentBucket.Get(sTypeName, &sType)
-	return &sType, nil
-}
-
-func (db CouchDatabase) WriteServiceType(sType *proto.ServiceType) error {
-	if db.currentBucket == nil {
-		if db.serviceTypeBucketName == "" {
-			db.serviceTypeBucketName = serviceTypeBucketName
-		}
-		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+		if err := db.getBucket(db.templateBucketName); err != nil {
 			return err
 		}
 	}
-	err := db.getBucket(db.serviceTypeBucketName)
+	err := db.getBucket(db.templateBucketName)
 	if err != nil {
 		return err
 	}
-	db.currentBucket.Upsert(sType.Type, sType, 0)
+	_, err = db.currentBucket.Upsert(template.ID, template, 0)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (db CouchDatabase) ListServicesTypes() ([]proto.ServiceType, error) {
+func (db CouchDatabase) ReadTemplate(projectID, id string) (*proto.Template, error) {
 	if db.currentBucket == nil {
-		if db.serviceTypeBucketName == "" {
-			db.serviceTypeBucketName = serviceTypeBucketName
+		if db.templateBucketName == "" {
+			db.templateBucketName = templateBucketName
 		}
-		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+		if err := db.getBucket(db.templateBucketName); err != nil {
 			return nil, err
 		}
 	}
 
-	query := gocb.NewN1qlQuery("SELECT ID, Type, Description FROM " + db.serviceTypeBucketName)
+	err := db.getBucket(db.templateBucketName)
+	if err != nil {
+		return nil, err
+	}
+	var template proto.Template
+	_, err = db.currentBucket.Get(id, &template)
+	if err != nil {
+		return nil, err
+	}
+	if projectID != template.ProjectID {
+		return &proto.Template{}, nil
+	}
+	return &template, nil
+}
+
+func (db CouchDatabase) ListTemplates(projectID string) ([]proto.Template, error) {
+	if db.currentBucket == nil {
+		if db.templateBucketName == "" {
+			db.templateBucketName = templateBucketName
+		}
+		if err := db.getBucket(db.templateBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
+		" NHosts, Description FROM %v WHERE ProjectID = '%v'",
+		db.templateBucketName, projectID))
 	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	var row proto.ServiceType
-	var result []proto.ServiceType
+	var row proto.Template
+	var result []proto.Template
 
 	for rows.Next(&row) {
 		result = append(result, row)
-		row = proto.ServiceType{}
 	}
 	return result, nil
 }
 
-func (db CouchDatabase) DeleteServiceType(name string) error {
+func (db CouchDatabase) DeleteTemplate(id string) error {
 	if db.currentBucket == nil {
-		if db.serviceTypeBucketName == "" {
-			db.serviceTypeBucketName = serviceTypeBucketName
+		if db.templateBucketName == "" {
+			db.templateBucketName = templateBucketName
 		}
-		if err := db.getBucket(db.serviceTypeBucketName); err != nil {
+		if err := db.getBucket(db.templateBucketName); err != nil {
 			return err
 		}
 	}
-	db.currentBucket.Remove(name, 0)
+	_, err := db.currentBucket.Remove(id, 0)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -394,3 +394,4 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	enc := json.NewEncoder(w)
 	enc.Encode(p)
 }
+

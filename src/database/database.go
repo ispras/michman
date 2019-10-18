@@ -13,10 +13,9 @@ type Database interface {
 	ListProjects() ([]proto.Project, error)
 	ReadProject(name string) (*proto.Project, error)
 	WriteProject(project *proto.Project) error
-
-	WriteServiceType(sType *proto.ServiceType) error
-	ReadServiceType(sType string) (*proto.ServiceType, error)
-	ListServicesTypes() ([]proto.ServiceType, error)
-	DeleteServiceType(name string) error
+	ReadTemplate(projectID, id string) (*proto.Template, error)
+	WriteTemplate(template *proto.Template) error
+	DeleteTemplate(id string) error
+	ListTemplates(projectID string) ([]proto.Template, error)
 }
 
