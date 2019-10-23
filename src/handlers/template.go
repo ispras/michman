@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
@@ -9,7 +10,7 @@ import (
 )
 
 func (hS HttpServer) TemplateCreate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print("Get /templates or /project/templates POST")
+	hS.Logger.Print("Get /templates or /project/projectIdOrName/templates POST")
 
 	var t protobuf.Template
 	err := json.NewDecoder(r.Body).Decode(&t)
@@ -22,49 +23,49 @@ func (hS HttpServer) TemplateCreate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	// checking do we get certain projectID or not
-	projectID := params.ByName("projectID")
+	projectID := params.ByName("projectIdOrName")
+	var projectName string
 	if projectID == "" {
 		// get common templates
 		projectID = utils.CommonProjectID
+		projectName = "common"
 	} else {
-		///check that projectID in url == projectID in json
-		if projectID != t.ProjectID {
-			hS.Logger.Print("projectID in url != projectID in json")
+		// try to get project with such ID from DB
+		project, err := hS.Db.ReadProject(projectID)
+		if err != nil {
+			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
-			enc := json.NewEncoder(w)
-			err := enc.Encode("projectID in url != projectID in json")
-			if err != nil {
-				hS.Logger.Print(err)
-				w.WriteHeader(http.StatusBadRequest)
-			}
 			return
 		}
+		if project.ID == "" {
+			hS.Logger.Print("no project with such id ", projectID)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		projectName = project.Name
 	}
 
-	//check, that template with such ID doesn't exist
-	dbRes, err := hS.Db.ReadTemplate(projectID, t.ID)
+	tUuid, err := uuid.NewRandom()
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	t.ID = tUuid.String()
+	t.ProjectID = projectID
+	t.Name = t.DisplayName + "-" + projectName
+
+	//check, that template with such Name doesn't exist
+	dbTemplate, err := hS.Db.ReadTemplateByName(t.Name)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	if dbRes.Name != "" {
-		hS.Logger.Print("Template with this ID already exists")
+	if dbTemplate.ID != "" {
+		hS.Logger.Print("template with this Name already exists")
 		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		err := enc.Encode("Template with this ID already exists")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
 		return
-	}
-
-	// set services uuid to empty string (UUID will be generated when cluster creates) //TODO: check this part
-	for _, s := range t.Services {
-		sUuid := ""
-		s.ID = sUuid
 	}
 
 	err = hS.Db.WriteTemplate(&t)
@@ -81,7 +82,7 @@ func (hS HttpServer) TemplateCreate(w http.ResponseWriter, r *http.Request, para
 }
 
 func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print("Get /templates/templateID or /projects/projectID/templates PUT")
+	hS.Logger.Print("Get /templates/templateID or /projects/projectIdOrName/templates PUT")
 	templateID := params.ByName("templateID")
 	var t protobuf.Template
 	err := json.NewDecoder(r.Body).Decode(&t)
@@ -92,42 +93,41 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	//check that ID in URL == ID in json
-	if templateID != t.ID {
-		hS.Logger.Print("ID in URL != ID in json")
+	// check immutable field
+	if t.ID != "" || t.ProjectID != "" || t.Name != "" {
+		hS.Logger.Print("got immutable fields")
 		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
 
 	// checking do we get certain projectID or not
-	projectID := params.ByName("projectID")
+	projectID := params.ByName("projectIdOrName")
 	if projectID == "" {
 		// get common templates
 		projectID = utils.CommonProjectID
 	} else {
-		///check that projectID in url == projectID in json
-		if projectID != t.ProjectID {
-			hS.Logger.Print("projectID in url != projectID in json")
+		// try to get project with such ID from DB
+		project, err := hS.Db.ReadProject(projectID)
+		if err != nil {
+			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
-			enc := json.NewEncoder(w)
-			err := enc.Encode("projectID in url != projectID in json")
-			if err != nil {
-				hS.Logger.Print(err)
-				w.WriteHeader(http.StatusBadRequest)
-			}
+			return
+		}
+		if project.ID == "" {
+			hS.Logger.Print("no project with such id ", projectID)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
 
 	//check, that template with such ID exists
-	dbRes, err := hS.Db.ReadTemplate(projectID, t.ID)
+	dbTemplate, err := hS.Db.ReadTemplate(projectID, templateID)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if dbRes.ID == "" {
+	if dbTemplate.ID == "" {
 		hS.Logger.Print("Template with this ID doesnt exist")
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
@@ -139,13 +139,13 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	// set services uuid to empty string (UUID will be generated when cluster creates) //TODO: check this part
-	for _, s := range t.Services {
-		sUuid := ""
-		s.ID = sUuid
-	}
+	//update fields
+	dbTemplate.DisplayName = t.DisplayName
+	dbTemplate.Services = t.Services
+	dbTemplate.NHosts = t.NHosts
+	dbTemplate.Description = t.Description
 
-	err = hS.Db.WriteTemplate(&t)
+	err = hS.Db.WriteTemplate(dbTemplate)
 
 	if err != nil {
 		hS.Logger.Print(err)
@@ -160,13 +160,13 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 
 func (hS HttpServer) TemplateDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	templateID := params.ByName("templateID")
-	hS.Logger.Print("Get /templates/", templateID, "or /projects/projectID/templates/templateID DELETE")
+	hS.Logger.Print("Get /templates/", templateID, "or /projects/projectIdOrName/templates/templateID DELETE")
 
 	//check that template exists
 	hS.Logger.Print("Sending request to db-service to check that template exists...")
 
 	// checking do we get certain projectID or not
-	projectID := params.ByName("projectID")
+	projectID := params.ByName("projectIdOrName")
 	if projectID == "" {
 		// get common templates
 		projectID = utils.CommonProjectID
@@ -198,10 +198,10 @@ func (hS HttpServer) TemplateDelete(w http.ResponseWriter, r *http.Request, para
 }
 
 func (hS HttpServer) TemplatesGetList(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print("Get /templates or /projects/projectID/templates GET")
+	hS.Logger.Print("Get /templates or /projects/projectIdOrName/templates GET")
 
 	// checking do we get certain projectID or not
-	projectID := params.ByName("projectID")
+	projectID := params.ByName("projectIdOrName")
 	if projectID == "" {
 		// get common templates
 		projectID = utils.CommonProjectID
@@ -228,13 +228,13 @@ func (hS HttpServer) TemplatesGetList(w http.ResponseWriter, r *http.Request, pa
 
 func (hS HttpServer) TemplateGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	// checking do we get certain projectID or not
-	projectID := params.ByName("projectID")
+	projectID := params.ByName("projectIdOrName")
 	if projectID == "" {
 		// get common templates
 		projectID = utils.CommonProjectID
 	}
 	templateID := params.ByName("templateID")
-	hS.Logger.Print("Get /templates/ or /projects/projectID/templates", templateID, " GET")
+	hS.Logger.Print("Get /templates/ or /projects/projectIdOrName/templates", templateID, " GET")
 
 	//reading template info from database
 	hS.Logger.Print("Reading template information from db...")

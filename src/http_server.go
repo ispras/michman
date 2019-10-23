@@ -33,15 +33,15 @@ func main() {
 
 	router.GET("/projects", hS.ProjectsGetList)
 	router.POST("/projects", hS.ProjectCreate)
-	router.GET("/projects/:projectName", hS.ProjectGetByName)
-	router.PUT("/projects/:projectName", hS.ProjectUpdate)
-	router.DELETE("/projects/:projectName", hS.ProjectDelete)
+	router.GET("/projects/:projectIdOrName", hS.ProjectGetByName)
+	router.PUT("/projects/:projectIdOrName", hS.ProjectUpdate)
+	router.DELETE("/projects/:projectIdOrName", hS.ProjectDelete)
 
-	router.GET("/projects/:projectName/clusters", hS.ClustersGet)
-	router.POST("/projects/:projectName/clusters", hS.ClusterCreate)
-	router.GET("/projects/:projectName/clusters/:clusterName", hS.ClustersGetByName)
-	router.PUT("/projects/:projectName/clusters/:clusterName", hS.ClustersUpdate)
-	router.DELETE("/projects/:projectName/clusters/:clusterName", hS.ClustersDelete)
+	router.GET("/projects/:projectIdOrName/clusters", hS.ClustersGet)
+	router.POST("/projects/:projectIdOrName/clusters", hS.ClusterCreate)
+	router.GET("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersGetByName)
+	router.PUT("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersUpdate)
+	router.DELETE("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersDelete)
 
 	router.GET("/templates", hS.TemplatesGetList)
 	router.POST("/templates", hS.TemplateCreate)
@@ -49,12 +49,17 @@ func main() {
 	router.PUT("/templates/:templateID", hS.TemplateUpdate)
 	router.DELETE("/templates/:templateID", hS.TemplateDelete)
 
-	router.GET("/projects/:projectID/templates", hS.TemplatesGetList)
-	router.POST("/projects/:projectID/templates", hS.TemplateCreate)
-	router.GET("/projects/:projectID/templates/:templateID", hS.TemplateGet)
-	router.PUT("/projects/:projectID/templates/:templateID", hS.TemplateUpdate)
-	router.DELETE("/projects/:projectID/templates/:templateID", hS.TemplateDelete)
+	router.GET("/projects/:projectIdOrName/templates", hS.TemplatesGetList)
+	router.POST("/projects/:projectIdOrName/templates", hS.TemplateCreate)
+	router.GET("/projects/:projectIdOrName/templates/:templateID", hS.TemplateGet)
+	router.PUT("/projects/:projectIdOrName/templates/:templateID", hS.TemplateUpdate)
+	router.DELETE("/projects/:projectIdOrName/templates/:templateID", hS.TemplateDelete)
+
+	// swagger UI route
+	router.ServeFiles("/api/*filepath", http.Dir("./swaggerui"))
 
 	httpServerLogger.Print("Server starts to work")
 	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))
+
+
 }

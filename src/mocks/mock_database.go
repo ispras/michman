@@ -179,6 +179,21 @@ func (mr *MockDatabaseMockRecorder) ReadProjectClusters(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProjectClusters", reflect.TypeOf((*MockDatabase)(nil).ReadProjectClusters), arg0)
 }
 
+// ReadTemplateByName mocks base method
+func (m *MockDatabase) ReadTemplateByName(arg0 string) (*protobuf.Template, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadTemplateByName", arg0)
+	ret0, _ := ret[0].(*protobuf.Template)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadTemplateByName indicates an expected call of ReadTemplateByName
+func (mr *MockDatabaseMockRecorder) ReadTemplateByName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadTemplateByName", reflect.TypeOf((*MockDatabase)(nil).ReadTemplateByName), arg0)
+}
+
 // UpdateProject mocks base method
 func (m *MockDatabase) UpdateProject(arg0 *protobuf.Project) error {
 	m.ctrl.T.Helper()

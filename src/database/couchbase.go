@@ -14,7 +14,7 @@ const (
 	couchPassword      string = "couchbase_password"
 	clusterBucketName  string = "clusters"
 	templateBucketName string = "templates"
-	projectBucketName string = "projects"
+	projectBucketName  string = "projects"
 )
 
 type vaultAuth struct {
@@ -114,7 +114,7 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 		}
 	}
 
-	db.currentBucket.Upsert(project.Name, project, 0)
+	db.currentBucket.Upsert(project.ID, project, 0)
 
 	return nil
 }
@@ -286,11 +286,42 @@ func (db CouchDatabase) ReadTemplate(projectID, id string) (*proto.Template, err
 	var template proto.Template
 	_, err = db.currentBucket.Get(id, &template)
 	if err != nil {
-		return nil, err
+		return &proto.Template{}, nil
 	}
 	if projectID != template.ProjectID {
 		return &proto.Template{}, nil
 	}
+	return &template, nil
+}
+
+func (db CouchDatabase) ReadTemplateByName(templateName string) (*proto.Template, error) {
+	if db.currentBucket == nil {
+		if db.templateBucketName == "" {
+			db.templateBucketName = templateBucketName
+		}
+		if err := db.getBucket(db.templateBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	err := db.getBucket(db.templateBucketName)
+	if err != nil {
+		return nil, err
+	}
+
+	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
+		" NHosts, Description FROM %v WHERE Name = '%v'",
+		db.templateBucketName, templateName))
+	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var template proto.Template
+
+	if hasResult := rows.Next(template); !hasResult {
+		template = proto.Template{}
+	}
+
 	return &template, nil
 }
 

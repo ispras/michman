@@ -18,6 +18,7 @@ type Database interface {
 	DeleteProject(name string) error
 
 	ReadTemplate(projectID, id string) (*proto.Template, error)
+	ReadTemplateByName(templateName string) (*proto.Template, error)
 	WriteTemplate(template *proto.Template) error
 	DeleteTemplate(id string) error
 	ListTemplates(projectID string) ([]proto.Template, error)
