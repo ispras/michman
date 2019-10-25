@@ -47,14 +47,6 @@ func (mr *MockDatabaseMockRecorder) DeleteCluster(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockDatabase)(nil).DeleteCluster), arg0)
 }
 
-// DeleteTemplate mocks base method
-func (m *MockDatabase) DeleteTemplate(arg0 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTemplate", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
 // DeleteProject mocks base method
 func (m *MockDatabase) DeleteProject(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -63,31 +55,24 @@ func (m *MockDatabase) DeleteProject(arg0 string) error {
 	return ret0
 }
 
-// DeleteTemplate indicates an expected call of DeleteTemplate
-func (mr *MockDatabaseMockRecorder) DeleteTemplate(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTemplate", reflect.TypeOf((*MockDatabase)(nil).DeleteTemplate), arg0)
-}
-
 // DeleteProject indicates an expected call of DeleteProject
 func (mr *MockDatabaseMockRecorder) DeleteProject(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockDatabase)(nil).DeleteProject), arg0)
 }
 
-// ListClusters mocks base method
-func (m *MockDatabase) ListClusters() ([]protobuf.Cluster, error) {
+// DeleteTemplate mocks base method
+func (m *MockDatabase) DeleteTemplate(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListClusters")
-	ret0, _ := ret[0].([]protobuf.Cluster)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "DeleteTemplate", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// ListClusters indicates an expected call of ListClusters
-func (mr *MockDatabaseMockRecorder) ListClusters() *gomock.Call {
+// DeleteTemplate indicates an expected call of DeleteTemplate
+func (mr *MockDatabaseMockRecorder) DeleteTemplate(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClusters", reflect.TypeOf((*MockDatabase)(nil).ListClusters))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTemplate", reflect.TypeOf((*MockDatabase)(nil).DeleteTemplate), arg0)
 }
 
 // ListProjects mocks base method
@@ -135,6 +120,21 @@ func (mr *MockDatabaseMockRecorder) ReadCluster(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadCluster", reflect.TypeOf((*MockDatabase)(nil).ReadCluster), arg0)
 }
 
+// ReadClusterByName mocks base method
+func (m *MockDatabase) ReadClusterByName(arg0, arg1 string) (*protobuf.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadClusterByName", arg0, arg1)
+	ret0, _ := ret[0].(*protobuf.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadClusterByName indicates an expected call of ReadClusterByName
+func (mr *MockDatabaseMockRecorder) ReadClusterByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadClusterByName", reflect.TypeOf((*MockDatabase)(nil).ReadClusterByName), arg0, arg1)
+}
+
 // ReadProject mocks base method
 func (m *MockDatabase) ReadProject(arg0 string) (*protobuf.Project, error) {
 	m.ctrl.T.Helper()
@@ -150,14 +150,21 @@ func (mr *MockDatabaseMockRecorder) ReadProject(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProject", reflect.TypeOf((*MockDatabase)(nil).ReadProject), arg0)
 }
 
-// ReadTemplate mocks base method
-func (m *MockDatabase) ReadTemplate(arg0, arg1 string) (*protobuf.Template, error) {
+// ReadProjectByName mocks base method
+func (m *MockDatabase) ReadProjectByName(arg0 string) (*protobuf.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadTemplate", arg0, arg1)
-	ret0, _ := ret[0].(*protobuf.Template)
+	ret := m.ctrl.Call(m, "ReadProjectByName", arg0)
+	ret0, _ := ret[0].(*protobuf.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
+
+// ReadProjectByName indicates an expected call of ReadProjectByName
+func (mr *MockDatabaseMockRecorder) ReadProjectByName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProjectByName", reflect.TypeOf((*MockDatabase)(nil).ReadProjectByName), arg0)
+}
+
 // ReadProjectClusters mocks base method
 func (m *MockDatabase) ReadProjectClusters(arg0 string) ([]protobuf.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -167,16 +174,25 @@ func (m *MockDatabase) ReadProjectClusters(arg0 string) ([]protobuf.Cluster, err
 	return ret0, ret1
 }
 
-// ReadTemplate indicates an expected call of ReadTemplate
-func (mr *MockDatabaseMockRecorder) ReadTemplate(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadTemplate", reflect.TypeOf((*MockDatabase)(nil).ReadTemplate), arg0, arg1)
-}
-
 // ReadProjectClusters indicates an expected call of ReadProjectClusters
 func (mr *MockDatabaseMockRecorder) ReadProjectClusters(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProjectClusters", reflect.TypeOf((*MockDatabase)(nil).ReadProjectClusters), arg0)
+}
+
+// ReadTemplate mocks base method
+func (m *MockDatabase) ReadTemplate(arg0, arg1 string) (*protobuf.Template, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadTemplate", arg0, arg1)
+	ret0, _ := ret[0].(*protobuf.Template)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadTemplate indicates an expected call of ReadTemplate
+func (mr *MockDatabaseMockRecorder) ReadTemplate(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadTemplate", reflect.TypeOf((*MockDatabase)(nil).ReadTemplate), arg0, arg1)
 }
 
 // ReadTemplateByName mocks base method
@@ -192,6 +208,20 @@ func (m *MockDatabase) ReadTemplateByName(arg0 string) (*protobuf.Template, erro
 func (mr *MockDatabaseMockRecorder) ReadTemplateByName(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadTemplateByName", reflect.TypeOf((*MockDatabase)(nil).ReadTemplateByName), arg0)
+}
+
+// UpdateCluster mocks base method
+func (m *MockDatabase) UpdateCluster(arg0 *protobuf.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCluster", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateCluster indicates an expected call of UpdateCluster
+func (mr *MockDatabaseMockRecorder) UpdateCluster(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockDatabase)(nil).UpdateCluster), arg0)
 }
 
 // UpdateProject mocks base method

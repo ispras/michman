@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"net/http"
 	//"regexp"
@@ -13,9 +13,8 @@ import (
 
 func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /projects GET")
-	//reading cluster info from database
-	hS.Logger.Print("Reading projects information from db...")
 
+	hS.Logger.Print("Reading projects information from db...")
 	projects, err := hS.Db.ListProjects()
 	if err != nil {
 		hS.Logger.Print(err)
@@ -33,9 +32,28 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	}
 }
 
+func (hS HttpServer) getProject(idORname string) (*proto.Project, error) {
+	is_uuid := true
+	_, err := uuid.Parse(idORname)
+	if err != nil {
+		is_uuid = false
+	}
+
+	var project *proto.Project
+
+	if is_uuid {
+		project, err = hS.Db.ReadProject(idORname)
+	} else {
+		project, err = hS.Db.ReadProjectByName(idORname)
+	}
+
+	return project, err
+}
+
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /projects POST")
-	var p protobuf.Project
+
+	var p proto.Project
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		hS.Logger.Print("ERROR:")
@@ -53,8 +71,8 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		}
 	*/
 
-	//check, that cluster with such name doesn't exist
-	dbRes, err := hS.Db.ReadProject(p.Name)
+	//check, that project with such name doesn't exist
+	dbRes, err := hS.Db.ReadProjectByName(p.Name)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -94,12 +112,12 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 }
 
 func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	hS.Logger.Print("Get /projects/", projectName, " GET")
+	projectIdOrName := params.ByName("projectIdOrName")
+	hS.Logger.Print("Get /projects/", projectIdOrName, " GET")
 
-	//reading cluster info from database
 	hS.Logger.Print("Reading project information from db...")
-	project, err := hS.Db.ReadProject(projectName)
+
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -107,7 +125,7 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -123,12 +141,10 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 }
 
 func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	hS.Logger.Print("Get /projects/", projectName, " PUT")
+	projectIdOrName := params.ByName("projectIdOrName")
+	hS.Logger.Print("Get /projects/", projectIdOrName, " PUT")
 
-	//reading project info from database
-	hS.Logger.Print("Reading project information from db...")
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -136,12 +152,12 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name or id '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	var p protobuf.Project
+	var p proto.Project
 	err = json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		hS.Logger.Print("ERROR:")
@@ -151,7 +167,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	if p.Name != "" || p.ID != "" || p.GroupID != 0 {
+	if p.Name != "" || p.ID != "" || p.GroupID != 0 || p.DisplayName != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
 		err = enc.Encode("This fields cannot be updated")
@@ -164,10 +180,6 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	if p.Description != "" {
 		project.Description = p.Description
-	}
-
-	if p.DisplayName != "" {
-		project.DisplayName = p.DisplayName
 	}
 
 	err = hS.Db.UpdateProject(project)
@@ -188,12 +200,12 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 }
 
 func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	hS.Logger.Print("Get /projects/", projectName, " DELETE")
+	projectIdOrName := params.ByName("projectIdOrName")
+	hS.Logger.Print("Get /projects/", projectIdOrName, " DELETE")
 
 	//reading project info from database
 	hS.Logger.Print("Reading project information from db...")
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -201,7 +213,7 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -224,7 +236,7 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	err = hS.Db.DeleteProject(projectName)
+	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)

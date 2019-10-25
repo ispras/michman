@@ -87,8 +87,7 @@ func (db *CouchDatabase) getBucket(name string) error {
 	return nil
 }
 
-
-func (db CouchDatabase) ReadProject(projectName string) (*proto.Project, error) {
+func (db CouchDatabase) ReadProject(projectID string) (*proto.Project, error) {
 	if db.currentBucket == nil {
 		if db.projectBucketName == "" {
 			db.projectBucketName = projectBucketName
@@ -99,9 +98,32 @@ func (db CouchDatabase) ReadProject(projectName string) (*proto.Project, error) 
 	}
 
 	var project proto.Project
-	db.currentBucket.Get(projectName, &project)
+	db.currentBucket.Get(projectID, &project)
 
 	return &project, nil
+}
+
+func (db CouchDatabase) ReadProjectByName(projectName string) (*proto.Project, error) {
+	if db.currentBucket == nil {
+		if db.projectBucketName == "" {
+			db.projectBucketName = projectBucketName
+		}
+		if err := db.getBucket(db.projectBucketName); err != nil {
+			return nil, err
+		}
+	}
+
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description FROM " + db.projectBucketName +
+		" WHERE Name = '" + projectName + "'")
+	result, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	var p proto.Project
+	result.Next(&p)
+
+	return &p, nil
 }
 
 func (db CouchDatabase) WriteProject(project *proto.Project) error {
@@ -156,7 +178,8 @@ func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, 
 		}
 	}
 
-	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services from " + clusterBucketName + " where ProjectID = '" + projectID + "'"
+	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services from " + clusterBucketName +
+		" where ProjectID = '" + projectID + "'"
 	query := gocb.NewN1qlQuery(q)
 
 	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
@@ -184,15 +207,17 @@ func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 			return err
 		}
 	}
+
 	err := db.getBucket(db.clusterBucketName)
 	if err != nil {
 		return err
 	}
-	db.currentBucket.Upsert(cluster.Name, cluster, 0)
+
+	db.currentBucket.Upsert(cluster.ID, cluster, 0)
 	return nil
 }
 
-func (db CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
+func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
 	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
@@ -206,37 +231,39 @@ func (db CouchDatabase) ReadCluster(name string) (*proto.Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var cluster proto.Cluster
-	db.currentBucket.Get(name, &cluster)
+	db.currentBucket.Get(clusterID, &cluster)
 	return &cluster, nil
 }
 
-func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
+func (db CouchDatabase) ReadClusterByName(projectID, clusterName string) (*proto.Cluster, error) {
 	if db.currentBucket == nil {
-		if db.clusterBucketName == "" {
-			db.clusterBucketName = clusterBucketName
+		if db.projectBucketName == "" {
+			db.projectBucketName = projectBucketName
 		}
 		if err := db.getBucket(db.projectBucketName); err != nil {
 			return nil, err
 		}
 	}
 
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services FROM " + db.clusterBucketName)
-	rows, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
+	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, ClusterType," +
+		"services, NHosts, masterIP, ProjectID FROM " + clusterBucketName +
+		" WHERE ProjectID = '" + projectID + "' and Name = '" + clusterName + "'"
+	//println(q)
+	query := gocb.NewN1qlQuery(q)
+	result, err := db.currentBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	var row proto.Cluster
-	var result []proto.Cluster
 
-	for rows.Next(&row) {
-		result = append(result, row)
-		row = proto.Cluster{}
-	}
-	return result, nil
+	var c proto.Cluster
+	result.Next(&c)
+
+	return &c, nil
 }
 
-func (db CouchDatabase) DeleteCluster(name string) error {
+func (db CouchDatabase) UpdateCluster(cluster *proto.Cluster) error {
 	if db.currentBucket == nil {
 		if db.clusterBucketName == "" {
 			db.clusterBucketName = clusterBucketName
@@ -245,7 +272,34 @@ func (db CouchDatabase) DeleteCluster(name string) error {
 			return err
 		}
 	}
-	db.currentBucket.Remove(name, 0)
+
+	var cas gocb.Cas
+	cas, err := db.currentBucket.Replace(cluster.ID, cluster, cas, 0)
+
+	return err
+}
+
+func (db CouchDatabase) DeleteCluster(clusterID string) error {
+	if db.currentBucket == nil {
+		if db.clusterBucketName == "" {
+			db.clusterBucketName = clusterBucketName
+		}
+		if err := db.getBucket(db.clusterBucketName); err != nil {
+			return err
+		}
+	}
+
+	err := db.getBucket(db.clusterBucketName)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.currentBucket.Remove(clusterID, 0)
+	println(clusterID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -378,7 +432,7 @@ func (db CouchDatabase) UpdateProject(project *proto.Project) error {
 	}
 
 	var cas gocb.Cas
-	cas, err := db.currentBucket.Replace(project.Name, project, cas, 0)
+	cas, err := db.currentBucket.Replace(project.ID, project, cas, 0)
 
 	return err
 }

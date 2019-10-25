@@ -16,7 +16,6 @@ before_script:
 
 stages:
   - test
-  - deploy
 
 
 runtests:
@@ -24,9 +23,3 @@ runtests:
   script:
     - pwd
     - go test ./src/handlers/ -cover
-
-
-deployapp:
-  stage: deploy
-  script:
-    - echo "Deploying the code"

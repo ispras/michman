@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"net/http"
@@ -18,10 +18,10 @@ const (
 )
 
 type GrpcClient interface {
-	GetID(c *protobuf.Cluster) (int32, error)
-	StartClusterCreation(c *protobuf.Cluster)
-	StartClusterDestroying(c *protobuf.Cluster)
-	StartClusterModification(c *protobuf.Cluster)
+	GetID(c *proto.Cluster) (int32, error)
+	StartClusterCreation(c *proto.Cluster)
+	StartClusterDestroying(c *proto.Cluster)
+	StartClusterModification(c *proto.Cluster)
 }
 
 type HttpServer struct {
@@ -32,13 +32,13 @@ type HttpServer struct {
 
 type serviceExists struct {
 	exists  bool
-	service *protobuf.Service
+	service *proto.Service
 }
 
-func ValidateCluster(cluster *protobuf.Cluster) bool {
+func ValidateCluster(cluster *proto.Cluster) bool {
 	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
 
-	if !validName(cluster.Name) {
+	if !validName(cluster.DisplayName) {
 		log.Print("ERROR: bad name for cluster. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol.")
 		return false
 	}
@@ -58,11 +58,29 @@ func ValidateCluster(cluster *protobuf.Cluster) bool {
 	return true
 }
 
-func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	hS.Logger.Print("Get /projects/", projectName, "/clusters GET")
+func (hS HttpServer) getCluster(projectID, idORname string) (*proto.Cluster, error) {
+	is_uuid := true
+	_, err := uuid.Parse(idORname)
+	if err != nil {
+		is_uuid = false
+	}
 
-	project, err := hS.Db.ReadProject(projectName)
+	var cluster *proto.Cluster
+
+	if is_uuid {
+		cluster, err = hS.Db.ReadCluster(idORname)
+	} else {
+		cluster, err = hS.Db.ReadClusterByName(projectID, idORname)
+	}
+
+	return cluster, err
+}
+
+func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	projectIdOrName := params.ByName("projectIdOrName")
+	hS.Logger.Print("Get /projects/", projectIdOrName, "/clusters GET")
+
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -70,7 +88,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -94,10 +112,10 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 }
 
 func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	hS.Logger.Print("Get /project/" + projectName + "/clusters POST")
+	projectIdOrName := params.ByName("projectIdOrName")
+	hS.Logger.Print("Get /project/" + projectIdOrName + "/clusters POST")
 
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -105,12 +123,12 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	var c protobuf.Cluster
+	var c *proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&c)
 	if err != nil {
 		hS.Logger.Print("ERROR:")
@@ -121,43 +139,40 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	// validate struct
-	if !ValidateCluster(&c) {
+	if !ValidateCluster(c) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	//check, that cluster with such name doesn't exist
-	clusters, err := hS.Db.ReadProjectClusters(project.ID)
+	searchedName := c.DisplayName + "-" + project.Name
+	cluster, err := hS.Db.ReadClusterByName(project.ID, searchedName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	existedClusterInd := CLUSTER_DIDNT_EXIST
+	clusterExists := false
 
-	for i := 0; i < len(clusters); i++ {
-		hS.Logger.Print(clusters[i].Name)
-		if clusters[i].Name == c.Name {
-			existedClusterInd = i
-			if clusters[i].EntityStatus != utils.StatusFailed {
-				hS.Logger.Print("Cluster with this name exists in this project")
+	if cluster.Name != "" {
+		clusterExists = true
+		if cluster.EntityStatus != utils.StatusFailed {
+			hS.Logger.Print("Cluster with this name exists in this project")
+			w.WriteHeader(http.StatusBadRequest)
+			enc := json.NewEncoder(w)
+			err := enc.Encode("Cluster with this name exists in this project")
+			if err != nil {
+				hS.Logger.Print(err)
 				w.WriteHeader(http.StatusBadRequest)
-				enc := json.NewEncoder(w)
-				err := enc.Encode("Cluster with this name exists in this project")
-				if err != nil {
-					hS.Logger.Print(err)
-					w.WriteHeader(http.StatusBadRequest)
-				}
-				return
 			}
-			break
+			return
 		}
 	}
 
 	// If cluster was failed
-	if existedClusterInd != CLUSTER_DIDNT_EXIST {
-		c = clusters[existedClusterInd]
+	if clusterExists {
+		c = cluster
 	} else {
 		cUuid, err := uuid.NewRandom()
 		if err != nil {
@@ -175,15 +190,18 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		}
 
 		c.ProjectID = project.ID
+		c.Name = c.DisplayName + "-" + project.Name
 	}
 
 	c.EntityStatus = utils.StatusInited
-	err = hS.Db.WriteCluster(&c)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+	if !clusterExists {
+		err = hS.Db.WriteCluster(c)
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	}
-	go hS.Gc.StartClusterCreation(&c)
+	go hS.Gc.StartClusterCreation(c)
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
@@ -191,11 +209,11 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 }
 
 func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	clusterName := params.ByName("clusterName")
-	hS.Logger.Print("Get /projects/"+projectName+"/clusters/", clusterName, " GET")
+	projectIdOrName := params.ByName("projectIdOrName")
+	clusterIdOrName := params.ByName("clusterIdOrName")
+	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " GET")
 
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -203,37 +221,28 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	// reading project info from database
-	clusters, err := hS.Db.ReadProjectClusters(project.ID)
+	// reading cluster info from database
+	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	clusterInd := CLUSTER_DIDNT_EXIST
-
-	for i := 0; i < len(clusters); i++ {
-		if clusters[i].Name == clusterName {
-			clusterInd = i
-			break
-		}
-	}
-
-	if clusterInd == CLUSTER_DIDNT_EXIST {
-		hS.Logger.Printf("Cluster with name '%s' not found", clusterName)
+	if cluster.Name == "" {
+		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
-	err = enc.Encode(clusters[clusterInd])
+	err = enc.Encode(cluster)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -242,11 +251,11 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 }
 
 func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	clusterName := params.ByName("clusterName")
-	hS.Logger.Print("Get /projects/"+projectName+"/clusters/", clusterName, " PUT")
+	projectIdOrName := params.ByName("projectIdOrName")
+	clusterIdOrName := params.ByName("clusterIdOrName")
+	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " PUT")
 
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -254,7 +263,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -262,41 +271,28 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//check that cluster exists
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
-	clusters, err := hS.Db.ReadProjectClusters(project.ID)
+	// reading cluster info from database
+	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	clusterInd := CLUSTER_DIDNT_EXIST
-
-	for i := 0; i < len(clusters); i++ {
-		if clusters[i].Name == clusterName {
-			clusterInd = i
-			if clusters[i].EntityStatus != utils.StatusCreated && clusters[i].EntityStatus != utils.StatusFailed {
-				errMessage := "Status of cluster to update must be 'CREATED' or 'FAILED'"
-				hS.Logger.Print(errMessage)
-				w.WriteHeader(http.StatusBadRequest)
-				enc := json.NewEncoder(w)
-				err = enc.Encode(errMessage)
-				return
-			}
-			break
-		}
+	if cluster.Name == "" {
+		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterIdOrName)
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 
-	if clusterInd == CLUSTER_DIDNT_EXIST {
-		errMessage := "Cluster didn't found"
-		hS.Logger.Print(errMessage)
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		err = enc.Encode(errMessage)
+	if cluster.EntityStatus != utils.StatusCreated && cluster.EntityStatus != utils.StatusFailed {
+		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for UPDATE")
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	// validate request struct
-	var newC protobuf.Cluster
+	var newC proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&newC)
 	if err != nil {
 		errMessage := "Invalid JSON"
@@ -307,17 +303,20 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	if !ValidateCluster(&newC) {
-		errMessage := "JSON isn't correct"
-		hS.Logger.Print(errMessage)
+	if newC.ID != "" || newC.Name != "" || newC.DisplayName != "" || newC.EntityStatus != "" ||
+		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
-		err = enc.Encode(errMessage)
+		err = enc.Encode("This fields cannot be updated")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		return
 	}
 
 	//appending old services which does not exist in new cluster configuration
-	var serviceTypesNew = map[string]serviceExists{
+	var serviceTypesOld = map[string]serviceExists{
 		utils.ServiceTypeCassandra: {
 			exists:  false,
 			service: nil,
@@ -344,28 +343,31 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		},
 	}
 
-	newC.ID = clusters[clusterInd].ID
-	for _, s := range newC.Services {
+	for _, s := range cluster.Services {
 		sUuid, err := uuid.NewRandom()
 		if err != nil {
 			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
 		}
 		s.ID = sUuid.String()
-		serviceTypesNew[s.Type] = serviceExists{
+		serviceTypesOld[s.Type] = serviceExists{
 			exists:  true,
 			service: s,
 		}
 	}
 
-	for _, s := range clusters[clusterInd].Services {
-		if serviceTypesNew[s.Type].exists == false {
-			newC.Services = append(newC.Services, s)
+	for _, s := range newC.Services {
+		if serviceTypesOld[s.Type].exists == false {
+			cluster.Services = append(cluster.Services, s)
 		}
 	}
 
+	if newC.Description != "" {
+		cluster.Description = newC.Description
+	}
+
 	newC.EntityStatus = utils.StatusInited
-	go hS.Gc.StartClusterModification(&newC)
+	go hS.Gc.StartClusterModification(cluster)
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
@@ -373,11 +375,11 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 }
 
 func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	projectName := params.ByName("projectName")
-	clusterName := params.ByName("clusterName")
-	hS.Logger.Print("Get /projects/"+projectName+"/clusters/", clusterName, " PUT")
+	projectIdOrName := params.ByName("projectIdOrName")
+	clusterIdOrName := params.ByName("clusterIdOrName")
+	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " DELETE")
 
-	project, err := hS.Db.ReadProject(projectName)
+	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -385,49 +387,35 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectName)
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	clusters, err := hS.Db.ReadProjectClusters(project.ID)
+	// reading cluster info from database
+	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	clusterInd := CLUSTER_DIDNT_EXIST
-
-	for i := 0; i < len(clusters); i++ {
-		if clusters[i].Name == clusterName {
-			clusterInd = i
-			if clusters[i].EntityStatus != utils.StatusCreated && clusters[i].EntityStatus != utils.StatusFailed {
-				errMessage := "Status of cluster to update must be 'CREATED' or 'FAILED'"
-				hS.Logger.Print(errMessage)
-				w.WriteHeader(http.StatusBadRequest)
-				enc := json.NewEncoder(w)
-				err = enc.Encode(errMessage)
-				return
-			}
-			break
-		}
-	}
-
-	if clusterInd == CLUSTER_DIDNT_EXIST {
-		errMessage := "Cluster didn't found"
-		hS.Logger.Print(errMessage)
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		err = enc.Encode(errMessage)
+	if cluster.Name == "" {
+		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterIdOrName)
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	clusters[clusterInd].EntityStatus = utils.StatusStopping
+	if cluster.EntityStatus != utils.StatusCreated && cluster.EntityStatus != utils.StatusFailed {
+		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for DELETE")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
-	go hS.Gc.StartClusterDestroying(&clusters[clusterInd])
+	cluster.EntityStatus = utils.StatusStopping
+
+	go hS.Gc.StartClusterDestroying(cluster)
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(clusters[clusterInd])
+	enc.Encode(cluster)
 }
-

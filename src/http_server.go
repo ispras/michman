@@ -39,9 +39,9 @@ func main() {
 
 	router.GET("/projects/:projectIdOrName/clusters", hS.ClustersGet)
 	router.POST("/projects/:projectIdOrName/clusters", hS.ClusterCreate)
-	router.GET("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersGetByName)
-	router.PUT("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersUpdate)
-	router.DELETE("/projects/:projectIdOrName/clusters/:clusterName", hS.ClustersDelete)
+	router.GET("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersGetByName)
+	router.PUT("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersUpdate)
+	router.DELETE("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersDelete)
 
 	router.GET("/templates", hS.TemplatesGetList)
 	router.POST("/templates", hS.TemplateCreate)

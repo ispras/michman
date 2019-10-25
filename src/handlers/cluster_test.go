@@ -29,11 +29,11 @@ func TestClustersGet(t *testing.T) {
 
 	projectTestID := "someID123"
 
-	mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
+	mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 	mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return([]protobuf.Cluster{}, nil)
 
 	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-	hS.ClustersGet(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+	hS.ClustersGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -43,6 +43,7 @@ func TestClustersGet(t *testing.T) {
 func TestClusterCreate(t *testing.T) {
 	l := log.New(os.Stdout, "TestClusterCreate: ", log.Ldate|log.Ltime)
 	projectName := "testProjectName"
+	projectID := "test-TEST-UUID-123"
 
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
@@ -50,7 +51,7 @@ func TestClusterCreate(t *testing.T) {
 
 	testClusterName := "spark-test"
 	testCluster := []byte(`{
-		"Name":"` + testClusterName + `",
+		"DisplayName":"` + testClusterName + `",
 		"EntityStatus": "some-status",
 		"services":[
 		{
@@ -77,10 +78,10 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{}, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusNoContent, response.Code)
@@ -92,10 +93,10 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: "NotEmptyName"}, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusBadRequest, response.Code)
@@ -107,13 +108,13 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: "NotEmptyName"}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(gomock.Any()).Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
+		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
 			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -135,16 +136,15 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusFailed,
-			ID: "some_ID_123", ProjectID: "test-TEST-UUID-123"}}
+		var existedCluster = protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusFailed,
+			ID: "some_ID_123", ProjectID: projectID}
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: "NotEmptyName"}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(gomock.Any()).Return(existedCluster, nil)
-		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
+		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
 			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -166,14 +166,14 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusCreated,
-			ID: "some_ID_123", ProjectID: "test-TEST-UUID-123"}}
+		var existedCluster = protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusCreated,
+			ID: "some_ID_123", ProjectID: projectID}
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: "NotEmptyName"}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(gomock.Any()).Return(existedCluster, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
+		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusBadRequest, response.Code)
@@ -185,10 +185,10 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: "NotEmptyName"}, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectName", Value: projectName}})
+		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
@@ -209,10 +209,10 @@ func TestClustersGetByName(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/projects/"+projectName+"/clusters"+clusterName, nil)
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{}, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectName", Value: projectName},
+		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterName", Value: clusterName}})
 
 		if response.Code != http.StatusNoContent {
@@ -225,14 +225,14 @@ func TestClustersGetByName(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		projectTestID := "someID123"
-		var testProjectClusters = []protobuf.Cluster{protobuf.Cluster{Name: clusterName}}
+		var testProjectClusters = protobuf.Cluster{Name: clusterName}
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return(testProjectClusters, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
+		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectName", Value: projectName},
-			{Key: "clusterName", Value: clusterName}})
+		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
+			{Key: "clusterIdOrName", Value: clusterName}})
 
 		if response.Code != http.StatusOK {
 			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -244,15 +244,14 @@ func TestClustersGetByName(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		projectTestID := "someID123"
-		anotherClusterName := "somethingElse"
-		var testProjectClusters = []protobuf.Cluster{protobuf.Cluster{Name: anotherClusterName}}
+		var testProjectClusters = protobuf.Cluster{}
 
-		mockDatabase.EXPECT().ReadProject(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return(testProjectClusters, nil)
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
+		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectName", Value: projectName},
-			{Key: "clusterName", Value: clusterName}})
+		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
+			{Key: "clusterIdOrName", Value: clusterName}})
 
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusNoContent, response.Code)

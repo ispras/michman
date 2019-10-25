@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
+	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"google.golang.org/grpc"
 )
 
@@ -107,6 +107,7 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 		gc.logger.Print(err)
 	}
 }
+
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
 func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
@@ -141,7 +142,7 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	}
 
 	gc.logger.Printf("Sending to db-service delete request for %s cluster\n", c.Name)
-	err = gc.Db.DeleteCluster(c.Name)
+	err = gc.Db.DeleteCluster(c.ID)
 	if err != nil {
 		gc.logger.Print(err)
 	}
