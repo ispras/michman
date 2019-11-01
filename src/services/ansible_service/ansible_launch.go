@@ -426,8 +426,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Print(string(ansibleArgs))
-
+	
 	cmdName := utils.AnsiblePlaybookCmd
 	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(ansibleArgs)}
 
@@ -474,7 +473,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	}
 
 	//Get Master IP for Cluster create or update action and save it
-	if action == actionCreate || action == actionUpdate {
+	if ansibleOk && (action == actionCreate || action == actionUpdate) {
 
 		var v = map[string]string {
 			"cluster_name": cluster.Name,

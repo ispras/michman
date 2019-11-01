@@ -114,7 +114,7 @@ func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
 func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRunner_DeleteServer) error {
 	aS.logger.Print("Getting delete cluster request...")
 	aS.logger.Print("Cluster info:")
-	in.PrintClusterData()
+	in.PrintClusterData(aS.logger)
 
 	aS.logger.Print("Getting vault secrets...")
 
@@ -163,7 +163,7 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRunner_UpdateServer) error {
 	aS.logger.Print("Getting update cluster request...")
 	aS.logger.Print("Cluster info:")
-	in.PrintClusterData()
+	in.PrintClusterData(aS.logger)
 
 	aS.logger.Print("Getting vault secrets...")
 
@@ -210,7 +210,7 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRunner_CreateServer) error {
 	aS.logger.Print("Getting create cluster request...")
 	aS.logger.Print("Cluster info:")
-	in.PrintClusterData()
+	in.PrintClusterData(aS.logger)
 
 	aS.logger.Print("Getting vault secrets...")
 

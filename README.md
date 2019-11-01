@@ -57,7 +57,7 @@ Openstack (os_key) secrets includes following keys:
 * **OS_SWIFT_PASSWORD** -- optional 
 
 Ssh (ssh_key) secrets includes following keys:
-* **id_rsa** -- private ssh key for Ansible commands
+* **key_bgt** -- private ssh key for Ansible commands
 
 Couchbase (cb_key) secretes includes following keys:
 * **clusterBucket** -- name of the bucket storing clusters
