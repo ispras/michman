@@ -76,6 +76,7 @@ func (hS HttpServer) getCluster(projectID, idORname string) (*proto.Cluster, err
 	return cluster, err
 }
 
+
 func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, "/clusters GET")
@@ -243,6 +244,48 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	w.WriteHeader(http.StatusOK)
 	enc := json.NewEncoder(w)
 	err = enc.Encode(cluster)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	projectIdOrName := params.ByName("projectIdOrName")
+	clusterIdOrName := params.ByName("clusterIdOrName")
+	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, "/status", " GET")
+
+	project, err := hS.getProject(projectIdOrName)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if project.Name == "" {
+		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// reading cluster info from database
+	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if cluster.Name == "" {
+		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterIdOrName)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	//__, err := fmt.Fprintf(w, cluster.EntityStatus)
+	_, err = w.Write([]byte(cluster.EntityStatus))
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)

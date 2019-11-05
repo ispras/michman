@@ -2,11 +2,13 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	vaultapi "github.com/hashicorp/vault/api"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -259,7 +261,15 @@ func (aS *ansibleService) GetMasterIP(in *protobuf.Cluster, stream protobuf.Ansi
 }
 
 func main() {
-	ansibleServiceLogger := log.New(os.Stdout, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
+	// create a multiwriter which writes to stout and a file simultaneously
+	logFile, err := os.OpenFile("logs/ansible_service.log", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Println("Can't create a log file. Exit...")
+		os.Exit(1)
+	}
+	mw := io.MultiWriter(os.Stdout, logFile)
+
+	ansibleServiceLogger := log.New(mw, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
 	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
 

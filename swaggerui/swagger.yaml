@@ -20,6 +20,7 @@ tags:
   - name: services
   - name: configs
   - name: templates
+  - name: logs
 paths:
   /projects:
     get:
@@ -269,7 +270,28 @@ paths:
       responses:
         200:
           description: OK
-
+  /projects/{projectId}/clusters/{clusterName}/status:
+    get:
+      tags:
+        - cluster
+      summary: Получение информации о статусе конкретного кластера
+      description: "Метод возращает статус кластера с именем clusterName."
+      parameters:
+        - name: clusterName
+          description: "Имя кластера."
+          in: path
+          type: string
+          required: true
+        - name: projectId
+          description: "ID проекта."
+          in: path
+          type: string
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: "OK"
   /projects/{projectId}/cluster/{clusterName}/export:
     get:
       tags:
@@ -894,6 +916,33 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ServiceConfigVersion'
+  /logs/http_server:
+    get:
+      tags:
+        - logs
+      summary: Возвращает лог http сервера.
+      description: Возвращает лог http сервера.
+      responses:
+        200:
+          description: OK
+  /logs/ansible_service:
+    get:
+      tags:
+        - logs
+      summary: Возвращает лог сервиса, отправляющего запросы ansible.
+      description: Возвращает лог сервиса, отправляющего запросы ansible.
+      responses:
+        200:
+          description: OK
+  /logs/ansible_output:
+    get:
+      tags:
+        - logs
+      summary: Возвращает лог выполнения последнего ansible сценария.
+      description: Возвращает лог выполнения последнего ansible сценария.
+      responses:
+        200:
+          description: OK
 
 definitions:
   Clusters:

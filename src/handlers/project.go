@@ -4,12 +4,24 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+	"log"
+	"regexp"
 	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"net/http"
 	//"regexp"
 )
+
+func ValidateProject(project *proto.Project) bool {
+	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
+
+	if !validName(project.DisplayName) {
+		log.Print("ERROR: bad name for project. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol.")
+		return false
+	}
+	return true
+}
 
 func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /projects GET")
@@ -63,14 +75,12 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	// validate struct
-	/*
-		if !ValidateCluster(&c) {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	*/
 
+	if !ValidateProject(&p) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	p.Name = p.DisplayName
 	//check, that project with such name doesn't exist
 	dbRes, err := hS.Db.ReadProjectByName(p.Name)
 	if err != nil {

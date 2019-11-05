@@ -446,7 +446,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 
 	scanner := bufio.NewScanner(stdout)
 
-	f, err := os.Create("ansible_output.txt")
+	f, err := os.Create("logs/ansible_output.log")
 	go func() {
 		for scanner.Scan() {
 			_, err := f.WriteString(scanner.Text() + "\n")
