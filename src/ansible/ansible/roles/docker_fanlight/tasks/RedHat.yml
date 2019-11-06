@@ -1,0 +1,19 @@
+---
+# tasks for Centos 7
+- name: Install necessary packages
+  yum:
+    name:
+      - "yum-utils"
+      - "device-mapper-persistent-data"
+      - lvm2
+    state: latest
+    update_cache: yes
+
+- name: Add repository
+  command: "yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo"
+
+- name: Install docker
+  yum:
+    name: "docker-ce"
+    state: latest
+    update_cache: yes

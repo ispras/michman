@@ -1,0 +1,11 @@
+---
+# tasks specific to Ubuntu 16.04
+
+- name: Install pip
+  apt:
+    name:
+      - "python-setuptools"
+      - "python-pip"
+      - "python3-setuptools"
+      - "python3-pip"
+    state: latest

@@ -384,6 +384,10 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeFanlight: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	for _, s := range cluster.Services {

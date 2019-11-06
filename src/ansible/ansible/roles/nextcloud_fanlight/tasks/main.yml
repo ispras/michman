@@ -1,0 +1,66 @@
+---
+- name: Log into registry
+  docker_login:
+    registry: "{{ nextcloud_registry }}"
+    username: "{{ nextcloud_registry_user }}"
+    password: "{{ nextcloud_registry_user_password }}"
+
+- name: Create mariadb container
+  docker_container:
+    name: "mariadb"
+    image: "{{ mariadb_image }}"
+    env:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: nextcloud
+      MARIADB_USER: nc_user
+      MARIADB_PASSWORD: nc_password
+    restart_policy: always
+
+- name: Create nextcloud container
+  docker_container:
+    name: "nextcloud"
+    image: "{{ nextcloud_image }}"
+    restart: yes
+    env:
+      MYSQL_HOST: mariadb
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nc_user
+      MYSQL_PASSWORD: nc_password
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: password
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ ansible_host }}"
+    links:
+      - "mariadb:mariadb"
+    ports:
+      - "8888:80"
+    restart_policy: always
+    volumes:
+      - /data:/external_data
+
+- name: Wait for nextcloud setup
+  command: curl {{ ansible_host }}:8888
+  register: result
+  until: not result.rc
+  retries: 60
+  delay: 2
+
+- name: configure nextcloud apps
+  shell: "docker exec -u www-data nextcloud php occ app:{{ item.key }} {{ item.value }}"
+  with_items: "{{ nc_app_config }}"
+  ignore_errors: true
+
+- name: add nextcloud users group
+  shell: "docker exec -u www-data nextcloud php occ group:add {{ nextcloud_users_group }}"
+  ignore_errors: true
+
+- name: configure nextcloud social login to use keycloak (OpenID)
+  shell: "docker exec -u www-data nextcloud php occ config:app:set sociallogin \"custom_oidc_providers\" --value \"[ {{ custom_oidc_providers }} ]\""
+
+- name: create group directory
+  shell: "docker exec nextcloud mkdir -p {{ nextcloud_group_dir }}"
+
+- name: change group directory permissions
+  shell: "docker exec nextcloud chown -R www-data {{ nextcloud_group_dir }}"
+
+- name: configure external storage for group
+  shell: "docker exec -u www-data nextcloud php occ files_external:create weblab_shared local null::null -n --config datadir={{ nextcloud_group_dir }}"

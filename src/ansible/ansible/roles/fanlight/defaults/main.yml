@@ -1,0 +1,25 @@
+---
+fanlight_instance_id: fanlight-release-test
+fanlight_network: fanlight-control
+
+fanlight_registry_use: yes
+fanlight_registry: registry_ip
+fanlight_registry_user: registry_user
+fanlight_registry_user_password: registry_password
+
+# Images
+
+traefik_image: "traefik:1.7.19"
+couchdb_image: "couchdb:2.3.1"
+setup_couchdb_image: "registry_ip/fanlight-setup-couchdb:0.1"
+controller_image: "registry_ip/fanlight-controller:4.4.1"
+vnclient_image: "registry_ip/fanlight-vnclient:0.2.1"
+proxy_image: "registry_ip/fanlight-proxy:3.0.1"
+desktop_image: "registry_ip/fanlight-xvnc:1.1.17"
+
+# Root url where fanlight instance is deployed
+fanlight_instance_url: localhost
+
+# Fanlight settings
+
+user_home_dir_root: /fanlight-home

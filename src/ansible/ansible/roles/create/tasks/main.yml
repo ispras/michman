@@ -1,6 +1,6 @@
 ---
 
-- include: "{{act + '_' + sync}}.yml"
+- include: "{{ act + '_' + sync }}.yml"
   tags: create
 
 # Delay for correct connection to the created instances

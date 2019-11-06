@@ -1,0 +1,118 @@
+---
+- name: Create control network
+  docker_network:
+    name: "{{ fanlight_network }}"
+
+- name: Log into fanlight registry
+  docker_login:
+    registry: "{{ fanlight_registry }}"
+    username: "{{ fanlight_registry_user }}"
+    password: "{{ fanlight_registry_user_password }}"
+  when: fanlight_registry_use
+
+- name: Create CouchDB container
+  docker_container:
+    name: "couchdb-{{ fanlight_instance_id }}"
+    image: "{{ couchdb_image }}"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    restart_policy: "always"
+
+- name: Init CouchDB
+  docker_container:
+    name: "setup-couchdb-{{ fanlight_instance_id }}"
+    image: "{{ setup_couchdb_image }}"
+    env:
+      COUCH: "couchdb-{{ fanlight_instance_id }}:5984"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    auto_remove: yes
+
+- name: Create Controller
+  docker_container:
+    name: "controller-{{ fanlight_instance_id }}"
+    image: "{{ controller_image }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      RACK_ENV: production
+      FN_desktop_DefaultImage: "{{ desktop_image }}"
+      FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
+      FN_services_couch_uri: "http://couchdb-{{ fanlight_instance_id }}:5984"
+      FN_user_HomeDirRoot: "{{ user_home_dir_root }}"
+    labels:
+      traefik.enable: "true"
+      traefik.port: "4501"
+      traefik.frontend.rule: "PathPrefix:/controller"
+      traefik.docker.network: "{{ fanlight_network }}"
+    ports:
+      - "4501:4501"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    restart_policy: "always"
+
+- name: Create Proxy
+  docker_container:
+    name: "proxy-{{ fanlight_instance_id }}"
+    image: "{{ proxy_image }}"
+    env:
+      FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
+      FN_services_controller_uri: "http://controller-{{ fanlight_instance_id }}:4501"
+      FN_proxy_websockifyPath: "websockify"
+    labels:
+      traefik.enable: "true"
+      traefik.port: "4501"
+      traefik.frontend.rule: "PathPrefix:/proxy"
+      traefik.docker.network: "{{ fanlight_network }}"
+    ports:
+      - "4502:4501"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    restart_policy: "always"
+
+- name: Create Vnclient
+  docker_container:
+    name: "vnclient-{{ fanlight_instance_id }}"
+    image: "{{ vnclient_image }}"
+    env:
+      RACK_ENV: production
+      FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
+      FN_services_controller_uri: "http://controller-{{ fanlight_instance_id }}:4501"
+      FN_DesktopAccessURL: "{{ fanlight_instance_url }}/proxy/websockify"
+    labels:
+      traefik.enable: "true"
+      traefik.port: "4501"
+      traefik.frontend.rule: "PathPrefix:/vnclient"
+      traefik.docker.network: "{{ fanlight_network }}"
+    ports:
+      - "4503:4501"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    restart_policy: "always"
+
+- name: Create traefik configuration file
+  template:
+    src: traefik.j2
+    dest: /etc/traefik.toml
+    force: yes
+
+- name: Create Traefik
+  docker_container:
+    name: "traefik-{{ fanlight_instance_id }}"
+    image: "{{ traefik_image }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/traefik.toml:/etc/traefik/traefik.toml
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    networks:
+      - name: "{{ fanlight_network }}"
+    purge_networks: yes
+    restart_policy: "always"

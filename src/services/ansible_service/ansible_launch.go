@@ -100,6 +100,7 @@ type AnsibleExtraVars struct {
 	SparkWorkerMemMb         int                 `json:"spark_worker_mem_mb,omitempty"`
 	IgniteMemory             int                 `json:"ignite_memory,omitempty"`
 	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
+	DeployFanlight           bool                `json:"create_fanlight"`
 }
 
 func GetElasticConnectorJar() string {
@@ -183,6 +184,10 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeFanlight: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	//iterating over services for looking, which services are presented
@@ -210,6 +215,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	extraVars.DeployJupyter = serviceTypes[utils.ServiceTypeJupyter].exists
 	extraVars.DeployIgnite = serviceTypes[utils.ServiceTypeIgnite].exists
 	extraVars.DeployJupyterhub = serviceTypes[utils.ServiceTypeJupyterhub].exists
+	extraVars.DeployFanlight = serviceTypes[utils.ServiceTypeFanlight].exists
 
 	//must be always async mode
 	extraVars.Sync = "async"
@@ -501,16 +507,49 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			log.Print("Error: ", err)
 		}
 
-		ip := findIP(outb.String())
-		if ip != "" {
-			log.Print("Master IP is: ", ip)
-			cluster.MasterIP = ip
+		masterIp := findIP(outb.String())
+		fanlightIp := ""
+		if extraVars.DeployFanlight {
+			v = map[string]string {
+				"cluster_name": cluster.Name,
+				"extended_role": "fanlight",
+			}
+			ipExtraVars, err = json.Marshal(v)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			cmdName = utils.AnsiblePlaybookCmd
+			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+			log.Print("Running ansible for getting fanlight IP...")
+			cmd := exec.Command(cmdName, args...)
+			var outb bytes.Buffer
+			cmd.Stdout = &outb
+
+			if err := cmd.Start(); err != nil {
+				log.Print("Error: ", err)
+			}
+
+			if err := cmd.Wait(); err != nil {
+				ansibleOk = false
+				log.Print("Error: ", err)
+			}
+
+			fanlightIp = findIP(outb.String())
+		}
+
+
+		if masterIp != "" {
+			log.Print("Master IP is: ", masterIp)
+			cluster.MasterIP = masterIp
 
 			//filling services URLs:
 
 			for i, service := range cluster.Services {
 				if service.Type == utils.ServiceTypeJupyter {
-					cluster.Services[i].URL = ip + ":" + jupyterPort
+					cluster.Services[i].URL = masterIp + ":" + jupyterPort
+				}
+				if service.Type == utils.ServiceTypeFanlight {
+					cluster.Services[i].ServiceURL = fanlightIp
 				}
 			}
 

@@ -1,0 +1,4 @@
+docker_repo_key: https://download.docker.com/linux/debian/gpg
+docker_repo: deb [arch=amd64] https://download.docker.com/linux/debian buster stable
+docker_users: ["ubuntu"]
+live_restore: yes

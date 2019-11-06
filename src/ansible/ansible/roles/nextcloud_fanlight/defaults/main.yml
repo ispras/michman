@@ -1,0 +1,27 @@
+---
+nextcloud_users_group: "users"
+nextcloud_group_dir: /external_data/group
+
+nextcloud_registry: registry_ip
+nextcloud_registry_user: registry_user
+nextcloud_registry_user_password: registry_password
+
+# images
+mariadb_image: "registry_ip/mariadb"
+nextcloud_image: "registry_ip/nextcloud"
+
+nc_app_config:
+  - { key: "disable", value: "survey_client" }
+  - { key: "disable", value: "firstrunwizard" }
+  - { key: "enable",  value: "admin_audit" }
+  - { key: "enable",  value: "files_pdfviewer" }
+  - { key: "install", value: "sociallogin" }
+  - { key: "enable",  value: "sociallogin" }
+  - { key: "enable",  value: "files_external" }
+
+custom_oidc_providers_url: 'http:\/\/127.0.0.1:8080\/auth\/realms'
+custom_oidc_providers_client: 'nxcloud'
+custom_oidc_providers_clientSecret: 'token'
+keycloak_realm: science
+
+custom_oidc_providers: '{\"name\": \"test1\", \"title\": \"OpenID\", \"authorizeUrl\": \"{{ custom_oidc_providers_url }}\/{{ keycloak_realm }}\/protocol\/openid-connect\/auth\", \"tokenUrl\": \"{{ custom_oidc_providers_url }}\/{{ keycloak_realm }}\/protocol\/openid-connect\/token\", \"clientId\": \"{{ custom_oidc_providers_client }}\", \"clientSecret\": \"{{ custom_oidc_providers_clientSecret }}\", \"scope\": \"openid\", \"defaultGroup\": \"{{ nextcloud_users_group }}\"}'

@@ -9,9 +9,7 @@
         name: os_facts
       when: act != "destroy"
 
-    - debug: var=create_cluster
-
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves:{{ cluster_name }}_fanlight"
   tasks:
     - include_role:
         name: deploy_ssh
@@ -124,3 +122,18 @@
           discovery:
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic
+
+- hosts: "{{ cluster_name }}_fanlight"
+  become: yes
+  vars:
+    fanlight_instance_url: localhost
+    user_home_dir_root: /home/ubuntu/tmp/fanlight-home
+    fanlight_registry_user: registry_user
+    fanlight_registry_user_password: registry_password
+    live_restore: yes
+  roles:
+    - docker_fanlight
+#    - python_fanlight
+#    - docker_configure
+    - fanlight
+    - nextcloud_fanlight

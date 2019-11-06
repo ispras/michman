@@ -13,6 +13,7 @@ var servicesTypes = map[string]bool {
 	utils.ServiceTypeCassandra: true,
 	utils.ServiceTypeElastic: true,
 	utils.ServiceTypeJupyterhub: true,
+	utils.ServiceTypeFanlight: true,
 }
 
 func ValidateService(service *protobuf.Service) bool {

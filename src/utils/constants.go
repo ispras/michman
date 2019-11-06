@@ -10,6 +10,7 @@ const (
 	ServiceTypeJupyter    string = "jupyter"
 	ServiceTypeJupyterhub string = "jupyterhub"
 	ServiceTypeElastic    string = "elastic"
+	ServiceTypeFanlight   string = "fanlight"
 
 	//supported spark configurations
 	SparkUseYarn         string = "use-yarn"
@@ -51,6 +52,8 @@ const (
 	AnsibleMainRole = "src/ansible/ansible/main.yml"
 	//ansible get master ip role path
 	AnsibleMasterIpRole = "src/ansible/ansible/get_master.yml"
+	//ansible get ip of any instance with role
+	AnsibleIpRole = "src/ansible/ansible/get_ip.yml"
 
 	//openstack secrets keys
 	OsAuthUrl       = "OS_AUTH_URL"

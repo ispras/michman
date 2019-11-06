@@ -1,0 +1,14 @@
+{
+  {% if nvidia_runtime %}
+  "runtimes": {
+    "nvidia": {
+      "path": "/usr/bin/nvidia-container-runtime",
+      "runtimeArgs": []
+    }
+  },
+  {% endif %}
+
+  {% if live_restore %}
+  "live-restore": true
+    {% endif %}
+}
