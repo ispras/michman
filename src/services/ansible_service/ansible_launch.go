@@ -444,83 +444,59 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	}
 
 	log.Print("Running ansible...")
-	ansibleCmd := exec.Command(cmdName, cmdArgs...)
-	stdout, err := ansibleCmd.StdoutPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
 
-	scanner := bufio.NewScanner(stdout)
-
+	// create output log
 	f, err := os.Create("logs/ansible_output.log")
-	go func() {
-		for scanner.Scan() {
-			_, err := f.WriteString(scanner.Text() + "\n")
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-	}()
 
-	ansibleOk := true
-	if err := ansibleCmd.Start(); err != nil {
-		ansibleOk = false
-		log.Print("Error: ", err)
-	}
-
-	if err := ansibleCmd.Wait(); err != nil {
-		ansibleOk = false
-		log.Print("Error: ", err)
-	}
-
-	err = f.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	//Get Master IP for Cluster create or update action and save it
-	if ansibleOk && (action == actionCreate || action == actionUpdate) {
-
-		var v = map[string]string {
-			"cluster_name": cluster.Name,
-		}
-
-		ipExtraVars, err := json.Marshal(v)
+	defer f.Close()
+	// retry on command fail
+	retries := cluster.NHosts + 1
+	success := false
+	for retry := int32(1); !success && retry <= retries; retry++ {
+		log.Printf("Try %v of %v", retry, retries)
+		ansibleCmd := exec.Command(cmdName, cmdArgs...)
+		stdout, err := ansibleCmd.StdoutPipe()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		cmdName := utils.AnsiblePlaybookCmd
-		args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(extraVars)}
+		scanner := bufio.NewScanner(stdout)
 
-		log.Print("Running ansible for getting master IP...")
-		cmd := exec.Command(cmdName, args...)
-		var outb bytes.Buffer
-		cmd.Stdout = &outb
+		go func() {
+			for scanner.Scan() {
+				_, err := f.WriteString(scanner.Text() + "\n")
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+		}()
 
-		if err := cmd.Start(); err != nil {
-			log.Print("Error: ", err)
-		}
-
-		if err := cmd.Wait(); err != nil {
+		ansibleOk := true
+		if err := ansibleCmd.Start(); err != nil {
 			ansibleOk = false
 			log.Print("Error: ", err)
 		}
 
-		masterIp := findIP(outb.String())
-		fanlightIp := ""
-		if extraVars.DeployFanlight {
-			v = map[string]string {
+		if err := ansibleCmd.Wait(); err != nil {
+			ansibleOk = false
+			log.Print("Error: ", err)
+		}
+
+		//Get Master IP for Cluster create or update action and save it
+		if action == actionCreate || action == actionUpdate {
+			var v = map[string]string{
 				"cluster_name": cluster.Name,
-				"extended_role": "fanlight",
 			}
-			ipExtraVars, err = json.Marshal(v)
+
+			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			cmdName = utils.AnsiblePlaybookCmd
-			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-			log.Print("Running ansible for getting fanlight IP...")
+
+			cmdName := utils.AnsiblePlaybookCmd
+			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
+
+			log.Print("Running ansible for getting master IP...")
 			cmd := exec.Command(cmdName, args...)
 			var outb bytes.Buffer
 			cmd.Stdout = &outb
@@ -534,41 +510,40 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 				log.Print("Error: ", err)
 			}
 
-			fanlightIp = findIP(outb.String())
+			ip := findIP(outb.String())
+			if ip != "" {
+				log.Print("Master IP is: ", ip)
+				cluster.MasterIP = ip
+
+				//filling services URLs:
+
+				for i, service := range cluster.Services {
+					if service.Type == utils.ServiceTypeJupyter {
+						cluster.Services[i].URL = ip + ":" + jupyterPort
+					}
+				}
+
+				log.Print("Saving master IP...")
+				err = aL.couchbaseCommunicator.WriteCluster(cluster)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				log.Print("There is no IP in Ansible output")
+			}
+
 		}
 
-
-		if masterIp != "" {
-			log.Print("Master IP is: ", masterIp)
-			cluster.MasterIP = masterIp
-
-			//filling services URLs:
-
-			for i, service := range cluster.Services {
-				if service.Type == utils.ServiceTypeJupyter {
-					cluster.Services[i].URL = masterIp + ":" + jupyterPort
-				}
-				if service.Type == utils.ServiceTypeFanlight {
-					cluster.Services[i].ServiceURL = fanlightIp
-				}
-			}
-
-			log.Print("Saving master IP...")
-			err = aL.couchbaseCommunicator.WriteCluster(cluster)
-			if err != nil {
-				log.Fatalln(err)
-			}
+		if ansibleOk {
+			log.Print("Launch: OK")
+			success = true
 		} else {
-			log.Print("There is no IP in Ansible output")
+			log.Print("Ansible has failed, check logs for mor information.")
 		}
-
 	}
-
-	if ansibleOk {
-		log.Print("Launch: OK")
+	if success {
 		return utils.AnsibleOk
 	} else {
-		log.Print("Ansible has failed, check logs for mor information.")
 		return utils.AnsibleFail
 	}
 }

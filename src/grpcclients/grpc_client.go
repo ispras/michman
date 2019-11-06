@@ -96,9 +96,12 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	}
 
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
-	newC, err := gc.Db.ReadCluster(c.Name)
+	newC, err := gc.Db.ReadCluster(c.ID)
 	if err != nil {
 		log.Fatalln(err)
+	}
+	if newC.Name == "" {
+		log.Fatalf("Cluster with ID %v not found\n", c.ID)
 	}
 
 	newC.EntityStatus = utils.StatusCreated
@@ -180,9 +183,12 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		return
 	}
-	newC, err := gc.Db.ReadCluster(c.Name)
+	newC, err := gc.Db.ReadCluster(c.ID)
 	if err != nil {
 		log.Fatalln(err)
+	}
+	if newC.Name == "" {
+		log.Fatalf("Cluster with ID %v not found\n", c.ID)
 	}
 	gc.logger.Printf("Sending to db-service new status for %s cluster\n", c.Name)
 	newC.EntityStatus = utils.StatusCreated

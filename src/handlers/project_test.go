@@ -34,7 +34,7 @@ func TestProjectsGetList(t *testing.T) {
 	}
 }
 
-func TestProjectsPost(t *testing.T) {
+func 	TestProjectsPost(t *testing.T)	 {
 	l := log.New(os.Stdout, "TestProjectsPost: ", log.Ldate|log.Ltime)
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
@@ -49,12 +49,7 @@ func TestProjectsPost(t *testing.T) {
 	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 	t.Run("Valid JSON", func(t *testing.T) {
-		testBody := []byte(`{
-									"Name": "test-project",
-									"DisplayName": "test-project-display",
-									"GroupId": 1,
-									"Description": "some description"
-								}`)
+		testBody := []byte(`{"Name": "test-project","DisplayName": "test-project","GroupId": 1,"Description": "some description"}`)
 		request, _ := http.NewRequest("POST", "/projects", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
