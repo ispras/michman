@@ -65,6 +65,18 @@ const (
 	OsUsername      = "OS_USERNAME"
 	OsSwiftUsername = "OS_SWIFT_USERNAME"
 	OsSwiftPassword = "OS_SWIFT_PASSWORD"
+	OsComputeApiVersion = "COMPUTE_API_VERSION"
+	OsNovaVersion = "NOVA_VERSION"
+	OsAuthType = "OS_AUTH_TYPE"
+	OsCloudname = "OS_CLOUDNAME"
+	OsIdentityApiVersion = "OS_IDENTITY_API_VERSION"
+	OsImageApiVersion = "OS_IMAGE_API_VERSION"
+	OsNoCache = "OS_NO_CACHE"
+	OsProjectDomainName = "OS_PROJECT_DOMAIN_NAME"
+	OsUserDomainName = "OS_USER_DOMAIN_NAME"
+	OsVolumeApiVersion = "OS_VOLUME_API_VERSION"
+	OsPythonwarnings = "PYTHONWARNINGS"
+	OsNoProxy = "no_proxy"
 
 	//ssh secrets keys
 	VaultSshKey = "key_bgt"
@@ -77,6 +89,10 @@ const (
 
 	//default IDs
 	CommonProjectID string = "None"
+
+	//Openstack stein version
+	OsSteinVersion string = "stein"
+	OsLibertyVersion string = "liberty"
 )
 
 var (

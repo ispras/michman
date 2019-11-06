@@ -20,6 +20,18 @@ type OsCredentials struct {
 	OsUserName      string
 	OsSwiftUserName string
 	OsSwiftPassword string
+	OsComputeApiVersion string
+	OsNovaVersion string
+	OsAuthType string
+	OsCloudname string
+	OsIdentityApiVersion string
+	OsImageApiVersion string
+	OsNoCache string
+	OsProjectDomainName string
+	OsUserDomainName string
+	OsVolumeApiVersion string
+	OsPythonwarnings string
+	OsNoProxy string
 }
 
 type AuthConfig struct {
@@ -36,6 +48,7 @@ type OsConfig struct {
 	OsImage        string `yaml:"os_image"`
 	FloatingIP     string `yaml:"floating_ip_pool"`
 	Flavor         string `yaml:"flavor"`
+	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
 }
 
 func (osCfg *OsConfig) MakeOsCfg() error {

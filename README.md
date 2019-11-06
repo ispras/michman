@@ -45,7 +45,7 @@ ssh_key: kv/ssh-keys
 cb_key: kv/couchbase/
 ```
 
-Openstack (os_key) secrets includes following keys:
+Openstack (os_key) secrets includes following keys for **Liberty** version:
 * **OS_AUTH_URL**
 * **OS_PASSWORD**
 * **OS_PROJECT_NAME**
@@ -55,6 +55,25 @@ Openstack (os_key) secrets includes following keys:
 * **OS_USERNAME** 
 * **OS_SWIFT_USERNAME** -- optional
 * **OS_SWIFT_PASSWORD** -- optional 
+
+Openstack (os_key) secrets includes following keys for **Stein** version:
+* **OS_AUTH_URL**
+* **OS_PASSWORD**
+* **OS_PROJECT_NAME**
+* **OS_REGION_NAME**
+* **OS_USERNAME** 
+* **COMPUTE_API_VERSION**
+* **NOVA_VERSION**
+* **OS_AUTH_TYPE**
+* **OS_CLOUDNAME**
+* **OS_IDENTITY_API_VERSION**
+* **OS_IMAGE_API_VERSION**
+* **OS_NO_CACHE**
+* **OS_PROJECT_DOMAIN_NAME**
+* **OS_USER_DOMAIN_NAME**
+* **OS_VOLUME_API_VERSION**
+* **PYTHONWARNINGS**
+* **no_proxy**
 
 Ssh (ssh_key) secrets includes following keys:
 * **key_bgt** -- private ssh key for Ansible commands
@@ -72,6 +91,7 @@ virtual_network: test
 os_image: 731c8c7d-47fd-4b69-bdb4-00415e3ccb00
 floating_ip_pool: test
 flavor: keystone.medium
+os_version: liberty
 ```
 
 Where:
@@ -80,6 +100,7 @@ Where:
 * **os_image** - ID of OS image
 * **floating_ip_pool** - floating IP pool name
 * **flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large)
+* **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
 ## Services
 
 Contains service for ansible launching.

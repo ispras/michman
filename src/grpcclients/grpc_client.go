@@ -80,6 +80,10 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	}
 
 	message, err := stream.Recv()
+	if err != nil {
+		gc.logger.Println(err)
+	}
+	//TODO: failed on next line
 	gc.logger.Printf("From ansible-service: %s", message.Status)
 
 	if err != nil || message.Status != "OK" {

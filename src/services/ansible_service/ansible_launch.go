@@ -377,53 +377,148 @@ func findIP(input string) string {
 	return regEx.FindString(input)
 }
 
+func setOsVars(osCreds *utils.OsCredentials, version string) error {
+	switch version {
+	case utils.OsSteinVersion:
+		err := os.Setenv(utils.OsAuthUrl, osCreds.OsAuthUrl)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsProjectName, osCreds.OsProjectName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsUsername, osCreds.OsUserName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsPassword, osCreds.OsPassword)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsRegionName, osCreds.OsRegionName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsIdentityApiVersion, osCreds.OsIdentityApiVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsImageApiVersion, osCreds.OsImageApiVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsNoCache, osCreds.OsNoCache)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsProjectDomainName, osCreds.OsProjectDomainName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsUserDomainName, osCreds.OsUserDomainName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsAuthType, osCreds.OsAuthType)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsCloudname, osCreds.OsCloudname)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsNovaVersion, osCreds.OsNovaVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsComputeApiVersion, osCreds.OsComputeApiVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsNoProxy, osCreds.OsNoProxy)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsVolumeApiVersion, osCreds.OsVolumeApiVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsPythonwarnings, osCreds.OsPythonwarnings)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	case utils.OsLibertyVersion:
+		err := os.Setenv(utils.OsAuthUrl, osCreds.OsAuthUrl)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsProjectName, osCreds.OsProjectName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsUsername, osCreds.OsUserName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsPassword, osCreds.OsPassword)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsRegionName, osCreds.OsRegionName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsTenantId, osCreds.OsTenantId)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsTenantName, osCreds.OsTenantName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if osCreds.OsSwiftUserName != "" {
+			err = os.Setenv(utils.OsSwiftUsername, osCreds.OsSwiftUserName)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+
+		if osCreds.OsSwiftPassword != "" {
+			err = os.Setenv(utils.OsSwiftPassword, osCreds.OsSwiftPassword)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object
 
 	//exporting ansible variables
-	err := os.Setenv("OS_AUTH_URL", osCreds.OsAuthUrl)
+	err := setOsVars(osCreds, osConfig.OsVersion)
 	if err != nil {
 		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_TENANT_ID", osCreds.OsTenantId)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_TENANT_NAME", osCreds.OsTenantName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_PROJECT_NAME", osCreds.OsProjectName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_USERNAME", osCreds.OsUserName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_PASSWORD", osCreds.OsPassword)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = os.Setenv("OS_REGION_NAME", osCreds.OsRegionName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	if osCreds.OsSwiftUserName != "" {
-		err = os.Setenv("OS_SWIFT_USERNAME", osCreds.OsSwiftUserName)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-
-	if osCreds.OsSwiftPassword != "" {
-		err = os.Setenv("OS_SWIFT_PASSWORD", osCreds.OsSwiftPassword)
-		if err != nil {
-			log.Fatalln(err)
-		}
 	}
 
 	//constructing ansible-playbook command

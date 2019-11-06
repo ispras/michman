@@ -34,32 +34,52 @@ type ansibleService struct {
 	vaultCommunicator utils.SecretStorage
 }
 
-func makeOsCreds(keyName string, vaultClient *vaultapi.Client) *utils.OsCredentials {
+func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *utils.OsCredentials {
 	secretValues, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
 		log.Fatalln(err)
 		return nil
 	}
-
 	var osCreds utils.OsCredentials
-	osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
-	osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)
-	osCreds.OsProjectName = secretValues.Data[utils.OsProjectName].(string)
-	osCreds.OsRegionName = secretValues.Data[utils.OsRegionName].(string)
-	osCreds.OsTenantId = secretValues.Data[utils.OsTenantId].(string)
-	osCreds.OsTenantName = secretValues.Data[utils.OsTenantName].(string)
-	osCreds.OsUserName = secretValues.Data[utils.OsUsername].(string)
+	switch version {
+	case utils.OsSteinVersion:
+		osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
+		osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)
+		osCreds.OsProjectName = secretValues.Data[utils.OsProjectName].(string)
+		osCreds.OsRegionName = secretValues.Data[utils.OsRegionName].(string)
+		osCreds.OsUserName = secretValues.Data[utils.OsUsername].(string)
+		osCreds.OsComputeApiVersion = secretValues.Data[utils.OsComputeApiVersion].(string)
+		osCreds.OsNovaVersion = secretValues.Data[utils.OsNovaVersion].(string)
+		osCreds.OsAuthType = secretValues.Data[utils.OsAuthType].(string)
+		osCreds.OsCloudname = secretValues.Data[utils.OsCloudname].(string)
+		osCreds.OsIdentityApiVersion = secretValues.Data[utils.OsIdentityApiVersion].(string)
+		osCreds.OsImageApiVersion = secretValues.Data[utils.OsImageApiVersion].(string)
+		osCreds.OsNoCache = secretValues.Data[utils.OsNoCache].(string)
+		osCreds.OsProjectDomainName = secretValues.Data[utils.OsProjectDomainName].(string)
+		osCreds.OsUserDomainName = secretValues.Data[utils.OsUserDomainName].(string)
+		osCreds.OsVolumeApiVersion = secretValues.Data[utils.OsVolumeApiVersion].(string)
+		osCreds.OsPythonwarnings = secretValues.Data[utils.OsPythonwarnings].(string)
+		osCreds.OsNoProxy = secretValues.Data[utils.OsNoProxy].(string)
+	case utils.OsLibertyVersion:
+		osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
+		osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)
+		osCreds.OsProjectName = secretValues.Data[utils.OsProjectName].(string)
+		osCreds.OsRegionName = secretValues.Data[utils.OsRegionName].(string)
+		osCreds.OsTenantId = secretValues.Data[utils.OsTenantId].(string)
+		osCreds.OsTenantName = secretValues.Data[utils.OsTenantName].(string)
+		osCreds.OsUserName = secretValues.Data[utils.OsUsername].(string)
+		if uname, ok := secretValues.Data[utils.OsSwiftUsername]; ok {
+			osCreds.OsSwiftUserName = uname.(string)
+		} else {
+			osCreds.OsSwiftUserName = ""
+		}
+		if pass, ok := secretValues.Data[utils.OsSwiftPassword]; ok {
+			osCreds.OsSwiftUserName = pass.(string)
+		} else {
+			osCreds.OsSwiftPassword = ""
+		}
+	}
 
-	if uname, ok := secretValues.Data[utils.OsSwiftUsername]; ok {
-		osCreds.OsSwiftUserName = uname.(string)
-	} else {
-		osCreds.OsSwiftUserName = ""
-	}
-	if pass, ok := secretValues.Data[utils.OsSwiftPassword]; ok {
-		osCreds.OsSwiftUserName = pass.(string)
-	} else {
-		osCreds.OsSwiftPassword = ""
-	}
 	return &osCreds
 }
 
@@ -118,6 +138,15 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
+	//getting openstack config info
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
+	if err != nil {
+		log.Fatalln(err)
+		return nil
+	}
+	//aS.logger.Print(osCreds)
+
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -128,17 +157,8 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 	keyName := vaultCfg.OsKey
 
-	osCreds := makeOsCreds(keyName, vaultClient)
+	osCreds := makeOsCreds(keyName, vaultClient, osCfg.OsVersion)
 	if osCreds == nil {
-		return nil
-	}
-	//aS.logger.Print(osCreds)
-
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
 		return nil
 	}
 
@@ -167,6 +187,14 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
+	//getting openstack config info
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
+	if err != nil {
+		log.Fatalln(err)
+		return nil
+	}
+
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -175,19 +203,13 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
-	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient)
+	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, osCfg.OsVersion)
 	if osCreds == nil {
 		return nil
 	}
 	//aS.logger.Print(osCreds)
 
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
-		return nil
-	}
+
 	//check file with ssh-key and create it if it doesn't exist
 	err = checkSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
@@ -214,6 +236,14 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
+	//getting openstack config info
+	var osCfg utils.OsConfig
+	err := osCfg.MakeOsCfg()
+	if err != nil {
+		log.Fatalln(err)
+		return nil
+	}
+
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -222,19 +252,12 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
-	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient)
+	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, osCfg.OsVersion)
 	if osCreds == nil {
 		return nil
 	}
 	//aS.logger.Print(osCreds)
 
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
-		return nil
-	}
 	//check file with ssh-key and create it if it doesn't exist
 	err = checkSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
