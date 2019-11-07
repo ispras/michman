@@ -131,6 +131,7 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 		hS.Logger.Print("Template with this ID doesnt exist")
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
 		err := enc.Encode("Template with this ID doesnt exists")
 		if err != nil {
 			hS.Logger.Print(err)
@@ -224,6 +225,7 @@ func (hS HttpServer) TemplatesGetList(w http.ResponseWriter, r *http.Request, pa
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) TemplateGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -259,4 +261,5 @@ func (hS HttpServer) TemplateGet(w http.ResponseWriter, r *http.Request, params 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }

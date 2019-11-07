@@ -110,6 +110,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -162,6 +163,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			hS.Logger.Print("Cluster with this name exists in this project")
 			w.WriteHeader(http.StatusBadRequest)
 			enc := json.NewEncoder(w)
+			w.Header().Set("Content-Type", "application/json")
 			err := enc.Encode("Cluster with this name exists in this project")
 			if err != nil {
 				hS.Logger.Print(err)
@@ -249,6 +251,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -279,12 +282,16 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 
 	if cluster.Name == "" {
 		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterIdOrName)
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte(utils.StatusMissing))
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	//__, err := fmt.Fprintf(w, cluster.EntityStatus)
 	_, err = w.Write([]byte(cluster.EntityStatus))
 	if err != nil {
 		hS.Logger.Print(err)
@@ -328,7 +335,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	if cluster.EntityStatus != utils.StatusCreated && cluster.EntityStatus != utils.StatusFailed {
+	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
 		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for UPDATE")
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -341,6 +348,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		errMessage := "Invalid JSON"
 		hS.Logger.Print(errMessage)
 		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
 		enc := json.NewEncoder(w)
 		err = enc.Encode(errMessage)
 		return
@@ -350,6 +358,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
 		err = enc.Encode("This fields cannot be updated")
 		if err != nil {
 			hS.Logger.Print(err)
@@ -453,7 +462,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	if cluster.EntityStatus != utils.StatusCreated && cluster.EntityStatus != utils.StatusFailed {
+	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
 		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for DELETE")
 		w.WriteHeader(http.StatusNoContent)
 		return

@@ -42,6 +42,7 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) getProject(idORname string) (*proto.Project, error) {
@@ -93,6 +94,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		hS.Logger.Print("Project with this name exists")
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
 		err := enc.Encode("Project with this name exists")
 		if err != nil {
 			hS.Logger.Print(err)
@@ -148,6 +150,7 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -180,6 +183,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	if p.Name != "" || p.ID != "" || p.GroupID != 0 || p.DisplayName != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
 		err = enc.Encode("This fields cannot be updated")
 		if err != nil {
 			hS.Logger.Print(err)
@@ -207,6 +211,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -238,6 +243,7 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 	if len(clusters) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
 		err = enc.Encode("Project has already had clusters. Delete them first")
 		if err != nil {
 			hS.Logger.Print(err)
@@ -261,4 +267,5 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 }

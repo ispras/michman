@@ -83,9 +83,10 @@ const (
 
 	//Entity statuses
 	StatusInited   = "INITED"
-	StatusCreated  = "CREATED"
+	StatusActive   = "ACTIVE"
 	StatusFailed   = "FAILED"
 	StatusStopping = "STOPPING"
+	StatusMissing  = "MISSING"
 
 	//default IDs
 	CommonProjectID string = "None"

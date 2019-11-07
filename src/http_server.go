@@ -19,7 +19,10 @@ const (
 	addressDBService      = "localhost:5001"
 )
 
+var VersionID string = "Default"
+
 func main() {
+	fmt.Printf("Build version: %v\n", VersionID)
 	// creating grpc client for communicating with services
 	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
@@ -73,6 +76,16 @@ func main() {
 	router.Handle("GET", "/logs/ansible_output", hS.ServeAnsibleOutput)
 	router.Handle("GET", "/logs/ansible_service", hS.ServeAnsibleServiceLog)
 	router.Handle("GET", "/logs/http_server", hS.ServeHttpServerLog)
+
+	// version of service
+	router.Handle("GET", "/version", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write([]byte(VersionID))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			hS.Logger.Println(err)
+		}
+	})
 
 
 	httpServerLogger.Print("Server starts to work")

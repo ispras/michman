@@ -166,7 +166,7 @@ func TestClusterCreate(t *testing.T) {
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		var existedCluster = protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusCreated,
+		var existedCluster = protobuf.Cluster{Name: testClusterName, EntityStatus: utils.StatusActive,
 			ID: "some_ID_123", ProjectID: projectID}
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
