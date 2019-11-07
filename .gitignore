@@ -118,3 +118,4 @@ src/ansible/files/keys/
 ansible_output.txt
 openstack_config.yaml
 vault.yaml
+logs/*.log
