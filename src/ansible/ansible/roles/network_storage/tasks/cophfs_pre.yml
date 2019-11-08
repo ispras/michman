@@ -1,0 +1,20 @@
+---
+- block: # Prepare Ceph repository
+  - name: Add Ceph repository key
+    apt_key:
+      url: "{{ cephfs_apt_key_url }}"
+      state: present
+
+  - name: Add Ceph repository
+    apt_repository:
+      repo: "{{ cephfs_deb_repository }}"
+      state: present
+
+
+- name: Ensure directory created
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    mode: 0755
+  with_items: "{{ cephfs_mounts }}"
+  when: cephfs_mounts is defined

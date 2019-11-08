@@ -1,0 +1,26 @@
+---
+weblab_name: "weblabs" #Shared dir for all weblabs users
+storage_type: nfs
+
+nfs_server_ip: "127.0.0.1"
+nfs_mountpath: "/home"
+nfs_mount_dir_name: "{{ weblab_name }}"
+nfs_url: "{{ nfs_server_ip }}:/home/{{ weblab_name }}"
+nfs_version: 3
+nfs_mount_opts: rsize=8192,wsize=8192,timeo=14,intr
+nfs_packages:
+  - nfs-common
+
+
+cephfs_version: nautilus
+cephfs_deb_repository: "deb https://download.ceph.com/debian-{{ cephfs_version }}/ {{ ansible_distribution_release }} main"
+cephfs_apt_key_url: https://download.ceph.com/keys/release.asc
+cephfs_packages:
+  - ceph-fs-common
+
+
+cephfs_mounts:
+  - src: 127.0.0.1:/
+    name: /home/
+    fstype: ceph
+    opts: name=cephfs_hpc,secretfile=/etc/ceph/ceph.key,_netdev,noatime,nocephx_require_signatures,nocephx_sign_messages

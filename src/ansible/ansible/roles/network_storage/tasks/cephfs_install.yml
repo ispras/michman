@@ -1,0 +1,8 @@
+---
+- name: Install CephFS {{ cephfs_version }}
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - "{{ cephfs_packages }}"

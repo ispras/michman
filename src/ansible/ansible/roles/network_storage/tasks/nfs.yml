@@ -1,0 +1,33 @@
+---
+- name: Install NFS
+  apt:
+    pkg: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - "{{ nfs_packages }}"
+
+
+
+- name: Create mountable dir
+  file:
+    path: "{{ nfs_mountpath }}"
+    state: directory
+    mode: 777
+    owner: root
+    group: root
+  tags: nfs
+
+
+- name: Mount NFS share
+  become: yes
+  mount:
+    fstype: nfs
+    path: "{{ nfs_mountpath }}"
+    src: "{{ nfs_url }}"
+    #   fstab: /etc/filesystems
+    opts: "vers={{ nfs_version }},{{ item.opts | default(nfs_mount_opts) }}"
+    state: mounted
+  tags: nfs
+
+

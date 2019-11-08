@@ -1,0 +1,10 @@
+- name: storage mount
+  include_tasks: "{{ storage_type }}.yml"
+  tags: storage
+
+
+- name: Creates directory for weblab-group
+  file:
+    path: "/home/{{ weblab_name }}"
+    state: directory
+

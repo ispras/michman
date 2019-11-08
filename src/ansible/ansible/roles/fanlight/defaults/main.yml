@@ -12,14 +12,18 @@ fanlight_registry_user_password: registry_password
 traefik_image: "traefik:1.7.19"
 couchdb_image: "couchdb:2.3.1"
 setup_couchdb_image: "registry_ip/fanlight-setup-couchdb:0.1"
-controller_image: "registry_ip/fanlight-controller:4.4.1"
-vnclient_image: "registry_ip/fanlight-vnclient:0.2.1"
-proxy_image: "registry_ip/fanlight-proxy:3.0.1"
+controller_image: "registry_ip/fanlight-controller:4.6.0"
+vnclient_image: "registry_ip/fanlight-vnclient:0.3.0"
+proxy_image: "registry_ip/fanlight-proxy:3.1.0"
 desktop_image: "registry_ip/fanlight-xvnc:1.1.17"
 
 # Root url where fanlight instance is deployed
-fanlight_instance_url: localhost
+fanlight_instance_url: "//{{ ansible_host }}"
+
+# This parameter (without protocol part and desktop id at the end)
+# is used to construct noVNC rfb connection url on the web page:
+#   (ws|wss)://{{DesktopAccessURL}}/{{desktop_id}}
+desktop_access_url: "{{ ansible_host }}"
 
 # Fanlight settings
-
-user_home_dir_root: /fanlight-home
+home_dirs_root: "/fanlight-home"

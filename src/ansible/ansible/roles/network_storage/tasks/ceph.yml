@@ -1,0 +1,4 @@
+---
+- include: cephfs_pre.yml
+- include: cephfs_install.yml
+- include: cephfs_post.yml

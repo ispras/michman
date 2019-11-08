@@ -20,7 +20,7 @@
   docker_container:
     name: "nextcloud"
     image: "{{ nextcloud_image }}"
-    restart: yes
+#    restart: yes
     env:
       MYSQL_HOST: mariadb
       MYSQL_DATABASE: nextcloud
@@ -35,7 +35,7 @@
       - "8888:80"
     restart_policy: always
     volumes:
-      - /data:/external_data
+      - /home:/external_data
 
 - name: Wait for nextcloud setup
   command: curl {{ ansible_host }}:8888
@@ -49,11 +49,17 @@
   with_items: "{{ nc_app_config }}"
   ignore_errors: true
 
+- name: remove default nextcloud files
+  shell: "docker exec -u www-data nextcloud bash -c 'rm -rf core/skeleton/*'"
+
 - name: add nextcloud users group
   shell: "docker exec -u www-data nextcloud php occ group:add {{ nextcloud_users_group }}"
   ignore_errors: true
 
 - name: configure nextcloud social login to use keycloak (OpenID)
+  shell: "docker exec -u www-data nextcloud php occ config:app:set files_external \"user_mounting_backends\" --value \"{{ nextcloud_user_mounting_backends_list }}\""
+
+- name: configure nextcloud external storage app
   shell: "docker exec -u www-data nextcloud php occ config:app:set sociallogin \"custom_oidc_providers\" --value \"[ {{ custom_oidc_providers }} ]\""
 
 - name: create group directory
@@ -63,4 +69,13 @@
   shell: "docker exec nextcloud chown -R www-data {{ nextcloud_group_dir }}"
 
 - name: configure external storage for group
-  shell: "docker exec -u www-data nextcloud php occ files_external:create weblab_shared local null::null -n --config datadir={{ nextcloud_group_dir }}"
+  shell: "docker exec -u www-data nextcloud php occ files_external:create {{ weblab_name }} local null::null -n --config datadir={{ nextcloud_group_dir }}"
+
+- name: update apt cache in nextcloud container
+  shell: "docker exec nextcloud apt update"
+
+- name: install sshd in nextcloud container
+  shell: "docker exec nextcloud apt install -y ssh"
+
+- name: start sshd in nextcloud container
+  shell: "docker exec nextcloud service ssh start"

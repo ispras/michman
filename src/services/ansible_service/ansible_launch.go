@@ -672,6 +672,20 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 				log.Print("There is no IP in Ansible output")
 			}
 
+			if fanlightIp != "" {
+				log.Print("Fanlight IP is: ", fanlightIp)
+				for i, service := range cluster.Services {
+					if service.Type == utils.ServiceTypeFanlight {
+						cluster.Services[i].ServiceURL = fanlightIp
+					}
+				}
+				log.Print("Saving fanlight IP...")
+				err = aL.couchbaseCommunicator.WriteCluster(cluster)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+
 		}
 
 		if ansibleOk {

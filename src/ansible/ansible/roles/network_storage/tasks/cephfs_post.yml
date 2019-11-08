@@ -1,0 +1,20 @@
+---
+- name: Creates directory
+  file:
+    path: /etc/ceph
+    state: directory
+
+- name: copy key file
+  template:
+    src: ceph.key
+    dest: "/etc/ceph/ceph.key"
+
+- name: Mount CephFS
+  mount:
+    name: "{{ item.name }}"
+    src: "{{ item.src }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.opts | default(omit) }}"
+    state: mounted
+  with_items: "{{ cephfs_mounts }}"
+  when: cephfs_mounts is defined

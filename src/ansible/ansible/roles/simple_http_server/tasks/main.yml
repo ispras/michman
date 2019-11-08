@@ -1,0 +1,7 @@
+---
+- name: kill running simple http server
+  shell: pkill -f "python3 -m http.server 8866"
+  ignore_errors: true
+
+- name: start simple http server in background to show docker logs
+  shell: cd /var/lib/docker/containers; nohup python3 -m http.server 8866 </dev/null >/dev/null 2>&1 &

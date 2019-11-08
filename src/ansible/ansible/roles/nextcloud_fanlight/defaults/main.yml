@@ -1,6 +1,10 @@
 ---
+weblab_name: "weblabs"
+
 nextcloud_users_group: "users"
-nextcloud_group_dir: /external_data/group
+nextcloud_group_dir: "/external_data/{{ weblab_name }}"
+nextcloud_user_mounting_backends_list: 'sftp,\OC\Files\Storage\SFTP_Key'
+
 
 nextcloud_registry: registry_ip
 nextcloud_registry_user: registry_user

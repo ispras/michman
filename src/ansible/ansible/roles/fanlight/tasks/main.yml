@@ -41,11 +41,14 @@
       FN_desktop_DefaultImage: "{{ desktop_image }}"
       FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
       FN_services_couch_uri: "http://couchdb-{{ fanlight_instance_id }}:5984"
-      FN_user_HomeDirRoot: "{{ user_home_dir_root }}"
+      FN_user_HomeDirRoot: "{{ home_dirs_root }}"
+      FN_docker_pullImageIfNotFound: "true"
+      FN_docker_registryAuth_username: "{{ fanlight_registry_user }}"
+      FN_docker_registryAuth_password: "{{ fanlight_registry_user_password }}"
     labels:
       traefik.enable: "true"
       traefik.port: "4501"
-      traefik.frontend.rule: "PathPrefix:/controller"
+      traefik.frontend.rule: "PathPrefixStrip:/controller"
       traefik.docker.network: "{{ fanlight_network }}"
     ports:
       - "4501:4501"
@@ -65,7 +68,7 @@
     labels:
       traefik.enable: "true"
       traefik.port: "4501"
-      traefik.frontend.rule: "PathPrefix:/proxy"
+      traefik.frontend.rule: "PathPrefixStrip:/proxy"
       traefik.docker.network: "{{ fanlight_network }}"
     ports:
       - "4502:4501"
@@ -82,11 +85,12 @@
       RACK_ENV: production
       FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
       FN_services_controller_uri: "http://controller-{{ fanlight_instance_id }}:4501"
-      FN_DesktopAccessURL: "{{ fanlight_instance_url }}/proxy/websockify"
+      FN_DesktopAccessURL: "{{ desktop_access_url }}/proxy"
+      FN_SiteBaseURL: "{{ fanlight_instance_url }}/vnclient"
     labels:
       traefik.enable: "true"
       traefik.port: "4501"
-      traefik.frontend.rule: "PathPrefix:/vnclient"
+      traefik.frontend.rule: "PathPrefixStrip:/vnclient"
       traefik.docker.network: "{{ fanlight_network }}"
     ports:
       - "4503:4501"
