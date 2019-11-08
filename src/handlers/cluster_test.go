@@ -26,13 +26,14 @@ func TestClustersGet(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	errHandler := HttpErrorHandler{}
 
 	projectTestID := "someID123"
 
 	mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 	mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return([]protobuf.Cluster{}, nil)
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 	hS.ClustersGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 	if response.Code != http.StatusOK {
@@ -48,6 +49,7 @@ func TestClusterCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	errHandler := HttpErrorHandler{}
 
 	testClusterName := "spark-test"
 	testCluster := []byte(`{
@@ -80,7 +82,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusNoContent {
@@ -95,7 +97,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -113,7 +115,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -143,7 +145,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -172,7 +174,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -187,7 +189,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -204,6 +206,7 @@ func TestClustersGetByName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	errHandler := HttpErrorHandler{}
 
 	t.Run("Project didn't exist", func(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/projects/"+projectName+"/clusters"+clusterName, nil)
@@ -211,7 +214,7 @@ func TestClustersGetByName(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterName", Value: clusterName}})
 
@@ -230,7 +233,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 
@@ -249,7 +252,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 

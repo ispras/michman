@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"regexp"
 	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
@@ -17,7 +16,6 @@ func ValidateProject(project *proto.Project) bool {
 	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
 
 	if !validName(project.DisplayName) {
-		log.Print("ERROR: bad name for project. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol.")
 		return false
 	}
 	return true
@@ -29,8 +27,8 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	hS.Logger.Print("Reading projects information from db...")
 	projects, err := hS.Db.ListProjects()
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -38,8 +36,8 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	enc := json.NewEncoder(w)
 	err = enc.Encode(projects)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -69,24 +67,22 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	var p proto.Project
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
-		hS.Logger.Print("ERROR:")
-		hS.Logger.Print(err)
-		hS.Logger.Print(r.Body)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
-
 	if !ValidateProject(&p) {
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 	p.Name = p.DisplayName
 	//check, that project with such name doesn't exist
 	dbRes, err := hS.Db.ReadProjectByName(p.Name)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -106,15 +102,16 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	// generating UUID for new project
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, err)
+		hS.Logger.Print(mess)
+		return
 	}
 	p.ID = pUuid.String()
 
 	err = hS.Db.WriteProject(&p)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -131,8 +128,8 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -146,8 +143,8 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 	enc := json.NewEncoder(w)
 	err = enc.Encode(project)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -159,8 +156,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -173,22 +170,14 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	var p proto.Project
 	err = json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
-		hS.Logger.Print("ERROR:")
-		hS.Logger.Print(err)
-		hS.Logger.Print(r.Body)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectFieldMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
 	if p.Name != "" || p.ID != "" || p.GroupID != 0 || p.DisplayName != "" {
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err = enc.Encode("This fields cannot be updated")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -198,8 +187,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	err = hS.Db.UpdateProject(project)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -207,8 +196,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	enc := json.NewEncoder(w)
 	err = enc.Encode(project)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -222,8 +211,8 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 	hS.Logger.Print("Reading project information from db...")
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -235,27 +224,21 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
 	if len(clusters) > 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err = enc.Encode("Project has already had clusters. Delete them first")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectWithClustersDel, UserErrorProjectWithClustersDelMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
 	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -263,8 +246,8 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 	enc := json.NewEncoder(w)
 	err = enc.Encode(project)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

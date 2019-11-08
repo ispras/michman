@@ -31,7 +31,7 @@ func main() {
 	gc.SetConnection(addressAnsibleService, addressDBService)
 
 	// create a multiwriter which writes to stout and a file simultaneously
-	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Println("Can't create a log file. Exit...")
 		os.Exit(1)
@@ -40,7 +40,10 @@ func main() {
 
 	httpServerLogger := log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
 
-	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
+	errHandler := handlers.HttpErrorHandler{}
+
+	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator},
+		ErrHandler: errHandler}
 
 	router := httprouter.New()
 
@@ -87,9 +90,7 @@ func main() {
 		}
 	})
 
-
 	httpServerLogger.Print("Server starts to work")
 	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))
-
 
 }

@@ -98,7 +98,10 @@ func (db CouchDatabase) ReadProject(projectID string) (*proto.Project, error) {
 	}
 
 	var project proto.Project
-	db.currentBucket.Get(projectID, &project)
+	_, err := db.currentBucket.Get(projectID, &project)
+	if err != nil {
+		return nil, err
+	}
 
 	return &project, nil
 }
@@ -136,9 +139,9 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 		}
 	}
 
-	db.currentBucket.Upsert(project.ID, project, 0)
+	_, err := db.currentBucket.Upsert(project.ID, project, 0)
 
-	return nil
+	return err
 }
 
 func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
@@ -178,7 +181,7 @@ func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, 
 		}
 	}
 
-	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, services from " + clusterBucketName +
+	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Services, MasterIP, Description from " + clusterBucketName +
 		" where ProjectID = '" + projectID + "'"
 	query := gocb.NewN1qlQuery(q)
 
@@ -213,8 +216,9 @@ func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
 		return err
 	}
 
-	db.currentBucket.Upsert(cluster.ID, cluster, 0)
-	return nil
+	_, err = db.currentBucket.Upsert(cluster.ID, cluster, 0)
+
+	return err
 }
 
 func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
@@ -233,7 +237,11 @@ func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
 	}
 
 	var cluster proto.Cluster
-	db.currentBucket.Get(clusterID, &cluster)
+
+	_, err = db.currentBucket.Get(clusterID, &cluster)
+	if err != nil {
+		return nil, err
+	}
 	return &cluster, nil
 }
 
@@ -248,7 +256,7 @@ func (db CouchDatabase) ReadClusterByName(projectID, clusterName string) (*proto
 	}
 
 	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, ClusterType," +
-		"services, NHosts, masterIP, ProjectID FROM " + clusterBucketName +
+		"Services, NHosts, MasterIP, ProjectID, Description FROM " + clusterBucketName +
 		" WHERE ProjectID = '" + projectID + "' and Name = '" + clusterName + "'"
 	//println(q)
 	query := gocb.NewN1qlQuery(q)
@@ -274,7 +282,7 @@ func (db CouchDatabase) UpdateCluster(cluster *proto.Cluster) error {
 	}
 
 	var cas gocb.Cas
-	cas, err := db.currentBucket.Replace(cluster.ID, cluster, cas, 0)
+	_, err := db.currentBucket.Replace(cluster.ID, cluster, cas, 0)
 
 	return err
 }

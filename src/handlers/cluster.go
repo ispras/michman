@@ -25,9 +25,10 @@ type GrpcClient interface {
 }
 
 type HttpServer struct {
-	Gc     GrpcClient
-	Logger *log.Logger
-	Db     database.Database
+	Gc         GrpcClient
+	Logger     *log.Logger
+	Db         database.Database
+	ErrHandler ErrorHandler
 }
 
 type serviceExists struct {
@@ -76,15 +77,14 @@ func (hS HttpServer) getCluster(projectID, idORname string) (*proto.Cluster, err
 	return cluster, err
 }
 
-
 func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, "/clusters GET")
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -97,8 +97,8 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	//reading cluster info from database
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -106,8 +106,8 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	enc := json.NewEncoder(w)
 	err = enc.Encode(clusters)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -119,8 +119,8 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -133,16 +133,15 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	var c *proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&c)
 	if err != nil {
-		hS.Logger.Print("ERROR:")
-		hS.Logger.Print(err)
-		hS.Logger.Print(r.Body)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		hS.Logger.Print(mess)
 		return
 	}
 
 	// validate struct
 	if !ValidateCluster(c) {
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -150,8 +149,8 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	searchedName := c.DisplayName + "-" + project.Name
 	cluster, err := hS.Db.ReadClusterByName(project.ID, searchedName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -160,15 +159,8 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	if cluster.Name != "" {
 		clusterExists = true
 		if cluster.EntityStatus != utils.StatusFailed {
-			hS.Logger.Print("Cluster with this name exists in this project")
-			w.WriteHeader(http.StatusBadRequest)
-			enc := json.NewEncoder(w)
-			w.Header().Set("Content-Type", "application/json")
-			err := enc.Encode("Cluster with this name exists in this project")
-			if err != nil {
-				hS.Logger.Print(err)
-				w.WriteHeader(http.StatusBadRequest)
-			}
+			mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterExisted, UserErrorClusterExistedMessage, nil)
+			hS.Logger.Print(mess)
 			return
 		}
 	}
@@ -179,15 +171,17 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	} else {
 		cUuid, err := uuid.NewRandom()
 		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
+			mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+			hS.Logger.Print(mess)
+			return
 		}
 		c.ID = cUuid.String()
 		for _, s := range c.Services {
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
-				hS.Logger.Print(err)
-				w.WriteHeader(http.StatusBadRequest)
+				mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+				hS.Logger.Print(mess)
+				return
 			}
 			s.ID = sUuid.String()
 		}
@@ -200,8 +194,9 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	if !clusterExists {
 		err = hS.Db.WriteCluster(c)
 		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
+			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+			hS.Logger.Print(mess)
+			return
 		}
 	}
 	go hS.Gc.StartClusterCreation(c)
@@ -218,8 +213,8 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -232,8 +227,8 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	// reading cluster info from database
 	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -247,8 +242,8 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	enc := json.NewEncoder(w)
 	err = enc.Encode(cluster)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -261,8 +256,8 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -275,8 +270,8 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	// reading cluster info from database
 	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -307,8 +302,8 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -324,8 +319,8 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// reading cluster info from database
 	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -336,8 +331,8 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for UPDATE")
-		w.WriteHeader(http.StatusNoContent)
+		mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -345,25 +340,15 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	var newC proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&newC)
 	if err != nil {
-		errMessage := "Invalid JSON"
-		hS.Logger.Print(errMessage)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/json")
-		enc := json.NewEncoder(w)
-		err = enc.Encode(errMessage)
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
 	if newC.ID != "" || newC.Name != "" || newC.DisplayName != "" || newC.EntityStatus != "" ||
 		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" {
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err = enc.Encode("This fields cannot be updated")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -402,8 +387,9 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	for _, s := range cluster.Services {
 		sUuid, err := uuid.NewRandom()
 		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
+			mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+			hS.Logger.Print(mess)
+			return
 		}
 		s.ID = sUuid.String()
 		serviceTypesOld[s.Type] = serviceExists{
@@ -437,8 +423,8 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -451,8 +437,8 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	// reading cluster info from database
 	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
@@ -463,8 +449,8 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		hS.Logger.Printf("Cluster status must be 'CREATED' or 'FAILED' for DELETE")
-		w.WriteHeader(http.StatusNoContent)
+		mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
+		hS.Logger.Print(mess)
 		return
 	}
 
