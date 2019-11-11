@@ -101,6 +101,8 @@ type AnsibleExtraVars struct {
 	IgniteMemory             int                 `json:"ignite_memory,omitempty"`
 	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
 	DeployFanlight           bool                `json:"create_fanlight"`
+	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
+	DesktopAccessUrl	     string              `json:"desktop_access_url"`
 }
 
 func GetElasticConnectorJar() string {
@@ -360,6 +362,15 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	extraVars.ExtraJars = extraJars
 	if extraVars.ExtraJars == nil {
 		extraVars.ExtraJars = []map[string]string{}
+	}
+
+	if serviceTypes[utils.ServiceTypeFanlight].exists && serviceTypes[utils.ServiceTypeFanlight].service.Config != nil {
+		if fInstanceUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightInstanceUrl]; ok {
+			extraVars.FanlightInstanceUrl = fInstanceUrl
+		}
+		if desktopUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightDesktopAccessUrl]; ok {
+			extraVars.DesktopAccessUrl = desktopUrl
+		}
 	}
 
 	return extraVars

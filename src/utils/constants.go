@@ -30,6 +30,10 @@ const (
 	//supported cassandra configurations
 	CassandraDefaultVersion string = "3.11.4"
 
+	//supported fanlight configurations
+	FanlightInstanceUrl string = "fanlight_instance_url"
+	FanlightDesktopAccessUrl string = "desktop_access_url"
+
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"
 	AnsibleFail string = "FAIL"

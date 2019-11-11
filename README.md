@@ -112,6 +112,7 @@ Supported services types are:
 * **jupyter**
 * **ignite**
 * **jupyterhub** 
+* **fanlight**
 
 Config parameter for **spark** service type supports:
 * **use-yarn** -- Spark-on-YARN deploy mode  (has overhead on memory so do not use it if you don't know why)
@@ -159,6 +160,25 @@ Example:
 ```json
 "Config": {
   "es-heap-size": "1g" 
+}
+```
+
+Config parameter for **fanlight** service type supports:
+* **fanlight_instance_url** -- Fanlight frontend vnclient base URL to build site links:
+```
+<link rel="stylesheet" href="fanlight_instance_url/vnc-toolbar/vnc-toolbar.min.css">
+```
+* **desktop_access_url** -- This parameter (without protocol part and desktop id at the end)
+                            is used to construct noVNC rfb connection URL on the web page:
+```
+(ws|wss)://DesktopAccessURL/desktop_id
+```
+
+Example:
+```json
+"Config": {
+  "fanlight_instance_url": "https://mydomain/myservice/",
+  "desktop_access_url": "https://mydomain/myservice/" 
 }
 ```
 

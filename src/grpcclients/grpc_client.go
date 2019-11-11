@@ -14,7 +14,7 @@ import (
 const (
 	EMPTY_BODY   = 0
 	ERROR_NUM    = -1
-	WAITING_TIME = 20
+	WAITING_TIME = 100
 )
 
 type GrpcClient struct {
