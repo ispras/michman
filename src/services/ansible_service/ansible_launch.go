@@ -505,6 +505,51 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 				log.Fatalln(err)
 			}
 		}
+	default: //liberty as default version
+		err := os.Setenv(utils.OsAuthUrl, osCreds.OsAuthUrl)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsProjectName, osCreds.OsProjectName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsUsername, osCreds.OsUserName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsPassword, osCreds.OsPassword)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsRegionName, osCreds.OsRegionName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = os.Setenv(utils.OsTenantId, osCreds.OsTenantId)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsTenantName, osCreds.OsTenantName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if osCreds.OsSwiftUserName != "" {
+			err = os.Setenv(utils.OsSwiftUsername, osCreds.OsSwiftUserName)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+
+		if osCreds.OsSwiftPassword != "" {
+			err = os.Setenv(utils.OsSwiftPassword, osCreds.OsSwiftPassword)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
 	}
 
 	return nil
@@ -578,7 +623,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		}
 
 		//Get Master IP for Cluster create or update action and save it
-		if action == actionCreate || action == actionUpdate {
+		if ansibleOk && (action == actionCreate || action == actionUpdate) {
 			var v = map[string]string{
 				"cluster_name": cluster.Name,
 			}

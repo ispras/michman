@@ -78,6 +78,24 @@ func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *
 		} else {
 			osCreds.OsSwiftPassword = ""
 		}
+	default: //liberty as default version
+		osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
+		osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)
+		osCreds.OsProjectName = secretValues.Data[utils.OsProjectName].(string)
+		osCreds.OsRegionName = secretValues.Data[utils.OsRegionName].(string)
+		osCreds.OsTenantId = secretValues.Data[utils.OsTenantId].(string)
+		osCreds.OsTenantName = secretValues.Data[utils.OsTenantName].(string)
+		osCreds.OsUserName = secretValues.Data[utils.OsUsername].(string)
+		if uname, ok := secretValues.Data[utils.OsSwiftUsername]; ok {
+			osCreds.OsSwiftUserName = uname.(string)
+		} else {
+			osCreds.OsSwiftUserName = ""
+		}
+		if pass, ok := secretValues.Data[utils.OsSwiftPassword]; ok {
+			osCreds.OsSwiftUserName = pass.(string)
+		} else {
+			osCreds.OsSwiftPassword = ""
+		}
 	}
 
 	return &osCreds
