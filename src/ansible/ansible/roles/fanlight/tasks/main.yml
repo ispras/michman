@@ -36,6 +36,7 @@
     image: "{{ controller_image }}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - "{{ ansible_host_dir }}:/ansible"
     env:
       RACK_ENV: production
       FN_desktop_DefaultImage: "{{ desktop_image }}"
@@ -45,6 +46,9 @@
       FN_docker_pullImageIfNotFound: "true"
       FN_docker_registryAuth_username: "{{ fanlight_registry_user }}"
       FN_docker_registryAuth_password: "{{ fanlight_registry_user_password }}"
+#      FN_users: "{{ users_add }}"
+#      FN_apps: "{{ apps_add }}"
+#      FN_managedResources_list: "{{ resources_list }}"
     labels:
       traefik.enable: "true"
       traefik.port: "4501"

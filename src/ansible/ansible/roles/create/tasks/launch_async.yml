@@ -17,7 +17,7 @@
       meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master"
     retries: 3
     async: 300
-    poll: 0
+    poll: 1
     register: master_waitress
 
   - name: Create slave instances
@@ -36,7 +36,7 @@
     delay: 1
     retries: 3
     async: 300
-    poll: 0
+    poll: 1
     register: slave_waitress
 
   - name: Create fanlight instance
@@ -53,7 +53,7 @@
       meta: "hostname={{ cluster_name }}-fanlight,group={{ cluster_name }}_fanlight"
     retries: 3
     async: 300
-    poll: 0
+    poll: 1
     register: fanlight_waitress
     when: create_fanlight is defined and create_fanlight == true
 
@@ -71,7 +71,7 @@
       meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage"
     retries: 3
     async: 300
-    poll: 0
+    poll: 1
     register: storage_waitress
     when: create_storage is defined and create_storage == true
 
@@ -112,12 +112,12 @@
       reuse: yes
       server: "{{ cluster_name }}-master"
       network: "{{ floating_ip_pool }}"
-      wait: True
+      wait: no
       timeout: 60
     delay: 1
     retries: 3
     async: 60
-    poll: 0
+    poll: 2
     register: master_ip_waitress
     when: floating_ip_pool != 'None'
 
@@ -127,13 +127,13 @@
       reuse: yes
       server: "{{ item }}"
       network: "{{ floating_ip_pool }}"
-      wait: True
+      wait: no
       timeout: 20
     with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
     retries: 3
     delay: 1
     async: 60
-    poll: 0
+    poll: 2
     register: slave_ip_waitress
     when: floating_ip_pool != 'None'
 
@@ -148,7 +148,7 @@
     retries: 3
     delay: 1
     async: 60
-    poll: 0
+    poll: 2
     register: fanlight_ip_waitress
     when: floating_ip_pool != 'None' and create_fanlight is defined and create_fanlight == true
 

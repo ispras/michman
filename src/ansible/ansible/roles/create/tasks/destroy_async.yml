@@ -20,7 +20,7 @@
   with_items: "{{ alive_servers }}"
   retries: 3
   async: 1000
-  poll: 0
+  poll: 1
   register: destruction_waitress
 
 

@@ -1,0 +1,15 @@
+local_repo_url: False
+weblab_name: "weblabs"
+
+
+nfs_server_export_directories:
+  - path: "/home/{{ weblab_name }}"
+    clients:
+      - "*(rw,no_subtree_check)"
+
+openstack_volume: "/dev/vdb"
+
+bionic: "deb http://archive.ubuntu.com/ubuntu/ bionic main restricted universe multiverse"
+security: "deb http://archive.ubuntu.com/ubuntu/ bionic-security main restricted universe multiverse"
+updates: "deb http://archive.ubuntu.com/ubuntu/ bionic-updates main restricted universe multiverse"
+

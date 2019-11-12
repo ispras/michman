@@ -11,6 +11,7 @@ const (
 	ServiceTypeJupyterhub string = "jupyterhub"
 	ServiceTypeElastic    string = "elastic"
 	ServiceTypeFanlight   string = "fanlight"
+	ServiceTypeNFS        string = "nfs-server"
 
 	//supported spark configurations
 	SparkUseYarn         string = "use-yarn"

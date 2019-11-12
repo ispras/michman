@@ -382,6 +382,10 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeNFS: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	for _, s := range cluster.Services {
@@ -397,10 +401,13 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			service: s,
 		}
 	}
-
+	newHost := false
 	for _, s := range newC.Services {
 		if serviceTypesOld[s.Type].exists == false {
 			cluster.Services = append(cluster.Services, s)
+		}
+		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeFanlight {
+			newHost = true
 		}
 	}
 
@@ -408,12 +415,16 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		cluster.Description = newC.Description
 	}
 
-	newC.EntityStatus = utils.StatusInited
-	go hS.Gc.StartClusterModification(cluster)
+	cluster.EntityStatus = utils.StatusInited
+	if newC.NHosts != 0 || newHost {
+		go hS.Gc.StartClusterCreation(cluster)
+	} else {
+		go hS.Gc.StartClusterModification(cluster)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(newC)
+	enc.Encode(cluster)
 }
 
 func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

@@ -1,0 +1,5 @@
+- name: Install nfs-server
+  apt:
+    name: nfs-kernel-server
+    state: latest
+

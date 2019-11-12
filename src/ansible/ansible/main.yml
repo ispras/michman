@@ -9,7 +9,7 @@
         name: os_facts
       when: act != "destroy"
 
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves:{{ cluster_name }}_fanlight"
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves:{{ cluster_name }}_fanlight:{{ cluster_name }}_storage"
   tasks:
     - include_role:
         name: deploy_ssh
@@ -123,19 +123,30 @@
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic
 
+# When create_storage is true, such instance would be created
+- hosts: "{{ cluster_name }}_storage"
+  become: yes
+  vars:
+    home_dirs_root: /home/dim/tmp/fanlight-home
+    fanlight_registry_user: registry_user
+    fanlight_registry_user_password: registry_password
+  roles:
+    - nfs_server
+    - docker_fanlight
+    - nextcloud
+
 # When create_fanlight is true, such instance would be created
 - hosts: "{{ cluster_name }}_fanlight"
   become: yes
   vars:
-    fanlight_instance_url: ""
-    home_dirs_root: /home/ubuntu/tmp/fanlight-home
+    nfs_server_ip: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}"
+    home_dirs_root: "/home/ubuntu/tmp/fanlight-home"
     fanlight_registry_user: registry_user
     fanlight_registry_user_password: registry_password
     live_restore: yes
   roles:
-#    - network_storage
+    - network_storage
     - docker_fanlight
     - fanlight
-    - nextcloud_fanlight
     - simple_http_server
 

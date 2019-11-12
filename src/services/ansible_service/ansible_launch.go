@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
@@ -13,7 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 )
 
 const (
@@ -102,7 +102,8 @@ type AnsibleExtraVars struct {
 	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
 	DeployFanlight           bool                `json:"create_fanlight"`
 	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
-	DesktopAccessUrl	     string              `json:"desktop_access_url"`
+	DesktopAccessUrl         string              `json:"desktop_access_url"`
+	DeployNFS                bool                `json:"create_storage"`
 }
 
 func GetElasticConnectorJar() string {
@@ -190,6 +191,10 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeNFS: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	//iterating over services for looking, which services are presented
@@ -218,6 +223,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	extraVars.DeployIgnite = serviceTypes[utils.ServiceTypeIgnite].exists
 	extraVars.DeployJupyterhub = serviceTypes[utils.ServiceTypeJupyterhub].exists
 	extraVars.DeployFanlight = serviceTypes[utils.ServiceTypeFanlight].exists
+	extraVars.DeployNFS = serviceTypes[utils.ServiceTypeNFS].exists
 
 	//must be always async mode
 	extraVars.Sync = "async"
@@ -376,7 +382,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	return extraVars
 }
 
-type AnsibleLauncher struct{
+type AnsibleLauncher struct {
 	couchbaseCommunicator database.Database
 }
 
@@ -583,7 +589,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	if err != nil {
 		log.Fatalln(err)
 	}
-	
+
 	cmdName := utils.AnsiblePlaybookCmd
 	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(ansibleArgs)}
 
@@ -600,58 +606,93 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	f, err := os.Create("logs/ansible_output.log")
 
 	defer f.Close()
-	// retry on command fail
-	retries := cluster.NHosts + 1
-	success := false
-	for retry := int32(1); !success && retry <= retries; retry++ {
-		log.Printf("Try %v of %v", retry, retries)
-		ansibleCmd := exec.Command(cmdName, cmdArgs...)
-		stdout, err := ansibleCmd.StdoutPipe()
+	ansibleCmd := exec.Command(cmdName, cmdArgs...)
+	stdout, err := ansibleCmd.StdoutPipe()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	stderr, err := ansibleCmd.StderrPipe()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	stdoutScanner := bufio.NewScanner(stdout)
+	stderrScanner := bufio.NewScanner(stderr)
+	go func() {
+		for stdoutScanner.Scan() {
+			_, err := f.WriteString(stdoutScanner.Text() + "\n")
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}()
+	go func() {
+		for stderrScanner.Scan() {
+			_, err = f.WriteString(stderrScanner.Text() + "\n")
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}()
+
+	ansibleOk := true
+	if err := ansibleCmd.Start(); err != nil {
+		ansibleOk = false
+		log.Print("Error: ", err)
+	}
+
+	if err := ansibleCmd.Wait(); err != nil {
+		ansibleOk = false
+		log.Print("Error: ", err)
+	}
+
+	//Get Master IP for Cluster create or update action and save it
+	if ansibleOk && (action == actionCreate || action == actionUpdate) {
+
+		var v = map[string]string{
+			"cluster_name": cluster.Name,
+		}
+
+		ipExtraVars, err := json.Marshal(v)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		scanner := bufio.NewScanner(stdout)
+		cmdName := utils.AnsiblePlaybookCmd
+		args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
 
-		go func() {
-			for scanner.Scan() {
-				_, err := f.WriteString(scanner.Text() + "\n")
-				if err != nil {
-					log.Fatalln(err)
-				}
-			}
-		}()
+		log.Print("Running ansible for getting master IP...")
+		cmd := exec.Command(cmdName, args...)
+		var outb bytes.Buffer
+		cmd.Stdout = &outb
 
-		ansibleOk := true
-		if err := ansibleCmd.Start(); err != nil {
+		if err := cmd.Start(); err != nil {
+			log.Print("Error: ", err)
+		}
+
+		if err := cmd.Wait(); err != nil {
 			ansibleOk = false
 			log.Print("Error: ", err)
 		}
 
-		if err := ansibleCmd.Wait(); err != nil {
-			ansibleOk = false
-			log.Print("Error: ", err)
-		}
-
-		//Get Master IP for Cluster create or update action and save it
-		if ansibleOk && (action == actionCreate || action == actionUpdate) {
-			var v = map[string]string{
-				"cluster_name": cluster.Name,
+		masterIp := findIP(outb.String())
+		fanlightIp := ""
+		nfsIp := ""
+		if extraVars.DeployFanlight {
+			v = map[string]string{
+				"cluster_name":  cluster.Name,
+				"extended_role": "fanlight",
 			}
-
-			ipExtraVars, err := json.Marshal(v)
+			ipExtraVars, err = json.Marshal(v)
 			if err != nil {
 				log.Fatalln(err)
 			}
-
-			cmdName := utils.AnsiblePlaybookCmd
-			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
-
-			log.Print("Running ansible for getting master IP...")
+			cmdName = utils.AnsiblePlaybookCmd
+			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+			log.Print("Running ansible for getting fanlight IP...")
 			cmd := exec.Command(cmdName, args...)
 			var outb bytes.Buffer
 			cmd.Stdout = &outb
-
 			if err := cmd.Start(); err != nil {
 				log.Print("Error: ", err)
 			}
@@ -660,55 +701,86 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 				ansibleOk = false
 				log.Print("Error: ", err)
 			}
-
-			ip := findIP(outb.String())
-			if ip != "" {
-				log.Print("Master IP is: ", ip)
-				cluster.MasterIP = ip
-
-				//filling services URLs:
-
-				for i, service := range cluster.Services {
-					if service.Type == utils.ServiceTypeJupyter {
-						cluster.Services[i].URL = ip + ":" + jupyterPort
-					}
-				}
-
-				log.Print("Saving master IP...")
-				err = aL.couchbaseCommunicator.WriteCluster(cluster)
-				if err != nil {
-					log.Fatalln(err)
-				}
-			} else {
-				log.Print("There is no IP in Ansible output")
-			}
-
-			if fanlightIp != "" {
-				log.Print("Fanlight IP is: ", fanlightIp)
-				for i, service := range cluster.Services {
-					if service.Type == utils.ServiceTypeFanlight {
-						cluster.Services[i].ServiceURL = fanlightIp
-					}
-				}
-				log.Print("Saving fanlight IP...")
-				err = aL.couchbaseCommunicator.WriteCluster(cluster)
-				if err != nil {
-					log.Fatalln(err)
-				}
-			}
-
+			fanlightIp = findIP(outb.String())
 		}
+		if extraVars.DeployNFS {
+			v = map[string]string{
+				"cluster_name":  cluster.Name,
+				"extended_role": "storage",
+			}
+			ipExtraVars, err = json.Marshal(v)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			cmdName = utils.AnsiblePlaybookCmd
+			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+			log.Print("Running ansible for getting NFS server IP...")
+			cmd := exec.Command(cmdName, args...)
+			var outb bytes.Buffer
+			cmd.Stdout = &outb
+			if err := cmd.Start(); err != nil {
+				log.Print("Error: ", err)
+			}
 
-		if ansibleOk {
-			log.Print("Launch: OK")
-			success = true
+			if err := cmd.Wait(); err != nil {
+				ansibleOk = false
+				log.Print("Error: ", err)
+			}
+			nfsIp = findIP(outb.String())
+		}
+		//filling services URLs:
+		if masterIp != "" {
+			log.Print("Master IP is: ", masterIp)
+			cluster.MasterIP = masterIp
+
+			for i, service := range cluster.Services {
+				if service.Type == utils.ServiceTypeJupyter {
+					cluster.Services[i].URL = masterIp + ":" + jupyterPort
+				}
+			}
+
+			log.Print("Saving master IP...")
+			err = aL.couchbaseCommunicator.WriteCluster(cluster)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		} else {
-			log.Print("Ansible has failed, check logs for mor information.")
+			log.Print("There is no IP in Ansible output")
 		}
+		if fanlightIp != "" {
+			log.Print("Fanlight IP is: ", fanlightIp)
+			for i, service := range cluster.Services {
+				if service.Type == utils.ServiceTypeFanlight {
+					cluster.Services[i].ServiceURL = fanlightIp
+				}
+			}
+			log.Print("Saving fanlight IP...")
+			err = aL.couchbaseCommunicator.WriteCluster(cluster)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+		if nfsIp != "" {
+			log.Print("NFS server IP is: ", nfsIp)
+			for i, service := range cluster.Services {
+				if service.Type == utils.ServiceTypeNFS {
+					cluster.Services[i].ServiceURL = nfsIp
+				}
+			}
+			log.Print("Saving NFS server IP...")
+			err = aL.couchbaseCommunicator.WriteCluster(cluster)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+
 	}
-	if success {
+
+	if ansibleOk {
+		log.Print("Launch: OK")
 		return utils.AnsibleOk
 	} else {
+		log.Print("Ansible has failed, check logs for mor information.")
 		return utils.AnsibleFail
 	}
 }

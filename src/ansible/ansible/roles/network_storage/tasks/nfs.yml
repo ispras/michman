@@ -7,15 +7,21 @@
   with_items:
     - "{{ nfs_packages }}"
 
-
+- name: Check if thereis no mounted dir
+  become: yes
+  mount:
+    path: "{{ nfs_mountpath }}"
+    state: absent
+  tags: nfs
 
 - name: Create mountable dir
+  become: yes
   file:
     path: "{{ nfs_mountpath }}"
     state: directory
     mode: 777
-    owner: root
-    group: root
+#    owner: root
+#    group: root
   tags: nfs
 
 

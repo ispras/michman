@@ -3,7 +3,7 @@ weblab_name: "weblabs" #Shared dir for all weblabs users
 storage_type: nfs
 
 nfs_server_ip: "127.0.0.1"
-nfs_mountpath: "/home"
+nfs_mountpath: "/home/{{ weblab_name }}"
 nfs_mount_dir_name: "{{ weblab_name }}"
 nfs_url: "{{ nfs_server_ip }}:/home/{{ weblab_name }}"
 nfs_version: 3

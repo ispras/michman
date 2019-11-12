@@ -1,0 +1,17 @@
+- name: Creates exported directories if needed
+  file:
+    path: "{{ item.path }}"
+    state: directory
+  with_items: ["{{ nfs_server_export_directories }}"]
+
+- name: Adds required directories to exports
+  lineinfile:
+    dest: /etc/exports
+    line: "{{ item.path }} {{ item.clients | join(' ') }}"
+    state: present
+    create: yes
+    regexp: "^{{ item.path }}"
+  with_items: ["{{ nfs_server_export_directories }}"]
+  notify:
+    - Refresh nfs exports
+

@@ -1,0 +1,17 @@
+#- include: repo.yml
+#  when: local_repo_url != False
+
+- include: nfs-server.yml
+  tags: repo
+
+- include: nfs-add-export.yml
+  when: nfs_server_export_directories is defined and nfs_server_export_directories != False
+  tags: ["nfs,nfs-server"]
+
+#- include: fdisk.yml
+#  tags: fdisk
+
+- name: Restart nfs-server
+  service:
+    name: nfs-kernel-server
+    state: restarted

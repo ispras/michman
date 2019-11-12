@@ -1,0 +1,24 @@
+# Add specified repository into sources list.
+- apt_repository:
+    repo: "{{bionic}}"
+    state: present
+  tags: repo
+
+- apt_repository:
+    repo: "{{security}}"
+    state: present
+  tags: repo
+
+- apt_repository:
+    repo: "{{updates}}"
+    state: present
+  tags: repo
+
+- name: Update apt repo
+  become: true
+  apt:
+    #upgrade: yes
+    update_cache: yes
+    #cache_valid_time: 86400 #One day
+  tags: repo
+
