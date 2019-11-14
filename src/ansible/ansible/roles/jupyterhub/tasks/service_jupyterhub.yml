@@ -1,0 +1,9 @@
+---
+
+- template: src=init.d-jupyterhub.j2 dest=/etc/init.d/jupyterhub mode=0751
+
+- file: path=/lib/systemd/system/ state=directory
+
+- template: src=systemd-jupyterhub.j2 dest=/lib/systemd/system/jupyterhub.service mode=0644
+
+- service: name=jupyterhub state=started enabled=yes

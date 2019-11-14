@@ -1,0 +1,12 @@
+[Unit]
+Description=Apache Livy service
+
+[Service]
+Type=forking
+ExecStart={{ livy_home }}/bin/livy-server start
+ExecStop={{ livy_home }}/bin/livy-server stop
+Environment=SPARK_HOME=/opt/spark
+Environment=HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+
+[Install]
+WantedBy=multi-user.target

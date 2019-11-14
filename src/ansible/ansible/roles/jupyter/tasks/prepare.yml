@@ -22,6 +22,9 @@
       - libfreetype6-dev
       - libpng12-dev
       - pkg-config
+      - unzip
+      - "r-base"
+      - "r-base-dev"
       - libkrb5-dev #needed for sparkmagic
     register: result
     ignore_errors: True
@@ -52,7 +55,7 @@
     pip:
       name:
         - jupyter
-        - numpy
+        - numpy==1.12.0
         - pandas
         - matplotlib
         - scipy
@@ -64,7 +67,7 @@
       executable: pip{{ python_version }}
 #    with_items:
 #      - jupyter
-#      - numpy
+#      - numpy==1.12.0
 #      - pandas
 #      - matplotlib
 #      - scipy
@@ -81,6 +84,7 @@
     #      (see http://stackoverflow.com/questions/29099404/ssl-insecureplatform-error-when-using-requests-package)
 
   # NOTE: toree_version is maintained in spark_openstack_cmd.py
+
   - name: install toree
     pip: name=toree state=present executable=pip{{ python_version }}
   become: True

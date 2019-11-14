@@ -171,7 +171,7 @@ c.JupyterHub.hub_ip = '0.0.0.0'
 # c.JupyterHub.pid_file = ''
 
 # The public facing port of the proxy
-# c.JupyterHub.port = 8000
+c.JupyterHub.port = 8000
 
 # The ip for the proxy API handlers
 # c.JupyterHub.proxy_api_ip = '127.0.0.1'
@@ -433,3 +433,24 @@ c.JupyterHub.hub_ip = '0.0.0.0'
 
 # The PAM service to use for authentication.
 # c.PAMAuthenticator.service = 'login'
+
+c.Authenticator.admin_users = {'ubuntu'}
+c.LocalAuthenticator.create_system_users = True
+
+from dummyauthenticator import DummyAuthenticator
+from jupyterhub.auth import LocalAuthenticator
+
+class LocalDummyAuthenticator(LocalAuthenticator, DummyAuthenticator):
+    pass
+
+c.JupyterHub.authenticator_class = LocalDummyAuthenticator
+
+# Set the log level by value or name.
+c.JupyterHub.log_level = 'DEBUG'
+
+# Enable debug-logging of the single-user server
+c.Spawner.debug = True
+
+# Enable debug-logging of the single-user server
+c.LocalProcessSpawner.debug = True
+c.JupyterHub.extra_log_file = '/var/log/jupyterhub.log'

@@ -1,0 +1,3 @@
+---
+jupyterhub_service_name: jupyterhub
+jupyterhub_workingdir: /home/{{ hadoop_user }}

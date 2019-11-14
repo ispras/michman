@@ -1,0 +1,11 @@
+[Unit]
+Description=Jupyterhub service
+
+[Service]
+User=root
+WorkingDirectory={{ jupyterhub_workingdir }}
+ExecStart=/usr/local/bin/jupyterhub --JupyterHub.spawner_class=sudospawner.SudoSpawner
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

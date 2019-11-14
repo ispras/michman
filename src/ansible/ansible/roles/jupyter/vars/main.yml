@@ -2,4 +2,10 @@
 python_version: 3
 install_as_service: False
 jupyter_service_name: jupyter
-spark_magic_path: /usr/local/lib/python2.7/dist-packages/sparkmagic
+spark_magic_path: "{{ '/usr/local/lib/python2.7/dist-packages/sparkmagic' if python_version == '2' else '/usr/local/lib/python3.5/dist-packages/sparkmagic' }}"
+
+livy_service_name: livy
+livy_base_dir: /opt
+livy_file_name: livy-0.5.0-incubating-bin
+livy_download_url: "http://archive.apache.org/dist/incubator/livy/0.5.0-incubating/livy-0.5.0-incubating-bin.zip"
+livy_home: "{{ livy_base_dir }}/{{ livy_file_name }}"

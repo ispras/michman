@@ -11,6 +11,13 @@
   become: yes
   shell: "curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - "
 
+- name: copy jupyterhub sudospawner sudo config
+  copy: src=sudo_jupyter dest=/etc/sudoers.d/jupyter mode=0440 owner=root group=root
+  become: yes
+  tags:
+  - install
+  - jupyterhub_install
+
 - debug: var=python_version
 - block:
   - name: install packages
@@ -29,10 +36,17 @@
     pip: name={{ item }} state=present executable=pip{{ python_version }}
     with_items:
       - jupyterhub
+      - sudospawner
+      - jupyterhub-dummyauthenticator
 
-  - copy: src=jupyterhub_config.py dest=/home/{{ hadoop_user }}
+  - copy: src=jupyterhub_config.py dest={{ jupyterhub_workingdir }}
   tags:
   - install
   - jupyterhub_install
 
-
+- include: service_jupyterhub.yml
+  become: yes
+  become_user: root
+  tags:
+  - install
+  - jupyterhub_install
