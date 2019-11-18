@@ -104,6 +104,10 @@ type AnsibleExtraVars struct {
 	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
 	DesktopAccessUrl         string              `json:"desktop_access_url"`
 	DeployNFS                bool                `json:"create_storage"`
+	UsersAdd                 string              `json:"users_add"`
+	AppsAdd                  string              `json:"apps_add"`
+	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host"`
+	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip"`
 }
 
 func GetElasticConnectorJar() string {
@@ -370,12 +374,29 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		extraVars.ExtraJars = []map[string]string{}
 	}
 
+	//check fanlight config
 	if serviceTypes[utils.ServiceTypeFanlight].exists && serviceTypes[utils.ServiceTypeFanlight].service.Config != nil {
 		if fInstanceUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightInstanceUrl]; ok {
 			extraVars.FanlightInstanceUrl = fInstanceUrl
 		}
 		if desktopUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightDesktopAccessUrl]; ok {
 			extraVars.DesktopAccessUrl = desktopUrl
+		}
+		if usersAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightUsersAdd]; ok {
+			extraVars.UsersAdd = usersAdd
+		}
+		if appssAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightAppsAdd]; ok {
+			extraVars.AppsAdd = appssAdd
+		}
+	}
+
+	//check nextcloud config
+	if serviceTypes[utils.ServiceTypeNFS].exists && serviceTypes[utils.ServiceTypeNFS].service.Config != nil {
+		if customOidcHost, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSCustomOidcProvidersHost]; ok {
+			extraVars.CustomOidcProvidersHost = customOidcHost
+		}
+		if customOidcIP, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSCustomOidcProvidersIP]; ok {
+			extraVars.CustomOidcProvidersIP = customOidcIP
 		}
 	}
 

@@ -34,6 +34,12 @@ const (
 	//supported fanlight configurations
 	FanlightInstanceUrl string = "fanlight_instance_url"
 	FanlightDesktopAccessUrl string = "desktop_access_url"
+	FanlightUsersAdd string = "users_add"
+	FanlightAppsAdd string = "apps_add"
+
+	//supported nfs-server configurations
+	NFSCustomOidcProvidersHost = "custom_oidc_providers_host"
+	NFSCustomOidcProvidersIP = "custom_oidc_providers_ip"
 
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"
