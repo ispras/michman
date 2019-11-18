@@ -23,8 +23,10 @@ nc_app_config:
   - { key: "enable",  value: "sociallogin" }
   - { key: "enable",  value: "files_external" }
 
-custom_oidc_providers_url: 'http:\/\/127.0.0.1:8080\/auth\/realms'
-custom_oidc_providers_client: 'nxcloud'
+custom_oidc_providers_host: 'auth.sci-portal.gov.ru'
+custom_oidc_providers_url: 'https:\/\/{{ custom_oidc_providers_host }}/auth\/realms'
+custom_oidc_providers_ip: '127.0.0.1'
+custom_oidc_providers_client: 'web-client'
 custom_oidc_providers_clientSecret: 'token'
 keycloak_realm: science
 

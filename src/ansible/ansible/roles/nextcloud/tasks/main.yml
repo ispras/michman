@@ -39,15 +39,20 @@
     links:
       - "mariadb:mariadb"
     ports:
-      - "8888:80"
+      - "80:80"
       - "2022:22"
     restart_policy: always
     volumes:
       - /home:/external_data
       - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
+    etc_hosts: >
+      {
+        "{{ custom_oidc_providers_host }}" : "{{ custom_oidc_providers_ip }}"
+      }
+
 
 - name: Wait for nextcloud setup
-  command: curl {{ ansible_host }}:8888
+  command: curl {{ ansible_host }}:80
   register: result
   until: not result.rc
   retries: 60
