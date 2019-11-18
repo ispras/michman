@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
 	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
@@ -108,6 +109,8 @@ type AnsibleExtraVars struct {
 	AppsAdd                  string              `json:"apps_add"`
 	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host"`
 	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip"`
+	UseMirror                string              `json:"use_mirror"`
+	MirrorAddress            string              `json:"mirror_address"`
 }
 
 func GetElasticConnectorJar() string {
@@ -400,11 +403,31 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		}
 	}
 
+	// load mirror config
+	mirrorC, err := utils.GetMirrorConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	extraVars.UseMirror = mirrorC.Enable
+	enable, err := strconv.ParseBool(mirrorC.Enable)
+	if enable && !validateIP(mirrorC.Address) {
+		log.Fatalln("ERROR: bad mirror's IP address")
+	}
+
+	extraVars.MirrorAddress = mirrorC.Address
+
 	return extraVars
 }
 
 type AnsibleLauncher struct {
 	couchbaseCommunicator database.Database
+}
+
+func validateIP(input string) bool {
+	pattern := "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+	regEx := regexp.MustCompile(pattern)
+	fmt.Println(input)
+	return regEx.FindString(input) != ""
 }
 
 func findIP(input string) string {

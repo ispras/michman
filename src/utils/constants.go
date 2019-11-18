@@ -58,7 +58,8 @@ const (
 	VaultCfg = "vault.yaml"
 	//openstack config file path
 	OpenstackCfg = "openstack_config.yaml"
-
+	//mirror config file path
+	MirrorCfg = "mirror.yaml"
 	//ansible main role path
 	AnsibleMainRole = "src/ansible/ansible/main.yml"
 	//ansible get master ip role path

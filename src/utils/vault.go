@@ -51,6 +51,33 @@ type OsConfig struct {
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
 }
 
+type MirrorConfig struct {
+	Enable string `yaml:"use_mirror"`
+	Address string `yaml:"mirror_address"`
+}
+
+func GetMirrorConfig() (*MirrorConfig, error) {
+	var mirrorC *MirrorConfig
+	path, err := os.Getwd() //file must be executed from spark-openstack directory
+	if err != nil {
+		log.Fatalln(err)
+		return mirrorC, err
+	}
+
+	workingDir := filepath.Base(path)
+	if workingDir != BasePath { //checking that current directory is correct
+		log.Fatalln("Error: working directory must be spark-openstack")
+		return mirrorC, errors.New("Error: working directory must be spark-openstack")
+	}
+
+	osConfigPath := filepath.Join(path, MirrorCfg)
+	osBs, err := ioutil.ReadFile(osConfigPath)
+	if err := yaml.Unmarshal(osBs, &mirrorC); err != nil {
+		log.Fatalln(err)
+	}
+	return mirrorC, nil
+}
+
 func (osCfg *OsConfig) MakeOsCfg() error {
 	path, err := os.Getwd() //file must be executed from spark-openstack directory
 	if err != nil {

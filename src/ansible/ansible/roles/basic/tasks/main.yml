@@ -28,11 +28,33 @@
     file: group_vars/all/oracle.yml
   when: use_oracle_java|default(False)
 
+- name: Set apt mirror
+  become: yes
+  copy:
+    dest: "/etc/apt/apt.conf.d/00aptproxy"
+    content: 'Acquire::http::Proxy "http://{{ mirror_address}}:3142";'
+  when: use_mirror
+
 - name: install python
   become: yes
   apt:
     name: python
     update_cache: yes
+
+- name: Create .pip directory
+  file:
+    path: /home/ubuntu/.pip
+    state: directory
+  when: use_mirror
+
+- name: Set pip mirror
+  copy:
+    dest: "/home/ubuntu/.pip/pip.conf"
+    content: |
+      [global]
+      index-url = http://{{ mirror_address}}:3141/root/pypi/+simple/
+      trusted-host = {{ mirror_address}}
+  when: use_mirror
 
 - name: update apt cache
   become: yes
