@@ -3,12 +3,12 @@
 - name: get Hadoop distro (except CDH4)
   become: no
   local_action: get_url url={{ hadoop_download_url }} dest=files/ checksum="md5:{{ hadoop_md5 }}"
-  when: "hadoop_version != 'cdh4'"
+  when: "spark_hadoop_version != 'cdh4'"
 
 - name: get Hadoop distro (CDH4)
   become: no
   local_action: get_url url={{ hadoop_download_url }} dest=files/
-  when: "hadoop_version == 'cdh4'"
+  when: "spark_hadoop_version == 'cdh4'"
 
 
 - name: distribute hadoop among slaves
@@ -27,7 +27,7 @@
 
 - name: put needed swift library
   get_url: url={{ swift_download_url }} dest=/usr/local/{{ hadoop_file }}/share/hadoop/hdfs/lib/
-  when: "hadoop_version == 2.3 or hadoop_version == 2.6"
+  when: "spark_hadoop_version == 2.3 or spark_hadoop_version == 2.6"
 
 #- name: remove hadoop archive
 #  file: path=/usr/local/{{ hadoop_file }}.tar.gz state=absent
@@ -68,5 +68,5 @@
 
 - name: copy extra jars
   copy: src={{item.path}} dest={{ spark_extra_jars_dir }}/{{item.name}} owner={{ hadoop_user }} group=hadoop mode=0644
-  with_items: "{{extra_jars}}"
+  with_items: "{{spark_extra_jars}}"
 

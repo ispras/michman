@@ -1,0 +1,18 @@
+{
+  "Type": "jupyterhub",
+  "Description": "Jupyterhub service",
+  "DefaultVersion": "1.0.0",
+  "Versions": [
+    {
+      "Version": "1.0.0",
+      "Description": "Jupyterhub version 1.0.0 (latest for pip install)",
+      "Dependencies": [
+            {
+                "ServiceType": "jupyter",
+                "ServiceVersions": ["6.0.1"],
+                "DefaultServiceVersion": "6.0.1",
+                "Description": "Dependency jupyterhub->jupyter"
+            }
+          ]
+    }]
+}

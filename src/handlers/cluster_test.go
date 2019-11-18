@@ -52,18 +52,24 @@ func TestClusterCreate(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	testClusterName := "spark-test"
+	//testCluster := []byte(`{
+	//	"DisplayName":"` + testClusterName + `",
+	//	"EntityStatus": "some-status",
+	//	"Services":[
+	//	{
+	//		"Name":"spark-test",
+	//		"Type":"spark",
+	//		"Config":{
+	//			"hadoop-version":"2.6"
+	//		},
+	//		"Version":"2.1.0"
+	//	}],
+	//	"NHosts":1
+	//}`)
+
 	testCluster := []byte(`{
 		"DisplayName":"` + testClusterName + `",
 		"EntityStatus": "some-status",
-		"services":[
-		{
-			"Name":"spark-test",
-			"Type":"spark",
-			"Config":{
-				"hadoop-version":"2.6"
-			},
-			"Version":"2.1.0"
-		}],
 		"NHosts":1
 	}`)
 
@@ -112,6 +118,30 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&protobuf.Cluster{}, nil)
+
+
+		var testServiceVersion = protobuf.ServiceVersion{
+			ID:                    "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Version:              "testVersion",
+			Description:          "test",
+			//Configs:              []*protobuf.ServiceConfig{&testServiceConfig},
+		}
+
+		testServiceType1 := protobuf.ServiceType{
+			ID:                   "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:                 "spark",
+			Description:          "test",
+			DefaultVersion: 	  "testVersion",
+			Versions:             []*protobuf.ServiceVersion{&testServiceVersion},
+		}
+		testServiceType2 := protobuf.ServiceType{
+			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:                 "test-service-type-2",
+			Description:          "test",
+		}
+
+		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
+
 		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 

@@ -39,12 +39,12 @@
       FN_docker_pullImageIfNotFound: "true"
       FN_docker_registryAuth_username: "{{ fanlight_registry_user }}"
       FN_docker_registryAuth_password: "{{ fanlight_registry_user_password }}"
-      FN_managedResources_ExecTimeoutSec: "{{ managedResources_ExecTimeoutSec }}" # comment this
-      FN_managedResources_list: "{{ resources_list | to_json }}"  # comment this
-      FN_users: "{{ users_add | to_json }}"
-      FN_apps: "{{ apps_add | to_json }}"
+      FN_managedResources_ExecTimeoutSec: "{{ managedResources_ExecTimeoutSec }}"
+      FN_managedResources_list: "{{ resources_list | to_json }}"
+      FN_users: "{{ fanlight_users_add | to_json }}"
+      FN_apps: "{{ fanlight_apps_add | to_json }}"
       FN_volumes: "{{ volumes | to_json }}"
-    labels: # comment this
+    labels:
       traefik.enable: "true"
       traefik.port: "4501"
       traefik.frontend.rule: "PathPrefixStrip:/controller"
@@ -84,7 +84,7 @@
       RACK_ENV: production
       FN_FanlightInstanceId: "{{ fanlight_instance_id }}"
       FN_services_controller_uri: "http://controller-{{ fanlight_instance_id }}:4501"
-      FN_DesktopAccessURL: "{{ desktop_access_url }}/proxy"
+      FN_DesktopAccessURL: "{{ fanlight_desktop_access_url }}/proxy"
       FN_SiteBaseURL: "{{ fanlight_instance_url }}/vnclient"
     labels:
       traefik.enable: "true"

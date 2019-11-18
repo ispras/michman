@@ -61,6 +61,35 @@ func (mr *MockDatabaseMockRecorder) DeleteProject(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockDatabase)(nil).DeleteProject), arg0)
 }
 
+// DeleteServiceType mocks base method
+func (m *MockDatabase) DeleteServiceType(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteServiceType", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteServiceType indicates an expected call of DeleteServiceType
+func (mr *MockDatabaseMockRecorder) DeleteServiceType(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteServiceType", reflect.TypeOf((*MockDatabase)(nil).DeleteServiceType), arg0)
+}
+
+// DeleteServiceVersion mocks base method
+func (m *MockDatabase) DeleteServiceVersion(arg0, arg1 string) (*protobuf.ServiceVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteServiceVersion", arg0, arg1)
+	ret0, _ := ret[0].(*protobuf.ServiceVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteServiceVersion indicates an expected call of DeleteServiceVersion
+func (mr *MockDatabaseMockRecorder) DeleteServiceVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteServiceVersion", reflect.TypeOf((*MockDatabase)(nil).DeleteServiceVersion), arg0, arg1)
+}
+
 // DeleteTemplate mocks base method
 func (m *MockDatabase) DeleteTemplate(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -88,6 +117,21 @@ func (m *MockDatabase) ListProjects() ([]protobuf.Project, error) {
 func (mr *MockDatabaseMockRecorder) ListProjects() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockDatabase)(nil).ListProjects))
+}
+
+// ListServicesTypes mocks base method
+func (m *MockDatabase) ListServicesTypes() ([]protobuf.ServiceType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServicesTypes")
+	ret0, _ := ret[0].([]protobuf.ServiceType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServicesTypes indicates an expected call of ListServicesTypes
+func (mr *MockDatabaseMockRecorder) ListServicesTypes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServicesTypes", reflect.TypeOf((*MockDatabase)(nil).ListServicesTypes))
 }
 
 // ListTemplates mocks base method
@@ -180,6 +224,51 @@ func (mr *MockDatabaseMockRecorder) ReadProjectClusters(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadProjectClusters", reflect.TypeOf((*MockDatabase)(nil).ReadProjectClusters), arg0)
 }
 
+// ReadServiceType mocks base method
+func (m *MockDatabase) ReadServiceType(arg0 string) (*protobuf.ServiceType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadServiceType", arg0)
+	ret0, _ := ret[0].(*protobuf.ServiceType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadServiceType indicates an expected call of ReadServiceType
+func (mr *MockDatabaseMockRecorder) ReadServiceType(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadServiceType", reflect.TypeOf((*MockDatabase)(nil).ReadServiceType), arg0)
+}
+
+// ReadServiceVersion mocks base method
+func (m *MockDatabase) ReadServiceVersion(arg0, arg1 string) (*protobuf.ServiceVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadServiceVersion", arg0, arg1)
+	ret0, _ := ret[0].(*protobuf.ServiceVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadServiceVersion indicates an expected call of ReadServiceVersion
+func (mr *MockDatabaseMockRecorder) ReadServiceVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadServiceVersion", reflect.TypeOf((*MockDatabase)(nil).ReadServiceVersion), arg0, arg1)
+}
+
+// ReadServiceVersionByName mocks base method
+func (m *MockDatabase) ReadServiceVersionByName(arg0, arg1 string) (*protobuf.ServiceVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadServiceVersionByName", arg0, arg1)
+	ret0, _ := ret[0].(*protobuf.ServiceVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadServiceVersionByName indicates an expected call of ReadServiceVersionByName
+func (mr *MockDatabaseMockRecorder) ReadServiceVersionByName(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadServiceVersionByName", reflect.TypeOf((*MockDatabase)(nil).ReadServiceVersionByName), arg0, arg1)
+}
+
 // ReadTemplate mocks base method
 func (m *MockDatabase) ReadTemplate(arg0, arg1 string) (*protobuf.Template, error) {
 	m.ctrl.T.Helper()
@@ -238,6 +327,20 @@ func (mr *MockDatabaseMockRecorder) UpdateProject(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProject", reflect.TypeOf((*MockDatabase)(nil).UpdateProject), arg0)
 }
 
+// UpdateServiceType mocks base method
+func (m *MockDatabase) UpdateServiceType(arg0 *protobuf.ServiceType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateServiceType", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateServiceType indicates an expected call of UpdateServiceType
+func (mr *MockDatabaseMockRecorder) UpdateServiceType(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateServiceType", reflect.TypeOf((*MockDatabase)(nil).UpdateServiceType), arg0)
+}
+
 // WriteCluster mocks base method
 func (m *MockDatabase) WriteCluster(arg0 *protobuf.Cluster) error {
 	m.ctrl.T.Helper()
@@ -264,6 +367,20 @@ func (m *MockDatabase) WriteProject(arg0 *protobuf.Project) error {
 func (mr *MockDatabaseMockRecorder) WriteProject(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteProject", reflect.TypeOf((*MockDatabase)(nil).WriteProject), arg0)
+}
+
+// WriteServiceType mocks base method
+func (m *MockDatabase) WriteServiceType(arg0 *protobuf.ServiceType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteServiceType", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteServiceType indicates an expected call of WriteServiceType
+func (mr *MockDatabaseMockRecorder) WriteServiceType(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteServiceType", reflect.TypeOf((*MockDatabase)(nil).WriteServiceType), arg0)
 }
 
 // WriteTemplate mocks base method

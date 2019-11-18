@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
@@ -36,7 +37,7 @@ type serviceExists struct {
 	service *proto.Service
 }
 
-func ValidateCluster(cluster *proto.Cluster) bool {
+func ValidateCluster(hS HttpServer, cluster *proto.Cluster) bool {
 	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
 
 	if !validName(cluster.DisplayName) {
@@ -51,13 +52,75 @@ func ValidateCluster(cluster *proto.Cluster) bool {
 	}
 
 	for _, service := range cluster.Services {
-		if !ValidateService(service) {
+		if res, err := ValidateService(hS, service); !res {
+			log.Print(err)
 			return false
 		}
 	}
 
 	return true
 }
+
+func (hS HttpServer) AddDependencies(c *proto.Cluster, curS *proto.Service) ([]*proto.Service, error) {
+	var err error = nil
+	var serviceToAdd *proto.Service = nil
+	var servicesList []*proto.Service = nil
+
+	sv, err := hS.Db.ReadServiceVersionByName(curS.Type, curS.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	//check if version has dependencies
+	if sv.Dependencies != nil {
+		for _, sd := range sv.Dependencies {
+			//check if the service from dependencies has already listed in cluster and version is ok
+			flagAddS := true
+			for _, clusterS := range c.Services {
+				if clusterS.Type == sd.ServiceType  {
+					if !utils.ItemExists(sd.ServiceVersions, clusterS.Version) {
+						//error: bad service version from user list
+						err = errors.New("Error: service " + clusterS.Type +
+							" has incompatible version for service " + curS.Type + ".")
+					}
+					flagAddS = false
+					break
+				}
+			}
+			if flagAddS && err == nil {
+				//add service from dependencies with default configurations
+				serviceToAdd = &proto.Service{
+					Name: curS.Name + "-dependent", //TODO: use better service name?
+					Type: sd.ServiceType,
+					Version: sd.DefaultServiceVersion,
+				}
+				servicesList = append(servicesList, serviceToAdd)
+			}
+		}
+	}
+
+	return servicesList, err
+}
+
+//func testAddDependencies(c *proto.Cluster, sTypes []proto.ServiceType) error {
+//	for _, s := range c.Services {
+//		sList, err := addDependencies(c, s, sTypes, nil)
+//		if err != nil {
+//			fmt.Println(err)
+//			return err
+//		}
+//		fmt.Println(sList)
+//
+//		for _, sToAdd := range sList {
+//			if !utils.ItemExists(c.Services, sToAdd) {
+//				c.Services = append(c.Services, sToAdd)
+//			}
+//		}
+//	}
+//
+//	fmt.Println(c)
+//	return nil
+//}
 
 func (hS HttpServer) getCluster(projectID, idORname string) (*proto.Cluster, error) {
 	is_uuid := true
@@ -139,12 +202,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	// validate struct
-	if c.DisplayName == "" {
-		mess, _ := hS.ErrHandler.Handle(w, JSONerrorMissField, JSONerrorMissFieldMessage, nil)
-		hS.Logger.Print(mess)
-		return
-	}
-	if !ValidateCluster(c) {
+	if !ValidateCluster(hS, c) {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 		hS.Logger.Print(mess)
 		return
@@ -181,6 +239,63 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			return
 		}
 		c.ID = cUuid.String()
+		//add services from user request and from dependencies
+		if c.Services != nil {
+			//TESTING
+			//_ = testAddDependencies(c, sTypes)
+			//return
+
+			retryFlag := true
+			startIdx := 0
+
+			//first for cycle is used for updating range values with appended services
+			for retryFlag {
+				for i, s := range c.Services[startIdx : ] {
+					st, err := hS.Db.ReadServiceType(s.Type)
+					if err != nil {
+						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+						hS.Logger.Print(mess)
+						return
+					}
+
+					if s.Version == "" {
+						s.Version = st.DefaultVersion
+					}
+
+					//add services from dependencies
+					sToAdd, err := hS.AddDependencies(c, s)
+					if err != nil {
+						hS.Logger.Println(err)
+						mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
+						hS.Logger.Print(mess)
+						//w.WriteHeader(http.StatusBadRequest)
+						return
+					}
+					hS.Logger.Println(sToAdd)
+
+					changesFlag := false
+					if sToAdd != nil {
+						for _, curS := range sToAdd {
+							c.Services = append(c.Services, curS)
+						}
+						changesFlag = true
+					}
+
+					if !changesFlag {
+						retryFlag = false
+					} else {
+						//update range values if new services has been added and start new iteration from the next value
+						startIdx = i + 1
+						break
+					}
+
+				}
+			}
+		}
+
+		c.ProjectID = project.ID
+		c.Name = c.DisplayName + "-" + project.Name
+		//set uuids for all cluster services
 		for _, s := range c.Services {
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
@@ -191,8 +306,6 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			s.ID = sUuid.String()
 		}
 
-		c.ProjectID = project.ID
-		c.Name = c.DisplayName + "-" + project.Name
 	}
 
 	c.EntityStatus = utils.StatusInited
@@ -357,66 +470,155 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	//appending old services which does not exist in new cluster configuration
-	var serviceTypesOld = map[string]serviceExists{
-		utils.ServiceTypeCassandra: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeSpark: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeElastic: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeJupyter: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeIgnite: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeJupyterhub: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeFanlight: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeNFS: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeNextCloud: {
-			exists:  false,
-			service: nil,
-		},
-	}
-
-	for _, s := range cluster.Services {
-		sUuid, err := uuid.NewRandom()
-		if err != nil {
-			mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+	//check correctness of new services
+	for _, s := range newC.Services {
+		if res, _ := ValidateService(hS, s); !res {
+			mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
-		s.ID = sUuid.String()
+	}
+
+
+	sTypes, err := hS.Db.ListServicesTypes()
+	if err != nil {
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		hS.Logger.Print(mess)
+		return
+	}
+	//appending old services which does not exist in new cluster configuration
+	var serviceTypesOld = make(map[string]serviceExists)
+
+	for _, st := range sTypes {
+		serviceTypesOld[st.Type] = serviceExists{
+		exists:  false,
+		service: nil,
+		}
+	}
+	//var serviceTypesOld = map[string]serviceExists{
+	//	utils.ServiceTypeCassandra: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeSpark: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeElastic: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeJupyter: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeIgnite: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeJupyterhub: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeFanlight: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeNFS: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//	utils.ServiceTypeNextCloud: {
+	//		exists:  false,
+	//		service: nil,
+	//	},
+	//}
+
+	for _, s := range cluster.Services {
 		serviceTypesOld[s.Type] = serviceExists{
 			exists:  true,
 			service: s,
 		}
 	}
+	//new nodes must be added for some special services types
 	newHost := false
+
+	//number of old services
+	oldSN := len(cluster.Services)
+
+
 	for _, s := range newC.Services {
 		if serviceTypesOld[s.Type].exists == false {
+			sUuid, err := uuid.NewRandom()
+			if err != nil {
+				mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+				hS.Logger.Print(mess)
+				return
+			}
+			s.ID = sUuid.String()
 			cluster.Services = append(cluster.Services, s)
 		}
+		//TODO: change this behavior mode
 		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeFanlight || s.Type == utils.ServiceTypeNextCloud{
 			newHost = true
+		}
+	}
+
+	//check if new services are added
+	if oldSN != len(cluster.Services) {
+		retryFlag := true
+		startIdx := oldSN
+
+		//first for cycle is used for updating range values with appended services
+		for retryFlag {
+			for i, s := range cluster.Services[startIdx : ] {
+				st, err := hS.Db.ReadServiceType(s.Type)
+				if err != nil {
+					mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+					hS.Logger.Print(mess)
+					return
+				}
+
+				if s.Version == "" {
+					s.Version = st.DefaultVersion
+				}
+
+				//add services from dependencies
+				sToAdd, err := hS.AddDependencies(cluster, s)
+				if err != nil {
+					hS.Logger.Println(err)
+					mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
+					hS.Logger.Print(mess)
+					//w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				hS.Logger.Println(sToAdd)
+
+				changesFlag := false
+				if sToAdd != nil {
+					for _, curS := range sToAdd {
+						sUuid, err := uuid.NewRandom()
+						if err != nil {
+							mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+							hS.Logger.Print(mess)
+							return
+						}
+						curS.ID = sUuid.String()
+
+						cluster.Services = append(cluster.Services, curS)
+					}
+					changesFlag = true
+				}
+
+				if !changesFlag {
+					retryFlag = false
+				} else {
+					//update range values if new services has been added and start new iteration from the next value
+					startIdx = i + 1
+					break
+				}
+
+			}
 		}
 	}
 

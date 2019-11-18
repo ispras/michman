@@ -56,12 +56,8 @@
       - "2022:22"
     restart_policy: always
     volumes:
-      - "/home/{{ weblab_dir_name }}:/external_data" # comment this
-      - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys # comment this
-#    etc_hosts: >  # comment this
-#      {
-#        "{{ custom_oidc_providers_host }}" : "{{ custom_oidc_providers_ip }}"
-#      }
+      - "/home/{{ weblab_dir_name }}:/external_data"
+      - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
 
 - name: Wait for nextcloud setup
   command: curl {{ ansible_host }}:80

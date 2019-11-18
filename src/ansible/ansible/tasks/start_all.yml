@@ -9,18 +9,18 @@
 
 - name: start hadoop yarn
   command: "/usr/local/hadoop/sbin/start-yarn.sh"
-  when: use_yarn
+  when: spark_use_yarn
   tags:
     - start
 
 - name: start spark master
   shell: SPARK_MASTER_IP="{{ cluster_name }}-master" /opt/spark/sbin/start-master.sh
-  when: not use_yarn
+  when: not spark_use_yarn
   tags:
     - start
 
 - name: start the slaves
   shell: "/opt/spark/sbin/start-slaves.sh"
-  when: not use_yarn
+  when: not spark_use_yarn
   tags:
     - start

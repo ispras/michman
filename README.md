@@ -185,12 +185,12 @@ Example:
 ```
 
 Config parameter for **elastic** service type supports:
-* **es-heap-size** -- use specific ElasticSearch heap size. Default heap size is 1g (1 GB).
+* **heap-size** -- use specific ElasticSearch heap size. Default heap size is 1g (1 GB).
 
 Example:
 ```json
 "Config": {
-  "es-heap-size": "1g" 
+  "heap-size": "1g" 
 }
 ```
 
@@ -214,7 +214,7 @@ Config parameter for **fanlight** service type supports:
 Example:
 ```json
 "Config": {
-  "fanlight_instance_url": "https://mydomain/myservice/",
+  "instance_url": "https://mydomain/myservice/",
   "desktop_access_url": "https://mydomain/myservice/",
   "users_add": '[{"uuid":"", "pos_name":"", "pos_group":"", "pos_uid": 123, "pos_gid": 123}]'
   "apps_add": '[{"uuid":"myapp_uuid", "image":"docker_image_url"}]',

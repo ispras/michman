@@ -18,7 +18,7 @@
 - name: Inventory file for Nextcloud
   lineinfile:
     path: "/ansible/nextcloud_inventory.yml"
-    line: "nextcloud ansible_ssh_host={{ fileshare_ui_ip }} ansible_ssh_user=root ansible_port=2022 ansible_ssh_private_key_file=/ansible/nextcloud.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+    line: "nextcloud ansible_ssh_host={{ fanlight_fileshare_ui_ip }} ansible_ssh_user=root ansible_port=2022 ansible_ssh_private_key_file=/ansible/nextcloud.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
     insertbefore: BOF
 
 - name: Inventory file for Nextcloud

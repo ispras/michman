@@ -37,7 +37,7 @@ func main() {
 	vaultCommunicator.Init()
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		fmt.Printf("Can't create couchbase communicator")
+		fmt.Println("Can't create couchbase communicator")
 		os.Exit(1)
 	}
 	gc := grpc_client.GrpcClient{Db: db}
@@ -86,6 +86,19 @@ func main() {
 	router.GET("/projects/:projectIdOrName/templates/:templateID", hS.TemplateGet)
 	router.PUT("/projects/:projectIdOrName/templates/:templateID", hS.TemplateUpdate)
 	router.DELETE("/projects/:projectIdOrName/templates/:templateID", hS.TemplateDelete)
+
+	// Routes for Configs module
+	router.POST("/configs", hS.ConfigsCreateService)
+	router.GET("/configs", hS.ConfigsGetServices)
+	router.GET("/configs/:serviceType", hS.ConfigsGetService)
+	router.PUT("/configs/:serviceType", hS.ConfigsUpdateService)
+	router.DELETE("/configs/:serviceType", hS.ConfigsDeleteService)
+	router.GET("/configs/:serviceType/versions", hS.ConfigsGetVersions)
+	router.POST("/configs/:serviceType/versions", hS.ConfigsCreateVersion)
+	router.GET("/configs/:serviceType/versions/:versionId", hS.ConfigsGetVersion)
+	router.PUT("/configs/:serviceType/versions/:versionId", hS.ConfigsUpdateVersion)
+	router.DELETE("/configs/:serviceType/versions/:versionId", hS.ConfigsDeleteVersion)
+	router.POST("/configs/:serviceType/versions/:versionId/configs", hS.ConfigsCreateConfigParam)
 
 	// swagger UI route
 	router.ServeFiles("/api/*filepath", http.Dir("./swaggerui"))

@@ -15,7 +15,7 @@
 
 - name: distribute hadoop yarn-site.xml
   template: src=templates/etc-hadoop/yarn-site.xml.j2 dest={{ hadoop_home }}/etc/hadoop/yarn-site.xml
-  when: use_yarn
+  when: spark_use_yarn
 
 - name: deploy slaves configuration
   template: src=templates/slaves.j2 dest={{ spark_home }}/conf/slaves

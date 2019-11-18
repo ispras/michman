@@ -1,0 +1,43 @@
+{
+  "Type": "nextcloud",
+  "Description": "Nextcloud service",
+  "DefaultVersion": "default",
+  "Versions": [
+    {
+      "Version": "default",
+      "Description": "NFS server default version",
+      "Configs":
+       [
+                {
+                  "ParameterName": "custom_oidc_providers_host",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "keycloak hostname>"
+                },
+                {
+                  "ParameterName": "custom_oidc_providers_ip",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "keycloak server ip"
+                },
+                {
+                  "ParameterName": "url",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "URL of nextcloud as it will be opened from portal (including proxy and weblab id)."
+                },
+                {
+                  "ParameterName": "weblab_name",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "name of Web Laboratory"
+                },
+                {
+                  "ParameterName": "nextcloud_nfs_server_ip",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "NFS server IP"
+                }
+      ]
+    }]
+}

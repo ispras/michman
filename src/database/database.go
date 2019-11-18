@@ -24,4 +24,13 @@ type Database interface {
 	WriteTemplate(template *proto.Template) error
 	DeleteTemplate(id string) error
 	ListTemplates(projectID string) ([]proto.Template, error)
+
+	WriteServiceType(sType *proto.ServiceType) error
+	UpdateServiceType(st *proto.ServiceType) error
+	ReadServiceType(sType string) (*proto.ServiceType, error)
+	ListServicesTypes() ([]proto.ServiceType, error)
+	DeleteServiceType(name string) error
+	ReadServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
+	ReadServiceVersionByName(sType string, version string) (*proto.ServiceVersion, error)
+	DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
 }

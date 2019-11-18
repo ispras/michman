@@ -55,7 +55,7 @@
     async: 300
     poll: 0
     register: fanlight_waitress
-    when: create_fanlight is defined and create_fanlight == true
+    when: deploy_fanlight is defined and deploy_fanlight == true
 
   - name: Create storage instance
     os_server:
@@ -96,7 +96,7 @@
     until: fanlight_start.finished
     retries: 60
     delay: 5
-    when: create_fanlight is defined and create_fanlight == true
+    when: deploy_fanlight is defined and deploy_fanlight == true
 
   - name: 'Checking storage started'
     async_status: jid={{ storage_waitress.ansible_job_id }}
@@ -150,7 +150,7 @@
     async: 60
     poll: 1
     register: fanlight_ip_waitress
-    when: floating_ip_pool != 'None' and create_fanlight is defined and create_fanlight == true
+    when: floating_ip_pool != 'None' and deploy_fanlight is defined and deploy_fanlight == true
 
   - name: 'Acquiring floating IPs for storage instance'
     os_floating_ip:
@@ -190,7 +190,7 @@
     until: fanlight_ip.finished
     retries: 60
     delay: 1
-    when: floating_ip_pool != 'None' and create_fanlight is defined and create_fanlight == true
+    when: floating_ip_pool != 'None' and deploy_fanlight is defined and deploy_fanlight == true
 
   - name: 'Waiting for storage IP'
     async_status: jid={{ storage_ip_waitress.ansible_job_id }}

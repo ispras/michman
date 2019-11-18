@@ -21,131 +21,11 @@ const (
 	jupyterPort = "8888"
 )
 
-var sparkVersions = map[string]map[string][]string{
-	"2.3.0": {"hadoop_versions": {"2.6", "2.7"}},
-	"2.2.1": {"hadoop_versions": {"2.6", "2.7"}},
-	"2.2.0": {"hadoop_versions": {"2.6", "2.7"}},
-	"2.1.0": {"hadoop_versions": {"2.3", "2.4", "2.6", "2.7"}},
-	"2.0.2": {"hadoop_versions": {"2.3", "2.4", "2.6", "2.7"}},
-	"2.0.1": {"hadoop_versions": {"2.3", "2.4", "2.6", "2.7"}},
-	"2.0.0": {"hadoop_versions": {"2.3", "2.4", "2.6", "2.7"}},
-	"1.6.2": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.6.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.6.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.5.2": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.5.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.5.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.4.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.4.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.3.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4", "2.6"}},
-	"1.3.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.2.2": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.2.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.2.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.1.1": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.1.0": {"hadoop_versions": {"1", "cdh4", "2.3", "2.4"}},
-	"1.0.2": {"hadoop_versions": {"1", "cdh4"}},
-	"1.0.1": {"hadoop_versions": {"1", "cdh4"}},
-	"1.0.0": {"hadoop_versions": {"1", "cdh4"}},
-}
-
-var toreeVersions = map[string]string{
-	"1": "https://www.apache.org/dist/incubator/toree/0.1.0-incubating/toree-pip/apache-toree-0.1.0.tar.gz",
-	"2": "https://www.apache.org/dist/incubator/toree/0.2.0-incubating/toree-pip/toree-0.2.0.tar.gz",
-	"3": "https://www.apache.org/dist/incubator/toree/0.3.0-incubating/toree-pip/toree-0.3.0.tar.gz",
-}
+type InterfaceMap map[string]interface{}
 
 type ServiceExists struct {
 	exists  bool
 	service *protobuf.Service
-}
-
-type AnsibleExtraVars struct {
-	// Ansible parameters
-	AnsibleUser              string              `json:"ansible_user"`
-	AnsibleSshPrivateKeyFile string              `json:"ansible_ssh_private_key_file"`
-	HadoopUser               string              `json:"hadoop_user"`
-	Act                      string              `json:"act"`
-	Sync                     string              `json:"sync"`
-	CreateCluster            bool                `json:"create_cluster"`
-	// Cluster info
-	NSlaves                  int32               `json:"n_slaves"`
-	ClusterName              string              `json:"cluster_name"`
-	// Openstack parameters
-	OsProjectName            string              `json:"os_project_name"`
-	OsAuthUrl                string              `json:"os_auth_url"`
-	OsKeyName                string              `json:"os_key_name"`
-	OsImage                  string              `json:"os_image"`
-	BootFromVolume           bool                `json:"boot_from_volume"`
-	VirtualNetwork           string              `json:"virtual_network"`
-	FloatingIpPool           string              `json:"floating_ip_pool"`
-	MasterFlavor             string              `json:"master_flavor"`
-	SlavesFlavor             string              `json:"slaves_flavor"`
-	StorageFlavor            string              `json:"storage_flavor"`
-	FanlightFlavor           string              `json:"fanlight_flavor"`
-	// Internal package mirror parameters
-	UseMirror                string              `json:"use_mirror"`
-	MirrorAddress            string              `json:"mirror_address,omitempty"`
-	// Internal docker registry parameters
-	SelfsignedRegistry		 bool                `json:"docker_selfsigned_registry,omitempty"`
-	InsecureRegistry         bool                `json:"docker_insecure_registry,omitempty"`
-	GitlabRegistry           bool                `json:"docker_docker_gitlab_registry,omitempty"`
-	SelfsignedRegistryIp     string              `json:"docker_selfsigned_registry_ip,omitempty"`
-	InsecureRegistryIp       string              `json:"docker_insecure_registry_ip,omitempty"`
-	SelfsignedRegistryUrl    string              `json:"docker_selfsigned_registry_url,omitempty"`
-	SelfsignedCertPath		 string              `json:"docker_cert_path,omitempty"`
-	DockerLogins             []map[string]string `json:"docker_logins,omitempty"`
-	// Basic parameters
-	SkipPackages             bool                `json:"skip_packages"`
-	UseOracleJava            bool                `json:"use_oracle_java"`
-	// Cassandra parameters
-	DeployCassandra          bool                `json:"deploy_cassandra"`
-	CassandraVersion         string              `json:"cassandra_version"`
-	// Ignite Parameters
-	DeployIgnite             bool                `json:"deploy_ignite"`
-	IgniteVersion            string              `json:"ignite_version"`
-	IgniteMemory             int                 `json:"ignite_memory,omitempty"`
-	// ElasticSearch parameters
-	DeployElastic            bool                `json:"deploy_elastic"`
-	EsHeapSize               string              `json:"es_heap_size"`
-	// Spark parameters
-	DeploySpark              bool                `json:"deploy_spark"`
-	SparkVersion             string              `json:"spark_version"`
-	ExtraJars                []map[string]string `json:"extra_jars"`
-	HadoopVersion            string              `json:"hadoop_version"`
-	SparkWorkerMemMb         int                 `json:"spark_worker_mem_mb,omitempty"`
-	// Jypyter parameters
-	DeployJupyter            bool                `json:"deploy_jupyter"`
-	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
-	ToreeVersion             string              `json:"toree_version,omitempty"`
-	UseYarn                  bool                `json:"use_yarn"`
-	DeployJupyterhub         bool                `json:"deploy_jupyterhub"`
-	// Fanlight parameters
-	WeblabName               string              `json:"weblab_name,omitempty"` // Used in Nextcloud and NFS-server too
-	DeployFanlight           bool                `json:"create_fanlight"`
-	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
-	DesktopAccessUrl         string              `json:"desktop_access_url,omitempty"`
-	UsersAdd                 string              `json:"users_add,omitempty"`
-	AppsAdd                  string              `json:"apps_add,omitempty"`
-	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host,omitempty"`
-	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip,omitempty"`
-	FileshareUiIP            string              `json:"fileshare_ui_ip,omitempty"`
-	// Nextcloud parameters
-	DeployNextcloud          bool                `json:"deploy_nextcloud,omitempty"`
-	NextcloudURL             string              `json:"nextcloud_url,omitempty"`
-	NextcloudImage			 string 			 `json:"nextcloud_image,omitempty"`
-	MariadbImage       	     string              `json:"mariadb_image,omitempty"`
-	NFSServerIP              string              `json:"nfs_server_ip,omitempty"`
-	// NFS Server parameters
-	DeployNFS                bool                `json:"deploy_nfs_server,omitempty"`
-	CreateStorage            bool                `json:"create_storage,omitempty"`
-	UseExternalStorage       bool                `json:"mount_external_storage,omitempty"`
-	// Old NFS parameters
-	NfsShares                []string            `json:"nfs_shares"` //check if type is correct
-	Mountnfs                 bool                `json:"mountnfs"`
-	// Swift parameters
-	OsSwiftUserName          string              `json:"os_swift_user_name,omitempty"`
-	OsSwiftPassword          string              `json:"os_swift_password,omitempty"`
 }
 
 func GetElasticConnectorJar() string {
@@ -189,7 +69,7 @@ func GetCassandraConnectorJar(sparkVersion string) string {
 	return sparkCassandraConnectorFile
 }
 
-func AddJar(path string) map[string]string {
+func addJar(path string) map[string]string {
 	var absPath string
 	if v, err := filepath.Abs(path); err != nil {
 		log.Fatalln(err)
@@ -202,289 +82,178 @@ func AddJar(path string) map[string]string {
 	return newElem
 }
 
-func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) AnsibleExtraVars {
-	//available services types
-	var serviceTypes = map[string]ServiceExists{
-		utils.ServiceTypeCassandra: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeSpark: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeElastic: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeJupyter: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeIgnite: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeJupyterhub: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeFanlight: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeNFS: {
-			exists:  false,
-			service: nil,
-		},
-		utils.ServiceTypeNextCloud: {
-			exists:  false,
-			service: nil,
-		},
-	}
+func setDeployService(stype string) string {
+	return "deploy_" + stype
+}
 
-	//iterating over services for looking, which services are presented
+func setServiceVersion(stype string) string {
+	return stype + "_version"
+}
+
+func convertParamValue(value string, vType string) interface{}{
+	switch vType {
+	case "int":
+		if v, err := strconv.ParseInt(value, 10, 32); err != nil {
+			log.Print(err)
+			return nil
+		} else {
+			return v
+		}
+	case "float":
+		if v, err := strconv.ParseFloat(value, 64); err != nil {
+			log.Print(err)
+			return nil
+		} else {
+			return v
+		}
+	case "bool":
+		if v, err := strconv.ParseBool(value); err != nil {
+			log.Print(err)
+			return nil
+		} else {
+			return v
+		}
+	case "string":
+		return value
+	}
+	return nil
+}
+
+
+func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) (InterfaceMap, error) {
+	sTypes, err := aL.couchbaseCommunicator.ListServicesTypes()
+	if err != nil {
+		return nil, err
+	}
+	//appending old services which does not exist in new cluster configuration
+	var curServices = make(map[string]ServiceExists)
+
 	for _, service := range cluster.Services {
-		if _, ok := serviceTypes[service.Type]; ok {
-			serviceTypes[service.Type] = ServiceExists{
+			curServices[service.Type] = ServiceExists{
 				exists:  true,
 				service: service,
 			}
-		}
 	}
 
-	var extraVars AnsibleExtraVars
+	var extraVars = make(InterfaceMap)
 
-	//must be True in method "/clusters" POST, else False
-	extraVars.CreateCluster = false
-	if action == actionCreate {
-		extraVars.CreateCluster = true
-	}
+	for _, st := range sTypes {
+		if curServices[st.Type].exists {
+			//set deploy_stype to True
+			curS := curServices[st.Type].service
+			extraVars[setDeployService(curS.Type)] = true
 
-	//filling services
-	extraVars.DeployCassandra = serviceTypes[utils.ServiceTypeCassandra].exists
-	extraVars.DeploySpark = serviceTypes[utils.ServiceTypeSpark].exists
-	extraVars.DeployElastic = serviceTypes[utils.ServiceTypeElastic].exists
-	extraVars.DeployJupyter = serviceTypes[utils.ServiceTypeJupyter].exists
-	extraVars.DeployIgnite = serviceTypes[utils.ServiceTypeIgnite].exists
-	extraVars.DeployJupyterhub = serviceTypes[utils.ServiceTypeJupyterhub].exists
-	extraVars.DeployFanlight = serviceTypes[utils.ServiceTypeFanlight].exists
-	extraVars.DeployNFS = serviceTypes[utils.ServiceTypeNFS].exists
-	extraVars.DeployNextcloud = serviceTypes[utils.ServiceTypeNextCloud].exists
-
-	//check creation of storage node
-	if extraVars.DeployNFS || extraVars.DeployNextcloud {
-		extraVars.CreateStorage = true
-	}
-
-	//must be always async mode
-	extraVars.Sync = "async"
-	extraVars.AnsibleUser = "ubuntu"
-
-	extraVars.IgniteVersion = "2.7.5"
-	if serviceTypes[utils.ServiceTypeIgnite].exists && serviceTypes[utils.ServiceTypeIgnite].service.Version != "" {
-		extraVars.IgniteVersion = serviceTypes[utils.ServiceTypeIgnite].service.Version
-	}
-
-	extraVars.EsHeapSize = "1g"
-	if serviceTypes[utils.ServiceTypeElastic].exists && serviceTypes[utils.ServiceTypeElastic].service.Config != nil {
-		if size, ok := serviceTypes[utils.ServiceTypeElastic].service.Config[utils.ElasticHeapSize]; ok {
-			extraVars.EsHeapSize = size
-		}
-	}
-
-	extraVars.Mountnfs = false
-	extraVars.MasterFlavor = osConfig.MasterFlavor
-	extraVars.SlavesFlavor = osConfig.SlavesFlavor
-	extraVars.StorageFlavor = osConfig.StorageFlavor
-	extraVars.FanlightFlavor = osConfig.FanlightFlavor
-	extraVars.BootFromVolume = false
-
-	extraVars.HadoopUser = "ubuntu"
-	extraVars.NSlaves = cluster.NHosts
-
-	extraVars.ClusterName = cluster.Name
-
-	extraVars.SparkVersion = "1.6.2"
-	if serviceTypes[utils.ServiceTypeSpark].exists && serviceTypes[utils.ServiceTypeSpark].service.Version != "" {
-		extraVars.SparkVersion = serviceTypes[utils.ServiceTypeSpark].service.Version
-	}
-
-	extraVars.OsImage = osConfig.OsImage
-	extraVars.SkipPackages = false
-	extraVars.OsProjectName = osCreds.OsProjectName
-	extraVars.NfsShares = []string{}
-
-	extraVars.UseYarn = false
-	//getting latest hadoop version for selected spark version
-	hadoopVersions := sparkVersions[extraVars.SparkVersion]["hadoop_versions"]
-	extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions)-1]
-	//checking spark config params
-	if serviceTypes[utils.ServiceTypeSpark].exists && serviceTypes[utils.ServiceTypeSpark].service.Config != nil {
-		if yarn, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkUseYarn]; ok {
-			b, err := strconv.ParseBool(yarn)
-			if err != nil {
-				log.Fatalln(err)
+			//set service version
+			if curS.Version != "" {
+				extraVars[setServiceVersion(curS.Type)] = curS.Version
+			} else {
+				extraVars[setServiceVersion(curS.Type)] = st.DefaultVersion
 			}
-			extraVars.UseYarn = b
-			extraVars.YarnMasterMemMb = 10240 //change it
-		}
-		if version, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkHadoopVersion]; ok {
-			hadoopVersions := sparkVersions[extraVars.SparkVersion]["hadoop_versions"]
-			versionOk := false
-			for _, v := range hadoopVersions {
-				if v == version {
-					extraVars.HadoopVersion = version
-					versionOk = true
+
+			//set version config params
+			var curSv *protobuf.ServiceVersion
+			for _, sv := range st.Versions {
+				if sv.Version == extraVars[setServiceVersion(curS.Type)] {
+					curSv = sv
+					break
 				}
 			}
-			if !versionOk {
-				log.Print("Bad Hadoop version in Spark config")
-				extraVars.HadoopVersion = hadoopVersions[len(hadoopVersions)-1]
-			}
-		}
 
-		if mem, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkWorkerMemMb]; ok {
-			memInt, err := strconv.Atoi(mem)
-			if err != nil {
-				log.Fatalln(err)
+			for _, sc := range curSv.Configs {
+				//check if in request presents current config param
+				if value, ok := curS.Config[sc.ParameterName]; ok {
+					extraVars[sc.AnsibleVarName] = convertParamValue(value, sc.Type)
+				} else if sc.Required {
+					//set default value if param is obligated
+					extraVars[sc.AnsibleVarName] = convertParamValue(sc.DefaultValue, sc.Type)
+				}
 			}
-			extraVars.SparkWorkerMemMb = memInt
-		}
-		if mem, ok := serviceTypes[utils.ServiceTypeSpark].service.Config[utils.SparkYarnMasterMemMb]; ok {
-			memInt, err := strconv.Atoi(mem)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			extraVars.YarnMasterMemMb = memInt
+
+		} else {
+			extraVars[setDeployService(st.Type)] = false
 		}
 	}
 
-	extraVars.FloatingIpPool = osConfig.FloatingIP
-	extraVars.OsAuthUrl = osCreds.OsAuthUrl
-	extraVars.UseOracleJava = false //must be always false
-	extraVars.AnsibleSshPrivateKeyFile = utils.SshKeyPath
+	//filling obligated params
+	extraVars["sync"] = "async" //must be always async mode
+	extraVars["ansible_user"] = "ubuntu"
 
-	extraVars.CassandraVersion = utils.CassandraDefaultVersion
-	if serviceTypes[utils.ServiceTypeCassandra].exists && serviceTypes[utils.ServiceTypeCassandra].service.Version != "" {
-		extraVars.CassandraVersion = serviceTypes[utils.ServiceTypeCassandra].service.Version
+	extraVars["create_cluster"] = false
+	if action == actionCreate {
+		extraVars["create_cluster"] = true
 	}
 
-	if serviceTypes[utils.ServiceTypeJupyter].exists && serviceTypes[utils.ServiceTypeJupyter].service.Config != nil {
-		if version, ok := serviceTypes[utils.ServiceTypeJupyter].service.Config[utils.JupyterToreeVersion]; ok {
-			if v, ok := toreeVersions[version]; ok {
-				extraVars.ToreeVersion = v
-			} else {
-				log.Print("Bad Toree version in Jupyter config")
-				extraVars.ToreeVersion = toreeVersions[string(extraVars.SparkVersion[0])]
-			}
-		}
-	} else if serviceTypes[utils.ServiceTypeJupyter].exists {
-		extraVars.ToreeVersion = toreeVersions[string(extraVars.SparkVersion[0])]
+	extraVars["n_slaves"] = cluster.NHosts
+	extraVars["cluster_name"] = cluster.Name
+
+	//TODO: change this mode
+	if res, ok := extraVars[setDeployService("nfs")]; ok && res == true {
+		extraVars["create_storage"] = true
 	}
 
-	if serviceTypes[utils.ServiceTypeIgnite].exists && serviceTypes[utils.ServiceTypeIgnite].service.Config != nil {
-		if mem, ok := serviceTypes[utils.ServiceTypeIgnite].service.Config[utils.IgniteMemory]; ok {
-			memInt, err := strconv.Atoi(mem)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			extraVars.IgniteMemory = memInt
-		}
+	if res, ok := extraVars[setDeployService("nextcloud")]; ok && res == true {
+		extraVars["create_storage"] = true
 	}
+
+	//if extraVars.DeployNFS || extraVars.DeployNextcloud {
+	//	extraVars.CreateStorage = true
+	//}
+
+	extraVars["mountnfs"] = false
+	extraVars["master_flavor"] = osConfig.MasterFlavor
+	extraVars["slaves_flavor"] = osConfig.SlavesFlavor
+	extraVars["storage_flavor"] = osConfig.StorageFlavor
+	extraVars["fanlight_flavor"] = osConfig.FanlightFlavor
+	extraVars["boot_from_volume"] = false
+
+	extraVars["hadoop_user"] = "ubuntu"
+
+	extraVars["os_image"] = osConfig.OsImage
+	extraVars["skip_packages"] = false
+	extraVars["os_project_name"] = osCreds.OsProjectName
+	extraVars["nfs_shares"] = []string{}
+
+	extraVars["floating_ip_pool"] = osConfig.FloatingIP
+	extraVars["os_auth_url"] = osCreds.OsAuthUrl
+	extraVars["use_oracle_java"] = false //must be always false
+	extraVars["ansible_ssh_private_key_file"] = utils.SshKeyPath
 
 	//action must be "launch" in method "/clusters" POST and /clusters/{clusterName} PUT
 	//action must be "destroy" in method /clusters/{clusterName} DELETE
 	if action == actionCreate || action == actionUpdate {
-		extraVars.Act = utils.AnsibleLaunch
+		extraVars["act"] = utils.AnsibleLaunch
 	} else if action == actionDelete {
-		extraVars.Act = utils.AnsibleDestroy
+		extraVars["act"] = utils.AnsibleDestroy
 	}
 
-	extraVars.VirtualNetwork = osConfig.VirtualNetwork
-	extraVars.OsKeyName = osConfig.Key
+	extraVars["virtual_network"] = osConfig.VirtualNetwork
+	extraVars["os_key_name"] = osConfig.Key
 
-	extraVars.OsSwiftUserName = osCreds.OsSwiftUserName
-	extraVars.OsSwiftPassword = osCreds.OsSwiftPassword
+	extraVars["os_swift_user_name"] = osCreds.OsSwiftUserName
+	extraVars["os_swift_password"] = osCreds.OsSwiftPassword
 
 	//make extra jars
+	//TODO: change this
 	var extraJars []map[string]string
-	if extraVars.DeployCassandra {
-		cassandraJar := GetCassandraConnectorJar(extraVars.SparkVersion)
-		extraJars = append(extraJars, AddJar(cassandraJar))
+	extraVars["spark_extra_jars"] = []map[string]string{}
+	if extraVars[setDeployService("cassandra")] == true {
+		cassandraJar := GetCassandraConnectorJar(extraVars["spark_version"].(string))
+		extraJars = append(extraJars, addJar(cassandraJar))
 	}
 
-	if extraVars.DeployElastic {
+	//TODO: change this
+	if extraVars[setDeployService("elastic")] == true {
 		elasticJar := GetElasticConnectorJar()
-		extraJars = append(extraJars, AddJar(elasticJar))
+		extraJars = append(extraJars, addJar(elasticJar))
 	}
 
-	extraVars.ExtraJars = extraJars
-	if extraVars.ExtraJars == nil {
-		extraVars.ExtraJars = []map[string]string{}
+	if extraJars != nil {
+		extraVars["spark_extra_jars"] = extraJars
 	}
 
-	//check fanlight config
-	if serviceTypes[utils.ServiceTypeFanlight].exists && serviceTypes[utils.ServiceTypeFanlight].service.Config != nil {
-		if fInstanceUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightInstanceUrl]; ok {
-			extraVars.FanlightInstanceUrl = fInstanceUrl
-		}
-		if desktopUrl, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightDesktopAccessUrl]; ok {
-			extraVars.DesktopAccessUrl = desktopUrl
-		}
-		if usersAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightUsersAdd]; ok {
-			extraVars.UsersAdd = usersAdd
-		}
-		if appsAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightAppsAdd]; ok {
-			extraVars.AppsAdd = appsAdd
-		}
-		if webLab, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightWeblabName]; ok {
-			extraVars.WeblabName = webLab
-		}
-		if uiIP, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightFileshareUiIP]; ok {
-			extraVars.FileshareUiIP = uiIP
-		}
-		if nfsIP, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightNfsServerIP]; ok {
-			extraVars.NFSServerIP = nfsIP
-			extraVars.UseExternalStorage = true
-		}
-	}
+	//extraVars["spark_extra_jars"] = []map[string]string{}
 
-	//check nfs config
-	if serviceTypes[utils.ServiceTypeNFS].exists && serviceTypes[utils.ServiceTypeNFS].service.Config != nil {
-		if webLab, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSWeblabName]; ok {
-			extraVars.WeblabName = webLab
-		}
-	}
-
-	//check nextcloud config
-	if serviceTypes[utils.ServiceTypeNextCloud].exists && serviceTypes[utils.ServiceTypeNextCloud].service.Config != nil {
-		if customOidcHost, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudCustomOidcProvidersHost]; ok {
-			extraVars.CustomOidcProvidersHost = customOidcHost
-		}
-		if customOidcIP, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudCustomOidcProvidersIP]; ok {
-			extraVars.CustomOidcProvidersIP = customOidcIP
-		}
-		if nextcloudURL, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudURL]; ok {
-			extraVars.NextcloudURL = nextcloudURL
-		}
-		if webLab, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudWeblabName]; ok {
-			extraVars.WeblabName = webLab
-		}
-		if nfsIP, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudNfsServerIP]; ok {
-			extraVars.NFSServerIP = nfsIP
-			extraVars.UseExternalStorage = true
-		}
-		if nxtImage, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudImage]; ok {
-			extraVars.NextcloudImage = nxtImage
-		}
-		if mariadbImage, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.MariadbImage]; ok {
-			extraVars.MariadbImage = mariadbImage
-		}
-
-	}
-
-	extraVars.UseMirror = osConfig.UseMirror
+	extraVars["use_mirror"] = osConfig.UseMirror
 	enable, err := strconv.ParseBool(osConfig.UseMirror)
 	if err != nil {
 		log.Fatalln("use_mirror is not boolean")
@@ -493,26 +262,9 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dock
 		log.Fatalln("ERROR: bad mirror's IP address")
 	}
 
-	extraVars.MirrorAddress = osConfig.MirrorAddress
+	extraVars["mirror_address"] = osConfig.MirrorAddress
 
-	extraVars.SelfsignedRegistry = osConfig.SelfignedRegistry
-	extraVars.InsecureRegistry = osConfig.InsecureRegistry
-	extraVars.GitlabRegistry = osConfig.GitlabRegistry
-
-	extraVars.SelfsignedRegistryIp = osConfig.SelfsignedRegistryIp
-	extraVars.InsecureRegistryIp = osConfig.InsecureRegistryIp
-
-	extraVars.SelfsignedRegistryUrl = osConfig.SelfignedRegistryUrl
-	extraVars.SelfsignedCertPath = osConfig.SelfignedRegistryCert
-
-	var logins []map[string]string
-	if extraVars.SelfsignedRegistry || extraVars.GitlabRegistry {
-		var item = map[string]string {
-			"url": dockRegCreds.Url, "user": dockRegCreds.User, "password": dockRegCreds.Password}
-		logins = append(logins, item)
-		extraVars.DockerLogins = logins
-	}
-	return extraVars
+	return extraVars, nil
 }
 
 type AnsibleLauncher struct {
@@ -724,15 +476,21 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	}
 
 	//constructing ansible-playbook command
-	extraVars := MakeExtraVars(cluster, osCreds, dockRegCreds, osConfig, action)
-	ansibleArgs, err := json.Marshal(extraVars)
+	newExtraVars, err := makeExtraVars(aL, cluster, osCreds, osConfig, action)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	cmdName := utils.AnsiblePlaybookCmd
-	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(ansibleArgs)}
+	newAnsibleArgs, err := json.Marshal(newExtraVars)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Print("New extra vars:")
+	log.Print(string(newAnsibleArgs))
 
+	cmdName := utils.AnsiblePlaybookCmd
+	//cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(ansibleArgs)}
+	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(newAnsibleArgs)}
 	//saving cluster to database
 	log.Print("Writing new cluster to db...")
 	err = aL.couchbaseCommunicator.WriteCluster(cluster)
@@ -818,7 +576,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		masterIp := findIP(outb.String())
 		fanlightIp := ""
 		nfsIp := ""
-		if extraVars.DeployFanlight {
+		if newExtraVars["deploy_fanlight"]  == true {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "fanlight",
@@ -843,7 +601,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			}
 			fanlightIp = findIP(outb.String())
 		}
-		if extraVars.DeployNFS || extraVars.DeployNextcloud {
+		if newExtraVars["deploy_nfs"] == true {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "storage",

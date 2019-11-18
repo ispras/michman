@@ -1,0 +1,1104 @@
+{
+    "Type": "spark",
+    "Description": "Spark service",
+    "DefaultVersion": "2.3.0",
+    "Versions": [
+      {
+        "Version": "1.0.0",
+        "Description": "Spark version 1.0.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "1",
+            "PossibleValues": [
+              "1",
+              "cdh4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.0.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.0.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.0.1",
+        "Description": "Spark version 1.0.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "1",
+            "PossibleValues": [
+              "1",
+              "cdh4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.0.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.0.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.0.2",
+        "Description": "Spark version 1.0.2",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "1",
+            "PossibleValues": [
+              "1",
+              "cdh4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.0.2"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.0.2"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.1.0",
+        "Description": "Spark version 1.1.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.1.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.1.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.1.1",
+        "Description": "Spark version 1.1.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.1.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.1.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.2.0",
+        "Description": "Spark version 1.2.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.2.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.2.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.2.1",
+        "Description": "Spark version 1.2.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.2.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.2.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.2.2",
+        "Description": "Spark version 1.2.2",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.2.2"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.2.2"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.3.0",
+        "Description": "Spark version 1.3.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.4",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.3.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.3.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.3.1",
+        "Description": "Spark version 1.3.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.3.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.3.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.4.0",
+        "Description": "Spark version 1.4.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.4.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.4.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.4.1",
+        "Description": "Spark version 1.4.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.4.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.4.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.5.0",
+        "Description": "Spark version 1.5.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.5.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.5.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.5.1",
+        "Description": "Spark version 1.5.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.5.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.5.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.5.2",
+        "Description": "Spark version 1.5.2",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.5.2"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.5.2"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.6.0",
+        "Description": "Spark version 1.6.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.6.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.6.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.6.1",
+        "Description": "Spark version 1.6.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.6.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.6.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "1.6.2",
+        "Description": "Spark version 1.6.2",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.6",
+            "PossibleValues": [
+              "1",
+              "cdh4",
+              "2.3",
+              "2.4",
+              "2.6"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 1.6.2"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 1.6.2"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.0.0",
+        "Description": "Spark version 2.0.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.3",
+              "2.4",
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.0.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.0.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.0.1",
+        "Description": "Spark version 2.0.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.3",
+              "2.4",
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.0.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.0.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.0.2",
+        "Description": "Spark version 2.0.2",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.3",
+              "2.4",
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.0.2"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.0.2"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.1.0",
+        "Description": "Spark version 2.1.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.3",
+              "2.4",
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.1.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.1.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.2.0",
+        "Description": "Spark version 2.2.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.2.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.2.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.2.1",
+        "Description": "Spark version 2.2.1",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.2.1"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.2.1"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      },
+      {
+        "Version": "2.3.0",
+        "Description": "Spark version 2.3.0",
+        "Configs": [
+          {
+            "ParameterName": "hadoop_version",
+            "Type": "string",
+            "DefaultValue": "2.7",
+            "PossibleValues": [
+              "2.6",
+              "2.7"
+            ],
+            "Required": true,
+            "Description": "hadoop versions for spark 2.3.0"
+          },
+          {
+            "ParameterName": "use_yarn",
+            "Type": "bool",
+            "DefaultValue": "false",
+            "PossibleValues": [
+              "true",
+              "false"
+            ],
+            "Required": true,
+            "Description": "use yarn mode on spark 2.3.0"
+          },
+          {
+            "ParameterName": "yarn_master_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240."
+          },
+          {
+            "ParameterName": "worker_mem_mb",
+            "Type": "int",
+            "DefaultValue": "10240",
+            "Required": true,
+            "Description": "don't auto-detect spark worker memory and use specified value, can be useful if other processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to system/other processes"
+          }
+        ]
+      }
+    ]
+}

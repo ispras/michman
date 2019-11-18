@@ -32,28 +32,6 @@ const (
 	//supported cassandra configurations
 	CassandraDefaultVersion string = "3.11.4"
 
-	//supported fanlight configurations
-	FanlightInstanceUrl string = "fanlight_instance_url"
-	FanlightDesktopAccessUrl string = "desktop_access_url"
-	FanlightUsersAdd string = "users_add"
-	FanlightAppsAdd string = "apps_add"
-	FanlightWeblabName string = "weblab_name"
-	FanlightFileshareUiIP string = "fileshare_ui_ip"
-	FanlightNfsServerIP string = "nfs_server_ip"
-
-	//supported nfs-server configurations
-	NFSWeblabName string = "weblab_name"
-
-	//supported nexcloud configurations
-	NextcloudImage = "nextcloud_image"
-	MariadbImage = "mariadb_image"
-	NextcloudCustomOidcProvidersHost = "custom_oidc_providers_host"
-	NextcloudCustomOidcProvidersIP = "custom_oidc_providers_ip"
-	NextcloudURL = "nextcloud_url"
-	NextcloudWeblabName string = "weblab_name"
-	NextcloudNfsServerIP string = "nfs_server_ip"
-
-
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"
 	AnsibleFail string = "FAIL"

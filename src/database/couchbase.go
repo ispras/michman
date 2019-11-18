@@ -12,6 +12,7 @@ const (
 	clusterBucketName  string = "clusters"
 	templateBucketName string = "templates"
 	projectBucketName  string = "projects"
+	serviceTypeBucketName string = "service_types"
 )
 
 type vaultAuth struct {
@@ -32,6 +33,7 @@ type CouchDatabase struct {
 	clustersBucket     *gocb.Bucket
 	projectsBucket     *gocb.Bucket
 	templatesBucket    *gocb.Bucket
+	serviceTypesBucket *gocb.Bucket
 	VaultCommunicator  utils.SecretStorage
 }
 
@@ -80,6 +82,12 @@ func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 		return nil, err
 	}
 	cb.templatesBucket = bucket
+
+	bucket, err = cb.couchCluster.OpenBucket(serviceTypeBucketName, "")
+	if err != nil {
+		return nil, err
+	}
+	cb.serviceTypesBucket = bucket
 
 	return cb, nil
 }
@@ -296,4 +304,128 @@ func (db CouchDatabase) UpdateProject(project *proto.Project) error {
 func (db CouchDatabase) DeleteProject(name string) error {
 	db.projectsBucket.Remove(name, 0)
 	return nil
+}
+
+func (db CouchDatabase) ReadServiceType(sTypeName string) (*proto.ServiceType, error) {
+	var sType proto.ServiceType
+	db.serviceTypesBucket.Get(sTypeName, &sType)
+	return &sType, nil
+}
+
+func (db CouchDatabase) WriteServiceType(sType *proto.ServiceType) error {
+	_, err := db.serviceTypesBucket.Upsert(sType.Type, sType, 0)
+	return err
+}
+
+func (db CouchDatabase) ListServicesTypes() ([]proto.ServiceType, error) {
+	query := gocb.NewN1qlQuery("SELECT ID, Type, Description, DefaultVersion, Versions FROM " + serviceTypeBucketName)
+	rows, err := db.serviceTypesBucket.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.ServiceType
+	var result []proto.ServiceType
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.ServiceType{}
+	}
+	return result, nil
+}
+
+func (db CouchDatabase) DeleteServiceType(name string) error {
+	_, err := db.serviceTypesBucket.Remove(name, 0)
+	return err
+}
+
+func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*proto.ServiceVersion, error) {
+	var st proto.ServiceType
+	db.serviceTypesBucket.Get(sType, &st)
+
+	var result *proto.ServiceVersion
+
+	if st.Type == "" {
+		return nil, errors.New("Error: service with this type doesn't exist")
+	}
+
+	flag := false
+	for _, v := range st.Versions {
+		if v.ID == vId {
+			result = v
+			flag = true
+			break
+		}
+ 	}
+
+	if flag {
+		return result, nil
+	}
+	return nil, errors.New("Error: service version with this ID doesn't exist")
+}
+
+func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)  {
+	var st proto.ServiceType
+	db.serviceTypesBucket.Get(sType, &st)
+
+	if st.Type == "" {
+		return nil, errors.New("Error: service with this type doesn't exist")
+	}
+
+	flag := false
+	var idToDelete int
+	var result *proto.ServiceVersion
+	for i, v := range st.Versions {
+		if v.ID == vId {
+			idToDelete = i
+			result = v
+			flag = true
+			break
+		}
+	}
+
+	if !flag {
+		return nil, errors.New("Error: service version with this ID doesn't exist")
+	}
+
+	st.Versions = st.Versions[:idToDelete + copy(st.Versions[idToDelete:], st.Versions[idToDelete + 1:])]
+	_, err := db.serviceTypesBucket.Upsert(st.Type, sType, 0)
+	return result, err
+}
+
+func (db CouchDatabase) UpdateServiceType(st *proto.ServiceType) error {
+	var cas gocb.Cas
+	_, err := db.clustersBucket.Replace(st.Type, st, cas, 0)
+	return err
+}
+
+//string ID = 1;
+//string Version = 2;
+//string Description = 3;
+//repeated ServiceConfig Configs = 4;
+//string DownloadURL = 5; //if service has download url
+//repeated ServiceDependency Dependencies = 6;
+
+func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (*proto.ServiceVersion, error) {
+	var st proto.ServiceType
+	db.serviceTypesBucket.Get(sType, &st)
+
+	var result *proto.ServiceVersion
+
+	if st.Type == "" {
+		return nil, errors.New("Error: service with this type doesn't exist")
+	}
+
+	flag := false
+	for _, v := range st.Versions {
+		if v.Version == version {
+			result = v
+			flag = true
+			break
+		}
+	}
+
+	if flag {
+		return result, nil
+	}
+	return nil, errors.New("Error: service version with this ID doesn't exist")
 }
