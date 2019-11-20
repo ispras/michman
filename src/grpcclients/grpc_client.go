@@ -19,7 +19,7 @@ const (
 
 type GrpcClient struct {
 	ansibleServiceClient protobuf.AnsibleRunnerClient
-	dbServiceClient      protobuf.DBClient
+	//dbServiceClient      protobuf.DBClient
 	logger               *log.Logger
 	Db                   database.Database
 }
@@ -29,38 +29,30 @@ func (gc *GrpcClient) SetLogger(l *log.Logger) {
 }
 
 // SetConnection will set connection with both of ansible and db services
-func (gc *GrpcClient) SetConnection(ansibleServiceAddr string, dbServiceAddr string) {
+func (gc *GrpcClient) SetConnection(ansibleServiceAddr string) {
 	connAnsible, errAnsible := grpc.Dial(ansibleServiceAddr, grpc.WithInsecure())
-	connDB, errDB := grpc.Dial(dbServiceAddr, grpc.WithInsecure())
-
 	if errAnsible != nil {
 		gc.logger.Fatalf("gRPC client connection error: %v", errAnsible)
 	}
-
-	if errDB != nil {
-		gc.logger.Fatalf("gRPC client connection error: %v", errDB)
-	}
-
 	gc.ansibleServiceClient = protobuf.NewAnsibleRunnerClient(connAnsible)
-	gc.dbServiceClient = protobuf.NewDBClient(connDB)
 }
 
 // GetID will send new cluster struct to db-service and return ID for new cluster
 // that can be used to request information about cluster state and etc
-func (gc GrpcClient) GetID(c *protobuf.Cluster) (int32, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
-	defer cancel()
-
-	gc.logger.Print("Sending request to db-service for clusterID")
-
-	newID, err := gc.dbServiceClient.GetID(ctx, c)
-	if err != nil {
-		gc.logger.Println(err)
-		return ERROR_NUM, err
-	}
-
-	return newID.ID, nil
-}
+//func (gc GrpcClient) GetID(c *protobuf.Cluster) (int32, error) {
+//	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
+//	defer cancel()
+//
+//	gc.logger.Print("Sending request to db-service for clusterID")
+//
+//	newID, err := gc.dbServiceClient.GetID(ctx, c)
+//	if err != nil {
+//		gc.logger.Println(err)
+//		return ERROR_NUM, err
+//	}
+//
+//	return newID.ID, nil
+//}
 
 // StartClusterCreation will send cluster struct to ansible-service for run ansible
 func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
@@ -203,14 +195,14 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 }
 
 // updateClusterState will send cluster struct to db-service for update it's state
-func (gc GrpcClient) updateClusterState(c *protobuf.Cluster) error {
-	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
-	defer cancel()
-
-	gc.logger.Print("Sending update cluster state request to db-service")
-
-	// todo: error handling
-	gc.dbServiceClient.UpdateClusterState(ctx, c)
-
-	return nil
-}
+//func (gc GrpcClient) updateClusterState(c *protobuf.Cluster) error {
+//	ctx, cancel := context.WithTimeout(context.Background(), WAITING_TIME*time.Minute)
+//	defer cancel()
+//
+//	gc.logger.Print("Sending update cluster state request to db-service")
+//
+//	// todo: error handling
+//	gc.dbServiceClient.UpdateClusterState(ctx, c)
+//
+//	return nil
+//}

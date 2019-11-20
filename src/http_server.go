@@ -26,9 +26,14 @@ func main() {
 	// creating grpc client for communicating with services
 	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
-	gc := grpc_client.GrpcClient{Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
+	db, err := database.NewCouchBase(&vaultCommunicator)
+	if err != nil {
+		fmt.Printf("Can't create couchbase communicator")
+		os.Exit(1)
+	}
+	gc := grpc_client.GrpcClient{Db: db}
 	gc.SetLogger(grpcClientLogger)
-	gc.SetConnection(addressAnsibleService, addressDBService)
+	gc.SetConnection(addressAnsibleService)
 
 	// create a multiwriter which writes to stout and a file simultaneously
 	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -42,7 +47,8 @@ func main() {
 
 	errHandler := handlers.HttpErrorHandler{}
 
-	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: database.CouchDatabase{VaultCommunicator: &vaultCommunicator},
+
+	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: db,
 		ErrHandler: errHandler}
 
 	router := httprouter.New()

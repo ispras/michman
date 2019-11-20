@@ -111,6 +111,7 @@ type AnsibleExtraVars struct {
 	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip"`
 	UseMirror                string              `json:"use_mirror"`
 	MirrorAddress            string              `json:"mirror_address"`
+	NextcloudURL             string              `json:"nextcloud_url"`
 }
 
 func GetElasticConnectorJar() string {
@@ -400,6 +401,9 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		}
 		if customOidcIP, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSCustomOidcProvidersIP]; ok {
 			extraVars.CustomOidcProvidersIP = customOidcIP
+		}
+		if nextcloudURL, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSNextcloudURL]; ok {
+			extraVars.NextcloudURL = nextcloudURL
 		}
 	}
 

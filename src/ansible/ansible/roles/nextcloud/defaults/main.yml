@@ -4,7 +4,7 @@ weblab_name: "weblabs"
 nextcloud_users_group: "users"
 nextcloud_group_dir: "/external_data/{{ weblab_name }}"
 nextcloud_user_mounting_backends_list: 'sftp,\OC\Files\Storage\SFTP_Key'
-
+nextcloud_url: "web.sci-portal.gov.ru/proxy/nfs-lab10"
 
 nextcloud_registry: registry_ip
 nextcloud_registry_user: registry_user
@@ -22,6 +22,11 @@ nc_app_config:
   - { key: "install", value: "sociallogin" }
   - { key: "enable",  value: "sociallogin" }
   - { key: "enable",  value: "files_external" }
+
+nc_url_config:
+  - { key: "overwriteprotocol", value: "https" }
+  - { key: "overwritehost", value: "{{ nextcloud_url.split(\"/\")[0] }}" }
+  - { key: "overwritewebroot", value: "{{ nextcloud_url.split(\"/\")[1:] | join(\"/\")}}" }
 
 custom_oidc_providers_host: 'auth.sci-portal.gov.ru'
 custom_oidc_providers_url: 'https:\/\/{{ custom_oidc_providers_host }}/auth\/realms'

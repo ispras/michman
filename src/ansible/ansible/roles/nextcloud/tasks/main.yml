@@ -35,7 +35,7 @@
       MYSQL_PASSWORD: nc_password
       NEXTCLOUD_ADMIN_USER: admin
       NEXTCLOUD_ADMIN_PASSWORD: password
-      NEXTCLOUD_TRUSTED_DOMAINS: "{{ ansible_host }} web.sci-portal.gov.ru"
+      NEXTCLOUD_TRUSTED_DOMAINS: '{{ ansible_host }} {{ nextcloud_url.split("/")[0] }}'
     links:
       - "mariadb:mariadb"
     ports:
@@ -57,6 +57,10 @@
   until: not result.rc
   retries: 60
   delay: 2
+
+- name: configure nextcloud url
+  shell: "docker exec -u www-data nextcloud php occ config:system:set {{ item.key }} --value {{ item.value }}"
+  with_items: "{{ nc_url_config }}"
 
 - name: configure nextcloud apps
   shell: "docker exec -u www-data nextcloud php occ app:{{ item.key }} {{ item.value }}"

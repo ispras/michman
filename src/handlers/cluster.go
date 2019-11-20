@@ -18,7 +18,7 @@ const (
 )
 
 type GrpcClient interface {
-	GetID(c *proto.Cluster) (int32, error)
+	//GetID(c *proto.Cluster) (int32, error)
 	StartClusterCreation(c *proto.Cluster)
 	StartClusterDestroying(c *proto.Cluster)
 	StartClusterModification(c *proto.Cluster)

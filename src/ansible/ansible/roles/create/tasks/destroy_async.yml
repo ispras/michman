@@ -20,8 +20,9 @@
   with_items: "{{ alive_servers }}"
   retries: 3
   async: 1000
-  poll: 1
+  poll: 0
   register: destruction_waitress
+  when: alive_servers is defined
 
 
 - name: 'Checking cluster is dead'
@@ -30,6 +31,7 @@
   until: slv.finished
   retries: 240
   with_items: "{{ destruction_waitress.results }}"
+  when: destruction_waitress is defined
 
 - name: destroy security group
   include: destroy_security_group.yml

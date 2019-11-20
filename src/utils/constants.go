@@ -40,6 +40,7 @@ const (
 	//supported nfs-server configurations
 	NFSCustomOidcProvidersHost = "custom_oidc_providers_host"
 	NFSCustomOidcProvidersIP = "custom_oidc_providers_ip"
+	NFSNextcloudURL = "nextcloud_url"
 
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"

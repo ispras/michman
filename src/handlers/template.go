@@ -164,7 +164,7 @@ func (hS HttpServer) TemplateDelete(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Print("Get /templates/", templateID, "or /projects/projectIdOrName/templates/templateID DELETE")
 
 	//check that template exists
-	hS.Logger.Print("Sending request to db-service to check that template exists...")
+	hS.Logger.Print("Check that template exists...")
 
 	// checking do we get certain projectID or not
 	projectID := params.ByName("projectIdOrName")

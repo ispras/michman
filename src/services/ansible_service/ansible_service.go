@@ -312,7 +312,12 @@ func main() {
 
 	ansibleServiceLogger := log.New(mw, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
-	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: database.CouchDatabase{VaultCommunicator: &vaultCommunicator}}
+	db, err := database.NewCouchBase(&vaultCommunicator)
+	if err != nil {
+		fmt.Println("Can't create database connection. Exit...")
+		os.Exit(1)
+	}
+	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: db}
 
 	lis, err := net.Listen("tcp", inputPort)
 	if err != nil {
