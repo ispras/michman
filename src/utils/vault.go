@@ -34,51 +34,34 @@ type OsCredentials struct {
 	OsNoProxy string
 }
 
-type AuthConfig struct {
-	Token     string `yaml:"token"`
-	VaultAddr string `yaml:"vault_addr"`
-	OsKey     string `yaml:"os_key"`
-	SshKey    string `yaml:"ssh_key"`
-	CbKey     string `yaml:"cb_key"`
-}
-
-type OsConfig struct {
+type Config struct {
+	// Openstack
 	Key            string `yaml:"os_key_name"`
 	VirtualNetwork string `yaml:"virtual_network"`
 	OsImage        string `yaml:"os_image"`
 	FloatingIP     string `yaml:"floating_ip_pool"`
 	Flavor         string `yaml:"flavor"`
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
+
+	// Vault
+	Token     string `yaml:"token"`
+	VaultAddr string `yaml:"vault_addr"`
+	OsKey     string `yaml:"os_key"`
+	SshKey    string `yaml:"ssh_key"`
+	CbKey     string `yaml:"cb_key"`
+
+	// Mirror
+	UseMirror     string `yaml:"use_mirror"`
+	MirrorAddress string `yaml:"mirror_address"`
 }
 
-type MirrorConfig struct {
-	Enable string `yaml:"use_mirror"`
-	Address string `yaml:"mirror_address"`
+func SetConfigPath(configPath string) {
+	ConfigPath = configPath
+	UseBasePath = false
 }
 
-func GetMirrorConfig() (*MirrorConfig, error) {
-	var mirrorC *MirrorConfig
-	path, err := os.Getwd() //file must be executed from spark-openstack directory
-	if err != nil {
-		log.Fatalln(err)
-		return mirrorC, err
-	}
 
-	workingDir := filepath.Base(path)
-	if workingDir != BasePath { //checking that current directory is correct
-		log.Fatalln("Error: working directory must be spark-openstack")
-		return mirrorC, errors.New("Error: working directory must be spark-openstack")
-	}
-
-	osConfigPath := filepath.Join(path, MirrorCfg)
-	osBs, err := ioutil.ReadFile(osConfigPath)
-	if err := yaml.Unmarshal(osBs, &mirrorC); err != nil {
-		log.Fatalln(err)
-	}
-	return mirrorC, nil
-}
-
-func (osCfg *OsConfig) MakeOsCfg() error {
+func (Cfg *Config) MakeCfg() error {
 	path, err := os.Getwd() //file must be executed from spark-openstack directory
 	if err != nil {
 		log.Fatalln(err)
@@ -91,21 +74,29 @@ func (osCfg *OsConfig) MakeOsCfg() error {
 		return errors.New("Error: working directory must be spark-openstack")
 	}
 
-	osConfigPath := filepath.Join(path, OpenstackCfg)
+	var osConfigPath string
+	if UseBasePath {
+		osConfigPath = filepath.Join(path, ConfigPath)
+	} else {
+		osConfigPath = ConfigPath
+	}
+
 	osBs, err := ioutil.ReadFile(osConfigPath)
-	if err := yaml.Unmarshal(osBs, &osCfg); err != nil {
+	if err := yaml.Unmarshal(osBs, &Cfg); err != nil {
 		log.Fatalln(err)
 	}
 	return nil
 }
 
 type SecretStorage interface {
-	ConnectVault() (*vaultapi.Client, *AuthConfig)
+	ConnectVault() (*vaultapi.Client, *Config)
 }
 
-type VaultCommunicator struct{}
+type VaultCommunicator struct{
+	config Config
+}
 
-func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *AuthConfig) {
+func (vc *VaultCommunicator) Init() error {
 	path, err := os.Getwd() //file must be executed from spark-openstack directory
 	if err != nil {
 		log.Fatalln(err)
@@ -114,24 +105,31 @@ func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *AuthConfig) {
 	workingDir := filepath.Base(path)
 	if workingDir != BasePath { //checking that current directory is correct
 		log.Fatalln("Error: working directory must be spark-openstack")
-		return nil, nil
 	}
 
-	//getting openstack credential info from vault
-	vaultConfigPath := filepath.Join(path, VaultCfg)
+	var vaultConfigPath string
+	if UseBasePath {
+		vaultConfigPath = filepath.Join(path, ConfigPath)
+	} else {
+		vaultConfigPath = ConfigPath
+	}
+
 	vaultBs, err := ioutil.ReadFile(vaultConfigPath)
-	var vaultCfg *AuthConfig
-	if err := yaml.Unmarshal(vaultBs, &vaultCfg); err != nil {
+	if err := yaml.Unmarshal(vaultBs, &vc.config); err != nil {
 		log.Fatalln(err)
 	}
+	return nil
+}
+
+func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *Config) {
 
 	client, err := vaultapi.NewClient(&vaultapi.Config{
-		Address: vaultCfg.VaultAddr,
+		Address: vc.config.VaultAddr,
 	})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	client.SetToken(vaultCfg.Token)
-	return client, vaultCfg
+	client.SetToken(vc.config.Token)
+	return client, &vc.config
 }

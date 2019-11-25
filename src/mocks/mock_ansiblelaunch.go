@@ -35,7 +35,7 @@ func (m *MockansibleLaunch) EXPECT() *MockansibleLaunchMockRecorder {
 }
 
 // Run mocks base method
-func (m *MockansibleLaunch) Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
+func (m *MockansibleLaunch) Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Run", c, osCreds, osConfig, action)
 	ret0, _ := ret[0].(string)

@@ -24,7 +24,7 @@ const (
 )
 
 type ansibleLaunch interface {
-	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string
+	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string
 }
 
 // ansibleService implements ansible service
@@ -32,6 +32,17 @@ type ansibleService struct {
 	logger            *log.Logger
 	ansibleRunner     ansibleLaunch
 	vaultCommunicator utils.SecretStorage
+	config utils.Config
+}
+
+func (aS *ansibleService) Init( logger *log.Logger, ansibleLaunch AnsibleLauncher,
+	vaultCommunicator utils.SecretStorage) {
+	config := utils.Config{}
+	config.MakeCfg()
+	aS.logger = logger
+	aS.ansibleRunner = ansibleLaunch
+	aS.vaultCommunicator = vaultCommunicator
+	aS.config = config
 }
 
 func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *utils.OsCredentials {
@@ -156,15 +167,6 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
-		return nil
-	}
-	//aS.logger.Print(osCreds)
-
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -175,20 +177,20 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 
 	keyName := vaultCfg.OsKey
 
-	osCreds := makeOsCreds(keyName, vaultClient, osCfg.OsVersion)
+	osCreds := makeOsCreds(keyName, vaultClient, aS.config.OsVersion)
 	if osCreds == nil {
 		return nil
 	}
 
 	//check file with ssh-key and create it if it doesn't exist
-	err = checkSshKey(vaultCfg.SshKey, vaultClient)
+	err := checkSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		log.Fatalln(err)
 		return nil
 	}
 
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &osCfg, actionDelete)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionDelete)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -205,14 +207,6 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
-		return nil
-	}
-
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -221,22 +215,20 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
-	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, osCfg.OsVersion)
+	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, aS.config.OsVersion)
 	if osCreds == nil {
 		return nil
 	}
-	//aS.logger.Print(osCreds)
-
 
 	//check file with ssh-key and create it if it doesn't exist
-	err = checkSshKey(vaultCfg.SshKey, vaultClient)
+	err := checkSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		log.Fatalln(err)
 		return nil
 	}
 
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &osCfg, actionUpdate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionUpdate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -254,14 +246,6 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	aS.logger.Print("Cluster info:")
 	in.PrintClusterData(aS.logger)
 
-	//getting openstack config info
-	var osCfg utils.OsConfig
-	err := osCfg.MakeOsCfg()
-	if err != nil {
-		log.Fatalln(err)
-		return nil
-	}
-
 	aS.logger.Print("Getting vault secrets...")
 
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
@@ -270,21 +254,21 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
-	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, osCfg.OsVersion)
+	osCreds := makeOsCreds(vaultCfg.OsKey, vaultClient, aS.config.OsVersion)
 	if osCreds == nil {
 		return nil
 	}
 	//aS.logger.Print(osCreds)
 
 	//check file with ssh-key and create it if it doesn't exist
-	err = checkSshKey(vaultCfg.SshKey, vaultClient)
+	err := checkSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		log.Fatalln(err)
 		return nil
 	}
 
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &osCfg, actionCreate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionCreate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -302,6 +286,13 @@ func (aS *ansibleService) GetMasterIP(in *protobuf.Cluster, stream protobuf.Ansi
 }
 
 func main() {
+	// check if we get path to config
+	args := os.Args[1:]
+	if len(args) > 0 {
+		fmt.Printf("Config path is %v\n", args[0])
+		utils.SetConfigPath(args[0])
+	}
+
 	// create a multiwriter which writes to stout and a file simultaneously
 	logFile, err := os.OpenFile("logs/ansible_service.log", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
 	if err != nil {
@@ -312,6 +303,7 @@ func main() {
 
 	ansibleServiceLogger := log.New(mw, "ANSIBLE_SERVICE: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
+	vaultCommunicator.Init()
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
 		fmt.Println("Can't create database connection. Exit...")
@@ -325,7 +317,9 @@ func main() {
 	}
 
 	gas := grpc.NewServer()
-	protobuf.RegisterAnsibleRunnerServer(gas, &ansibleService{ansibleServiceLogger, &ansibleLaunch, &vaultCommunicator})
+	aService := ansibleService{}
+	aService.Init(ansibleServiceLogger, ansibleLaunch, &vaultCommunicator)
+	protobuf.RegisterAnsibleRunnerServer(gas, &aService)
 
 	ansibleServiceLogger.Print("Ansible runner start work...\n")
 	if err := gas.Serve(lis); err != nil {

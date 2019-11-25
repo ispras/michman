@@ -23,9 +23,18 @@ var VersionID string = "Default"
 
 func main() {
 	fmt.Printf("Build version: %v\n", VersionID)
+
+	// check if we get path to config
+	args := os.Args[1:]
+	if len(args) > 0 {
+		fmt.Printf("Config path is %v\n", args[0])
+		utils.SetConfigPath(args[0])
+	}
+
 	// creating grpc client for communicating with services
 	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
+	vaultCommunicator.Init()
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
 		fmt.Printf("Can't create couchbase communicator")

@@ -1,0 +1,25 @@
+## You can specify path to this file in the first arg of go run commands
+
+## Openstack
+
+os_key_name: OS_KEY_NAME
+virtual_network: NETWORK
+os_image: OS_IMAGE
+floating_ip_pool: IP_POOL
+flavor: FLAVOR
+os_version: VERSION #stein or liberty
+
+
+## Vault
+
+token: ROOT_TOKEN
+vault_addr: VAULT_ADDR
+os_key: BUCKET_PATH
+cb_key: BUCKET_PATH
+ssh_key: BUCKET_PATH
+
+## Mirror
+
+use_mirror: false
+mirror_address: MIRROR_ADDR
+

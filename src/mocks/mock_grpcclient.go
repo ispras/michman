@@ -33,21 +33,6 @@ func (m *MockGrpcClient) EXPECT() *MockGrpcClientMockRecorder {
 	return m.recorder
 }
 
-// GetID mocks base method
-func (m *MockGrpcClient) GetID(arg0 *protobuf.Cluster) (int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetID", arg0)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetID indicates an expected call of GetID
-func (mr *MockGrpcClientMockRecorder) GetID(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockGrpcClient)(nil).GetID), arg0)
-}
-
 // StartClusterCreation mocks base method
 func (m *MockGrpcClient) StartClusterCreation(arg0 *protobuf.Cluster) {
 	m.ctrl.T.Helper()

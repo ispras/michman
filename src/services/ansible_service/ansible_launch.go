@@ -173,7 +173,7 @@ func AddJar(path string) map[string]string {
 	return newElem
 }
 
-func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) AnsibleExtraVars {
+func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) AnsibleExtraVars {
 	//available services types
 	var serviceTypes = map[string]ServiceExists{
 		utils.ServiceTypeCassandra: {
@@ -444,18 +444,16 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		}
 	}
 
-	// load mirror config
-	mirrorC, err := utils.GetMirrorConfig()
+	extraVars.UseMirror = osConfig.UseMirror
+	enable, err := strconv.ParseBool(osConfig.UseMirror)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("use_mirror is not boolean")
 	}
-	extraVars.UseMirror = mirrorC.Enable
-	enable, err := strconv.ParseBool(mirrorC.Enable)
-	if enable && !validateIP(mirrorC.Address) {
+	if enable && !validateIP(osConfig.MirrorAddress) {
 		log.Fatalln("ERROR: bad mirror's IP address")
 	}
 
-	extraVars.MirrorAddress = mirrorC.Address
+	extraVars.MirrorAddress = osConfig.MirrorAddress
 
 	return extraVars
 }
@@ -657,7 +655,7 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 	return nil
 }
 
-func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.OsConfig, action string) string {
+func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object

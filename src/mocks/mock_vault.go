@@ -35,11 +35,11 @@ func (m *MockSecretStorage) EXPECT() *MockSecretStorageMockRecorder {
 }
 
 // ConnectVault mocks base method
-func (m *MockSecretStorage) ConnectVault() (*api.Client, *utils.AuthConfig) {
+func (m *MockSecretStorage) ConnectVault() (*api.Client, *utils.Config) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ConnectVault")
 	ret0, _ := ret[0].(*api.Client)
-	ret1, _ := ret[1].(*utils.AuthConfig)
+	ret1, _ := ret[1].(*utils.Config)
 	return ret0, ret1
 }
 
