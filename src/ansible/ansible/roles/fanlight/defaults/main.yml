@@ -1,4 +1,6 @@
 ---
+weblab_dir_name: "weblabs"
+
 fanlight_instance_id: fanlight-release-test
 fanlight_network: fanlight-control
 
@@ -12,9 +14,9 @@ fanlight_registry_user_password: registry_password
 traefik_image: "traefik:1.7.19"
 couchdb_image: "couchdb:2.3.1"
 setup_couchdb_image: "registry_ip/fanlight-setup-couchdb:0.1"
-controller_image: "registry_ip/fanlight-controller:4.7.0"
-vnclient_image: "registry_ip/fanlight-vnclient:0.3.0"
-proxy_image: "registry_ip/fanlight-proxy:3.1.0"
+controller_image: "registry_ip/fanlight-controller:4.7.8"
+vnclient_image: "registry_ip/fanlight-vnclient:0.3.2"
+proxy_image: "registry_ip/fanlight-proxy:3.1.2"
 desktop_image: "registry_ip/fanlight-xvnc:1.1.17"
 
 # Root url where fanlight instance is deployed
@@ -26,16 +28,22 @@ fanlight_instance_url: "//{{ ansible_host }}"
 desktop_access_url: "{{ ansible_host }}"
 
 # Fanlight settings
-home_dirs_root: "/fanlight-home"
+home_dirs_root: "/home/{{ weblab_dir_name }}"
 
 # [{"uuid":"", "pos_name":"", "pos_group":"", "pos_uid": 123, "pos_gid": 123}]
-users_add: "[]"
+users_add: []
 
 # [{"uuid"=>"myapp_uuid", "image"=>"docker_image_url"}]
-apps_add: "[]"
+apps_add: []
 
 # [{"uuid"=>"resource_uuid", "desc"=>"Some user managed resource"}]
-resources_list: "[]"
+resources_list: [{"uuid": "nextcloud", "desc": "Nextcloud"}]
 
 # Host dir with ansible scripts for user managed resources
 ansible_host_dir: "/ansible"
+
+managedResources_ExecTimeoutSec: "180"
+
+# List of volumes to mount into all containers: desktops and apps
+# [{"Source":"/some/host/dir", "Target":"/some/dir/in/container", "Mode": "rw"}]
+volumes: [{"Source":"/home/{{ weblab_name }}/shared_dir_{{ weblab_name }}", "Target":"/home/shared_dir_{{ weblab_name }}", "Mode": "rw"}]

@@ -25,7 +25,7 @@
       state: present
       name: "{{ item }}"
       image: "{{ os_image }}"
-      flavor: "{{ flavor }}"
+      flavor: "{{ slaves_flavor }}"
       key_name: "{{ os_key_name }}"
       network: "{{ virtual_network }}"
       boot_from_volume: "{{ boot_from_volume }}"
@@ -44,7 +44,7 @@
       state: present
       name: "{{ cluster_name }}-fanlight"
       image: "{{ os_image }}"
-      flavor: "{{ master_flavor }}"
+      flavor: "{{ fanlight_flavor }}"
       key_name: "{{ os_key_name }}"
       network: "{{ virtual_network }}"
       boot_from_volume: "{{ boot_from_volume }}"
@@ -62,7 +62,7 @@
       state: present
       name: "{{ cluster_name }}-storage"
       image: "{{ os_image }}"
-      flavor: "{{ master_flavor }}"
+      flavor: "{{ storage_flavor }}"
       key_name: "{{ os_key_name }}"
       network: "{{ virtual_network }}"
       boot_from_volume: "{{ boot_from_volume }}"

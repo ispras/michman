@@ -9,13 +9,13 @@
         name: os_facts
       when: act != "destroy"
 
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves:{{ cluster_name }}_fanlight:{{ cluster_name }}_storage"
+- hosts: all
   tasks:
     - include_role:
         name: deploy_ssh
       vars:
         hadoop_user: ubuntu
-      when: create_cluster is defined and create_cluster == true
+      when: create_cluster is defined and create_cluster
     - include_role:
             name: cpus
     - include_role:
@@ -28,48 +28,48 @@
     - name: install base
       include_role:
         name: basic
-      when: create_cluster is defined and create_cluster == true
+      when: create_cluster is defined and create_cluster
     - name: install Spark
       include_role:
         name: spark_common
-      when: deploy_spark
+      when: deploy_spark is defined and deploy_spark
     - name: install cassandra
       include_role:
         name: cassandra
-      when: deploy_cassandra
+      when: deploy_cassandra is defined and deploy_cassandra
     - name: prepare ignite
       include_role:
         name: ignite_prepare
-      when: deploy_ignite
+      when: deploy_ignite is defined and deploy_ignite
     - name: config ignite
       include_role:
         name: ignite_config
-      when: deploy_ignite
+      when: deploy_ignite is defined and deploy_ignite
     - name: mountnfs
       include_role:
         name: mountnfs
-      when: mountnfs
+      when: mountnfs is defined and mountnfs
 
 - hosts: "{{ cluster_name }}_master"
   tasks:
     - include_role:
         name: spark_master
-      when: deploy_spark
+      when: deploy_spark is defined and deploy_spark
     - include_role:
         name: jupyter
       vars:
         install_as_service: True
-      when: deploy_jupyter
+      when: deploy_jupyter is defined and deploy_jupyter
     - include_role:
         name: jupyter
       vars:
         install_as_service: True
-      when: deploy_jupyter
+      when: deploy_jupyter is defined and deploy_jupyter
     - include_role:
         name: jupyterhub
       vars:
         python_version: 3
-      when: deploy_jupyterhub
+      when: deploy_jupyterhub is defined and deploy_jupyterhub
 
 - hosts: "{{ cluster_name }}_master"
   become: yes
@@ -95,7 +95,7 @@
             host: "0"
           discovery:
             seed_hosts: "{{ active_master_ip }}"
-      when: deploy_elastic
+      when: deploy_elastic is defined and deploy_elastic
 
 - hosts: "{{ cluster_name }}_slaves"
   become: yes
@@ -121,32 +121,54 @@
             host: "0"
           discovery:
             seed_hosts: "{{ active_master_ip }}"
-      when: deploy_elastic
+      when: deploy_elastic is defined and deploy_elastic
 
 # When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"
   become: yes
-  vars:
-    home_dirs_root: /home/dim/tmp/fanlight-home
-    fanlight_registry_user: registry_user
-    fanlight_registry_user_password: registry_password
   roles:
-    - nfs_server
-    - docker_fanlight
-    - nextcloud
+    - { role: network_storage, when: mount_external_storage is defined and mount_external_storage } # nfs_server_ip must be defined
+    - { role: nfs_server, when: deploy_nfs_server is defined and deploy_nfs_server }
+    - { role: docker_fanlight, when: deploy_nextcloud is defined and deploy_nextcloud }
+    - { role: nextcloud, when: deploy_nextcloud is defined and deploy_nextcloud }
 
 # When create_fanlight is true, such instance would be created
 - hosts: "{{ cluster_name }}_fanlight"
   become: yes
   vars:
-    nfs_server_ip: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}"
-    home_dirs_root: "/home/ubuntu/tmp/fanlight-home"
     fanlight_registry_user: registry_user
     fanlight_registry_user_password: registry_password
     live_restore: yes
   roles:
-    - network_storage
-    - docker_fanlight
-    - fanlight
-    - simple_http_server
+    - {
+      role: network_storage,
+      nfs_server_ip: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}",
+      when: deploy_nfs_server is defined and deploy_nfs_server and create_fanlight is defined and create_fanlight
+    }
+    - {
+      role: network_storage, # nfs_server_ip must be defined
+      when: mount_external_storage is defined and mount_external_storage
+    }
+    - {
+      role: docker_fanlight,
+      when: create_fanlight is defined and create_fanlight
+    }
+    - {
+      role: fanlight,
+      nfs_server_ip: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}",
+      when: create_fanlight is defined and create_fanlight
+    }
+    - {
+      role: fanlight,
+      when: create_fanlight is defined and create_fanlight and mount_external_storage is defined and mount_external_storage
+    }
+    - {
+        role: fanlight_post_install,
+        fileshare_ui_ip: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}",
+        when: create_fanlight is defined and create_fanlight and deploy_nextcloud is defined and deploy_nextcloud
+    }
+    - {
+      role: simple_http_server,
+      when: create_fanlight is defined and create_fanlight
+    }
 

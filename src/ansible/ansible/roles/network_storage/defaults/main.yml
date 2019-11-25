@@ -1,13 +1,14 @@
 ---
 weblab_name: "weblabs" #Shared dir for all weblabs users
+weblab_dir_name: "weblabs"
 storage_type: nfs
 
 nfs_server_ip: "127.0.0.1"
-nfs_mountpath: "/home/{{ weblab_name }}"
+nfs_mountpath: "/home/{{ weblab_dir_name }}"
 nfs_mount_dir_name: "{{ weblab_name }}"
-nfs_url: "{{ nfs_server_ip }}:/home/{{ weblab_name }}"
+nfs_url: "{{ nfs_server_ip }}:/home/{{ weblab_dir_name }}"
 nfs_version: 3
-nfs_mount_opts: rsize=8192,wsize=8192,timeo=14,intr
+nfs_mount_opts: nolock,rsize=8192,wsize=8192,timeo=14,intr
 nfs_packages:
   - nfs-common
 
@@ -20,7 +21,7 @@ cephfs_packages:
 
 
 cephfs_mounts:
-  - src: 127.0.0.1:/
+  - src: 127.0.0.1:6789:/
     name: /home/
     fstype: ceph
     opts: name=cephfs_hpc,secretfile=/etc/ceph/ceph.key,_netdev,noatime,nocephx_require_signatures,nocephx_sign_messages

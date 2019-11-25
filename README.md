@@ -50,7 +50,10 @@ os_key_name: my_key
 virtual_network: test
 os_image: 731c8c7d-47fd-4b69-bdb4-00415e3ccb00
 floating_ip_pool: test
-flavor: keystone.medium
+master_flavor: keystone.medium
+slaves_flavor: keystone.medium
+storage_flavor: keystone.medium
+fanlight_flavor: keystone.medium
 os_version: liberty
 
 ## Apt and Pip mirror
@@ -69,7 +72,7 @@ Where:
 * **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
 * **os_image** - ID of OS image
 * **floating_ip_pool** - floating IP pool name
-* **flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large)
+* **\<type\>_flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large). Master and slaves flavors are required parameters anyway. Fanlight flavor required if you want deploy fanlight. Storage flavor required if you want deploy nextcloud or nfs-server 
 * **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
 * **use_mirror** - Do or do not use your apt and pip mirror
 * **mirror_address** - Address of you mirror. Can be omitted if use_mirror is false

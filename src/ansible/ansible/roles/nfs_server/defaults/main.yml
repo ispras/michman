@@ -1,9 +1,9 @@
 local_repo_url: False
-weblab_name: "weblabs"
+weblab_dir_name: "weblabs"
 
 
 nfs_server_export_directories:
-  - path: "/home/{{ weblab_name }}"
+  - path: "/home/{{ weblab_dir_name }}"
     clients:
       - "*(rw,no_subtree_check)"
 

@@ -2,9 +2,8 @@
   include_tasks: "{{ storage_type }}.yml"
   tags: storage
 
-
-- name: Creates directory for weblab-group
+- name: Creates directory for weblab-group if necessary
   file:
-    path: "/home/{{ weblab_name }}"
+    path: "/home/{{ weblab_dir_name }}/shared_dir_{{ weblab_name }}"
     state: directory
 

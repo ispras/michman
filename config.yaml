@@ -6,7 +6,10 @@ os_key_name: OS_KEY_NAME
 virtual_network: NETWORK
 os_image: OS_IMAGE
 floating_ip_pool: IP_POOL
-flavor: FLAVOR
+master_flavor: FLAVOR
+slaves_flavor: FLAVOR
+storage_flavor: FLAVOR
+fanlight_flavor: FLAVOR
 os_version: VERSION #stein or liberty
 
 

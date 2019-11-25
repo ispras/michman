@@ -20,15 +20,15 @@
 
 - name: Creates directory
   file:
-    path: "/home/{{weblabs}}"
+    path: "/home/{{ weblab_dir_name }}"
     state: directory
     mode: 0775
     recurse: yes
 
 - name: Mount up device by UUID
   mount:
-    path: "/home/{{weblabs}}"
-    src: "{{UUID.stdout}}"
+    path: "/home/{{ weblab_dir_name }}"
+    src: "{{ UUID.stdout }}"
     fstype: xfs
     opts: noatime
     state: present

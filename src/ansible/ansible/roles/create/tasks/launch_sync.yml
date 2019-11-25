@@ -40,7 +40,7 @@
     state: present
     name: "{{ item }}"
     image: "{{ os_image }}"
-    flavor: "{{ flavor }}"
+    flavor: "{{ slaves_flavor }}"
     key_name: "{{ os_key_name }}"
     floating_ip_pools: "{{ floating_ip_pool }}"
     network: "{{ virtual_network }}"
@@ -57,7 +57,7 @@
     state: present
     name: "{{ item }}"
     image: "{{ os_image }}"
-    flavor: "{{ flavor }}"
+    flavor: "{{ slaves_flavor }}"
     key_name: "{{ os_key_name }}"
     auto_ip: no
 #    floating_ip_pools: "{{ floating_ip_pool }}"
@@ -74,7 +74,7 @@
     state: present
     name: "{{ cluster_name }}-fanlight"
     image: "{{ os_image }}"
-    flavor: "{{ master_flavor }}"
+    flavor: "{{ fanlight_flavor }}"
     key_name: "{{ os_key_name }}"
     floating_ip_pools: "{{ floating_ip_pool }}"
     network: "{{ virtual_network }}"
@@ -89,7 +89,7 @@
     state: present
     name: "{{ cluster_name }}-fanlight"
     image: "{{ os_image }}"
-    flavor: "{{ master_flavor }}"
+    flavor: "{{ fanlight_flavor }}"
     key_name: "{{ os_key_name }}"
     auto_ip: no
     #    floating_ip_pools: "{{ floating_ip_pool }}"
@@ -105,7 +105,7 @@
     state: present
     name: "{{ cluster_name }}-storage"
     image: "{{ os_image }}"
-    flavor: "{{ master_flavor }}"
+    flavor: "{{ storage_flavor }}"
     key_name: "{{ os_key_name }}"
     floating_ip_pools: "{{ floating_ip_pool }}"
     network: "{{ virtual_network }}"
@@ -120,7 +120,7 @@
     state: present
     name: "{{ cluster_name }}-storage"
     image: "{{ os_image }}"
-    flavor: "{{ master_flavor }}"
+    flavor: "{{ storage_flavor }}"
     key_name: "{{ os_key_name }}"
     auto_ip: no
     #    floating_ip_pools: "{{ floating_ip_pool }}"

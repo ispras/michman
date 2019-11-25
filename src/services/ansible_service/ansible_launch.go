@@ -61,62 +61,80 @@ type ServiceExists struct {
 }
 
 type AnsibleExtraVars struct {
-	IgniteVersion            string              `json:"ignite_version"`
-	EsHeapSize               string              `json:"es_heap_size"`
-	CreateCluster            bool                `json:"create_cluster"`
-	DeployCassandra          bool                `json:"deploy_cassandra"`
-	Sync                     string              `json:"sync"`
+	// Ansible parameters
 	AnsibleUser              string              `json:"ansible_user"`
-	DeploySpark              bool                `json:"deploy_spark"`
-	DeployElastic            bool                `json:"deploy_elastic"`
-	Mountnfs                 bool                `json:"mountnfs"`
-	Flavor                   string              `json:"flavor"`
-	BootFromVolume           bool                `json:"boot_from_volume"`
-	DeployJupyter            bool                `json:"deploy_jupyter"`
-	ToreeVersion             string              `json:"toree_version,omitempty"`
-	HadoopUser               string              `json:"hadoop_user"`
-	MasterFlavor             string              `json:"master_flavor"`
-	NSlaves                  int32               `json:"n_slaves"`
-	DeployIgnite             bool                `json:"deploy_ignite"`
-	ClusterName              string              `json:"cluster_name"`
-	SparkVersion             string              `json:"spark_version"`
-	OsImage                  string              `json:"os_image"`
-	SkipPackages             bool                `json:"skip_packages"`
-	OsProjectName            string              `json:"os_project_name"`
-	NfsShares                []string            `json:"nfs_shares"` //check if type is correct
-	UseYarn                  bool                `json:"use_yarn"`
-	FloatingIpPool           string              `json:"floating_ip_pool"`
-	OsAuthUrl                string              `json:"os_auth_url"`
-	UseOracleJava            bool                `json:"use_oracle_java"`
 	AnsibleSshPrivateKeyFile string              `json:"ansible_ssh_private_key_file"`
-	HadoopVersion            string              `json:"hadoop_version"`
-	CassandraVersion         string              `json:"cassandra_version"`
-	ExtraJars                []map[string]string `json:"extra_jars"`
+	HadoopUser               string              `json:"hadoop_user"`
 	Act                      string              `json:"act"`
-	VirtualNetwork           string              `json:"virtual_network"`
+	Sync                     string              `json:"sync"`
+	CreateCluster            bool                `json:"create_cluster"`
+	// Cluster info
+	NSlaves                  int32               `json:"n_slaves"`
+	ClusterName              string              `json:"cluster_name"`
+	// Openstack parameters
+	OsProjectName            string              `json:"os_project_name"`
+	OsAuthUrl                string              `json:"os_auth_url"`
 	OsKeyName                string              `json:"os_key_name"`
-	DeployJupyterhub         bool                `json:"deploy_jupyterhub"`
-	OsSwiftUserName          string              `json:"os_swift_user_name,omitempty"`
-	OsSwiftPassword          string              `json:"os_swift_password,omitempty"`
-	SparkWorkerMemMb         int                 `json:"spark_worker_mem_mb,omitempty"`
+	OsImage                  string              `json:"os_image"`
+	BootFromVolume           bool                `json:"boot_from_volume"`
+	VirtualNetwork           string              `json:"virtual_network"`
+	FloatingIpPool           string              `json:"floating_ip_pool"`
+	MasterFlavor             string              `json:"master_flavor"`
+	SlavesFlavor             string              `json:"slaves_flavor"`
+	StorageFlavor            string              `json:"storage_flavor"`
+	FanlightFlavor           string              `json:"fanlight_flavor"`
+	// Internal package mirror parameters
+	UseMirror                string              `json:"use_mirror"`
+	MirrorAddress            string              `json:"mirror_address,omitempty"`
+	// Basic parameters
+	SkipPackages             bool                `json:"skip_packages"`
+	UseOracleJava            bool                `json:"use_oracle_java"`
+	// Cassandra parameters
+	DeployCassandra          bool                `json:"deploy_cassandra"`
+	CassandraVersion         string              `json:"cassandra_version"`
+	// Ignite Parameters
+	DeployIgnite             bool                `json:"deploy_ignite"`
+	IgniteVersion            string              `json:"ignite_version"`
 	IgniteMemory             int                 `json:"ignite_memory,omitempty"`
+	// ElasticSearch parameters
+	DeployElastic            bool                `json:"deploy_elastic"`
+	EsHeapSize               string              `json:"es_heap_size"`
+	// Spark parameters
+	DeploySpark              bool                `json:"deploy_spark"`
+	SparkVersion             string              `json:"spark_version"`
+	ExtraJars                []map[string]string `json:"extra_jars"`
+	HadoopVersion            string              `json:"hadoop_version"`
+	SparkWorkerMemMb         int                 `json:"spark_worker_mem_mb,omitempty"`
+	// Jypyter parameters
+	DeployJupyter            bool                `json:"deploy_jupyter"`
 	YarnMasterMemMb          int                 `json:"yarn_master_mem_mb,omitempty"`
+	ToreeVersion             string              `json:"toree_version,omitempty"`
+	UseYarn                  bool                `json:"use_yarn"`
+	DeployJupyterhub         bool                `json:"deploy_jupyterhub"`
+	// Fanlight parameters
+	WeblabName               string              `json:"weblab_name,omitempty"` // Used in Nextcloud and NFS-server too
 	DeployFanlight           bool                `json:"create_fanlight"`
 	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
-	DesktopAccessUrl         string              `json:"desktop_access_url"`
-	CreateStorage            bool                `json:"create_storage"`
-	UsersAdd                 string              `json:"users_add"`
-	AppsAdd                  string              `json:"apps_add"`
-	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host"`
-	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip"`
-	UseMirror                string              `json:"use_mirror"`
-	MirrorAddress            string              `json:"mirror_address"`
-	NextcloudURL             string              `json:"nextcloud_url"`
-	DeployNFS                bool                `json:"deploy_nfs"`
-	DeployNextcloud          bool                `json:"deploy_nextcloud"`
-	WeblabName               string              `json:"weblab_name"`
-	NFSServerIP              string              `json:"nfs_server_ip"`
-	FileshareUiIP            string              `json:"fileshare_ui_ip"`
+	DesktopAccessUrl         string              `json:"desktop_access_url,omitempty"`
+	UsersAdd                 string              `json:"users_add,omitempty"`
+	AppsAdd                  string              `json:"apps_add,omitempty"`
+	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host,omitempty"`
+	CustomOidcProvidersIP    string              `json:"custom_oidc_providers_ip,omitempty"`
+	FileshareUiIP            string              `json:"fileshare_ui_ip,omitempty"`
+	// Nextcloud parameters
+	DeployNextcloud          bool                `json:"deploy_nextcloud,omitempty"`
+	NextcloudURL             string              `json:"nextcloud_url,omitempty"`
+	NFSServerIP              string              `json:"nfs_server_ip,omitempty"`
+	// NFS Server parameters
+	DeployNFS                bool                `json:"deploy_nfs_server,omitempty"`
+	CreateStorage            bool                `json:"create_storage,omitempty"`
+	UseExternalStorage       bool                `json:"mount_external_storage,omitempty"`
+	// Old NFS parameters
+	NfsShares                []string            `json:"nfs_shares"` //check if type is correct
+	Mountnfs                 bool                `json:"mountnfs"`
+	// Swift parameters
+	OsSwiftUserName          string              `json:"os_swift_user_name,omitempty"`
+	OsSwiftPassword          string              `json:"os_swift_password,omitempty"`
 }
 
 func GetElasticConnectorJar() string {
@@ -265,11 +283,13 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	}
 
 	extraVars.Mountnfs = false
-	extraVars.Flavor = osConfig.Flavor
+	extraVars.MasterFlavor = osConfig.MasterFlavor
+	extraVars.SlavesFlavor = osConfig.SlavesFlavor
+	extraVars.StorageFlavor = osConfig.StorageFlavor
+	extraVars.FanlightFlavor = osConfig.FanlightFlavor
 	extraVars.BootFromVolume = false
 
 	extraVars.HadoopUser = "ubuntu"
-	extraVars.MasterFlavor = osConfig.Flavor
 	extraVars.NSlaves = cluster.NHosts
 
 	extraVars.ClusterName = cluster.Name
@@ -415,6 +435,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		}
 		if nfsIP, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightNfsServerIP]; ok {
 			extraVars.NFSServerIP = nfsIP
+			extraVars.UseExternalStorage = true
 		}
 	}
 
@@ -441,6 +462,7 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		}
 		if nfsIP, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudNfsServerIP]; ok {
 			extraVars.NFSServerIP = nfsIP
+			extraVars.UseExternalStorage = true
 		}
 	}
 
@@ -654,7 +676,20 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 
 	return nil
 }
-
+//func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
+//	log.SetPrefix("ANSIBLE_LAUNCHER: ")
+//	err := setOsVars(osCreds, osConfig.OsVersion)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//	extraVars := MakeExtraVars(cluster, osCreds, osConfig, action)
+//	ansibleArgs, err := json.Marshal(extraVars)
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//	log.Println(string(ansibleArgs))
+//	return utils.AnsibleOk
+//}
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
@@ -786,7 +821,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			}
 			fanlightIp = findIP(outb.String())
 		}
-		if extraVars.DeployNFS {
+		if extraVars.CreateStorage {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "storage",

@@ -40,7 +40,10 @@ type Config struct {
 	VirtualNetwork string `yaml:"virtual_network"`
 	OsImage        string `yaml:"os_image"`
 	FloatingIP     string `yaml:"floating_ip_pool"`
-	Flavor         string `yaml:"flavor"`
+	MasterFlavor   string `yaml:"master_flavor"`
+	SlavesFlavor   string `yaml:"slaves_flavor"`
+	StorageFlavor  string `yaml:"storage_flavor"`
+	FanlightFlavor string `yaml:"fanlight_flavor"`
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
 
 	// Vault

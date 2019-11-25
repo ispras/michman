@@ -16,18 +16,32 @@
       MARIADB_PASSWORD: nc_password
     restart_policy: always
 
-- name: Wait for mariadb startup
-  command:  docker exec mariadb sh -c 'mysqladmin ping'
-  register: result
-  until: not result.rc
-  retries: 60
-  delay: 2
+- name: get mariadb IP address
+  command: "docker inspect --format '{''{ .NetworkSettings.IPAddress }''}' mariadb"
+  register: mariadb_ip_address
+
+- name: wait for mariadb to become ready
+  wait_for:
+    host: "{{ mariadb_ip_address.stdout }}"
+    port: 3306
+    state: started
+    connect_timeout: 2
+    timeout: 180
+    sleep: 2
+
+
+- name: deploy authorized keys
+  become: yes
+  become_user: root
+  lineinfile:
+    path: "/root/.ssh/authorized_keys"
+    line: "{{ lookup('file', 'files/keys/{{ cluster_name }}.pub') }}"
+  tags: prepare
 
 - name: Create nextcloud container
   docker_container:
     name: "nextcloud"
     image: "{{ nextcloud_image }}"
-#    restart: yes
     env:
       MYSQL_HOST: mariadb
       MYSQL_DATABASE: nextcloud
@@ -43,13 +57,12 @@
       - "2022:22"
     restart_policy: always
     volumes:
-      - /home:/external_data
+      - "/home/{{ weblab_dir_name }}:/external_data"
       - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
     etc_hosts: >
       {
         "{{ custom_oidc_providers_host }}" : "{{ custom_oidc_providers_ip }}"
       }
-
 
 - name: Wait for nextcloud setup
   command: curl {{ ansible_host }}:80
@@ -83,8 +96,13 @@
 - name: create group directory
   shell: "docker exec nextcloud mkdir -p {{ nextcloud_group_dir }}"
 
-- name: change group directory permissions
+- name: set write permissions for group directory
+  shell: "docker exec nextcloud chmod -R o+w {{ nextcloud_group_dir }}"
+  ignore_errors: true
+
+- name: change group directory owner
   shell: "docker exec nextcloud chown -R www-data {{ nextcloud_group_dir }}"
+  ignore_errors: true
 
 - name: configure external storage for group
   shell: "docker exec -u www-data nextcloud php occ files_external:create {{ weblab_name }} local null::null -n --config datadir={{ nextcloud_group_dir }}"
@@ -95,5 +113,11 @@
 - name: install sshd in nextcloud container
   shell: "docker exec nextcloud apt install -y ssh"
 
+- name: install sudo in nextcloud container
+  shell: "docker exec nextcloud apt install -y sudo"
+
 - name: start sshd in nextcloud container
   shell: "docker exec nextcloud service ssh start"
+
+- name: install python in nextcloud container
+  shell: "docker exec nextcloud apt install -y python"

@@ -1,0 +1,34 @@
+---
+- name: Creates directory "/ansible"
+  file:
+    path: /ansible
+    state: directory
+
+- name: copy ssh-key for nextcloud
+  become: yes
+  become_user: root
+  copy: src="files/keys/{{ cluster_name }}" dest="/ansible/nextcloud.pem" mode=0600
+  tags: prepare
+
+- name: Create inventory file for Nextcloud
+  file:
+    path: /ansible/nextcloud_inventory.yml
+    state: touch
+
+- name: Inventory file for Nextcloud
+  lineinfile:
+    path: "/ansible/nextcloud_inventory.yml"
+    line: "nextcloud ansible_ssh_host={{ fileshare_ui_ip }} ansible_ssh_user=root ansible_port=2022 ansible_ssh_private_key_file=/ansible/nextcloud.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'"
+    insertbefore: BOF
+
+- name: Inventory file for Nextcloud
+  lineinfile:
+    path: "/ansible/nextcloud_inventory.yml"
+    line: "[nextcloud]"
+    insertbefore: BOF
+
+- name: Load playbook for Nextcloud
+  copy: src="templates/nextcloud_user_add_playbook.yml" dest="/ansible/nextcloud_user_add_playbook.yml"
+
+- name: Load playbook for Nextcloud userdel
+  copy: src="templates/nextcloud_user_del_playbook.yml" dest="/ansible/nextcloud_user_del_playbook.yml"

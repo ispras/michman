@@ -6,13 +6,16 @@
     update_cache: yes
   with_items:
     - "{{ nfs_packages }}"
+  tags:
+    - nfs
 
-- name: Check if thereis no mounted dir
+- name: Check there is no mounted dir
   become: yes
   mount:
     path: "{{ nfs_mountpath }}"
     state: absent
-  tags: nfs
+  tags:
+    - nfs
 
 - name: Create mountable dir
   become: yes
@@ -22,7 +25,8 @@
     mode: 777
 #    owner: root
 #    group: root
-  tags: nfs
+  tags:
+    - nfs
 
 
 - name: Mount NFS share
