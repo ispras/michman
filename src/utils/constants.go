@@ -12,6 +12,7 @@ const (
 	ServiceTypeElastic    string = "elastic"
 	ServiceTypeFanlight   string = "fanlight"
 	ServiceTypeNFS        string = "nfs-server"
+	ServiceTypeNextCloud  string = "nextcloud"
 
 	//supported spark configurations
 	SparkUseYarn         string = "use-yarn"
@@ -36,11 +37,20 @@ const (
 	FanlightDesktopAccessUrl string = "desktop_access_url"
 	FanlightUsersAdd string = "users_add"
 	FanlightAppsAdd string = "apps_add"
+	FanlightWeblabName string = "weblab_name"
+	FanlightFileshareUiIP string = "fileshare_ui_ip"
+	FanlightNfsServerIP string = "nfs_server_ip"
 
 	//supported nfs-server configurations
-	NFSCustomOidcProvidersHost = "custom_oidc_providers_host"
-	NFSCustomOidcProvidersIP = "custom_oidc_providers_ip"
-	NFSNextcloudURL = "nextcloud_url"
+	NFSWeblabName string = "weblab_name"
+
+	//supported nexcloud configurations
+	NextcloudCustomOidcProvidersHost = "custom_oidc_providers_host"
+	NextcloudCustomOidcProvidersIP = "custom_oidc_providers_ip"
+	NextcloudURL = "nextcloud_url"
+	NextcloudWeblabName string = "weblab_name"
+	NextcloudNfsServerIP string = "nfs_server_ip"
+
 
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"

@@ -104,7 +104,7 @@ type AnsibleExtraVars struct {
 	DeployFanlight           bool                `json:"create_fanlight"`
 	FanlightInstanceUrl      string              `json:"fanlight_instance_url"`
 	DesktopAccessUrl         string              `json:"desktop_access_url"`
-	DeployNFS                bool                `json:"create_storage"`
+	CreateStorage            bool                `json:"create_storage"`
 	UsersAdd                 string              `json:"users_add"`
 	AppsAdd                  string              `json:"apps_add"`
 	CustomOidcProvidersHost  string              `json:"custom_oidc_providers_host"`
@@ -112,6 +112,11 @@ type AnsibleExtraVars struct {
 	UseMirror                string              `json:"use_mirror"`
 	MirrorAddress            string              `json:"mirror_address"`
 	NextcloudURL             string              `json:"nextcloud_url"`
+	DeployNFS                bool                `json:"deploy_nfs"`
+	DeployNextcloud          bool                `json:"deploy_nextcloud"`
+	WeblabName               string              `json:"weblab_name"`
+	NFSServerIP              string              `json:"nfs_server_ip"`
+	FileshareUiIP            string              `json:"fileshare_ui_ip"`
 }
 
 func GetElasticConnectorJar() string {
@@ -203,6 +208,10 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeNextCloud: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	//iterating over services for looking, which services are presented
@@ -232,6 +241,12 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 	extraVars.DeployJupyterhub = serviceTypes[utils.ServiceTypeJupyterhub].exists
 	extraVars.DeployFanlight = serviceTypes[utils.ServiceTypeFanlight].exists
 	extraVars.DeployNFS = serviceTypes[utils.ServiceTypeNFS].exists
+	extraVars.DeployNextcloud = serviceTypes[utils.ServiceTypeNextCloud].exists
+
+	//check creation of storage node
+	if extraVars.DeployNFS || extraVars.DeployNextcloud {
+		extraVars.CreateStorage = true
+	}
 
 	//must be always async mode
 	extraVars.Sync = "async"
@@ -389,21 +404,43 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 		if usersAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightUsersAdd]; ok {
 			extraVars.UsersAdd = usersAdd
 		}
-		if appssAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightAppsAdd]; ok {
-			extraVars.AppsAdd = appssAdd
+		if appsAdd, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightAppsAdd]; ok {
+			extraVars.AppsAdd = appsAdd
+		}
+		if webLab, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightWeblabName]; ok {
+			extraVars.WeblabName = webLab
+		}
+		if uiIP, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightFileshareUiIP]; ok {
+			extraVars.FileshareUiIP = uiIP
+		}
+		if nfsIP, ok := serviceTypes[utils.ServiceTypeFanlight].service.Config[utils.FanlightNfsServerIP]; ok {
+			extraVars.NFSServerIP = nfsIP
+		}
+	}
+
+	//check nfs config
+	if serviceTypes[utils.ServiceTypeNFS].exists && serviceTypes[utils.ServiceTypeNFS].service.Config != nil {
+		if webLab, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSWeblabName]; ok {
+			extraVars.WeblabName = webLab
 		}
 	}
 
 	//check nextcloud config
-	if serviceTypes[utils.ServiceTypeNFS].exists && serviceTypes[utils.ServiceTypeNFS].service.Config != nil {
-		if customOidcHost, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSCustomOidcProvidersHost]; ok {
+	if serviceTypes[utils.ServiceTypeNextCloud].exists && serviceTypes[utils.ServiceTypeNextCloud].service.Config != nil {
+		if customOidcHost, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudCustomOidcProvidersHost]; ok {
 			extraVars.CustomOidcProvidersHost = customOidcHost
 		}
-		if customOidcIP, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSCustomOidcProvidersIP]; ok {
+		if customOidcIP, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudCustomOidcProvidersIP]; ok {
 			extraVars.CustomOidcProvidersIP = customOidcIP
 		}
-		if nextcloudURL, ok := serviceTypes[utils.ServiceTypeNFS].service.Config[utils.NFSNextcloudURL]; ok {
+		if nextcloudURL, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudURL]; ok {
 			extraVars.NextcloudURL = nextcloudURL
+		}
+		if webLab, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudWeblabName]; ok {
+			extraVars.WeblabName = webLab
+		}
+		if nfsIP, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudNfsServerIP]; ok {
+			extraVars.NFSServerIP = nfsIP
 		}
 	}
 
@@ -811,7 +848,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		if nfsIp != "" {
 			log.Print("NFS server IP is: ", nfsIp)
 			for i, service := range cluster.Services {
-				if service.Type == utils.ServiceTypeNFS {
+				if service.Type == utils.ServiceTypeNFS || service.Type == utils.ServiceTypeNextCloud {
 					cluster.Services[i].ServiceURL = nfsIp
 				}
 			}

@@ -113,6 +113,8 @@ Supported services types are:
 * **ignite**
 * **jupyterhub** 
 * **fanlight**
+* **nfs-server**
+* **nextcloud**
 
 Config parameter for **spark** service type supports:
 * **use-yarn** -- Spark-on-YARN deploy mode  (has overhead on memory so do not use it if you don't know why)
@@ -174,11 +176,51 @@ Config parameter for **fanlight** service type supports:
 (ws|wss)://DesktopAccessURL/desktop_id
 ```
 
+* **users_add** -- adds users on startup.
+* **apps_add** -- list of applications to add on startup.
+* **weblab_name** -- name of Web Laboratory.
+* **fileshare_ui_ip** 
+* **nfs_server_ip** -- NFS server IP.
+
 Example:
 ```json
 "Config": {
   "fanlight_instance_url": "https://mydomain/myservice/",
-  "desktop_access_url": "https://mydomain/myservice/" 
+  "desktop_access_url": "https://mydomain/myservice/",
+  "users_add": '[{"uuid":"", "pos_name":"", "pos_group":"", "pos_uid": 123, "pos_gid": 123}]'
+  "apps_add": '[{"uuid":"myapp_uuid", "image":"docker_image_url"}]',
+  "weblab_name": "Name",
+  "fileshare_ui_ip": "IP",
+  "nfs_server_ip": "IP"
+}
+```
+
+Config parameter for **nfs-server** service type supports:
+* **weblab_name** -- name of Web Laboratory.
+
+Example:
+```json
+"Config": {
+  "weblab_name": "Name"
+}
+```
+
+Config parameter for **nextcloud** service type supports:
+
+* **custom_oidc_providers_host** --  keycloak hostname.
+* **custom_oidc_providers_ip** -- keycloak server ip.
+* **nextcloud_url** -- URL of nextcloud as it will be opened from portal (including proxy and weblab id).
+* **weblab_name** -- name of Web Laboratory.
+* **nfs_server_ip** -- NFS server IP.
+
+Example:
+```json
+"Config": {
+  "custom_oidc_providers_host": "auth.sci-portal.gov.ru",
+  "custom_oidc_providers_ip": "10.10.16.51",
+  "nextcloud_url": "web.sci-portal.gov.ru/proxy/nfs-lab10",
+  "weblab_name": "Name",
+  "nfs_server_ip": "IP"
 }
 ```
 

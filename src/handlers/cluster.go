@@ -386,6 +386,10 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			exists:  false,
 			service: nil,
 		},
+		utils.ServiceTypeNextCloud: {
+			exists:  false,
+			service: nil,
+		},
 	}
 
 	for _, s := range cluster.Services {
@@ -406,7 +410,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		if serviceTypesOld[s.Type].exists == false {
 			cluster.Services = append(cluster.Services, s)
 		}
-		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeFanlight {
+		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeFanlight || s.Type == utils.ServiceTypeNextCloud{
 			newHost = true
 		}
 	}

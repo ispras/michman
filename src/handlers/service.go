@@ -15,6 +15,7 @@ var servicesTypes = map[string]bool {
 	utils.ServiceTypeJupyterhub: true,
 	utils.ServiceTypeFanlight: true,
 	utils.ServiceTypeNFS: true,
+	utils.ServiceTypeNextCloud: true,
 }
 
 func ValidateService(service *protobuf.Service) bool {
