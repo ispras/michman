@@ -36,14 +36,45 @@ go get github.com/google/uuid
 Ansible version >= 2.8.1 
 
 ## Configurations
-Configuration of vault server is stored in **vault.yaml** file. Example:
+Configuration of the service is stored in **config.yaml** file. Example:
 ```yaml
+## Vault
 token: MY-TOKEN
 vault_addr: http://127.0.0.1:8200
 os_key: kv/openstack
 ssh_key: kv/ssh-keys
 cb_key: kv/couchbase/
+
+#Openstack
+os_key_name: my_key
+virtual_network: test
+os_image: 731c8c7d-47fd-4b69-bdb4-00415e3ccb00
+floating_ip_pool: test
+flavor: keystone.medium
+os_version: liberty
+
+## Apt and Pip mirror
+use_mirror: false
+mirror_address: 10.10.11.111
 ```
+
+
+Where:
+* **token** - your token for authorization in vault 
+* **vault_addr** - address of you vault db
+* **os_key** - path to openstack's kv secrets engine
+* **ssh_key** - path to ssh_key's kv secrets engine
+* **cb_key** - path to couchbase's kv secrets engine
+* **os_key_name** - key pair name
+* **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
+* **os_image** - ID of OS image
+* **floating_ip_pool** - floating IP pool name
+* **flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large)
+* **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
+* **use_mirror** - Do or do not use your apt and pip mirror
+* **mirror_address** - Address of you mirror. Can be omitted if use_mirror is false
+## Services
+
 
 Openstack (os_key) secrets includes following keys for **Liberty** version:
 * **OS_AUTH_URL**
@@ -83,25 +114,6 @@ Couchbase (cb_key) secretes includes following keys:
 * **password** -- password of couchbase
 * **path** -- address of couchbase
 * **username** -- user name of couchbase 
-
-Configuration of Openstack is stored in **openstack_config.yaml** file. Example:
-```yaml
-os_key_name: my_key
-virtual_network: test
-os_image: 731c8c7d-47fd-4b69-bdb4-00415e3ccb00
-floating_ip_pool: test
-flavor: keystone.medium
-os_version: liberty
-```
-
-Where:
-* **os_key_name** - key pair name
-* **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
-* **os_image** - ID of OS image
-* **floating_ip_pool** - floating IP pool name
-* **flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large)
-* **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
-## Services
 
 Contains service for ansible launching.
 
@@ -237,13 +249,22 @@ Launch ansible_runner service:
 go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go
 ```
 
+Launch ansible_runner service specifying config:
+```
+go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go /path/to/config.yaml
+```
+
 Launch http_server:
 ```
 go run src/http_server.go
 ```
 
-Send request to localhost:8080/clusters":
+Launch http_server specifying config:
+```
+go run src/http_server.go /path/to/config.yaml
+```
+
+Create new project:
 ```
 curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test", "Services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
 ```
-
