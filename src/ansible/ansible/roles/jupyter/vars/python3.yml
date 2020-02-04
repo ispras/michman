@@ -1,3 +1,4 @@
 ---
 
 apt_pkg_pref: python3
+spark_magic_path: '/usr/local/lib/python3.5/dist-packages/sparkmagic'

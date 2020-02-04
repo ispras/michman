@@ -4,27 +4,6 @@
   when: not skip_install|default(False)
 
 
-# - name: setup toree
-#   become: yes
-#   shell: jupyter toree install
-#   when: not skip_install|default(False)
-#   tags:
-#   - install
-#   - jupyter_install
-
-
-# - name: download livy
-#   become: yes
-#   get_url:
-#     url: "{{ livy_download_url }}"
-#     dest: "{{ livy_base_dir }}"
-  
-# - name: Unarchive livy
-#   unarchive:
-#     src: "{{ livy_base_dir }}/{{ livy_file_name }}.zip"
-#     dest: "{{ livy_base_dir }}"
-#     remote_src: yes
-
 - name: Download and unarchive livy
   become: yes
   unarchive:
@@ -98,18 +77,6 @@
   - install
   - jupyter_install
 
-# - name: copy toree kernel config
-#   become: yes
-#   file: path=/usr/local/share/jupyter/kernels/toree_python{{python_version}} state=directory
-#   tags:
-#   - install
-#   - jupyter_install
-# - name: copy toree kernel config
-#   become: yes
-#   template: src=toree_kernel.json.j2 dest=/usr/local/share/jupyter/kernels/toree_python{{python_version}}/kernel.json
-#   tags:
-#   - install
-#   - jupyter_install
 
 - name: download scala
   shell: wget http://www.scala-lang.org/files/archive/scala-2.10.4.deb

@@ -61,11 +61,6 @@
         install_as_service: True
       when: deploy_jupyter is defined and deploy_jupyter
     - include_role:
-        name: jupyter
-      vars:
-        install_as_service: True
-      when: deploy_jupyter is defined and deploy_jupyter
-    - include_role:
         name: jupyterhub
       vars:
         python_version: 3

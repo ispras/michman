@@ -2,7 +2,6 @@
 python_version: 3
 install_as_service: False
 jupyter_service_name: jupyter
-spark_magic_path: "{{ '/usr/local/lib/python2.7/dist-packages/sparkmagic' if python_version == '2' else '/usr/local/lib/python3.5/dist-packages/sparkmagic' }}"
 
 livy_service_name: livy
 livy_base_dir: /opt
