@@ -11,7 +11,9 @@ const (
 	JSONerrorIncorrect                     = 11
 	JSONerrorIncorrectMessage              = "Incorrect JSON"
 	JSONerrorIncorrectField                = 12
-	JSONerrorIncorrectFieldMessage         = "bad name for project. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol."
+	JSONerrorIncorrectFieldMessage         = "Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol."
+	JSONerrorMissField                     = 13
+	JSONerrorMissFieldMessage              = "Required field is empty"
 	DBerror                                = 21
 	DBerrorMessage                         = "DB error"
 	LibErrorUUID                           = 31

@@ -139,6 +139,11 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	// validate struct
+	if c.DisplayName == "" {
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorMissField, JSONerrorMissFieldMessage, nil)
+		hS.Logger.Print(mess)
+		return
+	}
 	if !ValidateCluster(c) {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 		hS.Logger.Print(mess)

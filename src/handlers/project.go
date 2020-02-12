@@ -72,6 +72,12 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
+	if p.DisplayName == "" {
+		mess, _ := hS.ErrHandler.Handle(w, JSONerrorMissField, JSONerrorMissFieldMessage, nil)
+		hS.Logger.Print(mess)
+		return
+	}
+
 	if !ValidateProject(&p) {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 		hS.Logger.Print(mess)
