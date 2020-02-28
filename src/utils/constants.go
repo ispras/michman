@@ -45,6 +45,8 @@ const (
 	NFSWeblabName string = "weblab_name"
 
 	//supported nexcloud configurations
+	NextcloudImage = "nextcloud_image"
+	MariadbImage = "mariadb_image"
 	NextcloudCustomOidcProvidersHost = "custom_oidc_providers_host"
 	NextcloudCustomOidcProvidersIP = "custom_oidc_providers_ip"
 	NextcloudURL = "nextcloud_url"
@@ -94,6 +96,11 @@ const (
 	OsVolumeApiVersion = "OS_VOLUME_API_VERSION"
 	OsPythonwarnings = "PYTHONWARNINGS"
 	OsNoProxy = "no_proxy"
+
+	// Docker login secrets keys
+	DockerLoginUlr = "url"
+	DockerLoginUser = "user"
+	DockerLoginPassword = "password"
 
 	//ssh secrets keys
 	VaultSshKey = "key_bgt"

@@ -24,7 +24,7 @@ const (
 )
 
 type ansibleLaunch interface {
-	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string
+	Run(c *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string
 }
 
 // ansibleService implements ansible service
@@ -112,6 +112,19 @@ func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *
 	return &osCreds
 }
 
+func makeDockerCreds(keyName string, vaultClient *vaultapi.Client) *utils.DockerCredentials {
+	secrets, err := vaultClient.Logical().Read(keyName)
+	if err != nil {
+		log.Fatalln(err)
+		return nil
+	}
+	var res utils.DockerCredentials
+	res.Url = secrets.Data[utils.DockerLoginUlr].(string)
+	res.User = secrets.Data[utils.DockerLoginUser].(string)
+	res.Password = secrets.Data[utils.DockerLoginPassword].(string)
+	return &res
+}
+
 func checkSshKey(keyName string, vaultClient *vaultapi.Client) error {
 	path, err := os.Getwd() //file must be executed from spark-openstack directory
 	if err != nil {
@@ -189,8 +202,12 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
+	var dockRegCreds *utils.DockerCredentials
+	if aS.config.SelfignedRegistry || aS.config.GitlabRegistry {
+		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+	}
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionDelete)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionDelete)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -227,8 +244,12 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		return nil
 	}
 
+	var dockRegCreds *utils.DockerCredentials
+	if aS.config.SelfignedRegistry || aS.config.GitlabRegistry {
+		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+	}
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionUpdate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionUpdate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -266,9 +287,13 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		log.Fatalln(err)
 		return nil
 	}
+	var dockRegCreds *utils.DockerCredentials
+	if aS.config.SelfignedRegistry || aS.config.GitlabRegistry {
+		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+	}
 
 	// here ansible will run
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, &aS.config, actionCreate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionCreate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err

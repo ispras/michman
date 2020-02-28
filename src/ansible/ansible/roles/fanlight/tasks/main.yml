@@ -3,13 +3,6 @@
   docker_network:
     name: "{{ fanlight_network }}"
 
-- name: Log into fanlight registry
-  docker_login:
-    registry: "{{ fanlight_registry }}"
-    username: "{{ fanlight_registry_user }}"
-    password: "{{ fanlight_registry_user_password }}"
-  when: fanlight_registry_use
-
 - name: Create CouchDB container
   docker_container:
     name: "couchdb-{{ fanlight_instance_id }}"
@@ -46,12 +39,12 @@
       FN_docker_pullImageIfNotFound: "true"
       FN_docker_registryAuth_username: "{{ fanlight_registry_user }}"
       FN_docker_registryAuth_password: "{{ fanlight_registry_user_password }}"
-      FN_managedResources_ExecTimeoutSec: "{{ managedResources_ExecTimeoutSec }}"
-      FN_managedResources_list: "{{ resources_list | to_json }}"
+      FN_managedResources_ExecTimeoutSec: "{{ managedResources_ExecTimeoutSec }}" # comment this
+      FN_managedResources_list: "{{ resources_list | to_json }}"  # comment this
       FN_users: "{{ users_add | to_json }}"
       FN_apps: "{{ apps_add | to_json }}"
       FN_volumes: "{{ volumes | to_json }}"
-    labels:
+    labels: # comment this
       traefik.enable: "true"
       traefik.port: "4501"
       traefik.frontend.rule: "PathPrefixStrip:/controller"
@@ -104,13 +97,13 @@
       - name: "{{ fanlight_network }}"
     purge_networks: yes
     restart_policy: "always"
-
+# comment this
 - name: Create traefik configuration file
   template:
     src: traefik.j2
     dest: /etc/traefik.toml
     force: yes
-
+# comment this
 - name: Create Traefik
   docker_container:
     name: "traefik-{{ fanlight_instance_id }}"

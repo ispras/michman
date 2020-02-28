@@ -4,36 +4,13 @@ weblab_dir_name: "weblabs"
 
 nextcloud_users_group: "users"
 nextcloud_group_dir: "/external_data/shared_dir_{{ weblab_name }}"
-nextcloud_user_mounting_backends_list: 'sftp,\OC\Files\Storage\SFTP_Key'
-nextcloud_url: "web.sci-portal.gov.ru/proxy/nfs-lab10"
 
-nextcloud_registry: registry_ip
-nextcloud_registry_user: registry_user
-nextcloud_registry_user_password: registry_password
-
-# images
-mariadb_image: "registry_ip/mariadb"
-nextcloud_image: "registry_ip/nextcloud"
+mariadb_image: "mariadb:10.4-bionic"
+nextcloud_image: "nextcloud:17"
 
 nc_app_config:
   - { key: "disable", value: "survey_client" }
   - { key: "disable", value: "firstrunwizard" }
   - { key: "enable",  value: "admin_audit" }
   - { key: "enable",  value: "files_pdfviewer" }
-  - { key: "install", value: "sociallogin" }
-  - { key: "enable",  value: "sociallogin" }
   - { key: "enable",  value: "files_external" }
-
-nc_url_config:
-  - { key: "overwriteprotocol", value: "https" }
-  - { key: "overwritehost", value: "{{ nextcloud_url.split(\"/\")[0] }}" }
-  - { key: "overwritewebroot", value: "{{ nextcloud_url.split(\"/\")[1:] | join(\"/\")}}" }
-
-custom_oidc_providers_host: 'auth.sci-portal.gov.ru'
-custom_oidc_providers_ip: '127.0.0.1'
-custom_oidc_providers_url: 'https:\/\/{{ custom_oidc_providers_host }}/auth\/realms'
-custom_oidc_providers_client: 'web-client'
-custom_oidc_providers_clientSecret: 'token'
-keycloak_realm: science
-
-custom_oidc_providers: '{\"name\": \"keycloack\", \"title\": \"OpenID\", \"authorizeUrl\": \"{{ custom_oidc_providers_url }}\/{{ keycloak_realm }}\/protocol\/openid-connect\/auth\", \"tokenUrl\": \"{{ custom_oidc_providers_url }}\/{{ keycloak_realm }}\/protocol\/openid-connect\/token\", \"clientId\": \"{{ custom_oidc_providers_client }}\", \"clientSecret\": \"{{ custom_oidc_providers_clientSecret }}\", \"scope\": \"openid\", \"defaultGroup\": \"{{ nextcloud_users_group }}\"}'

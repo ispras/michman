@@ -121,10 +121,12 @@
 # When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"
   become: yes
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
   roles:
     - { role: network_storage, when: mount_external_storage is defined and mount_external_storage } # nfs_server_ip must be defined
     - { role: nfs_server, when: deploy_nfs_server is defined and deploy_nfs_server }
-    - { role: docker_fanlight, when: deploy_nextcloud is defined and deploy_nextcloud }
+    - { role: docker, when: deploy_nextcloud is defined and deploy_nextcloud }
     - { role: nextcloud, when: deploy_nextcloud is defined and deploy_nextcloud }
 
 # When create_fanlight is true, such instance would be created
@@ -134,6 +136,7 @@
     fanlight_registry_user: registry_user
     fanlight_registry_user_password: registry_password
     live_restore: yes
+    ansible_python_interpreter: "/usr/bin/python3"
   roles:
     - {
       role: network_storage,
@@ -145,7 +148,7 @@
       when: mount_external_storage is defined and mount_external_storage
     }
     - {
-      role: docker_fanlight,
+      role: docker,
       when: create_fanlight is defined and create_fanlight
     }
     - {

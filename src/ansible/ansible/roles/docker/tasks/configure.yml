@@ -1,0 +1,42 @@
+---
+- name: Write docker config file
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+
+- name: Add docker registry url to hosts
+  lineinfile:
+    line: "{{ docker_selfsigned_registry_ip }} {{ docker_selfsigned_registry_url }}"
+    path: "/etc/hosts"
+  when: docker_selfsigned_registry is defined and docker_selfsigned_registry
+
+- name: Copy selfsigned certificate
+  copy:
+    src: "{{ docker_cert_path }}"
+    dest: "/usr/local/share/ca-certificates/docker.crt"
+  when: docker_selfsigned_registry is defined and docker_selfsigned_registry
+
+- name: Update system certificates
+  command: "update-ca-certificates"
+  when: docker_selfsigned_registry is defined and docker_selfsigned_registry
+
+- name: Add Docker users to the docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  with_items: "{{ docker_users }}"
+
+- name: reset ssh connection
+  meta: reset_connection
+
+- name: Restart docker service
+  systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+

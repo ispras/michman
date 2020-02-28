@@ -1,0 +1,20 @@
+{% set comma = joiner(", ") %}
+{
+  {% if nvidia_runtime %}
+  "runtimes": {
+    "nvidia": {
+      "path": "/usr/bin/nvidia-container-runtime",
+      "runtimeArgs": []
+    }
+  },
+  {% endif %}
+
+  {% if live_restore %}
+  "live-restore": true {% if docker_insecure_registry is defined and docker_insecure_registry %},{% endif %}
+  {% endif %}
+
+  {% if docker_insecure_registry is defined and docker_insecure_registry %}
+  "insecure-registries": ["{{ docker_insecure_registry_ip }}"]
+  {% endif %}
+
+}

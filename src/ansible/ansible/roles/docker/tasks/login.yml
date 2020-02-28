@@ -1,0 +1,8 @@
+---
+- name: Login into registries
+  docker_login:
+    registry: "{{ item.url }}"
+    username: "{{ item.user }}"
+    password: "{{ item.password }}"
+  with_items: "{{ docker_logins | default([]) }}"
+#  when: docker_logins is defined and docker_logins != '' and docker_logins != []

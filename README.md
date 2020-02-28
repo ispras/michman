@@ -1,42 +1,33 @@
-# Http server
+# Spark-openstack project
 
 ## Dependencies
-
-gRPC:
+Apt packages:
+```shell script
+sudo add-apt-repository ppa:longsleep/golang-backports
+sudo apt update
+sudo apt install golang-go
+sudo apt install unzip apt-transport-https \
+  ca-certificates curl software-properties-common \
+  python python-pip python-setuptools
 ```
+Python packages:
+```shell script
+pip install ansible==2.9.4 openstacksdk==0.40.0 # latest tested versions or
+# pip3 install ansible==2.9.4 openstacksdk==0.40.0
+```
+Go packages:
+```shell script
 go get -u google.golang.org/grpc
 go get -u github.com/golang/protobuf/protoc-gen-go
-```
-
-Vault API:
-```
 go get -u github.com/hashicorp/vault/api
-```
-
-YAML:
-```
 go get -u gopkg.in/yaml.v2
-```
-
-HTTP routing:
-```
 go get github.com/julienschmidt/httprouter
-```
-
-Couchbase SDK:
-```
 go get -u gopkg.in/couchbase/gocb.v1
-```
-
-UUIDs:
-```
 go get github.com/google/uuid
 ```
 
-Ansible version >= 2.8.1 
-
 ## Configurations
-Configuration of the service is stored in **config.yaml** file. Example:
+Configuration of the project is stored in **config.yaml** file. Example:
 ```yaml
 ## Vault
 token: MY-TOKEN
@@ -59,8 +50,17 @@ os_version: liberty
 ## Apt and Pip mirror
 use_mirror: false
 mirror_address: 10.10.11.111
-```
 
+## Docker registry
+docker_insecure_registry: true
+docker_selfsigned_registry: true
+docker_gitlab_registry: false
+
+docker_insecure_registry_ip: 10.10.17.242:5000
+docker_selfsigned_registry_ip: 10.10.17.246
+docker_selfsigned_registry_url: bgtregistry.ru
+docker_cert_path: /home/ubuntu/docker.crt 
+```
 
 Where:
 * **token** - your token for authorization in vault 
@@ -68,16 +68,23 @@ Where:
 * **os_key** - path to openstack's kv secrets engine
 * **ssh_key** - path to ssh_key's kv secrets engine
 * **cb_key** - path to couchbase's kv secrets engine
-* **os_key_name** - key pair name
+* **os_key_name** - key pair name of your Openstack account
 * **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
 * **os_image** - ID of OS image
 * **floating_ip_pool** - floating IP pool name
 * **\<type\>_flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large). Master and slaves flavors are required parameters anyway. Fanlight flavor required if you want deploy fanlight. Storage flavor required if you want deploy nextcloud or nfs-server 
 * **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
-* **use_mirror** - Do or do not use your apt and pip mirror
-* **mirror_address** - Address of you mirror. Can be omitted if use_mirror is false
-## Services
+* **use_mirror** - Do or do not use your apt and pip mirror (optional)
+* **mirror_address** - Address of you mirror. Can be omitted if use_mirror is false (optional)
+* **docker_insecure_registry** - Do or not use local insecure (without certificates and user control) registry (optional)
+* **docker_selfsigned_registry** - Do or not use local selfsigned registry (optional)
+* **docker_gitlab_registry** - Do or not use gitlab registry (optional)
+* **docker_insecure_registry_ip** - Host ip of your insecure registry (optional)
+* **docker_selfsigned_registry_ip** - Host ip of your selfsigned registry (optional)
+* **docker_selfsigned_registry_url** - Address of your selfsigned registry according to certificate (optional)
+* **docker_cert_path** - path to your selfsigned certificate (optional)
 
+## Vault secrets 
 
 Openstack (os_key) secrets includes following keys for **Liberty** version:
 * **OS_AUTH_URL**
@@ -118,7 +125,14 @@ Couchbase (cb_key) secretes includes following keys:
 * **path** -- address of couchbase
 * **username** -- user name of couchbase 
 
-Contains service for ansible launching.
+Docker registry (registry_key) secret includes following key:
+ * **url** -- Address of your selfsigned registry according to certificate or gitlab registry url
+ * **user** -- Your selfsigned registry or gitlab username
+ * **password** -- Your selfsigned registry or gitlab password
+ 
+ This secret is optional.
+
+# Services
 
 Supported services types are:
 * **cassandra**
@@ -127,7 +141,7 @@ Supported services types are:
 * **jupyter**
 * **ignite**
 * **jupyterhub** 
-* **fanlight**
+* **fanlight** 
 * **nfs-server**
 * **nextcloud**
 
@@ -222,20 +236,18 @@ Example:
 
 Config parameter for **nextcloud** service type supports:
 
-* **custom_oidc_providers_host** --  keycloak hostname.
-* **custom_oidc_providers_ip** -- keycloak server ip.
-* **nextcloud_url** -- URL of nextcloud as it will be opened from portal (including proxy and weblab id).
 * **weblab_name** -- name of Web Laboratory.
 * **nfs_server_ip** -- NFS server IP.
+* **mariadb_image** -- your docker image with mariadb
+* **nextcloud_image** -- your docker image with nextcloud
 
 Example:
 ```json
 "Config": {
-  "custom_oidc_providers_host": "auth.sci-portal.gov.ru",
-  "custom_oidc_providers_ip": "10.10.16.51",
-  "nextcloud_url": "web.sci-portal.gov.ru/proxy/nfs-lab10",
   "weblab_name": "Name",
-  "nfs_server_ip": "IP"
+  "nfs_server_ip": "IP",
+  "mariadb_image": "bgtregistry.ru:5000/mariadb"
+  "nextcloud_image": "bgtregistry.ru:5000/nextcloud"
 }
 ```
 
@@ -243,16 +255,26 @@ Example:
 
 Contains proto file for gRPC and have already generated code from it. Used in http_server and services/ansible_runner.
 
-## http_server
-Server that handles HTTP requests(probably from Envoy, that will take tham from real clients), and call, using gRPC(use client class from ansible-pb), ansible_service to lanch ansible.
+## gRPC communication
+HTTP Server that handles HTTP requests(probably from Envoy, that will take tham from real clients), and call, using gRPC(use client class from ansible-pb), ansible_service to launch ansible.
 
 # How to get it worked
+First, place project code in $GOPATH:
+```shell script
+git clone https://gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack.git
+mkdir $GOPATH/src/gitlab.at.ispras.ru
+mkdir $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools
+cp -R ./spark-openstack $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools/
+cd $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools
+```
+Then, complete _config.yaml_ file.
+ 
 Launch ansible_runner service:
 ```
 go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go
 ```
 
-Launch ansible_runner service specifying config:
+Or launch ansible_runner service specifying config:
 ```
 go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go /path/to/config.yaml
 ```
@@ -269,5 +291,27 @@ go run src/http_server.go /path/to/config.yaml
 
 Create new project:
 ```
-curl localhost:8080/clusters -XPOST -d '{"Name":"spark-test", "Services":[{"Name":"spark-test","Type":"spark","Config":{"hadoop-version":"2.6", "use-yarn": "true"},"Version":"2.1.0"}],"NHosts":1}'
+curl {IP}:8080/projects -XPOST -d '{"Name":"Test", "Description":"Project for tests"}'
 ```
+
+Create new cluster with Jupyter service:
+```
+curl {IP}:8080/projects/{ProjectID}/clusters -XPOST -d '{"DisplayName":"jupyter-test", "Services":[{"Name":"jupyter-project","Type":"jupyter"}],"NHosts":1}'
+```
+
+Get info about all clusters in project:
+```
+curl {IP}:8080/projects/{ProjectID}/clusters
+```
+
+Get info about **jupyter-test** cluster in **Test** project (**note: cluster name id constructed as cluster _DisplayName-ProjectName_**):
+```
+curl {IP}:8080/projects/{ProjectID}/clusters/jupyter-test-Test
+```
+
+Delete  **jupyter-test** cluster in **Test** project:
+```
+curl {IP}:8080/projects/{ProjectID}/clusters/jupyter-test-Test -XDELETE
+```
+
+Get service API in browser by this URL: **{IP}:8080/api**

@@ -11,27 +11,33 @@ import (
 )
 
 type OsCredentials struct {
-	OsAuthUrl       string
-	OsPassword      string
-	OsProjectName   string
-	OsRegionName    string
-	OsTenantId      string
-	OsTenantName    string
-	OsUserName      string
-	OsSwiftUserName string
-	OsSwiftPassword string
-	OsComputeApiVersion string
-	OsNovaVersion string
-	OsAuthType string
-	OsCloudname string
+	OsAuthUrl            string
+	OsPassword           string
+	OsProjectName        string
+	OsRegionName         string
+	OsTenantId           string
+	OsTenantName         string
+	OsUserName           string
+	OsSwiftUserName      string
+	OsSwiftPassword      string
+	OsComputeApiVersion  string
+	OsNovaVersion        string
+	OsAuthType           string
+	OsCloudname          string
 	OsIdentityApiVersion string
-	OsImageApiVersion string
-	OsNoCache string
-	OsProjectDomainName string
-	OsUserDomainName string
-	OsVolumeApiVersion string
-	OsPythonwarnings string
-	OsNoProxy string
+	OsImageApiVersion    string
+	OsNoCache            string
+	OsProjectDomainName  string
+	OsUserDomainName     string
+	OsVolumeApiVersion   string
+	OsPythonwarnings     string
+	OsNoProxy            string
+}
+
+type DockerCredentials struct {
+	Url      string
+	User     string
+	Password string
 }
 
 type Config struct {
@@ -47,22 +53,33 @@ type Config struct {
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
 
 	// Vault
-	Token     string `yaml:"token"`
-	VaultAddr string `yaml:"vault_addr"`
-	OsKey     string `yaml:"os_key"`
-	SshKey    string `yaml:"ssh_key"`
-	CbKey     string `yaml:"cb_key"`
+	Token       string `yaml:"token"`
+	VaultAddr   string `yaml:"vault_addr"`
+	OsKey       string `yaml:"os_key"`
+	SshKey      string `yaml:"ssh_key"`
+	CbKey       string `yaml:"cb_key"`
+	RegistryKey string `yaml:"registry_key"`
 
 	// Mirror
 	UseMirror     string `yaml:"use_mirror"`
 	MirrorAddress string `yaml:"mirror_address"`
+
+	// Registry
+	SelfignedRegistry     bool   `yaml:"docker_selfsigned_registry"`
+	InsecureRegistry      bool   `yaml:"docker_insecure_registry"`
+	GitlabRegistry        bool   `yaml:"gitlab_registry"`
+
+	SelfsignedRegistryIp  string `yaml:"docker_selfsigned_registry_ip"`
+	InsecureRegistryIp    string `yaml:"docker_insecure_registry_ip"`
+
+	SelfignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url"`
+	SelfignedRegistryCert string `yaml:"docker_cert_path"`
 }
 
 func SetConfigPath(configPath string) {
 	ConfigPath = configPath
 	UseBasePath = false
 }
-
 
 func (Cfg *Config) MakeCfg() error {
 	path, err := os.Getwd() //file must be executed from spark-openstack directory
@@ -95,7 +112,7 @@ type SecretStorage interface {
 	ConnectVault() (*vaultapi.Client, *Config)
 }
 
-type VaultCommunicator struct{
+type VaultCommunicator struct {
 	config Config
 }
 

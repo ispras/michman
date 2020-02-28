@@ -86,6 +86,15 @@ type AnsibleExtraVars struct {
 	// Internal package mirror parameters
 	UseMirror                string              `json:"use_mirror"`
 	MirrorAddress            string              `json:"mirror_address,omitempty"`
+	// Internal docker registry parameters
+	SelfsignedRegistry		 bool                `json:"docker_selfsigned_registry,omitempty"`
+	InsecureRegistry         bool                `json:"docker_insecure_registry,omitempty"`
+	GitlabRegistry           bool                `json:"docker_docker_gitlab_registry,omitempty"`
+	SelfsignedRegistryIp     string              `json:"docker_selfsigned_registry_ip,omitempty"`
+	InsecureRegistryIp       string              `json:"docker_insecure_registry_ip,omitempty"`
+	SelfsignedRegistryUrl    string              `json:"docker_selfsigned_registry_url,omitempty"`
+	SelfsignedCertPath		 string              `json:"docker_cert_path,omitempty"`
+	DockerLogins             []map[string]string `json:"docker_logins,omitempty"`
 	// Basic parameters
 	SkipPackages             bool                `json:"skip_packages"`
 	UseOracleJava            bool                `json:"use_oracle_java"`
@@ -124,6 +133,8 @@ type AnsibleExtraVars struct {
 	// Nextcloud parameters
 	DeployNextcloud          bool                `json:"deploy_nextcloud,omitempty"`
 	NextcloudURL             string              `json:"nextcloud_url,omitempty"`
+	NextcloudImage			 string 			 `json:"nextcloud_image,omitempty"`
+	MariadbImage       	     string              `json:"mariadb_image,omitempty"`
 	NFSServerIP              string              `json:"nfs_server_ip,omitempty"`
 	// NFS Server parameters
 	DeployNFS                bool                `json:"deploy_nfs_server,omitempty"`
@@ -191,7 +202,7 @@ func AddJar(path string) map[string]string {
 	return newElem
 }
 
-func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) AnsibleExtraVars {
+func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) AnsibleExtraVars {
 	//available services types
 	var serviceTypes = map[string]ServiceExists{
 		utils.ServiceTypeCassandra: {
@@ -464,6 +475,13 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 			extraVars.NFSServerIP = nfsIP
 			extraVars.UseExternalStorage = true
 		}
+		if nxtImage, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.NextcloudImage]; ok {
+			extraVars.NextcloudImage = nxtImage
+		}
+		if mariadbImage, ok := serviceTypes[utils.ServiceTypeNextCloud].service.Config[utils.MariadbImage]; ok {
+			extraVars.MariadbImage = mariadbImage
+		}
+
 	}
 
 	extraVars.UseMirror = osConfig.UseMirror
@@ -477,6 +495,23 @@ func MakeExtraVars(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osCo
 
 	extraVars.MirrorAddress = osConfig.MirrorAddress
 
+	extraVars.SelfsignedRegistry = osConfig.SelfignedRegistry
+	extraVars.InsecureRegistry = osConfig.InsecureRegistry
+	extraVars.GitlabRegistry = osConfig.GitlabRegistry
+
+	extraVars.SelfsignedRegistryIp = osConfig.SelfsignedRegistryIp
+	extraVars.InsecureRegistryIp = osConfig.InsecureRegistryIp
+
+	extraVars.SelfsignedRegistryUrl = osConfig.SelfignedRegistryUrl
+	extraVars.SelfsignedCertPath = osConfig.SelfignedRegistryCert
+
+	var logins []map[string]string
+	if extraVars.SelfsignedRegistry || extraVars.GitlabRegistry {
+		var item = map[string]string {
+			"url": dockRegCreds.Url, "user": dockRegCreds.User, "password": dockRegCreds.Password}
+		logins = append(logins, item)
+		extraVars.DockerLogins = logins
+	}
 	return extraVars
 }
 
@@ -676,21 +711,8 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 
 	return nil
 }
-//func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
-//	log.SetPrefix("ANSIBLE_LAUNCHER: ")
-//	err := setOsVars(osCreds, osConfig.OsVersion)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//	extraVars := MakeExtraVars(cluster, osCreds, osConfig, action)
-//	ansibleArgs, err := json.Marshal(extraVars)
-//	if err != nil {
-//		log.Fatalln(err)
-//	}
-//	log.Println(string(ansibleArgs))
-//	return utils.AnsibleOk
-//}
-func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) string {
+
+func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string {
 	log.SetPrefix("ANSIBLE_LAUNCHER: ")
 
 	// creating ansible-playbook commands according to cluster object
@@ -702,7 +724,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	}
 
 	//constructing ansible-playbook command
-	extraVars := MakeExtraVars(cluster, osCreds, osConfig, action)
+	extraVars := MakeExtraVars(cluster, osCreds, dockRegCreds, osConfig, action)
 	ansibleArgs, err := json.Marshal(extraVars)
 	if err != nil {
 		log.Fatalln(err)
@@ -821,7 +843,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			}
 			fanlightIp = findIP(outb.String())
 		}
-		if extraVars.CreateStorage {
+		if extraVars.DeployNFS || extraVars.DeployNextcloud {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "storage",
