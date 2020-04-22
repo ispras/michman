@@ -48,7 +48,7 @@
       MYSQL_PASSWORD: nc_password
       NEXTCLOUD_ADMIN_USER: admin
       NEXTCLOUD_ADMIN_PASSWORD: password
-      NEXTCLOUD_TRUSTED_DOMAINS: '{{ ansible_host }}' # {{ nextcloud_url.split("/")[0] }}'
+      NEXTCLOUD_TRUSTED_DOMAINS: '{{ ansible_host }}'
     links:
       - "mariadb:mariadb"
     ports:
@@ -56,7 +56,6 @@
       - "2022:22"
     restart_policy: always
     volumes:
-      - "/home/{{ weblab_dir_name }}:/external_data"
       - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
 
 - name: Wait for nextcloud setup
@@ -66,11 +65,6 @@
   retries: 60
   delay: 2
 
-# comment this
-#- name: configure nextcloud url
-#  shell: "docker exec -u www-data nextcloud php occ config:system:set {{ item.key }} --value {{ item.value }}"
-#  with_items: "{{ nc_url_config }}"
-
 - name: configure nextcloud apps
   shell: "docker exec -u www-data nextcloud php occ app:{{ item.key }} {{ item.value }}"
   with_items: "{{ nc_app_config }}"
@@ -79,42 +73,4 @@
 - name: remove default nextcloud files
   shell: "docker exec -u www-data nextcloud bash -c 'rm -rf core/skeleton/*'"
 
-# comment this
-- name: add nextcloud users group
-  shell: "docker exec -u www-data nextcloud php occ group:add {{ nextcloud_users_group }}"
-  ignore_errors: true
-## comment this
-#- name: configure nextcloud social login to use keycloak (OpenID)
-#  shell: "docker exec -u www-data nextcloud php occ config:app:set files_external \"user_mounting_backends\" --value \"{{ nextcloud_user_mounting_backends_list }}\""
-## comment this
-#- name: configure nextcloud external storage app
-#  shell: "docker exec -u www-data nextcloud php occ config:app:set sociallogin \"custom_oidc_providers\" --value \"[ {{ custom_oidc_providers }} ]\""
-## comment this
-- name: create group directory
-  shell: "docker exec nextcloud mkdir -p {{ nextcloud_group_dir }}"
-# comment this
-- name: set write permissions for group directory
-  shell: "docker exec nextcloud chmod -R o+w {{ nextcloud_group_dir }}"
-  ignore_errors: true
-## comment this
-- name: change group directory owner
-  shell: "docker exec nextcloud chown -R www-data {{ nextcloud_group_dir }}"
-  ignore_errors: true
-## comment this
-- name: configure external storage for group
-  shell: "docker exec -u www-data nextcloud php occ files_external:create {{ weblab_name }} local null::null -n --config datadir={{ nextcloud_group_dir }}"
-# fanlight connection
-- name: update apt cache in nextcloud container
-  shell: "docker exec nextcloud apt update"
-# fanlight connection
-- name: install sshd in nextcloud container
-  shell: "docker exec nextcloud apt install -y ssh"
-# fanlight connection
-- name: install sudo in nextcloud container
-  shell: "docker exec nextcloud apt install -y sudo"
-# fanlight connection
-- name: start sshd in nextcloud container
-  shell: "docker exec nextcloud service ssh start"
-# fanlight connection
-- name: install python in nextcloud container
-  shell: "docker exec nextcloud apt install -y python"
+

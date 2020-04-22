@@ -49,7 +49,6 @@ type Config struct {
 	MasterFlavor   string `yaml:"master_flavor"`
 	SlavesFlavor   string `yaml:"slaves_flavor"`
 	StorageFlavor  string `yaml:"storage_flavor"`
-	FanlightFlavor string `yaml:"fanlight_flavor"`
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
 
 	// Vault

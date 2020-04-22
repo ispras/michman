@@ -44,7 +44,6 @@ floating_ip_pool: test
 master_flavor: keystone.medium
 slaves_flavor: keystone.medium
 storage_flavor: keystone.medium
-fanlight_flavor: keystone.medium
 os_version: liberty
 
 ## Apt and Pip mirror
@@ -72,7 +71,7 @@ Where:
 * **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
 * **os_image** - ID of OS image
 * **floating_ip_pool** - floating IP pool name
-* **\<type\>_flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large). Master and slaves flavors are required parameters anyway. Fanlight flavor required if you want deploy fanlight. Storage flavor required if you want deploy nextcloud or nfs-server 
+* **\<type\>_flavor** - instance flavor that exists in your Openstack environment (e.g. spark.large). Master and slaves flavors are required parameters anyway. Storage flavor required if you want deploy nextcloud or nfs-server 
 * **os_version** - OpenStack version code name. **_Now are supported only two versions: "stein" and "liberty"_**
 * **use_mirror** - Do or do not use your apt and pip mirror (optional)
 * **mirror_address** - Address of you mirror. Can be omitted if use_mirror is false (optional)
@@ -141,7 +140,6 @@ Supported services types are:
 * **jupyter**
 * **ignite**
 * **jupyterhub** 
-* **fanlight** 
 * **nfs-server**
 * **nextcloud**
 
@@ -191,36 +189,6 @@ Example:
 ```json
 "Config": {
   "heap-size": "1g" 
-}
-```
-
-Config parameter for **fanlight** service type supports:
-* **fanlight_instance_url** -- Fanlight frontend vnclient base URL to build site links:
-```
-<link rel="stylesheet" href="fanlight_instance_url/vnc-toolbar/vnc-toolbar.min.css">
-```
-* **desktop_access_url** -- This parameter (without protocol part and desktop id at the end)
-                            is used to construct noVNC rfb connection URL on the web page:
-```
-(ws|wss)://DesktopAccessURL/desktop_id
-```
-
-* **users_add** -- adds users on startup.
-* **apps_add** -- list of applications to add on startup.
-* **weblab_name** -- name of Web Laboratory.
-* **fileshare_ui_ip** 
-* **nfs_server_ip** -- NFS server IP.
-
-Example:
-```json
-"Config": {
-  "instance_url": "https://mydomain/myservice/",
-  "desktop_access_url": "https://mydomain/myservice/",
-  "users_add": '[{"uuid":"", "pos_name":"", "pos_group":"", "pos_uid": 123, "pos_gid": 123}]'
-  "apps_add": '[{"uuid":"myapp_uuid", "image":"docker_image_url"}]',
-  "weblab_name": "Name",
-  "fileshare_ui_ip": "IP",
-  "nfs_server_ip": "IP"
 }
 ```
 

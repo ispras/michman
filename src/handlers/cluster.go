@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	"github.com/ispras/michman/src/database"
+	proto "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"log"
 	"net/http"
 	"regexp"
@@ -520,10 +520,6 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//		exists:  false,
 	//		service: nil,
 	//	},
-	//	utils.ServiceTypeFanlight: {
-	//		exists:  false,
-	//		service: nil,
-	//	},
 	//	utils.ServiceTypeNFS: {
 	//		exists:  false,
 	//		service: nil,
@@ -559,7 +555,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			cluster.Services = append(cluster.Services, s)
 		}
 		//TODO: change this behavior mode
-		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeFanlight || s.Type == utils.ServiceTypeNextCloud{
+		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeNextCloud{
 			newHost = true
 		}
 	}

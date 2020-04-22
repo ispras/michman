@@ -49,7 +49,7 @@
     meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
   with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
   retries: 3
-  when: floating_ip_pool != "None" and deploy_fanlight is defined and deploy_fanlight == true
+  when: floating_ip_pool != "None" 
 
 
 - name: create slaves without ip pool
@@ -67,38 +67,7 @@
     meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
   with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
   retries: 3
-  when: floating_ip_pool == "None" and deploy_fanlight is defined and deploy_fanlight == true
-
-- name: create fanlight with ip pool
-  os_server:
-    state: present
-    name: "{{ cluster_name }}-fanlight"
-    image: "{{ os_image }}"
-    flavor: "{{ fanlight_flavor }}"
-    key_name: "{{ os_key_name }}"
-    floating_ip_pools: "{{ floating_ip_pool }}"
-    network: "{{ virtual_network }}"
-    boot_from_volume: "{{ boot_from_volume }}"
-    security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-fanlight,group={{ cluster_name }}_fanlight"
-  retries: 3
-  when: floating_ip_pool != "None"
-
-- name: create fanlight without ip pool
-  os_server:
-    state: present
-    name: "{{ cluster_name }}-fanlight"
-    image: "{{ os_image }}"
-    flavor: "{{ fanlight_flavor }}"
-    key_name: "{{ os_key_name }}"
-    auto_ip: no
-    #    floating_ip_pools: "{{ floating_ip_pool }}"
-    network: "{{ virtual_network }}"
-    boot_from_volume: "{{ boot_from_volume }}"
-    security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-fanlight,group={{ cluster_name }}_fanlight"
-  retries: 3
-  when: floating_ip_pool == "None"
+  when: floating_ip_pool == "None" 
 
 - name: create storage with ip pool
   os_server:

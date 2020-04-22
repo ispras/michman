@@ -9,7 +9,6 @@ floating_ip_pool: IP_POOL
 master_flavor: FLAVOR
 slaves_flavor: FLAVOR
 storage_flavor: FLAVOR
-fanlight_flavor: FLAVOR
 os_version: VERSION #stein or liberty
 
 

@@ -203,7 +203,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["master_flavor"] = osConfig.MasterFlavor
 	extraVars["slaves_flavor"] = osConfig.SlavesFlavor
 	extraVars["storage_flavor"] = osConfig.StorageFlavor
-	extraVars["fanlight_flavor"] = osConfig.FanlightFlavor
 	extraVars["boot_from_volume"] = false
 
 	extraVars["hadoop_user"] = "ubuntu"
@@ -574,33 +573,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		}
 
 		masterIp := findIP(outb.String())
-		fanlightIp := ""
 		nfsIp := ""
-		if newExtraVars["deploy_fanlight"]  == true {
-			v = map[string]string{
-				"cluster_name":  cluster.Name,
-				"extended_role": "fanlight",
-			}
-			ipExtraVars, err = json.Marshal(v)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			cmdName = utils.AnsiblePlaybookCmd
-			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-			log.Print("Running ansible for getting fanlight IP...")
-			cmd := exec.Command(cmdName, args...)
-			var outb bytes.Buffer
-			cmd.Stdout = &outb
-			if err := cmd.Start(); err != nil {
-				log.Print("Error: ", err)
-			}
-
-			if err := cmd.Wait(); err != nil {
-				ansibleOk = false
-				log.Print("Error: ", err)
-			}
-			fanlightIp = findIP(outb.String())
-		}
 		if newExtraVars["deploy_nfs"] == true {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
@@ -644,19 +617,6 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			}
 		} else {
 			log.Print("There is no IP in Ansible output")
-		}
-		if fanlightIp != "" {
-			log.Print("Fanlight IP is: ", fanlightIp)
-			for i, service := range cluster.Services {
-				if service.Type == utils.ServiceTypeFanlight {
-					cluster.Services[i].ServiceURL = fanlightIp
-				}
-			}
-			log.Print("Saving fanlight IP...")
-			err = aL.couchbaseCommunicator.WriteCluster(cluster)
-			if err != nil {
-				log.Fatalln(err)
-			}
 		}
 		if nfsIp != "" {
 			log.Print("NFS server IP is: ", nfsIp)

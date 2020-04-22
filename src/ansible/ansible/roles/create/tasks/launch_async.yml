@@ -39,24 +39,6 @@
     poll: 0
     register: slave_waitress
 
-  - name: Create fanlight instance
-    os_server:
-      state: present
-      name: "{{ cluster_name }}-fanlight"
-      image: "{{ os_image }}"
-      flavor: "{{ fanlight_flavor }}"
-      key_name: "{{ os_key_name }}"
-      network: "{{ virtual_network }}"
-      boot_from_volume: "{{ boot_from_volume }}"
-      security_groups: "{{ cluster_name }}"
-      auto_ip: False
-      meta: "hostname={{ cluster_name }}-fanlight,group={{ cluster_name }}_fanlight"
-    retries: 3
-    async: 300
-    poll: 0
-    register: fanlight_waitress
-    when: deploy_fanlight is defined and deploy_fanlight == true
-
   - name: Create storage instance
     os_server:
       state: present
@@ -89,14 +71,6 @@
     retries: 60
     delay: 5
     with_items: "{{ slave_waitress.results }}"
-
-  - name: 'Checking fanlight started'
-    async_status: jid={{ fanlight_waitress.ansible_job_id }}
-    register: fanlight_start
-    until: fanlight_start.finished
-    retries: 60
-    delay: 5
-    when: deploy_fanlight is defined and deploy_fanlight == true
 
   - name: 'Checking storage started'
     async_status: jid={{ storage_waitress.ansible_job_id }}
@@ -137,21 +111,6 @@
     register: slave_ip_waitress
     when: floating_ip_pool != 'None'
 
-  - name: 'Acquiring floating IPs for fanlight instance'
-    os_floating_ip:
-      state: present
-      reuse: yes
-      server: "{{ cluster_name }}-fanlight"
-      network: "{{ floating_ip_pool }}"
-      wait: True
-      timeout: 60
-    retries: 3
-    delay: 1
-    async: 60
-    poll: 1
-    register: fanlight_ip_waitress
-    when: floating_ip_pool != 'None' and deploy_fanlight is defined and deploy_fanlight == true
-
   - name: 'Acquiring floating IPs for storage instance'
     os_floating_ip:
       state: present
@@ -183,14 +142,6 @@
     delay: 1
     with_items: "{{ slave_ip_waitress.results }}"
     when: floating_ip_pool != 'None'
-
-  - name: 'Waiting for fanlight IP'
-    async_status: jid={{ fanlight_ip_waitress.ansible_job_id }}
-    register: fanlight_ip
-    until: fanlight_ip.finished
-    retries: 60
-    delay: 1
-    when: floating_ip_pool != 'None' and deploy_fanlight is defined and deploy_fanlight == true
 
   - name: 'Waiting for storage IP'
     async_status: jid={{ storage_ip_waitress.ansible_job_id }}

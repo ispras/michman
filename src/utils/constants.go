@@ -10,7 +10,6 @@ const (
 	ServiceTypeJupyter    string = "jupyter"
 	ServiceTypeJupyterhub string = "jupyterhub"
 	ServiceTypeElastic    string = "elastic"
-	ServiceTypeFanlight   string = "fanlight"
 	ServiceTypeNFS        string = "nfs-server"
 	ServiceTypeNextCloud  string = "nextcloud"
 
