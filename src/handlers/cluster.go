@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
 	"github.com/ispras/michman/src/database"
 	proto "github.com/ispras/michman/src/protobuf"
 	"github.com/ispras/michman/src/utils"
+	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"regexp"
@@ -77,7 +77,7 @@ func (hS HttpServer) AddDependencies(c *proto.Cluster, curS *proto.Service) ([]*
 			//check if the service from dependencies has already listed in cluster and version is ok
 			flagAddS := true
 			for _, clusterS := range c.Services {
-				if clusterS.Type == sd.ServiceType  {
+				if clusterS.Type == sd.ServiceType {
 					if !utils.ItemExists(sd.ServiceVersions, clusterS.Version) {
 						//error: bad service version from user list
 						err = errors.New("Error: service " + clusterS.Type +
@@ -90,8 +90,8 @@ func (hS HttpServer) AddDependencies(c *proto.Cluster, curS *proto.Service) ([]*
 			if flagAddS && err == nil {
 				//add service from dependencies with default configurations
 				serviceToAdd = &proto.Service{
-					Name: curS.Name + "-dependent", //TODO: use better service name?
-					Type: sd.ServiceType,
+					Name:    curS.Name + "-dependent", //TODO: use better service name?
+					Type:    sd.ServiceType,
 					Version: sd.DefaultServiceVersion,
 				}
 				servicesList = append(servicesList, serviceToAdd)
@@ -250,7 +250,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 			//first for cycle is used for updating range values with appended services
 			for retryFlag {
-				for i, s := range c.Services[startIdx : ] {
+				for i, s := range c.Services[startIdx:] {
 					st, err := hS.Db.ReadServiceType(s.Type)
 					if err != nil {
 						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
@@ -479,7 +479,6 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		}
 	}
 
-
 	sTypes, err := hS.Db.ListServicesTypes()
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
@@ -491,8 +490,8 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 
 	for _, st := range sTypes {
 		serviceTypesOld[st.Type] = serviceExists{
-		exists:  false,
-		service: nil,
+			exists:  false,
+			service: nil,
 		}
 	}
 	//var serviceTypesOld = map[string]serviceExists{
@@ -542,7 +541,6 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//number of old services
 	oldSN := len(cluster.Services)
 
-
 	for _, s := range newC.Services {
 		if serviceTypesOld[s.Type].exists == false {
 			sUuid, err := uuid.NewRandom()
@@ -555,7 +553,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			cluster.Services = append(cluster.Services, s)
 		}
 		//TODO: change this behavior mode
-		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeNextCloud{
+		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeNextCloud {
 			newHost = true
 		}
 	}
@@ -567,7 +565,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 
 		//first for cycle is used for updating range values with appended services
 		for retryFlag {
-			for i, s := range cluster.Services[startIdx : ] {
+			for i, s := range cluster.Services[startIdx:] {
 				st, err := hS.Db.ReadServiceType(s.Type)
 				if err != nil {
 					mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)

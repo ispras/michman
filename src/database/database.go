@@ -1,7 +1,7 @@
 package database
 
 import (
-	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	proto "github.com/ispras/michman/src/protobuf"
 )
 
 type Database interface {

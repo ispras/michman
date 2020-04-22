@@ -3,13 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	proto "github.com/ispras/michman/src/protobuf"
 	"github.com/julienschmidt/httprouter"
-	"regexp"
-	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"net/http"
-	//"regexp"
+	"regexp"
 )
 
 func ValidateProject(project *proto.Project) bool {

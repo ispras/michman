@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"net/http"
+	protobuf "github.com/ispras/michman/src/protobuf"
 	"github.com/jinzhu/copier"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
 const (
-	respTypeFull = "full"
+	respTypeFull    = "full"
 	respTypeSummary = "summary"
-	respTypeKey = "view"
+	respTypeKey     = "view"
 )
 
 //list of supported types
@@ -60,7 +60,7 @@ func (hS HttpServer) checkConfigs(vConfigs []*protobuf.ServiceConfig) (bool, err
 		if curName == "" {
 			return false, errors.New("ERROR: parameter names must be set")
 		}
-		for _, otherC := range vConfigs[i + 1: ] {
+		for _, otherC := range vConfigs[i+1:] {
 			if curName == otherC.ParameterName {
 				return false, errors.New("ERROR: parameter names in service config must be uniques")
 			}
@@ -154,7 +154,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 	}
 
 	for i, sv := range st.Versions {
-		if  !checkVersionUnique(st.Versions[i + 1: ], *sv) {
+		if !checkVersionUnique(st.Versions[i+1:], *sv) {
 			hS.Logger.Print("ERROR: service version exists in this service type")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -408,7 +408,7 @@ func (hS HttpServer) ConfigsDeleteService(w http.ResponseWriter, r *http.Request
 
 func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	stName := params.ByName("serviceType")
-	hS.Logger.Print("Get /configs/",  stName, "/versions POST")
+	hS.Logger.Print("Get /configs/", stName, "/versions POST")
 
 	hS.Logger.Print("Reading service types information from db...")
 	st, err := hS.Db.ReadServiceType(stName)
@@ -526,7 +526,7 @@ func (hS HttpServer) ConfigsGetVersions(w http.ResponseWriter, r *http.Request, 
 func (hS HttpServer) ConfigsGetVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceType")
 	vId := params.ByName("versionId")
-	hS.Logger.Print("Get /configs/", sTypeName, "/versions/",  vId, " GET")
+	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " GET")
 
 	//reading service type info from database
 	hS.Logger.Print("Reading service version information from db...")
@@ -558,7 +558,7 @@ func (hS HttpServer) ConfigsUpdateVersion(w http.ResponseWriter, r *http.Request
 	//TODO: updating of service version dependencies is not supported
 	sTypeName := params.ByName("serviceType")
 	vId := params.ByName("versionId")
-	hS.Logger.Print("Get /configs/", sTypeName, "/versions/",  vId, " PUT")
+	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " PUT")
 
 	hS.Logger.Print("Reading service types information from db...")
 	st, err := hS.Db.ReadServiceType(sTypeName)
@@ -594,7 +594,7 @@ func (hS HttpServer) ConfigsUpdateVersion(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	st.Versions = st.Versions[:idToUpdate + copy(st.Versions[idToUpdate:], st.Versions[idToUpdate + 1:])]
+	st.Versions = st.Versions[:idToUpdate+copy(st.Versions[idToUpdate:], st.Versions[idToUpdate+1:])]
 
 	var newStVersion protobuf.ServiceVersion
 	err = json.NewDecoder(r.Body).Decode(&newStVersion)
@@ -657,7 +657,7 @@ func (hS HttpServer) ConfigsUpdateVersion(w http.ResponseWriter, r *http.Request
 func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceType")
 	vId := params.ByName("versionId")
-	hS.Logger.Print("Get /configs/", sTypeName, "/versions/",  vId, " DELETE")
+	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " DELETE")
 
 	var result *protobuf.ServiceVersion
 	result, err := hS.Db.ReadServiceVersion(sTypeName, vId)
@@ -714,7 +714,7 @@ func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request
 func (hS HttpServer) ConfigsCreateConfigParam(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceType")
 	vId := params.ByName("versionId")
-	hS.Logger.Print("Get /configs/", sTypeName, "/versions/",  vId, "/configs POST")
+	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, "/configs POST")
 
 	var newStConfig *protobuf.ServiceConfig
 	err := json.NewDecoder(r.Body).Decode(&newStConfig)
@@ -724,7 +724,6 @@ func (hS HttpServer) ConfigsCreateConfigParam(w http.ResponseWriter, r *http.Req
 		return
 	}
 	newStConfig.AnsibleVarName = sTypeName + "_" + newStConfig.ParameterName
-
 
 	hS.Logger.Print("Reading service types information from db...")
 	st, err := hS.Db.ReadServiceType(sTypeName)

@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	//"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -11,10 +10,10 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	mocks "github.com/ispras/michman/src/mocks"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"github.com/julienschmidt/httprouter"
-	mocks "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/mocks"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 )
 
 func TestClustersGet(t *testing.T) {
@@ -119,25 +118,24 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&protobuf.Cluster{}, nil)
 
-
 		var testServiceVersion = protobuf.ServiceVersion{
-			ID:                    "60c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Version:              "testVersion",
-			Description:          "test",
+			ID:          "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Version:     "testVersion",
+			Description: "test",
 			//Configs:              []*protobuf.ServiceConfig{&testServiceConfig},
 		}
 
 		testServiceType1 := protobuf.ServiceType{
-			ID:                   "60c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Type:                 "spark",
-			Description:          "test",
-			DefaultVersion: 	  "testVersion",
-			Versions:             []*protobuf.ServiceVersion{&testServiceVersion},
+			ID:             "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:           "spark",
+			Description:    "test",
+			DefaultVersion: "testVersion",
+			Versions:       []*protobuf.ServiceVersion{&testServiceVersion},
 		}
 		testServiceType2 := protobuf.ServiceType{
-			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Type:                 "test-service-type-2",
-			Description:          "test",
+			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:        "test-service-type-2",
+			Description: "test",
 		}
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)

@@ -2,13 +2,12 @@ package grpcclient
 
 import (
 	"context"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	"github.com/ispras/michman/src/database"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
+	"google.golang.org/grpc"
 	"log"
 	"time"
-
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -20,8 +19,8 @@ const (
 type GrpcClient struct {
 	ansibleServiceClient protobuf.AnsibleRunnerClient
 	//dbServiceClient      protobuf.DBClient
-	logger               *log.Logger
-	Db                   database.Database
+	logger *log.Logger
+	Db     database.Database
 }
 
 func (gc *GrpcClient) SetLogger(l *log.Logger) {

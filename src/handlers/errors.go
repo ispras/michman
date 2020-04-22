@@ -28,7 +28,7 @@ const (
 	UserErrorClusterExistedMessage         = "Cluster with this name has already existed in this project"
 	UserErrorClusterStatus                 = 44
 	UserErrorClusterStatusMessage          = "Cluster status must be 'CREATED' or 'FAILED' for UPDATE or DELETE"
-	UserErrorBadServiceVersion			   = 45
+	UserErrorBadServiceVersion             = 45
 	UserErrorBadServiceVersionMessage      = "Incompatible versions between services"
 )
 

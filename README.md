@@ -1,4 +1,4 @@
-# Spark-openstack project
+# Michman
 
 ## Dependencies
 Apt packages:
@@ -229,11 +229,11 @@ HTTP Server that handles HTTP requests(probably from Envoy, that will take tham 
 # How to get it worked
 First, place project code in $GOPATH:
 ```shell script
-git clone https://gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack.git
-mkdir $GOPATH/src/gitlab.at.ispras.ru
-mkdir $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools
-cp -R ./spark-openstack $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools/
-cd $GOPATH/src/gitlab.at.ispras.ru/openstack_bigdata_tools
+git clone https://github.com/ispras/michman.git
+mkdir $GOPATH/src/github.com
+mkdir $GOPATH/src/github.com/ispras
+mv ./michman $GOPATH/src/github.com/ispras/
+cd $GOPATH/src/github.com/ispras/michman
 ```
 Then, complete _config.yaml_ file.
  

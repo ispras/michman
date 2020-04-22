@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	"github.com/ispras/michman/src/database"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"log"
 	"os"
 	"os/exec"
@@ -90,7 +90,7 @@ func setServiceVersion(stype string) string {
 	return stype + "_version"
 }
 
-func convertParamValue(value string, vType string) interface{}{
+func convertParamValue(value string, vType string) interface{} {
 	switch vType {
 	case "int":
 		if v, err := strconv.ParseInt(value, 10, 32); err != nil {
@@ -119,7 +119,6 @@ func convertParamValue(value string, vType string) interface{}{
 	return nil
 }
 
-
 func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) (InterfaceMap, error) {
 	sTypes, err := aL.couchbaseCommunicator.ListServicesTypes()
 	if err != nil {
@@ -129,10 +128,10 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	var curServices = make(map[string]ServiceExists)
 
 	for _, service := range cluster.Services {
-			curServices[service.Type] = ServiceExists{
-				exists:  true,
-				service: service,
-			}
+		curServices[service.Type] = ServiceExists{
+			exists:  true,
+			service: service,
+		}
 	}
 
 	var extraVars = make(InterfaceMap)

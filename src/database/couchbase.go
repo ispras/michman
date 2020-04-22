@@ -3,15 +3,15 @@ package database
 import (
 	"errors"
 	"fmt"
-	proto "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	proto "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"gopkg.in/couchbase/gocb.v1"
 )
 
 const (
-	clusterBucketName  string = "clusters"
-	templateBucketName string = "templates"
-	projectBucketName  string = "projects"
+	clusterBucketName     string = "clusters"
+	templateBucketName    string = "templates"
+	projectBucketName     string = "projects"
 	serviceTypeBucketName string = "service_types"
 )
 
@@ -170,7 +170,8 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 	return result, nil
 }
 
-func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, error) {q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Services, MasterIP, Description from " + clusterBucketName +
+func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, error) {
+	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Services, MasterIP, Description from " + clusterBucketName +
 		" where ProjectID = '" + projectID + "'"
 	query := gocb.NewN1qlQuery(q)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
@@ -355,7 +356,7 @@ func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*proto.Ser
 			flag = true
 			break
 		}
- 	}
+	}
 
 	if flag {
 		return result, nil
@@ -363,7 +364,7 @@ func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*proto.Ser
 	return nil, errors.New("Error: service version with this ID doesn't exist")
 }
 
-func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)  {
+func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error) {
 	var st proto.ServiceType
 	db.serviceTypesBucket.Get(sType, &st)
 
@@ -387,7 +388,7 @@ func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.S
 		return nil, errors.New("Error: service version with this ID doesn't exist")
 	}
 
-	st.Versions = st.Versions[:idToDelete + copy(st.Versions[idToDelete:], st.Versions[idToDelete + 1:])]
+	st.Versions = st.Versions[:idToDelete+copy(st.Versions[idToDelete:], st.Versions[idToDelete+1:])]
 	_, err := db.serviceTypesBucket.Upsert(st.Type, sType, 0)
 	return result, err
 }

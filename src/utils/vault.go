@@ -64,12 +64,12 @@ type Config struct {
 	MirrorAddress string `yaml:"mirror_address"`
 
 	// Registry
-	SelfignedRegistry     bool   `yaml:"docker_selfsigned_registry"`
-	InsecureRegistry      bool   `yaml:"docker_insecure_registry"`
-	GitlabRegistry        bool   `yaml:"gitlab_registry"`
+	SelfignedRegistry bool `yaml:"docker_selfsigned_registry"`
+	InsecureRegistry  bool `yaml:"docker_insecure_registry"`
+	GitlabRegistry    bool `yaml:"gitlab_registry"`
 
-	SelfsignedRegistryIp  string `yaml:"docker_selfsigned_registry_ip"`
-	InsecureRegistryIp    string `yaml:"docker_insecure_registry_ip"`
+	SelfsignedRegistryIp string `yaml:"docker_selfsigned_registry_ip"`
+	InsecureRegistryIp   string `yaml:"docker_insecure_registry_ip"`
 
 	SelfignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url"`
 	SelfignedRegistryCert string `yaml:"docker_cert_path"`

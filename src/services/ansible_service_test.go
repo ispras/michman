@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	mocks "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/mocks"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	mocks "github.com/ispras/michman/src/mocks"
+	protobuf "github.com/ispras/michman/src/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )

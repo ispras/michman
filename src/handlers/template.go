@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"github.com/julienschmidt/httprouter"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
 	"net/http"
 )
 

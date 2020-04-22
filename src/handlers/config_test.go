@@ -4,40 +4,40 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/golang/mock/gomock"
+	"github.com/ispras/michman/src/mocks"
+	protobuf "github.com/ispras/michman/src/protobuf"
 	"github.com/julienschmidt/httprouter"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/mocks"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 )
 
 var serviceType = "test-service-type"
 var svId = "60c18874-f41d-4f7f-a45d-8503abd53e1c"
 
 var testServiceConfig = protobuf.ServiceConfig{
-	ParameterName:        "test",
-	Type:                 "string",
-	DefaultValue:         "t",
-	Required:          false,
-	Description:          "test param",
+	ParameterName: "test",
+	Type:          "string",
+	DefaultValue:  "t",
+	Required:      false,
+	Description:   "test param",
 }
 
 var testServiceVersion = protobuf.ServiceVersion{
-	ID:                    "60c18874-f41d-4f7f-a45d-8503abd53e1c",
-	Version:              "testVersion",
-	Description:          "test",
+	ID:          "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+	Version:     "testVersion",
+	Description: "test",
 	//Configs:              []*protobuf.ServiceConfig{&testServiceConfig},
 }
 
 var testServiceType = protobuf.ServiceType{
-	ID:                   "60c18874-f41d-4f7f-a45d-8503abd53e1c",
-	Type:                 serviceType,
-	Description:          "test",
-	DefaultVersion: 	  "testVersion",
-	Versions:             []*protobuf.ServiceVersion{&testServiceVersion},
+	ID:             "60c18874-f41d-4f7f-a45d-8503abd53e1c",
+	Type:           serviceType,
+	Description:    "test",
+	DefaultVersion: "testVersion",
+	Versions:       []*protobuf.ServiceVersion{&testServiceVersion},
 }
 
 func TestConfigsGetServices(t *testing.T) {
@@ -55,14 +55,14 @@ func TestConfigsGetServices(t *testing.T) {
 
 		testServiceType1 := testServiceType
 		testServiceType2 := protobuf.ServiceType{
-			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Type:                 "test-service-type-2",
-			Description:          "test",
+			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:        "test-service-type-2",
+			Description: "test",
 		}
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase,  ErrHandler: errHandler}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsGetServices(response, request, httprouter.Params{})
 
 		var sTypes []protobuf.ServiceType
@@ -80,7 +80,6 @@ func TestConfigsGetServices(t *testing.T) {
 		}
 	})
 }
-
 
 func TestConfigsCreateService(t *testing.T) {
 	l := log.New(os.Stdout, "TestConfigsCreateService: ", log.Ldate|log.Ltime)
@@ -181,13 +180,12 @@ func TestConfigsDeleteService(t *testing.T) {
 
 		testServiceType1 := testServiceType
 		testServiceType2 := protobuf.ServiceType{
-			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Type:                 "test-service-type-2",
-			Description:          "test",
+			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:        "test-service-type-2",
+			Description: "test",
 		}
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
-
 
 		mockDatabase.EXPECT().DeleteServiceType(serviceType).Return(nil)
 
@@ -223,8 +221,8 @@ func TestConfigsUpdateService(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	updateBody := protobuf.ServiceType{
-		Description:          "updated test",
-		DefaultVersion: 	  "testVersion",
+		Description:    "updated test",
+		DefaultVersion: "testVersion",
 	}
 	testBody, _ := json.Marshal(updateBody)
 
@@ -270,15 +268,15 @@ func TestConfigsCreateVersion(t *testing.T) {
 
 	t.Run("New service version with valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceVersion)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions", bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		st := protobuf.ServiceType {
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			Versions: 	          []*protobuf.ServiceVersion{},
+		st := protobuf.ServiceType{
+			ID:          testServiceType.ID,
+			Type:        testServiceType.Type,
+			Description: testServiceType.Description,
+			Versions:    []*protobuf.ServiceVersion{},
 		}
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&st, nil)
@@ -303,7 +301,7 @@ func TestConfigsCreateVersion(t *testing.T) {
 
 	t.Run("Invalid JSON", func(t *testing.T) {
 		testBody := []byte(`this is invalid json`)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions", bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
@@ -325,7 +323,7 @@ func TestConfigsGetVersion(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	t.Run("Existed service version", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", "/configs/" + serviceType + "/versions/" + svId, nil)
+		request, _ := http.NewRequest("GET", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&testServiceVersion, nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
@@ -339,7 +337,7 @@ func TestConfigsGetVersion(t *testing.T) {
 	})
 
 	t.Run("Not existed service version", func(t *testing.T) {
-		request, _ := http.NewRequest("GET", "/configs/" + serviceType + "/versions/" + svId, nil)
+		request, _ := http.NewRequest("GET", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&protobuf.ServiceVersion{}, nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
@@ -363,26 +361,26 @@ func TestConfigsGetVersions(t *testing.T) {
 	t.Run("List of service versions", func(t *testing.T) {
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 
-		request, _ := http.NewRequest("GET", "/configs/" + serviceType + "/versions", nil)
+		request, _ := http.NewRequest("GET", "/configs/"+serviceType+"/versions", nil)
 		response := httptest.NewRecorder()
 
 		testServiceVersion1 := testServiceVersion
 		testServiceVersion2 := protobuf.ServiceVersion{
-			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1s",
-			Version:              "testVersion2",
-			Description:          "test2",
+			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1s",
+			Version:     "testVersion2",
+			Description: "test2",
 		}
 
 		curSt := protobuf.ServiceType{
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			Versions:             []*protobuf.ServiceVersion{&testServiceVersion1, &testServiceVersion2},
-			DefaultVersion:       testServiceType.DefaultVersion,
+			ID:             testServiceType.ID,
+			Type:           testServiceType.Type,
+			Description:    testServiceType.Description,
+			Versions:       []*protobuf.ServiceVersion{&testServiceVersion1, &testServiceVersion2},
+			DefaultVersion: testServiceType.DefaultVersion,
 		}
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curSt, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase,  ErrHandler: errHandler}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsGetVersions(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		var versions []protobuf.ServiceVersion
@@ -409,26 +407,26 @@ func TestConfigsUpdateVersion(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	updateBody := protobuf.ServiceVersion{
-		Description:          "updated test",
+		Description: "updated test",
 	}
 	testBody, _ := json.Marshal(updateBody)
 
 	t.Run("Update existed service type with correct body", func(t *testing.T) {
-		request, _ := http.NewRequest("PUT", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("PUT", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
 
-		updatedSV := protobuf.ServiceVersion {
-			ID:                   testServiceVersion.ID,
-			Description:          updateBody.Description,
-			Version:              svId,
+		updatedSV := protobuf.ServiceVersion{
+			ID:          testServiceVersion.ID,
+			Description: updateBody.Description,
+			Version:     svId,
 		}
 
-		updatedST := protobuf.ServiceType {
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			DefaultVersion: 	  testServiceType.DefaultVersion,
-			Versions:             []*protobuf.ServiceVersion{&updatedSV},
+		updatedST := protobuf.ServiceType{
+			ID:             testServiceType.ID,
+			Type:           testServiceType.Type,
+			Description:    testServiceType.Description,
+			DefaultVersion: testServiceType.DefaultVersion,
+			Versions:       []*protobuf.ServiceVersion{&updatedSV},
 		}
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&updatedST, nil)
@@ -444,7 +442,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 	})
 
 	t.Run("Update not existed service type", func(t *testing.T) {
-		request, _ := http.NewRequest("PUT", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("PUT", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
@@ -459,15 +457,15 @@ func TestConfigsUpdateVersion(t *testing.T) {
 		}
 	})
 	t.Run("Update not existed service version", func(t *testing.T) {
-		request, _ := http.NewRequest("PUT", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("PUT", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
 
-		updatedST := protobuf.ServiceType {
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			DefaultVersion: 	  testServiceType.DefaultVersion,
-			Versions:             []*protobuf.ServiceVersion{},
+		updatedST := protobuf.ServiceType{
+			ID:             testServiceType.ID,
+			Type:           testServiceType.Type,
+			Description:    testServiceType.Description,
+			DefaultVersion: testServiceType.DefaultVersion,
+			Versions:       []*protobuf.ServiceVersion{},
 		}
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&updatedST, nil)
 		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
@@ -490,16 +488,16 @@ func TestConfigsDeleteVersion(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	t.Run("Existed service version", func(t *testing.T) {
-		request, _ := http.NewRequest("DELETE", "/configs/" + serviceType + "/versions/" + svId, nil)
+		request, _ := http.NewRequest("DELETE", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&testServiceVersion, nil)
 
 		testServiceType1 := testServiceType
 		testServiceType2 := protobuf.ServiceType{
-			ID:                   "61c18874-f41d-4f7f-a45d-8503abd53e1c",
-			Type:                 "test-service-type-2",
-			Description:          "test",
+			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1c",
+			Type:        "test-service-type-2",
+			Description: "test",
 		}
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
@@ -516,7 +514,7 @@ func TestConfigsDeleteVersion(t *testing.T) {
 	})
 
 	t.Run("Delete not existed service version", func(t *testing.T) {
-		request, _ := http.NewRequest("DELETE", "/configs/" + serviceType + "/versions/" + svId, nil)
+		request, _ := http.NewRequest("DELETE", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&protobuf.ServiceVersion{}, nil)
@@ -542,25 +540,24 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 
 	t.Run("New service config param with valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceConfig)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		curSV:= protobuf.ServiceVersion {
-			ID:                   testServiceVersion.ID,
-			Description:          testServiceVersion.Description,
-			Version:              svId,
-			Configs:              []*protobuf.ServiceConfig{},
+		curSV := protobuf.ServiceVersion{
+			ID:          testServiceVersion.ID,
+			Description: testServiceVersion.Description,
+			Version:     svId,
+			Configs:     []*protobuf.ServiceConfig{},
 		}
 
-		curST := protobuf.ServiceType {
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			DefaultVersion: 	  testServiceType.DefaultVersion,
-			Versions:             []*protobuf.ServiceVersion{&curSV},
+		curST := protobuf.ServiceType{
+			ID:             testServiceType.ID,
+			Type:           testServiceType.Type,
+			Description:    testServiceType.Description,
+			DefaultVersion: testServiceType.DefaultVersion,
+			Versions:       []*protobuf.ServiceVersion{&curSV},
 		}
-
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)
 		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
@@ -581,7 +578,7 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 
 	t.Run("Invalid JSON", func(t *testing.T) {
 		testBody := []byte(`this is invalid json`)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
@@ -597,7 +594,7 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 	})
 	t.Run("Not existed service type", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceConfig)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
@@ -614,15 +611,15 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 	})
 	t.Run("Not existed service version", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceConfig)
-		request, _ := http.NewRequest("POST", "/configs/" + serviceType + "/versions/" + svId, bytes.NewReader(testBody))
+		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
 
-		curST := protobuf.ServiceType {
-			ID:                   testServiceType.ID,
-			Type:                 testServiceType.Type,
-			Description:          testServiceType.Description,
-			DefaultVersion: 	  testServiceType.DefaultVersion,
-			Versions:             []*protobuf.ServiceVersion{},
+		curST := protobuf.ServiceType{
+			ID:             testServiceType.ID,
+			Type:           testServiceType.Type,
+			Description:    testServiceType.Description,
+			DefaultVersion: testServiceType.DefaultVersion,
+			Versions:       []*protobuf.ServiceVersion{},
 		}
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)

@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	mocks "github.com/ispras/michman/src/mocks"
+	protobuf "github.com/ispras/michman/src/protobuf"
 	"github.com/julienschmidt/httprouter"
-	mocks "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/mocks"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
 )
 
 func TestProjectsGetList(t *testing.T) {

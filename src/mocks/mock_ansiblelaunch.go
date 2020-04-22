@@ -6,8 +6,8 @@ package mocks
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	utils "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	utils "github.com/ispras/michman/src/utils"
 	reflect "reflect"
 )
 

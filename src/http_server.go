@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	"github.com/ispras/michman/src/database"
+	"github.com/ispras/michman/src/utils"
 	"io"
 	"log"
 	"net/http"
 	"os"
 
+	grpc_client "github.com/ispras/michman/src/grpcclients"
+	"github.com/ispras/michman/src/handlers"
 	"github.com/julienschmidt/httprouter"
-	grpc_client "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/grpcclients"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/handlers"
 )
 
 const (
@@ -55,7 +55,6 @@ func main() {
 	httpServerLogger := log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
 
 	errHandler := handlers.HttpErrorHandler{}
-
 
 	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: db,
 		ErrHandler: errHandler}

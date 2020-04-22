@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	vaultapi "github.com/hashicorp/vault/api"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/database"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
-	"gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/utils"
+	"github.com/ispras/michman/src/database"
+	protobuf "github.com/ispras/michman/src/protobuf"
+	"github.com/ispras/michman/src/utils"
 	"google.golang.org/grpc"
 	"io"
 	"log"
@@ -32,10 +32,10 @@ type ansibleService struct {
 	logger            *log.Logger
 	ansibleRunner     ansibleLaunch
 	vaultCommunicator utils.SecretStorage
-	config utils.Config
+	config            utils.Config
 }
 
-func (aS *ansibleService) Init( logger *log.Logger, ansibleLaunch AnsibleLauncher,
+func (aS *ansibleService) Init(logger *log.Logger, ansibleLaunch AnsibleLauncher,
 	vaultCommunicator utils.SecretStorage) {
 	config := utils.Config{}
 	config.MakeCfg()
@@ -319,7 +319,7 @@ func main() {
 	}
 
 	// create a multiwriter which writes to stout and a file simultaneously
-	logFile, err := os.OpenFile("logs/ansible_service.log", os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+	logFile, err := os.OpenFile("logs/ansible_service.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Println("Can't create a log file. Exit...")
 		os.Exit(1)

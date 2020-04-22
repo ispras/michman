@@ -43,7 +43,7 @@ const (
 	AnsiblePlaybookCmd = "ansible-playbook"
 
 	//base path
-	BasePath = "spark-openstack"
+	BasePath = "michman"
 	//ansible main role path
 	AnsibleMainRole = "src/ansible/ansible/main.yml"
 	//ansible get master ip role path
@@ -52,31 +52,31 @@ const (
 	AnsibleIpRole = "src/ansible/ansible/get_ip.yml"
 
 	//openstack secrets keys
-	OsAuthUrl       = "OS_AUTH_URL"
-	OsPassword      = "OS_PASSWORD"
-	OsProjectName   = "OS_PROJECT_NAME"
-	OsRegionName    = "OS_REGION_NAME"
-	OsTenantId      = "OS_TENANT_ID"
-	OsTenantName    = "OS_TENANT_NAME"
-	OsUsername      = "OS_USERNAME"
-	OsSwiftUsername = "OS_SWIFT_USERNAME"
-	OsSwiftPassword = "OS_SWIFT_PASSWORD"
-	OsComputeApiVersion = "COMPUTE_API_VERSION"
-	OsNovaVersion = "NOVA_VERSION"
-	OsAuthType = "OS_AUTH_TYPE"
-	OsCloudname = "OS_CLOUDNAME"
+	OsAuthUrl            = "OS_AUTH_URL"
+	OsPassword           = "OS_PASSWORD"
+	OsProjectName        = "OS_PROJECT_NAME"
+	OsRegionName         = "OS_REGION_NAME"
+	OsTenantId           = "OS_TENANT_ID"
+	OsTenantName         = "OS_TENANT_NAME"
+	OsUsername           = "OS_USERNAME"
+	OsSwiftUsername      = "OS_SWIFT_USERNAME"
+	OsSwiftPassword      = "OS_SWIFT_PASSWORD"
+	OsComputeApiVersion  = "COMPUTE_API_VERSION"
+	OsNovaVersion        = "NOVA_VERSION"
+	OsAuthType           = "OS_AUTH_TYPE"
+	OsCloudname          = "OS_CLOUDNAME"
 	OsIdentityApiVersion = "OS_IDENTITY_API_VERSION"
-	OsImageApiVersion = "OS_IMAGE_API_VERSION"
-	OsNoCache = "OS_NO_CACHE"
-	OsProjectDomainName = "OS_PROJECT_DOMAIN_NAME"
-	OsUserDomainName = "OS_USER_DOMAIN_NAME"
-	OsVolumeApiVersion = "OS_VOLUME_API_VERSION"
-	OsPythonwarnings = "PYTHONWARNINGS"
-	OsNoProxy = "no_proxy"
+	OsImageApiVersion    = "OS_IMAGE_API_VERSION"
+	OsNoCache            = "OS_NO_CACHE"
+	OsProjectDomainName  = "OS_PROJECT_DOMAIN_NAME"
+	OsUserDomainName     = "OS_USER_DOMAIN_NAME"
+	OsVolumeApiVersion   = "OS_VOLUME_API_VERSION"
+	OsPythonwarnings     = "PYTHONWARNINGS"
+	OsNoProxy            = "no_proxy"
 
 	// Docker login secrets keys
-	DockerLoginUlr = "url"
-	DockerLoginUser = "user"
+	DockerLoginUlr      = "url"
+	DockerLoginUser     = "user"
 	DockerLoginPassword = "password"
 
 	//ssh secrets keys
@@ -93,12 +93,12 @@ const (
 	CommonProjectID string = "None"
 
 	//Openstack stein version
-	OsSteinVersion string = "stein"
+	OsSteinVersion   string = "stein"
 	OsLibertyVersion string = "liberty"
 )
 
 var (
-	SshKeyPath = os.Getenv("PWD") + "/src/ansible/ansible/files/ssh_key"
-	ConfigPath = "config.yaml"
+	SshKeyPath  = os.Getenv("PWD") + "/src/ansible/ansible/files/ssh_key"
+	ConfigPath  = "config.yaml"
 	UseBasePath = true
 )

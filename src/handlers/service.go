@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"errors"
-	protobuf "gitlab.at.ispras.ru/openstack_bigdata_tools/spark-openstack/src/protobuf"
+	protobuf "github.com/ispras/michman/src/protobuf"
 	"log"
 	"strconv"
 )
@@ -41,7 +41,7 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 
 	if service.Version == "" && sTypes[stIdx].DefaultVersion != "" {
 		service.Version = sTypes[stIdx].DefaultVersion
-	} else if  service.Version == "" && sTypes[stIdx].DefaultVersion == "" {
+	} else if service.Version == "" && sTypes[stIdx].DefaultVersion == "" {
 		//s, _ := json.Marshal(sTypes[stIdx])
 		//log.Print(string(s))
 		//log.Print(sTypes[stIdx].Type)
@@ -150,4 +150,3 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 	//}
 	return true, nil
 }
-
