@@ -1,9 +1,0 @@
----
-# tasks for Centos 7
-
-- name: "Install pip. Epel required."
-  yum:
-    name:
-      - "python3-setuptools"
-      - "python3-pip"
-    state: latest

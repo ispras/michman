@@ -45,11 +45,11 @@ const (
 	//base path
 	BasePath = "michman"
 	//ansible main role path
-	AnsibleMainRole = "src/ansible/ansible/main.yml"
+	AnsibleMainRole = "src/ansible/main.yml"
 	//ansible get master ip role path
-	AnsibleMasterIpRole = "src/ansible/ansible/get_master.yml"
+	AnsibleMasterIpRole = "src/ansible/get_master.yml"
 	//ansible get ip of any instance with role
-	AnsibleIpRole = "src/ansible/ansible/get_ip.yml"
+	AnsibleIpRole = "src/ansible/get_ip.yml"
 
 	//openstack secrets keys
 	OsAuthUrl            = "OS_AUTH_URL"
@@ -98,7 +98,7 @@ const (
 )
 
 var (
-	SshKeyPath  = os.Getenv("PWD") + "/src/ansible/ansible/files/ssh_key"
+	SshKeyPath  = os.Getenv("PWD") + "/src/ansible/files/ssh_key"
 	ConfigPath  = "config.yaml"
 	UseBasePath = true
 )

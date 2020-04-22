@@ -113,8 +113,8 @@ ENV/
 
 packages.txt
 sandbox-openrc.sh
-src/ansible/ansible/files/keys/
-src/ansible/ansible/files/ssh_key
+src/ansible/files/keys/
+src/ansible/files/ssh_key
 ansible_output.txt
 openstack_config.yaml
 vault.yaml
