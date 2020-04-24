@@ -10,6 +10,8 @@ sudo apt install unzip apt-transport-https \
   ca-certificates curl software-properties-common \
   python python-pip python-setuptools
 ```
+Also required `libprotoc 3.6.1`. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04).
+
 Python packages:
 ```shell script
 pip install ansible==2.9.4 openstacksdk==0.40.0 # latest tested versions or
@@ -24,7 +26,33 @@ go get -u gopkg.in/yaml.v2
 go get github.com/julienschmidt/httprouter
 go get -u gopkg.in/couchbase/gocb.v1
 go get github.com/google/uuid
+go get github.com/golang/mock/gomock
+go get github.com/golang/mock/mockgen
 ```
+## Infrastructure requirements
+* **Openstack** cloud. Supported versions: _Liberty_, _Stein_.
+  * Currently project supports deploying of services only on VMs with Ubuntu (16.04 or 18.04), so should be prepared suitable image.
+  * It's recomended to prepare floating ip pool and flavors for created VMs.
+  * Also you should prepare security key-pair and pem-key to provide access to created VMs from ansible_service. Key should be pasted in `$PROJECT_ROOT/src/ansible/ansible/files/ssh_key` file.
+* **Couchbase** server.
+  * Tested version: 6.0.0 community edition
+  * Must contain prepared buckets with primary indexes: _clusters_, _projects_, _templates_. The last one is optional and used only if you going to create templates.
+* **Vault** server:
+  * Tested version: 1.2.3
+  * Stored secrets (Secret engine type - _kv v1_, path: kv/):
+    * kv/couchbase: _path, username, password_, where path means address of Couchbase server
+    * kv/openstack: 
+        -- `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_TENANT_ID, OS_TENANT_NAME, OS_USERNAME` for Liberty Openstack version
+        -- `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_USERNAME, OS_SWIFT_USERNAME, OS_SWIFT_PASSWORD, COMPUTE_API_VERSION, NOVA_VERSION, OS_AUTH_TYPE, OS_CLOUDNAME, OS_IDENTITY_API_VERSION, OS_IMAGE_API_VERSION, OS_NO_CACHE, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_VOLUME_API_VERSION, PYTHONWARNINGS, no_proxy` for Stein Openstack version
+    * kv/pem_key: _key_bgt_ - must contain actual ssh key from Openstack key pair for `OS_USERNAME`
+* **Docker registry**  
+  * Currently Nextcloud service deployment based on docker containers. It's possible to use local registry:
+    1. Prepare your registry. It may be insecure registry (without any sertificates and user controls), selfsigned registry or gitlab registry.
+    2. Configure:
+      1. If you use insecure registry, set `docker_incecure_registry: true` and `insecure_registry_ip: xx.xx.xx.xx:xxxx` options in _config.yaml_
+      2. If you use selfsigned registry, you need to set `docker_selfsigned_registry: true`, `docker_selfsigned_registry_ip: xx.xx.xx.xx:xxxx`, `docker_selfsigned_registry_url: consides.to.cert.url` and `docker_cert_path: path_to_registry_cert.crt` in _config.yaml_
+      3. If you use gitlab registry you should set `docker_gitlab_registry: true`
+    3. In case of using selfsigned or gitlab registry you should add secret with _url_, _user_ and _password_ to **vault** and set `registry_key: key_of_docker_secret` in _config.yaml_
 
 ## Configurations
 Configuration of the project is stored in **config.yaml** file. Example:
@@ -236,23 +264,28 @@ mv ./michman $GOPATH/src/github.com/ispras/
 cd $GOPATH/src/github.com/ispras/michman
 ```
 Then, complete _config.yaml_ file.
- 
-Launch ansible_runner service:
+
+To quick start you may use _build.sh_ script:
+```
+./build.sh start
+```
+
+Manually launch ansible_runner service:
 ```
 go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go
 ```
 
-Or launch ansible_runner service specifying config:
+Manually launch ansible_runner service specifying config:
 ```
 go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go /path/to/config.yaml
 ```
 
-Launch http_server:
+Manually launch http_server:
 ```
 go run src/http_server.go
 ```
 
-Launch http_server specifying config:
+Manually launch http_server specifying config:
 ```
 go run src/http_server.go /path/to/config.yaml
 ```
