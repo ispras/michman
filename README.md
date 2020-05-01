@@ -10,7 +10,6 @@ sudo apt install unzip apt-transport-https \
   ca-certificates curl software-properties-common \
   python python-pip python-setuptools
 ```
-Also required `libprotoc 3.6.1`. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04).
 
 Python packages:
 ```shell script
@@ -29,11 +28,18 @@ go get github.com/google/uuid
 go get github.com/golang/mock/gomock
 go get github.com/golang/mock/mockgen
 ```
+
+Also required `libprotoc 3.6.1`. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04) or may be used docker container [like this](https://hub.docker.com/r/znly/protoc/). Example:
+```
+docker pull znly/protoc
+cd $GOPATH/src/github.com/ispras/michman/protobuf
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc --go_out=plugins=grpc:. -I. protofile.proto
+```
 ## Infrastructure requirements
 * **Openstack** cloud. Supported versions: _Liberty_, _Stein_.
   * Currently project supports deploying of services only on VMs with Ubuntu (16.04 or 18.04), so should be prepared suitable image.
   * It's recomended to prepare floating ip pool and flavors for created VMs.
-  * Also you should prepare security key-pair and pem-key to provide access to created VMs from ansible_service. Key should be pasted in `$PROJECT_ROOT/src/ansible/ansible/files/ssh_key` file.
+  * Also you should prepare security key-pair and pem-key to provide access to created VMs from launcher. Key should be pasted in `$PROJECT_ROOT/launcher/ansible/files/ssh_key` file.
 * **Couchbase** server.
   * Tested version: 6.0.0 community edition
   * Must contain prepared buckets with primary indexes: _clusters_, _projects_, _templates_. The last one is optional and used only if you going to create templates.
@@ -242,17 +248,14 @@ Example:
 "Config": {
   "weblab_name": "Name",
   "nfs_server_ip": "IP",
-  "mariadb_image": "bgtregistry.ru:5000/mariadb"
+  "mariadb_image": "bgtregistry.ru:5000/mariadb",
   "nextcloud_image": "bgtregistry.ru:5000/nextcloud"
 }
 ```
 
 ## Protobuf
 
-Contains proto file for gRPC and have already generated code from it. Used in http_server and services/ansible_runner.
-
-## gRPC communication
-HTTP Server that handles HTTP requests(probably from Envoy, that will take tham from real clients), and call, using gRPC(use client class from ansible-pb), ansible_service to launch ansible.
+Contains proto file for gRPC that must be used to generate protobuf package. Used in rest and launcher services.
 
 # How to get it worked
 First, place project code in $GOPATH:
@@ -272,22 +275,22 @@ To quick start you may use _build.sh_ script:
 
 Manually launch ansible_runner service:
 ```
-go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go
+go run ./launcher/ansible_launcher.go ./launcher/main.go
 ```
 
 Manually launch ansible_runner service specifying config:
 ```
-go run src/services/ansible_service/ansible_service.go src/services/ansible_service/ansible_launch.go /path/to/config.yaml
+go run ./launcher/ansible_launcher.go ./launcher/main.go /path/to/config.yaml
 ```
 
 Manually launch http_server:
 ```
-go run src/http_server.go
+go run ./rest/main.go
 ```
 
 Manually launch http_server specifying config:
 ```
-go run src/http_server.go /path/to/config.yaml
+go run ./rest/main.go /path/to/config.yaml
 ```
 
 Create new project:

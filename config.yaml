@@ -23,5 +23,17 @@ ssh_key: BUCKET_PATH
 ## Mirror
 
 use_mirror: false
-mirror_address: MIRROR_ADDR
+# mirror_address: MIRROR_ADDR # optional
+
+## Docker registry (optional)
+#
+# docker_insecure_registry: false
+# docker_selfsigned_registry: false
+# docker_gitlab_registry: false
+
+# docker_insecure_registry_ip: 127.0.0.1:5000
+# docker_selfsigned_registry_ip: 127.0.0.1
+# docker_selfsigned_registry_url: michmanregistry.ru
+# docker_cert_path: /home/ubuntu/docker.crt
+
 

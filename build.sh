@@ -1,59 +1,96 @@
 #!/bin/sh
 
 usage="usage: build.sh [proto|mock|test|compile|start|stop|clean]"
+LAUNCHER_BIN=launch
+REST_BIN=http
 
 case $1 in
 proto) 
 	echo "generate protobuf code..."
-	cd src/protobuf/; protoc --go_out=plugins=grpc:. protofile.proto; cd ../..
+	cd protobuf/; protoc --go_out=plugins=grpc:. protofile.proto; cd ..
 	;;
-mock) 
+mock)
+        if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
+        then
+                ./build.sh proto
+        fi
 	echo "generate mocks..."
-	mockgen --destination=./src/mocks/mock_database.go -package=mocks github.com/ispras/michman/src/database Database 
-	mockgen --destination=./src/mocks/mock_grpcclient.go -package=mocks github.com/ispras/michman/src/handlers GrpcClient 
-	mockgen --destination=./src/mocks/mock_vault.go -package=mocks github.com/ispras/michman/src/utils SecretStorage
-	;;
+	cd ./database
+	mockgen --destination=../mocks/mock_database.go -package=mocks . Database
+        cd ..
+        cd ./rest/handlers
+        mockgen --destination=../../mocks/mock_grpcclient.go -package=mocks . GrpcClient
+        cd ../..
+        cd ./utils
+        mockgen --destination=../mocks/mock_vault.go -package=mocks . SecretStorage
+        cd ..
+        ;;
 test) 
-	if [ -z $( 2>/dev/null ls ./src/mocks/mock_database.go ./src/mocks/mock_grpcclient.go ./src/mocks/mock_vault.go ) ]
+	if [ -z $( 2>/dev/null ls ./mocks/mock_database.go ./mocks/mock_grpcclient.go ./mocks/mock_vault.go ) ]
 	then
 		./build.sh mock
 	fi
 	echo "run tests..."
-	go test ./src/handlers -cover
+	cd ./rest/handlers
+	go test
 	;;
-compile) 
-	echo "build ansible_service..."
-	go build ./src/services/ansible_service/ansible_service.go ./src/services/ansible_service/ansible_launch.go
-	echo "build http_server..."
-	go build ./src/http_server.go
+compile)
+        if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
+        then
+                ./build.sh proto
+        fi
+	echo "build launcher..."
+	cd launcher
+	go build
+	cd ..
+	mv ./launcher/launcher ./$LAUNCHER_BIN
+	echo "build rest api server..."
+	cd rest
+	go build
+	cd ..
+	mv rest/rest ./$REST_BIN
 	;;
 start)
-	if [ -z $( 2>/dev/null ls ./src/protobuf/protofile.pb.go ) ]
+	if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
 	then
 		./build.sh proto
 	fi
-	if [ -z $( 2>/dev/null ls ./ansible_service ) ] || [ -z $( 2>/dev/null ls ./http_server ) ]
+	if [ -z $( 2>/dev/null ls ./$LAUNCHER_BIN ) ] || [ -z $( 2>/dev/null ls ./$REST_BIN ) ]
 	then
 		./build.sh compile
 	fi
-	echo "run ansible_service..."
-	1>/dev/null 2>/dev/null ./ansible_service &
-	echo $! > .ansible.pid
-	echo "run http_server..."
-	1>/dev/null 2>/dev/null ./http_server &
-	echo $! > .http.pid
+	echo "run launcher..."
+	1>/dev/null 2>/dev/null ./$LAUNCHER_BIN $2 &
+	echo $! > .$LAUNCHER_BIN.pid
+	sleep 1
+	if [ -z $(ps | grep $(cat .$LAUNCHER_BIN.pid)| awk '{print $1}') ]
+	then 
+		echo "launcher did't start, check config and logs"
+		rm .$LAUNCHER_BIN.pid
+		exit
+	fi
+	echo "run rest api server..."
+	1>/dev/null 2>/dev/null ./$REST_BIN $2 &
+	echo $! > .$REST_BIN.pid
+	sleep 1
+	if [ -z $(ps | grep $(cat .$REST_BIN.pid) | awk '{print $1}') ]
+        then
+                echo "rest api did't start, check config and logs"
+                rm .$REST_BIN.pid
+                exit
+        fi
 	;;
 stop) 
-	echo "kill ansible_service..."
-	kill $( cat .ansible.pid )
-	rm .ansible.pid
-	echo "kill http_server..."
-	kill $( cat .http.pid )
-	rm .http.pid
+	echo "kill launcher..."
+	kill $( cat .$LAUNCHER_BIN.pid )
+	rm .$LAUNCHER_BIN.pid
+	echo "kill rest api server..."
+	kill $( cat .$REST_BIN.pid )
+	rm .$REST_BIN.pid
 	;;
 clean)
 	echo "remove all generated and binary files"
-	rm ./ansible_service ./http_server ./src/protobuf/protofile.pb.go ./src/mocks/*
+	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN ./protobuf/protofile.pb.go ./mocks/mock_*
 	;;
 *) echo $usage
 esac
