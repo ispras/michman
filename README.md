@@ -1,5 +1,19 @@
 ![Michman](michman-public-version-logo.png)
 
+Michman is an orchestration self-hosted service intended to simplify process of creating distributed clusters and management of services in cloud environments. At now it provides capabilities for deployment a part of Apache big data stack respecting user ability to choose needed versions with additional tools and services:
+* Apache Spark
+* Apache Hadoop
+* Apache Ignite
+* Apache Cassandra
+* ElasticSearch with OpenDistro tools
+* Jupyter
+* Jupyterhub
+* Nextcloud
+
+Clusters are created and managed via REST API (see swagger docs) with collaborative group-based access to computational resources.
+
+This project follows up spark-openstack project (ISP RAS).
+
 ## Dependencies
 Apt packages:
 ```shell script
@@ -190,7 +204,7 @@ Example:
 "Config": {
   "use-yarn": "false",
   "hadoop-version": "2.6",
-  "spark-worker-mem-mb": "10240"
+  "spark-worker-mem-mb": "10240",
   "yarn-master-mem-mb": "10240"
 }
 ```
