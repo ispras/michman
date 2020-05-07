@@ -1,4 +1,4 @@
-# Michman
+![Michman](michman-public-version-logo.png)
 
 ## Dependencies
 Apt packages:
