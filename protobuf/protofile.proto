@@ -15,6 +15,7 @@ message Project {
     string DisplayName = 3;
     int32 GroupID = 4;
     string Description = 5;
+    string DefaultImage = 6;
 }
 
 message Cluster {
@@ -29,6 +30,7 @@ message Cluster {
     string MasterIP = 9;
     string ProjectID = 10;
     string Description = 11;
+    string Image = 12; 
 }
 
 message Service {
@@ -99,4 +101,11 @@ message ServiceDependency {
     string DefaultServiceVersion = 3; //default dependent service version
     string Description = 4;
     //bool Required = 5; //is this dependency required
+}
+
+message Image {
+    string ID = 1;
+    string Name = 2;
+    string AnsibleUser = 3;
+    string CloudImageID = 4;
 }

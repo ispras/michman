@@ -1,0 +1,92 @@
+---
+
+- name: Delete default repos
+  become: yes
+  file:
+    path: "/etc/yum.repos.d"
+    state: absent
+  when: use_package_mirror
+
+- name: Make clean repo directory
+  become: yes
+  file:
+    path: "/etc/yum.repos.d"
+    state: directory
+  when: use_package_mirror
+
+- name: create proxy repo file
+  become: yes
+  template:
+    src: nexus.repo.j2
+    dest: "/etc/yum.repos.d/nexus.repo"
+    mode: 0644
+  when: use_package_mirror
+
+- name: install python
+  become: yes
+  yum:
+    name: python
+    update_cache: yes
+
+- name: Create .pip directory
+  file:
+    path: /home/centos/.pip
+    state: directory
+  when: use_pip_mirror
+
+- name: Set pip mirror
+  template:
+    src: "pip.conf.j2"
+    dest: "/home/centos/.pip/pip.conf"
+
+- name: update yum cache
+  become: yes
+  yum: update_cache=yes
+  when: not skip_packages|default(False)
+
+- name: install dstat and rsync packages
+  become: yes
+  package: name={{ item }} state=present
+  with_items: ["dstat", "rsync"]
+  when: not skip_packages|default(False)
+
+- name: install Java
+  become: yes
+  yum:
+    name: java
+    state: present
+  when: not skip_packages|default(False)
+
+- name: disable net.ipv6.conf.all.disable_ipv6
+  become: yes
+  sysctl: name=net.ipv6.conf.all.disable_ipv6 value=1 state=present
+  tags:
+    - prepare
+
+- name: disable net.ipv6.conf.lo.disable_ipv6
+  become: yes
+  sysctl: name=net.ipv6.conf.lo.disable_ipv6 value=1 state=present
+  tags:
+    - prepare
+
+- name: increase hard file limits
+  become: yes
+  pam_limits: domain=* limit_type=hard limit_item=nofile value=1000000
+  tags:
+    - prepare
+
+- name: increase soft file limits
+  become: yes
+  pam_limits: domain=* limit_type=soft limit_item=nofile value=1000000
+
+- name: create hadoop group
+  become: yes
+  group: name=hadoop state=present
+  tags:
+    - prepare
+
+- name: create hadoop user
+  become: yes
+  user: name={{ hadoop_user }} comment="Hadoop user" group=hadoop shell=/bin/bash
+  tags:
+    - prepare

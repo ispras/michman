@@ -20,10 +20,13 @@ os_key: BUCKET_PATH
 cb_key: BUCKET_PATH
 ssh_key: BUCKET_PATH
 
-## Mirror
+## Mirrors
 
-use_mirror: false
-# mirror_address: MIRROR_ADDR # optional
+use_package_mirror: false
+use_pip_mirror: false
+# yum_mirror_address: REPOSITORY_URL
+# apt_mirror_address: REPOSITORY_URL
+# pip_mirror_address: REPOSITORY_URL
 
 ## Docker registry (optional)
 #

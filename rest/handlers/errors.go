@@ -21,7 +21,7 @@ const (
 	LibErrorStructToJson                   = 32
 	LibErrorStructToJsonMessage            = "Struct to JSON converting error"
 	UserErrorProjectUnmodField             = 41
-	UserErrorProjectUnmodFieldMessage      = "This fields of project or cluster can't be modifed"
+	UserErrorProjectUnmodFieldMessage      = "This fields of project or cluster can't be modified"
 	UserErrorProjectWithClustersDel        = 42
 	UserErrorProjectWithClustersDelMessage = "Project has already had clusters. Delete them first"
 	UserErrorClusterExisted                = 43
@@ -30,6 +30,12 @@ const (
 	UserErrorClusterStatusMessage          = "Cluster status must be 'CREATED' or 'FAILED' for UPDATE or DELETE"
 	UserErrorBadServiceVersion             = 45
 	UserErrorBadServiceVersionMessage      = "Incompatible versions between services"
+	ImageExisted                           = 50
+	ImageExistedMessage                    = "Image with this name already exists"
+	ImageUsed                              = 51
+	ImageUsedMessage                       = "Image already in use. It can't be modified or deleted"
+	ImageUnmodField                        = 52
+	ImageUnmodFieldMessage                 = "Some fileds can't be modified"
 )
 
 // ErrorHandler handling interface

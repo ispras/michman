@@ -102,6 +102,32 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
+	if p.DefaultImage == "" {
+		hS.Logger.Print("Default Image not specified")
+		w.WriteHeader(http.StatusBadRequest)
+		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
+		err := enc.Encode("Default Image not specified")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+	dbImg, err := hS.Db.ReadImage(p.DefaultImage)
+	if dbImg == nil {
+		hS.Logger.Print("Specified Default Image not found")
+		w.WriteHeader(http.StatusBadRequest)
+		enc := json.NewEncoder(w)
+		w.Header().Set("Content-Type", "application/json")
+		err := enc.Encode("Specified Default Image not found")
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+
 	// generating UUID for new project
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
@@ -186,6 +212,10 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	if p.Description != "" {
 		project.Description = p.Description
+	}
+
+	if p.DefaultImage != "" {
+		project.DefaultImage = p.DefaultImage
 	}
 
 	err = hS.Db.UpdateProject(project)

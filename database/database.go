@@ -10,6 +10,7 @@ type Database interface {
 	WriteCluster(cluster *proto.Cluster) error
 	DeleteCluster(clusterID string) error
 	UpdateCluster(*proto.Cluster) error
+	ListClusters() ([]proto.Cluster, error)
 
 	ListProjects() ([]proto.Project, error)
 	ReadProject(projectID string) (*proto.Project, error)
@@ -33,4 +34,10 @@ type Database interface {
 	ReadServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
 	ReadServiceVersionByName(sType string, version string) (*proto.ServiceVersion, error)
 	DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
+
+	ReadImage(imageName string) (*proto.Image, error)
+	WriteImage(image *proto.Image) error
+	DeleteImage(imageName string) error
+	UpdateImage(name string, image *proto.Image) error
+	ListImages() ([]proto.Image, error)
 }

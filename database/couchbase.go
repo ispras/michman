@@ -13,6 +13,7 @@ const (
 	templateBucketName    string = "templates"
 	projectBucketName     string = "projects"
 	serviceTypeBucketName string = "service_types"
+	imageBucketName       string = "images"
 )
 
 type vaultAuth struct {
@@ -34,6 +35,7 @@ type CouchDatabase struct {
 	projectsBucket     *gocb.Bucket
 	templatesBucket    *gocb.Bucket
 	serviceTypesBucket *gocb.Bucket
+	imageBucket        *gocb.Bucket
 	VaultCommunicator  utils.SecretStorage
 }
 
@@ -89,6 +91,12 @@ func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 	}
 	cb.serviceTypesBucket = bucket
 
+	bucket, err = cb.couchCluster.OpenBucket(imageBucketName, "")
+	if err != nil {
+		return nil, err
+	}
+	cb.imageBucket = bucket
+
 	return cb, nil
 }
 
@@ -134,7 +142,7 @@ func (db CouchDatabase) ReadProject(projectID string) (*proto.Project, error) {
 }
 
 func (db CouchDatabase) ReadProjectByName(projectName string) (*proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description FROM " + projectBucketName +
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage FROM " + projectBucketName +
 		" WHERE Name = '" + projectName + "'")
 	result, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
@@ -153,7 +161,7 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 }
 
 func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description FROM " + projectBucketName)
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage FROM " + projectBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
@@ -171,8 +179,7 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 }
 
 func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Services, MasterIP, Description from " + clusterBucketName +
-		" where ProjectID = '" + projectID + "'"
+	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description from " + clusterBucketName + " where ProjectID = '" + projectID + "'"
 	query := gocb.NewN1qlQuery(q)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
@@ -203,7 +210,7 @@ func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
 }
 
 func (db CouchDatabase) ReadClusterByName(projectID, clusterName string) (*proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, ClusterType," +
+	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, Image, ClusterType," +
 		"Services, NHosts, MasterIP, ProjectID, Description FROM " + clusterBucketName +
 		" WHERE ProjectID = '" + projectID + "' and Name = '" + clusterName + "'"
 	query := gocb.NewN1qlQuery(q)
@@ -238,6 +245,24 @@ func (db CouchDatabase) WriteTemplate(template *proto.Template) error {
 		return err
 	}
 	return nil
+}
+
+func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description FROM " + clusterBucketName)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.Cluster
+	var result []proto.Cluster
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.Cluster{}
+	}
+	rows.Close()
+
+	return result, nil
 }
 
 func (db CouchDatabase) ReadTemplate(projectID, id string) (*proto.Template, error) {
@@ -422,4 +447,60 @@ func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (
 		return result, nil
 	}
 	return nil, errors.New("Error: service version with this ID doesn't exist")
+}
+
+func (db CouchDatabase) ReadImage(imageName string) (*proto.Image, error) {
+	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, AnsibleUser, CloudImageID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
+	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var img proto.Image
+	res.Next(&img)
+	return &img, nil
+}
+
+func (db CouchDatabase) WriteImage(image *proto.Image) error {
+	_, err := db.imageBucket.Upsert(image.ID, image, 0)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db CouchDatabase) UpdateImage(id string, image *proto.Image) error {
+	var cas gocb.Cas
+	_, err := db.imageBucket.Replace(id, image, cas, 0)
+	return err
+}
+
+func (db CouchDatabase) DeleteImage(imageName string) error {
+	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
+	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+	if err != nil {
+		return err
+	}
+	var img proto.Image
+	res.Next(&img)
+	res.Close()
+	_, err = db.imageBucket.Remove(img.ID, 0)
+	return err
+}
+
+func (db CouchDatabase) ListImages() ([]proto.Image, error) {
+	query := gocb.NewN1qlQuery("SELECT ID, Name, AnsibleUser, CloudImageID FROM " + imageBucketName)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.Image
+	var result []proto.Image
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.Image{}
+	}
+	rows.Close()
+
+	return result, nil
 }

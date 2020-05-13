@@ -117,6 +117,12 @@ func main() {
 		}
 	})
 
+	router.Handle("GET", "/images", hS.ImagesGetList)
+	router.Handle("GET", "/images/:imageName", hS.ImageGet)
+	router.Handle("POST", "/images", hS.ImagesPost)
+	router.Handle("PUT", "/images/:imageName", hS.ImagePut)
+	router.Handle("DELETE", "/images/:imageName", hS.ImageDelete)
+
 	httpServerLogger.Print("Server starts to work")
 	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))
 

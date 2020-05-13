@@ -59,8 +59,12 @@ type Config struct {
 	RegistryKey string `yaml:"registry_key"`
 
 	// Mirror
-	UseMirror     string `yaml:"use_mirror"`
-	MirrorAddress string `yaml:"mirror_address"`
+	UsePackageMirror string `yaml:"use_package_mirror"`
+	UsePipMirror     string `yaml:"use_pip_mirror"`
+	YumMirrorAddress string `yaml:"yum_mirror_address"`
+	AptMirrorAddress string `yaml:"apt_mirror_address"`
+	PipMirrorAddress string `yaml:"pip_mirror_address"`
+	PipTrustedHost   string `yaml:"pip_trusted_host"`
 
 	// Registry
 	SelfignedRegistry bool `yaml:"docker_selfsigned_registry"`
@@ -72,6 +76,9 @@ type Config struct {
 
 	SelfignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url"`
 	SelfignedRegistryCert string `yaml:"docker_cert_path"`
+
+	// User to connect
+	AnsibleUser string `yaml:ansible_user`
 }
 
 func SetConfigPath(configPath string) {

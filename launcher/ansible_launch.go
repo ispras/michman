@@ -175,7 +175,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 
 	//filling obligated params
 	extraVars["sync"] = "async" //must be always async mode
-	extraVars["ansible_user"] = "ubuntu"
 
 	extraVars["create_cluster"] = false
 	if action == actionCreate {
@@ -200,9 +199,14 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["storage_flavor"] = osConfig.StorageFlavor
 	extraVars["boot_from_volume"] = false
 
-	extraVars["hadoop_user"] = "ubuntu"
+	image, err := aL.couchbaseCommunicator.ReadImage(cluster.Image)
+	if err != nil {
+		return nil, err
+	}
+	extraVars["ansible_user"] = image.AnsibleUser
+	extraVars["hadoop_user"] = image.AnsibleUser
 
-	extraVars["os_image"] = osConfig.OsImage
+	extraVars["os_image"] = image.CloudImageID
 	extraVars["skip_packages"] = false
 	extraVars["os_project_name"] = osCreds.OsProjectName
 	extraVars["nfs_shares"] = []string{}
@@ -245,16 +249,18 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 		extraVars["spark_extra_jars"] = extraJars
 	}
 
-	extraVars["use_mirror"] = osConfig.UseMirror
-	enable, err := strconv.ParseBool(osConfig.UseMirror)
+	extraVars["use_package_mirror"] = osConfig.UsePackageMirror
+	extraVars["use_pip_mirror"] = osConfig.UsePipMirror
+	extraVars["apt_mirror_address"] = osConfig.AptMirrorAddress
+	extraVars["pip_mirror_address"] = osConfig.PipMirrorAddress
+	extraVars["pip_trusted_host"] = osConfig.PipTrustedHost
+	extraVars["yum_mirror_address"] = osConfig.YumMirrorAddress
+
+	_, err = strconv.ParseBool(osConfig.UsePackageMirror)
+
 	if err != nil {
 		log.Fatalln("use_mirror is not boolean")
 	}
-	if enable && !validateIP(osConfig.MirrorAddress) {
-		log.Fatalln("ERROR: bad mirror's IP address")
-	}
-
-	extraVars["mirror_address"] = osConfig.MirrorAddress
 
 	return extraVars, nil
 }
@@ -466,7 +472,6 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	//constructing ansible-playbook command
 	newExtraVars, err := makeExtraVars(aL, cluster, osCreds, osConfig, action)
 	if err != nil {

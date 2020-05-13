@@ -56,7 +56,6 @@ func ValidateCluster(hS HttpServer, cluster *proto.Cluster) bool {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -281,7 +280,10 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			}
 			s.ID = sUuid.String()
 		}
-
+	}
+	// set default project Image if not specified
+	if c.Image == "" {
+		c.Image = project.DefaultImage
 	}
 
 	c.EntityStatus = utils.StatusInited
@@ -440,7 +442,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if newC.ID != "" || newC.Name != "" || newC.DisplayName != "" || newC.EntityStatus != "" ||
-		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" {
+		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" || newC.Image != "" {
 		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
 		hS.Logger.Print(mess)
 		return
