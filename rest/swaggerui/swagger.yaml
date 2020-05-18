@@ -1,26 +1,28 @@
 swagger: "2.0"
 info:
-  version: 0.1.0
-  title: Openstack Big Data tools
+  version: 1.0.0
+  title: Michman
   description: "Данная система предоставляет REST API для создания кластеров с заданным списком зарегестрированных сервисов в облачной среде OpenStack."
   license:
-    name: License Here
+    name: MPL-2.0
   #    url:
   contact:
     email: modis@ispras.ru
-host: host.here.com
-basePath: /home
+host: localhost:8080
+basePath: /api
 schemes:
   - http
   - https
 tags:
   - name: projects
   - name: cluster
-  - name: hosts
-  - name: services
+  # - name: hosts
+  # - name: services
   - name: configs
   - name: templates
   - name: logs
+  - name: version
+  - name: images
 paths:
   /projects:
     get:
@@ -292,216 +294,216 @@ paths:
       responses:
         200:
           description: "OK"
-  /projects/{projectId}/cluster/{clusterName}/export:
-    get:
-      tags:
-        - cluster
-      summary: Получение шаблона указанного кластера
-      description: Получение шаблона указанного кластера
-      operationId: exportCluster
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: exportAutoConfig
-          in: query
-          type: boolean
-          description: Export configs set by the auto configuration
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Template'
-    post:
-      tags:
-        - cluster
-      summary: Создание шаблона по указанному кластеру
-      description: Создание шаблона по указанному кластеру
-      operationId: exportClusterAndSave
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: exportAutoConfig
-          in: query
-          type: boolean
-          description: Export configs set by the auto configuration
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-        - name: templateName
-          in: query
-          type: string
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Template'
+#  /projects/{projectId}/cluster/{clusterName}/export:
+#    get:
+#      tags:
+#        - cluster
+#      summary: Получение шаблона указанного кластера
+#      description: Получение шаблона указанного кластера
+#      operationId: exportCluster
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: exportAutoConfig
+#          in: query
+#          type: boolean
+#          description: Export configs set by the auto configuration
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Template'
+#    post:
+#      tags:
+#        - cluster
+#      summary: Создание шаблона по указанному кластеру
+#      description: Создание шаблона по указанному кластеру
+#      operationId: exportClusterAndSave
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: exportAutoConfig
+#          in: query
+#          type: boolean
+#          description: Export configs set by the auto configuration
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#        - name: templateName
+#          in: query
+#          type: string
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Template'
+#
+#  /projects/{projectId}/clusters/{clusterName}/hosts:
+#    get:
+#      tags:
+#        - cluster
+#        - hosts
+#      summary: Список IP-адресов хостов, ассоциированных с указанным кластером
+#      operationId: getClusterHosts
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Hosts'
 
-  /projects/{projectId}/clusters/{clusterName}/hosts:
-    get:
-      tags:
-        - cluster
-        - hosts
-      summary: Список IP-адресов хостов, ассоциированных с указанным кластером
-      operationId: getClusterHosts
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Hosts'
-
-  /projects/{projectId}/clusters/{clusterName}/serviceTypes:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: Список типов сервисов, развернутых на указанном кластере
-      operationId: listsClusterServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/ServiceTypes'
-
-  /projects/{projectId}/clusters/{clusterName}/services:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: Список всех сервисов, развернутых на указанном кластере
-      operationId: clusterListServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: view
-          in: query
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Services'
-    post:
-      tags:
-        - cluster
-        - services
-      summary: Creates a list of services.
-      operationId: clusterCreateServices
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-        - name: configuration
-          in: body
-          schema:
-            $ref: '#/definitions/Service'
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Service'
-
-  /projects/{projectId}/clusters/{clusterName}/services/{serviceName}:
-    get:
-      tags:
-        - cluster
-        - services
-      summary: Получение информации об указанном сервисе
-      operationId: clusterGetServiceInfo
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: view
-          in: query
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Service'
-    put:
-      tags:
-        - cluster
-        - services
-      summary: Обновление информации указанного сервиса
-      operationId: clusterUpdateServiceInfo
-      parameters:
-        - name: clusterName
-          in: path
-          required: true
-          type: string
-        - name: serviceName
-          in: path
-          required: true
-          type: string
-        - name: projectId
-          description: "ID проекта."
-          in: path
-          type: string
-          required: true
-        - name: configuration
-          in: body
-          schema:
-            $ref: '#/definitions/Service'
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Service'
+#  /projects/{projectId}/clusters/{clusterName}/serviceTypes:
+#    get:
+#      tags:
+#        - cluster
+#        - services
+#      summary: Список типов сервисов, развернутых на указанном кластере
+#      operationId: listsClusterServices
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/ServiceTypes'
+#
+#  /projects/{projectId}/clusters/{clusterName}/services:
+#    get:
+#      tags:
+#        - cluster
+#        - services
+#      summary: Список всех сервисов, развернутых на указанном кластере
+#      operationId: clusterListServices
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: view
+#          in: query
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Services'
+#    post:
+#      tags:
+#        - cluster
+#        - services
+#      summary: Creates a list of services.
+#      operationId: clusterCreateServices
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#        - name: configuration
+#          in: body
+#          schema:
+#            $ref: '#/definitions/Service'
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Service'
+#
+#  /projects/{projectId}/clusters/{clusterName}/services/{serviceName}:
+#    get:
+#      tags:
+#        - cluster
+#        - services
+#      summary: Получение информации об указанном сервисе
+#      operationId: clusterGetServiceInfo
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: serviceName
+#          in: path
+#          required: true
+#          type: string
+#        - name: view
+#          in: query
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Service'
+#    put:
+#      tags:
+#        - cluster
+#        - services
+#      summary: Обновление информации указанного сервиса
+#      operationId: clusterUpdateServiceInfo
+#      parameters:
+#        - name: clusterName
+#          in: path
+#          required: true
+#          type: string
+#        - name: serviceName
+#          in: path
+#          required: true
+#          type: string
+#        - name: projectId
+#          description: "ID проекта."
+#          in: path
+#          type: string
+#          required: true
+#        - name: configuration
+#          in: body
+#          schema:
+#            $ref: '#/definitions/Service'
+#      responses:
+#        200:
+#          description: OK
+#          schema:
+#            $ref: '#/definitions/Service'
 
   /templates:
     get:
@@ -719,7 +721,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigs'
+            $ref: '#/definitions/ServiceTypes'
 
     post:
       tags:
@@ -731,12 +733,12 @@ paths:
         - name: serviceConfig
           in: body
           schema:
-            $ref: '#/definitions/ServiceConfig'
+            $ref: '#/definitions/ServiceType'
       responses:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfig'
+            $ref: '#/definitions/ServiceType'
 
   /configs/{serviceType}:
     get:
@@ -760,10 +762,10 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfig'
+            $ref: '#/definitions/ServiceType'
     put:
       tags:
-        - templates
+        - configs
       summary: Обновление информации о типе сервиса.
       description: Обновление информации о типе сервиса.
       operationId: configsUpdate
@@ -776,12 +778,12 @@ paths:
         - name: serviceConfig
           in: body
           schema:
-            $ref: '#/definitions/ServiceConfig'
+            $ref: '#/definitions/ServiceType'
       responses:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/Template'
+            $ref: '#/definitions/ServiceType'
     delete:
       tags:
         - configs
@@ -798,7 +800,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfig'
+            $ref: '#/definitions/ServiceType'
   /configs/{serviceType}/versions:
     get:
       tags:
@@ -821,7 +823,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigVersions'
+            $ref: '#/definitions/ServiceVersions'
 
     post:
       tags:
@@ -838,12 +840,12 @@ paths:
         - name: serviceConfigVersion
           in: body
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
       responses:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
 
   /configs/{serviceType}/versions/{versionId}:
     get:
@@ -867,7 +869,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
     put:
       tags:
         - configs
@@ -888,12 +890,12 @@ paths:
         - name: serviceConfigVersion
           in: body
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
       responses:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
     delete:
       tags:
         - configs
@@ -915,7 +917,35 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/ServiceConfigVersion'
+            $ref: '#/definitions/ServiceVersion'
+
+  /configs/{serviceType}/versions/{versionId}/configs:
+    post:
+      tags:
+        - configs
+      summary: Создание нового параметра конфигурации для указанной версии типа сервиса.
+      description: Создание нового параметра конфигурации для указанной версии типа сервиса.
+      operationId: ConfigsCreateConfigParam
+      parameters:
+        - name: serviceType
+          description: "Тип сервиса."
+          in: path
+          type: string
+          required: true
+        - name: versionId
+          description: "ID версии сервиса."
+          in: path
+          type: string
+          required: true
+        - name: serviceConfig
+          in: body
+          schema:
+            $ref: '#/definitions/ServiceConfig'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ServiceConfig'
   /logs/http_server:
     get:
       tags:
@@ -927,7 +957,7 @@ paths:
           description: OK
   /logs/launcher:
     get:
-      tags:
+      tags: 
         - logs
       summary: Возвращает лог сервиса, отправляющего запросы ansible.
       description: Возвращает лог сервиса, отправляющего запросы ansible.
@@ -943,6 +973,103 @@ paths:
       responses:
         200:
           description: OK
+  /version:
+    get:
+      tags:
+        - version
+      summary: Возвращает версию системы.
+      description: Возвращает версию системы.
+      responses:
+        200:
+          description: OK
+
+  /images:
+    get:
+      tags:
+        - images
+      summary: Возвращает список поддерживаемых в системе образов ОС.
+      description: Возвращает список поддерживаемых в системе образов ОС.
+      operationId: ImagesGetList
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ImagesList'
+    post:
+      tags:
+        - configs
+      summary: Добавление нового поддерживаемого образа ОС.
+      description: Добавление нового поддерживаемого образа ОС.
+      operationId: ImagesPost
+      parameters:
+        - name: Image
+          in: body
+          schema:
+            $ref: '#/definitions/Image'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Image'
+
+  /images/{imageName}:
+    get:
+      tags:
+        - images
+      summary: Возвращает информацию об указанном образе ОС.
+      description: Возвращает информацию об указанном образе ОС.
+      operationId: ImageGet
+      parameters:
+        - name: imageName
+          description: "Имя ОС."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Image'
+    put:
+      tags:
+        - images
+      summary: Обновление информации об указанном образе ОС.
+      description: Обновление информации об указанном образе ОС.
+      operationId: ImagePut
+      parameters:
+        - name: imageName
+          description: "Имя ОС."
+          in: path
+          type: string
+          required: true
+        - name: serviceConfig
+          in: body
+          schema:
+            $ref: '#/definitions/Image'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ClusterOS'
+    delete:
+      tags:
+        - images
+      summary: Удаление информации об образе ОС из системы.
+      description: Удаление информации об образе ОС из системы.
+      operationId: ImageDelete
+      parameters:
+        - name: imageName
+          description: "Имя ОС."
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Image'
+
+
 
 definitions:
   Clusters:
@@ -973,7 +1100,8 @@ definitions:
           ],
           "NHosts":3,
           "MasterIP": "masterHost",
-          "Description":"someDescription"
+          "Description":"someDescription",
+          "Image": "ubuntu"
         }
         ]
       }
@@ -1003,7 +1131,8 @@ definitions:
         ],
         "NHosts":3,
         "MasterIP": "masterHost",
-        "Description":"someDescription"
+        "Description":"someDescription",
+        "Image": "ubuntu"
       }
   Services:
     type: object
@@ -1041,26 +1170,16 @@ definitions:
         "Description":"someDescription",
         "URL": "serviceURL"
       }
-  Hosts:
-    type: object
-    example:
-      {
-        "Hosts":[
-          "host1",
-          "host2",
-          "host3"
-        ]
-      }
-  ServiceTypes:
-    type: object
-    example:
-      {
-        "ServiceTypes":[
-          "spark",
-          "jupyter",
-          "cassandra"
-        ]
-      }
+#  Hosts:
+#    type: object
+#    example:
+#      {
+#        "Hosts":[
+#          "host1",
+#          "host2",
+#          "host3"
+#        ]
+#      }
   Projects:
     type: object
     example:
@@ -1072,7 +1191,8 @@ definitions:
             "Name":"projectName",
             "DisplayName":"projectName",
             "GroupId": "id",
-            "Description": "someDescription"
+            "Description": "someDescription",
+            "DefaultImage": "ubuntu"
           }
           ]
       }
@@ -1084,7 +1204,8 @@ definitions:
         "Name":"projectName",
         "DisplayName":"projectName",
         "GroupId": "id",
-        "Description": "someDescription"
+        "Description": "someDescription",
+            "DefaultImage": "ubuntu"
       }
   Templates:
     type: object
@@ -1134,27 +1255,231 @@ definitions:
         "NHosts":3,
         "Description":"someDescription"
       }
-  ServiceConfigs:
+  ServiceTypes:
+    type: object
+    example:
+      [{
+        "ID": "UUID",
+        "Type": "stype",
+        "Description": "stype description",
+        "Versions": [
+        {
+          "ID": "UUID",
+          "Version": "1.0.0",
+          "Description": "version description",
+          "Configs": [
+          {
+            "ParameterName": "param1",
+            "Type": "string",
+            "PossibleValues": [
+              "value1",
+              "value2"
+            ],
+            "DefaultValue": "value1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param1"
+          },
+          {
+            "ParameterName": "param2",
+            "Type": "int",
+            "PossibleValues": [
+              "1",
+              "2"
+            ],
+            "DefaultValue": "1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param2"
+          }
+          ],
+          "Dependencies": [
+          {
+            "ServiceType": "stype2",
+            "ServiceVersions": [
+              "1.0.0",
+              "1.0.1"
+            ],
+            "DefaultServiceVersion": "1.0.0",
+            "Description": "Dependency stype->stype1"
+          }
+          ]
+        }
+        ],
+        "DefaultVersion": "1.0.0",
+        "Class": "stand-alone"
+      }]
+  ServiceType:
     type: object
     example:
       {
-
+        "ID": "UUID",
+        "Type": "stype",
+        "Description": "stype description",
+        "Versions": [
+        {
+          "ID": "UUID",
+          "Version": "1.0.0",
+          "Description": "version description",
+          "Configs": [
+          {
+            "ParameterName": "param1",
+            "Type": "string",
+            "PossibleValues": [
+              "value1",
+              "value2"
+            ],
+            "DefaultValue": "value1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param1"
+          },
+          {
+            "ParameterName": "param2",
+            "Type": "int",
+            "PossibleValues": [
+              "1",
+              "2"
+            ],
+            "DefaultValue": "1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param2"
+          }
+          ],
+          "Dependencies": [
+          {
+            "ServiceType": "stype2",
+            "ServiceVersions": [
+              "1.0.0",
+              "1.0.1"
+            ],
+            "DefaultServiceVersion": "1.0.0",
+            "Description": "Dependency stype->stype1"
+          }
+          ]
+        }
+        ],
+        "DefaultVersion": "1.0.0",
+        "Class": "stand-alone"
       }
+  ServiceVersion:
+    type: object
+    example:
+      {
+        "ID": "UUID",
+        "Version": "1.0.0",
+        "Description": "version description",
+        "Configs": [
+        {
+          "ParameterName": "param1",
+          "Type": "string",
+          "PossibleValues": [
+            "value1",
+            "value2"
+          ],
+          "DefaultValue": "value1",
+          "Description": "param description",
+          "AnsibleVarName": "stype_param1"
+        },
+        {
+          "ParameterName": "param2",
+          "Type": "int",
+          "PossibleValues": [
+            "1",
+            "2"
+          ],
+          "DefaultValue": "1",
+          "Description": "param description",
+          "AnsibleVarName": "stype_param2"
+        }
+        ],
+        "Dependencies": [
+        {
+          "ServiceType": "stype2",
+          "ServiceVersions": [
+            "1.0.0",
+            "1.0.1"
+          ],
+          "DefaultServiceVersion": "1.0.0",
+          "Description": "Dependency stype->stype1"
+        }
+        ]
+      }
+  ServiceVersions:
+    type: object
+    example:
+      [
+        {
+          "ID": "UUID",
+          "Version": "1.0.0",
+          "Description": "version description",
+          "Configs": [
+          {
+            "ParameterName": "param1",
+            "Type": "string",
+            "PossibleValues": [
+              "value1",
+              "value2"
+            ],
+            "DefaultValue": "value1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param1"
+          },
+          {
+            "ParameterName": "param2",
+            "Type": "int",
+            "PossibleValues": [
+              "1",
+              "2"
+            ],
+            "DefaultValue": "1",
+            "Description": "param description",
+            "AnsibleVarName": "stype_param2"
+          }
+          ],
+          "Dependencies": [
+          {
+            "ServiceType": "stype2",
+            "ServiceVersions": [
+              "1.0.0",
+              "1.0.1"
+            ],
+            "DefaultServiceVersion": "1.0.0",
+            "Description": "Dependency stype->stype1"
+          }
+          ]
+        }
+      ]
   ServiceConfig:
     type: object
     example:
       {
-
+        "ParameterName": "param1",
+        "Type": "string",
+        "PossibleValues": [
+          "value1",
+          "value2"
+        ],
+        "DefaultValue": "value1",
+        "Description": "param description",
+        "AnsibleVarName": "stype_param1"
       }
-  ServiceConfigVersion:
+
+  Image:
     type: object
     example:
       {
-
+        "ID": "UUID",
+        "Name": "ubuntu",
+        "AnsibleUser": "ubuntu",
+        "ImageID": "UUID"
       }
-  ServiceConfigVersions:
+
+  ImagesList:
     type: object
     example:
-      {
-
-      }
+      [
+        {
+          "ID": "UUID",
+          "Name": "ubuntu",
+          "AnsibleUser": "ubuntu",
+          "CloudImageID": "UUID"
+        }
+      ]
