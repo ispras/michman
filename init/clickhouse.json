@@ -1,0 +1,21 @@
+{
+  "Type":"clickhouse",
+  "Description":"Clickhouse database service",
+  "DefaultVersion":"latest",
+  "Class": "storage",
+  "Versions":[
+    {
+      "Version":"latest",
+      "Description":"Clickhouse default version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for Clickhouse DB for user 'default', you can change it."
+        }
+      ]
+    }
+  ]
+}

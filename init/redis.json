@@ -1,0 +1,21 @@
+{
+  "Type":"redis",
+  "Description":"Redis service",
+  "DefaultVersion":"latest",
+  "Class": "storage",
+  "Versions":[
+    {
+      "Version":"latest",
+      "Description":"Redis default version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for Redis, you can change it. User name is not required."
+        }
+      ]
+    }
+  ]
+}

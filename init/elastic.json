@@ -1,0 +1,19 @@
+{
+  "Type": "elastic",
+  "Description": "ElastiSearch service",
+  "DefaultVersion": "7.1.1",
+  "Class": "master-slave",
+  "Versions": [
+    {
+      "Version": "7.1.1",
+      "Description": "ElastiSearch default version for spark-openstack",
+      "Configs": [
+        {
+          "ParameterName": "heap-size",
+          "Type": "string",
+          "DefaultValue": "1g",
+          "Required": true,
+          "Description": "use specific ElasticSearch heap size. Default heap size is 1g (1 GB)."
+        }]
+    }]
+}

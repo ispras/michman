@@ -95,6 +95,11 @@ const (
 	//Openstack stein version
 	OsSteinVersion   string = "stein"
 	OsLibertyVersion string = "liberty"
+
+	//Supported classes for service types
+	ClassStorage     string = "storage"
+	ClassMasterSlave string = "master-slave"
+	ClassStandAlone  string = "stand-alone"
 )
 
 var (

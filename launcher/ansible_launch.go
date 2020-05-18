@@ -136,6 +136,8 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 
 	var extraVars = make(InterfaceMap)
 
+	extraVars["create_storage"] = false
+
 	for _, st := range sTypes {
 		if curServices[st.Type].exists {
 			//set deploy_stype to True
@@ -167,6 +169,9 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 					extraVars[sc.AnsibleVarName] = convertParamValue(sc.DefaultValue, sc.Type)
 				}
 			}
+			if st.Class == utils.ClassStorage {
+				extraVars["create_storage"] = true
+			}
 
 		} else {
 			extraVars[setDeployService(st.Type)] = false
@@ -184,15 +189,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["n_slaves"] = cluster.NHosts
 	extraVars["cluster_name"] = cluster.Name
 
-	//TODO: change this mode
-	if res, ok := extraVars[setDeployService("nfs")]; ok && res == true {
-		extraVars["create_storage"] = true
-	}
-
-	if res, ok := extraVars[setDeployService("nextcloud")]; ok && res == true {
-		extraVars["create_storage"] = true
-	}
-
 	extraVars["mountnfs"] = false
 	extraVars["master_flavor"] = osConfig.MasterFlavor
 	extraVars["slaves_flavor"] = osConfig.SlavesFlavor
@@ -205,7 +201,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	}
 	extraVars["ansible_user"] = image.AnsibleUser
 	extraVars["hadoop_user"] = image.AnsibleUser
-
 	extraVars["os_image"] = image.CloudImageID
 	extraVars["skip_packages"] = false
 	extraVars["os_project_name"] = osCreds.OsProjectName
@@ -462,6 +457,10 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 	return nil
 }
 
+func setServiceUrl(ip string, port int32) string {
+	return ip + ":" + string(port)
+}
+
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string {
 	log.SetPrefix("LAUNCHER: ")
 
@@ -538,7 +537,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		log.Print("Error: ", err)
 	}
 
-	//Get Master IP for Cluster create or update action and save it
+	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
 	if ansibleOk && (action == actionCreate || action == actionUpdate) {
 
 		var v = map[string]string{
@@ -557,7 +556,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		cmd := exec.Command(cmdName, args...)
 		var outb bytes.Buffer
 		cmd.Stdout = &outb
-
+		//Get Master IP and save it
 		if err := cmd.Start(); err != nil {
 			log.Print("Error: ", err)
 		}
@@ -568,8 +567,9 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		}
 
 		masterIp := findIP(outb.String())
-		nfsIp := ""
-		if newExtraVars["deploy_nfs"] == true {
+		storageIp := ""
+		//check if cluster has storage
+		if newExtraVars["create_storage"] == true {
 			v = map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "storage",
@@ -592,39 +592,48 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 				ansibleOk = false
 				log.Print("Error: ", err)
 			}
-			nfsIp = findIP(outb.String())
+
+			storageIp = findIP(outb.String())
 		}
+
 		//filling services URLs:
+		sTypes, err := aL.couchbaseCommunicator.ListServicesTypes()
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		for i, service := range cluster.Services {
+			for _, st := range sTypes {
+				if st.Type == service.Type {
+					//set service url for services on master host
+					if (st.Class == utils.ClassStandAlone || st.Class == utils.ClassMasterSlave) && masterIp != "" {
+						if st.AccessPort > 0 { //service has access port
+							cluster.Services[i].URL = setServiceUrl(masterIp, st.AccessPort)
+						} else {
+							cluster.Services[i].URL = masterIp
+						}
+						//set service url for services on storage host
+					} else if st.Class == utils.ClassStorage && storageIp != "" {
+						if st.AccessPort > 0 { //service has access port
+							cluster.Services[i].URL = setServiceUrl(storageIp, st.AccessPort)
+						} else {
+							cluster.Services[i].URL = storageIp
+						}
+					}
+					break
+				}
+			}
+		}
+
 		if masterIp != "" {
 			log.Print("Master IP is: ", masterIp)
 			cluster.MasterIP = masterIp
-
-			for i, service := range cluster.Services {
-				if service.Type == utils.ServiceTypeJupyter {
-					cluster.Services[i].URL = masterIp + ":" + jupyterPort
-				}
-			}
-
-			log.Print("Saving master IP...")
-			err = aL.couchbaseCommunicator.WriteCluster(cluster)
-			if err != nil {
-				log.Fatalln(err)
-			}
-		} else {
-			log.Print("There is no IP in Ansible output")
 		}
-		if nfsIp != "" {
-			log.Print("NFS server IP is: ", nfsIp)
-			for i, service := range cluster.Services {
-				if service.Type == utils.ServiceTypeNFS || service.Type == utils.ServiceTypeNextCloud {
-					cluster.Services[i].ServiceURL = nfsIp
-				}
-			}
-			log.Print("Saving NFS server IP...")
-			err = aL.couchbaseCommunicator.WriteCluster(cluster)
-			if err != nil {
-				log.Fatalln(err)
-			}
+
+		log.Print("Saving master IP and URLs for services...")
+		err = aL.couchbaseCommunicator.WriteCluster(cluster)
+		if err != nil {
+			log.Fatalln(err)
 		}
 
 	}

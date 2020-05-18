@@ -1,0 +1,11 @@
+---
+- name: remove old apt cache
+  shell: rm -rf /var/lib/apt/lists/*
+
+- name: install redis
+  apt:
+    name:
+      - redis-server
+    update_cache: yes
+    allow_unauthenticated: yes
+    state: latest

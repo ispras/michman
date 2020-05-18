@@ -74,6 +74,9 @@ message ServiceType {
     string Description = 3;
     repeated ServiceVersion Versions = 4;
     string DefaultVersion = 5;
+    string Class = 6;
+    int32 AccessPort = 7;
+    repeated ServicePort Ports = 8;
 }
 
 message ServiceVersion {
@@ -108,4 +111,9 @@ message Image {
     string Name = 2;
     string AnsibleUser = 3;
     string CloudImageID = 4;
+}
+
+message ServicePort {
+    int32 Port = 1;
+    string Description = 2;
 }

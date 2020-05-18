@@ -1,0 +1,31 @@
+---
+
+- include_tasks: "{{ansible_distribution}}.yml"
+
+- name: include os-specific variables
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: add password
+  lineinfile:
+    path: "{{ redis_conf_file }}"
+    state: present
+    insertafter: "# requirepass.*"
+    line: "requirepass {{redis_db_password}}"
+
+- name: update redis.conf
+  replace:
+    path: "{{ redis_conf_file }}"
+    regexp: '^appendonly\s+no'
+    replace: 'appendonly yes'
+
+- name: bind to all interfaces
+  replace:
+    path: "{{ redis_conf_file }}"
+    regexp: '^(bind .*)'
+    replace: '# \1'
+
+- name: enable and start redis server
+  service:
+    name: redis
+    state: restarted
+    enabled: yes

@@ -1,0 +1,20 @@
+{
+  "Type": "ignite",
+  "Description": "Apache Ignite service",
+  "DefaultVersion": "7.1.1",
+  "Class": "master-slave",
+  "Versions": [
+    {
+      "Version": "7.1.1",
+      "Description": "Apache Ignite default version for spark-openstack",
+      "Configs": [
+        {
+          "ParameterName": "memory",
+          "Type": "int",
+          "DefaultValue": "30",
+          "Required": true,
+          "Description": "percentage (integer number from 0 to 100) of worker memory to be assigned to Apache Ignite.\nCurrently this simply reduces spark executor memory, Apache Ignite memory usage must be manually configured."
+        }
+      ]
+    }]
+}

@@ -1,0 +1,30 @@
+---
+
+- include_tasks: "{{ansible_distribution}}.yml"
+
+- name: modify config to run couchdb as a single node
+  lineinfile:
+    path: "/opt/couchdb/etc/local.ini"
+    regexp: "^single_node = true"
+    line: "single_node = true"
+    insertafter: "\\[couchdb\\]"
+
+- name: modify config to listen on 0.0.0.0
+  lineinfile:
+    path: "/opt/couchdb/etc/local.ini"
+    regexp: "^bind_address = 0.0.0.0"
+    line: "bind_address = 0.0.0.0"
+    insertafter: "\\[chttpd\\]"
+
+- name: add admin account to config
+  lineinfile:
+    path: "/opt/couchdb/etc/local.ini"
+    regexp: "^admin = *"
+    line: "admin = {{ couchdb_db_password }}"
+    insertafter: "\\[admins\\]"
+
+- name: enable and start couchdb server
+  service:
+    name: couchdb
+    state: restarted
+    enabled: yes

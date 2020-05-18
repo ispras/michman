@@ -1,0 +1,22 @@
+---
+
+- include_tasks: "{{ansible_distribution}}.yml"
+
+- name: modify config to listen on 0.0.0.0
+  lineinfile:
+    path: "/etc/clickhouse-server/config.xml"
+    regexp: '^<listen_host>0\.0\.0\.0</listen_host>'
+    line: '<listen_host>0.0.0.0</listen_host>'
+    insertbefore: '</yandex>'
+
+- name: change password for default user
+  lineinfile:
+    path: "/etc/clickhouse-server/users.xml"
+    regexp: "<password></password>"
+    line: "<password>{{ clickhouse_db_password }}</password>"
+
+- name: enable and start clickhouse server
+  service:
+    name: clickhouse-server
+    state: restarted
+    enabled: yes

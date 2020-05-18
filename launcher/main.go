@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"errors"
 	"fmt"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/ispras/michman/database"

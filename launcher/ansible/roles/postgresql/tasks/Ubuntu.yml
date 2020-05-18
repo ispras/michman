@@ -1,0 +1,31 @@
+---
+- name: remove old apt cache
+  shell: rm -rf /var/lib/apt/lists/*
+
+- name: Add postgresql repo key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: add postgresql repo
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+    state: present
+    filename: postgresql_repo
+
+- name: install PostgreSQL
+  apt:
+    name:
+      - postgresql-{{ postgresql_version }}
+      - python-psycopg2
+      - python-ipaddress
+      - libpq-dev
+    update_cache: yes
+    allow_unauthenticated: yes
+    state: present
+
+- name: enable and start postgresql server
+  service:
+    name: postgresql
+    state: restarted
+    enabled: yes

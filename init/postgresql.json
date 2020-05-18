@@ -1,0 +1,59 @@
+{
+  "Type":"postgresql",
+  "Description":"PostgreSQL database service",
+  "DefaultVersion":"10",
+  "Class": "storage",
+  "Versions":[
+    {
+      "Version":"9.6",
+      "Description":"PostgreSQL 9.6 version",
+      "Configs": [{
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        }
+      ]
+    },
+    {
+      "Version":"10",
+      "Description":"PostgreSQL default version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        }
+      ]
+    },
+    {
+      "Version":"11",
+      "Description":"PostgreSQL 11 version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        }
+      ]
+    },
+    {
+      "Version":"12",
+      "Description":"PostgreSQL 12 version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        }
+      ]
+    }
+  ]
+}

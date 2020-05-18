@@ -1,0 +1,19 @@
+{
+  "Type": "nfs_server",
+  "Description": "NFS server",
+  "DefaultVersion": "default",
+  "Class": "storage",
+  "Versions": [
+    {
+      "Version": "default",
+      "Description": "NFS server default version",
+      "Configs": [
+        {
+          "ParameterName": "weblab_name",
+          "Type": "string",
+          "Required": true,
+          "Description": "name of Web Laboratory"
+        }
+      ]
+    }]
+}

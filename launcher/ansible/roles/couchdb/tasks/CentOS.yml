@@ -1,0 +1,16 @@
+---
+
+- name: "add yum repo for couchdb"
+  yum_repository:
+    baseurl: http://apache.bintray.com/couchdb-rpm/el$releasever/$basearch/
+    state: present
+    name: couchdb
+    description: couchdb repo
+    gpgcheck: no
+
+- name: install couchdb
+  yum:
+    name:
+    - couchdb
+    state: latest
+    update_cache: yes

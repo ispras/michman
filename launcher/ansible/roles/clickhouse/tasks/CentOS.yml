@@ -1,0 +1,21 @@
+---
+
+- name: add yum repo key for clickhouse repo
+  rpm_key:
+    state: present
+    key: https://repo.yandex.ru/clickhouse/CLICKHOUSE-KEY.GPG
+
+- name: "add yum repo for clickhouse"
+  yum_repository:
+    baseurl: https://repo.yandex.ru/clickhouse/rpm/stable/x86_64
+    state: present
+    name: clickhouse
+    description: clickhouse repo
+
+- name: install clickhouse
+  yum:
+    name:
+    - clickhouse-server
+    - clickhouse-client
+    state: latest
+    update_cache: yes

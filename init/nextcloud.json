@@ -1,0 +1,38 @@
+{
+  "Type": "nextcloud",
+  "Description": "Nextcloud service",
+  "DefaultVersion": "default",
+  "Class": "storage",
+  "Versions": [
+    {
+      "Version": "default",
+      "Description": "NFS server default version",
+      "Configs":
+       [
+                {
+                  "ParameterName": "nextcloud_image",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "Your docker image with nextcloud. For example: bgtregistry.ru:5000/nextcloud"
+                },
+                {
+                  "ParameterName": "mariadb_image",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "Your docker image with mariadb. For example: bgtregistry.ru:5000/mariadb"
+                },
+                {
+                  "ParameterName": "weblab_name",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "name of Web Laboratory"
+                },
+                {
+                  "ParameterName": "nfs_server_ip",
+                  "Type": "string",
+                  "Required": true,
+                  "Description": "NFS server IP"
+                }
+      ]
+    }]
+}

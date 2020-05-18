@@ -1,0 +1,42 @@
+---
+
+- include_tasks: "{{ansible_distribution}}.yml"
+
+- name: configure postgresql server
+  block:
+    - name: get psql config file path
+      shell: psql -c 'SHOW config_file' -tA
+      register: conffile
+
+    - name: get psql hba file path
+      shell: psql -c 'SHOW hba_file' -tA
+      register: hbafile
+
+    - name: set listen_addresses parameter
+      lineinfile:
+        path: "{{ conffile.stdout }}"
+        regexp: '^listen_addresses ='
+        line: listen_addresses = '*'
+
+    - name: accept all incoming connections
+      lineinfile:
+        path: "{{ hbafile.stdout }}"
+        regexp: '^host all all 0.0.0.0/0 md5'
+        line: host all all 0.0.0.0/0 md5
+  become_user: postgres
+
+- name: restart postgresql server
+  service:
+    name: postgresql-{{ postgresql_version }}
+    state: restarted
+  when: ansible_distribution == 'CentOS'
+
+- name: restart postgresql server
+  service:
+    name: postgresql
+    state: restarted
+  when: ansible_distribution == 'Ubuntu'
+
+- name: set password for user postgres
+  shell: "psql -c \"ALTER USER postgres WITH PASSWORD '{{ postgresql_db_password }}'\""
+  become_user: postgres

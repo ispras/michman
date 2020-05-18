@@ -1,0 +1,46 @@
+{
+   "Type":"cassandra",
+   "Description":"Cassandra database service",
+   "DefaultVersion":"3.11.4",
+   "Class": "master-slave",
+   "Versions":[
+      {
+         "Version":"3.11.4",
+         "Description":"Cassandra default version for spark-openstack",
+         "Dependencies":[
+            {
+               "ServiceType":"spark",
+               "ServiceVersions":[
+                  "1.0.0",
+                  "1.0.1",
+                  "1.0.2",
+                  "1.1.0",
+                  "1.1.1",
+                  "1.2.0",
+                  "1.2.1",
+                  "1.2.2",
+                  "1.3.0",
+                  "1.3.1",
+                  "1.4.0",
+                  "1.4.1",
+                  "1.5.0",
+                  "1.5.1",
+                  "1.5.2",
+                  "1.6.0",
+                  "1.6.1",
+                  "1.6.2",
+                  "2.0.0",
+                  "2.0.1",
+                  "2.0.2",
+                  "2.1.0",
+                  "2.2.0",
+                  "2.2.1",
+                  "2.3.0"
+               ],
+               "DefaultServiceVersion":"2.3.0",
+               "Description":"Dependency cassandra->spark"
+            }
+         ]
+      }
+   ]
+}

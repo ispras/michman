@@ -1,0 +1,13 @@
+---
+
+- name: install epel release
+  yum:
+    name: epel-release
+    state: latest
+    update_cache: yes
+
+- name: install redis
+  yum:
+    name: redis
+    state: latest
+    update_cache: yes

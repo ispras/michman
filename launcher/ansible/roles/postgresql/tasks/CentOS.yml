@@ -1,0 +1,43 @@
+---
+
+- name: "add yum repo for postgresql"
+  yum_repository:
+    baseurl: https://download.postgresql.org/pub/repos/yum/{{ postgresql_version }}/redhat/rhel-$releasever-$basearch
+    state: present
+    name: postgresql
+    description: postgresql repo
+    gpgcheck: no
+
+- name: install PostgreSQL
+  yum:
+    name:
+      - postgresql{{ postgresql_version | replace('.','') }}
+      - postgresql{{ postgresql_version | replace('.','') }}-server
+    update_cache: yes
+    state: present
+
+- name: init database for 9.6
+  command: /usr/pgsql-{{ postgresql_version }}/bin/postgresql{{ postgresql_version | replace('.','') }}-setup initdb
+  when: postgresql_version == "9.6"
+  register: result
+  failed_when:
+    - result.rc != 0
+    - '"is not empty" not in result.stdout'
+  changed_when:
+    - result.rc == 0
+
+- name: init database for 10, 11 or 12
+  command: /usr/pgsql-{{ postgresql_version }}/bin/postgresql-{{ postgresql_version }}-setup initdb
+  when: postgresql_version | int >= 10
+  register: result
+  failed_when:
+    - result.rc != 0
+    - '"is not empty" not in result.stdout'
+  changed_when:
+    - result.rc == 0
+
+- name: enable and start postgresql server
+  service:
+    name: postgresql-{{ postgresql_version }}
+    state: restarted
+    enabled: yes

@@ -1,0 +1,4 @@
+---
+postgresql_version: 9.6
+postgresql_db_password: dbpassword
+

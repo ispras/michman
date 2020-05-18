@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	protobuf "github.com/ispras/michman/protobuf"
+	"github.com/ispras/michman/utils"
 	"github.com/jinzhu/copier"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -113,6 +114,21 @@ func (hS HttpServer) checkDependency(d *protobuf.ServiceDependency) (bool, error
 	return true, nil
 }
 
+func checkClass(st *protobuf.ServiceType) bool {
+	if st.Class == utils.ClassMasterSlave || st.Class == utils.ClassStandAlone || st.Class == utils.ClassStorage {
+		return true
+	}
+	return false
+}
+
+func checkPort(port int32) bool {
+	//TODO: add another checks for port?
+	if port > 0 {
+		return true
+	}
+	return false
+}
+
 func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /configs POST")
 	var st protobuf.ServiceType
@@ -145,9 +161,35 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	//check service class
+	if res := checkClass(&st); !res {
+		hS.Logger.Print("ERROR: class for service type is not supported")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	//check service access port
+	if st.AccessPort != 0 { //0 if port not provided
+		if res := checkPort(st.AccessPort); !res {
+			hS.Logger.Print("ERROR: access port for service type must be > 0")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	//check all ports
+	if st.Ports != nil {
+		for _, p := range st.Ports {
+			if res := checkPort(p.Port); !res {
+				hS.Logger.Print("ERROR: port must be > 0")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+	}
+
 	//check deafault version
-	res := checkDefaultVersion(st.Versions[:], st.DefaultVersion)
-	if !res {
+	if res := checkDefaultVersion(st.Versions[:], st.DefaultVersion); !res {
 		hS.Logger.Print("ERROR: default service version doesn't exists in this service type")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -278,6 +320,8 @@ func (hS HttpServer) ConfigsGetService(w http.ResponseWriter, r *http.Request, p
 		respBody.Type = st.Type
 		respBody.Description = st.Description
 		respBody.DefaultVersion = st.DefaultVersion
+		respBody.Class = st.Class
+		respBody.AccessPort = st.AccessPort
 	} else {
 		respBody = *st
 	}
@@ -331,7 +375,59 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 
 	//update service type default version
 	if newSt.DefaultVersion != "" {
+		if res := checkDefaultVersion(st.Versions[:], newSt.DefaultVersion); !res {
+			hS.Logger.Print("ERROR: new default service version doesn't exists in this service type")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		st.DefaultVersion = newSt.DefaultVersion
+	}
+
+	//uodate service type class
+	if newSt.Class != "" {
+		if res := checkClass(&newSt); !res {
+			hS.Logger.Print("ERROR: class for service type is not supported")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		st.Class = newSt.Class
+	}
+
+	//update service access port
+	if newSt.AccessPort != 0 { //0 if port not provided
+		if res := checkPort(newSt.AccessPort); !res {
+			hS.Logger.Print("ERROR: access port for service type must be > 0")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		st.AccessPort = newSt.AccessPort
+	}
+
+	if newSt.Ports != nil {
+		for _, p := range newSt.Ports {
+			if res := checkPort(p.Port); !res {
+				hS.Logger.Print("ERROR: port must be > 0")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+		if st.Ports != nil {
+			newPLen := len(newSt.Ports)
+			for _, oldP := range st.Ports {
+				f := false
+				for _, newP := range newSt.Ports[:newPLen] {
+					if oldP.Port == newP.Port {
+						f = true
+						break
+					}
+				}
+				//add old port if it hasn't been updated
+				if !f {
+					newSt.Ports = append(newSt.Ports, oldP)
+				}
+			}
+		}
+
 	}
 
 	//saving new service type

@@ -1,0 +1,22 @@
+{
+  "Type":"couchdb",
+  "Description":"CouchDB database service",
+  "DefaultVersion":"latest",
+  "Class": "storage",
+  "AccessPort": 5984,
+  "Versions":[
+    {
+      "Version":"latest",
+      "Description":"CouchDB default version",
+      "Configs": [
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Default user password for Couchdb for user 'admin', you can change it."
+        }
+      ]
+    }
+  ]
+}

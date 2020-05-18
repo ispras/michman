@@ -496,8 +496,14 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			s.ID = sUuid.String()
 			cluster.Services = append(cluster.Services, s)
 		}
-		//TODO: change this behavior mode
-		if s.Type == utils.ServiceTypeNFS || s.Type == utils.ServiceTypeNextCloud {
+
+		st, err := hS.Db.ReadServiceType(s.Type)
+		if err != nil {
+			hS.Logger.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if st.Class == utils.ClassStorage {
 			newHost = true
 		}
 	}
