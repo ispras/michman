@@ -251,12 +251,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["pip_trusted_host"] = osConfig.PipTrustedHost
 	extraVars["yum_mirror_address"] = osConfig.YumMirrorAddress
 
-	_, err = strconv.ParseBool(osConfig.UsePackageMirror)
-
-	if err != nil {
-		log.Fatalln("use_mirror is not boolean")
-	}
-
 	return extraVars, nil
 }
 

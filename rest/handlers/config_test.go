@@ -13,7 +13,6 @@ import (
 	"os"
 	"testing"
 )
-
 var serviceType = "test-service-type"
 var svId = "60c18874-f41d-4f7f-a45d-8503abd53e1c"
 
@@ -29,6 +28,7 @@ var testServiceVersion = protobuf.ServiceVersion{
 	ID:          "60c18874-f41d-4f7f-a45d-8503abd53e1c",
 	Version:     "testVersion",
 	Description: "test",
+	//Configs:              []*protobuf.ServiceConfig{&testServiceConfig},
 }
 
 var testServiceType = protobuf.ServiceType{
@@ -37,6 +37,7 @@ var testServiceType = protobuf.ServiceType{
 	Description:    "test",
 	DefaultVersion: "testVersion",
 	Versions:       []*protobuf.ServiceVersion{&testServiceVersion},
+	Class:          "storage",
 }
 
 func TestConfigsGetServices(t *testing.T) {
@@ -245,7 +246,7 @@ func TestConfigsUpdateService(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
-		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
+		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsUpdateService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
@@ -445,7 +446,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
-		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
+		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsUpdateVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
@@ -467,7 +468,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 			Versions:       []*protobuf.ServiceVersion{},
 		}
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&updatedST, nil)
-		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
+		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsUpdateVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
@@ -612,17 +613,18 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceConfig)
 		request, _ := http.NewRequest("POST", "/configs/"+serviceType+"/versions/"+svId, bytes.NewReader(testBody))
 		response := httptest.NewRecorder()
-
-		curST := protobuf.ServiceType{
-			ID:             testServiceType.ID,
-			Type:           testServiceType.Type,
-			Description:    testServiceType.Description,
-			DefaultVersion: testServiceType.DefaultVersion,
-			Versions:       []*protobuf.ServiceVersion{},
-		}
-
-		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)
-		mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
+		//
+		//curST := protobuf.ServiceType{
+		//	ID:             testServiceType.ID,
+		//	Type:           testServiceType.Type,
+		//	Description:    testServiceType.Description,
+		//	DefaultVersion: testServiceType.DefaultVersion,
+		//	Versions:       []*protobuf.ServiceVersion{},
+		//}
+		//
+		//mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)
+		//mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)
+		////mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		hS.ConfigsCreateConfigParam(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},

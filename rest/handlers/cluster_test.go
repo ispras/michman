@@ -16,6 +16,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+var testClusterName = "spark-test"
+
+var testService = protobuf.Service{
+	DisplayName: "test",
+	Type:        "spark",
+}
+
+var testCluster = protobuf.Cluster{
+	DisplayName: testClusterName,
+	NHosts:      3,
+	Image:       "ubuntu",
+	Services:    []*protobuf.Service{&testService},
+}
+
 func TestClustersGet(t *testing.T) {
 	l := log.New(os.Stdout, "TestClustersGet: ", log.Ldate|log.Ltime)
 	projectName := "testProjectName"
@@ -50,13 +64,22 @@ func TestClusterCreate(t *testing.T) {
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
 	errHandler := HttpErrorHandler{}
 
-	testClusterName := "spark-test"
 
-	testCluster := []byte(`{
-		"DisplayName":"` + testClusterName + `",
-		"EntityStatus": "some-status",
-		"NHosts":1
-	}`)
+	//testCluster := []byte(`{
+	//	"DisplayName":"` + testClusterName + `",
+	//	"EntityStatus": "some-status",
+	//	"Services":[
+	//	{
+	//		"Name":"spark-test",
+	//		"Type":"spark",
+	//		"Config":{
+	//			"hadoop-version":"2.6"
+	//		},
+	//		"Version":"2.1.0"
+	//	}],
+	//	"NHosts":1
+	//}`)
+
 
 	testInvalidCluster := []byte(`{
 		"Name":"` + testClusterName + `",
@@ -65,9 +88,10 @@ func TestClusterCreate(t *testing.T) {
 	}`)
 
 	testInvalidJSON := []byte(`invalid json`)
+	testBody, _ := json.Marshal(testCluster)
 
 	t.Run("Project didn't exist", func(t *testing.T) {
-		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testCluster))
+		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
@@ -97,7 +121,7 @@ func TestClusterCreate(t *testing.T) {
 	})
 
 	t.Run("Cluster didn't exist, valid JSON", func(t *testing.T) {
-		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testCluster))
+		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
@@ -116,16 +140,27 @@ func TestClusterCreate(t *testing.T) {
 			Type:           "spark",
 			Description:    "test",
 			DefaultVersion: "testVersion",
+			Class:          "storage",
 			Versions:       []*protobuf.ServiceVersion{&testServiceVersion},
 		}
 		testServiceType2 := protobuf.ServiceType{
 			ID:          "61c18874-f41d-4f7f-a45d-8503abd53e1c",
 			Type:        "test-service-type-2",
 			Description: "test",
+			Class:       "stand-alone",
 		}
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
+		for _, s := range testCluster.Services {
+			mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
+			log.Println(s)
+		}
+		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
 
+		for _, s := range testCluster.Services {
+			mockDatabase.EXPECT().ReadServiceType(s.Type).Return(&testServiceType1, nil)
+			mockDatabase.EXPECT().ReadServiceVersionByName(testServiceType1.Type, testServiceVersion.Version).Return(&testServiceVersion, nil)
+		}
 		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
@@ -148,7 +183,7 @@ func TestClusterCreate(t *testing.T) {
 	})
 
 	t.Run("Cluster exists, but failed. Valid JSON", func(t *testing.T) {
-		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testCluster))
+		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
@@ -178,7 +213,7 @@ func TestClusterCreate(t *testing.T) {
 	})
 
 	t.Run("Cluster exists. Valid JSON", func(t *testing.T) {
-		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testCluster))
+		request, _ := http.NewRequest("POST", "/projects/"+projectName+"/clusters", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 

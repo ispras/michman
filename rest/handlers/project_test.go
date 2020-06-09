@@ -15,6 +15,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+var project = protobuf.Project{
+	Name: "test-project",
+	DisplayName: "test-project",
+	Description: "some description",
+	DefaultImage: "ubuntu",
+}
+
+var testImage = protobuf.Image{
+	ID: "e2246d19-1221-416e-8c49-ad6dac00000a",
+	Name: "ubuntu",
+	AnsibleUser: "ubuntu",
+	CloudImageID: "e2246d19-1221-416e-8c49-ad6dac00000a",
+}
+
 func TestProjectsGetList(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/projects", nil)
 	response := httptest.NewRecorder()
@@ -35,31 +49,25 @@ func TestProjectsGetList(t *testing.T) {
 	}
 }
 
-func TestProjectsPost(t *testing.T) {
-	l := log.New(os.Stdout, "TestProjectsPost: ", log.Ldate|log.Ltime)
+func TestProjectsCreate(t *testing.T) {
+	l := log.New(os.Stdout, "TestProjectsCreate: ", log.Ldate|log.Ltime)
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
 	errHandler := HttpErrorHandler{}
-	mockDatabase.EXPECT().ReadProjectByName("test-project").Return(&protobuf.Project{}, nil)
-
-	// Because of generating uuid in WriteProject we can't know
-	// what it will be
-	// So gomock.Any() is used
-	mockDatabase.EXPECT().WriteProject(gomock.Any()).Return(nil)
 
 	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 
 	t.Run("Valid JSON", func(t *testing.T) {
-		testBody := []byte(`{"Name": "test-project","DisplayName": "test-project","GroupId": 1,"Description": "some description"}`)
-		request, _ := http.NewRequest("POST", "/projects", bytes.NewBuffer(testBody))
+		testBody, _ := json.Marshal(project)
+		request, _ := http.NewRequest("POST", "/projects", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 		hS.ProjectCreate(response, request, httprouter.Params{})
 
-		if response.Code != http.StatusOK {
-			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
-		}
+		mockDatabase.EXPECT().ReadProjectByName(project.DisplayName).Return(&protobuf.Project{}, nil)
+		mockDatabase.EXPECT().ReadImage(project.DefaultImage).Return(&testImage, nil)
+		mockDatabase.EXPECT().WriteProject(&project).Return(nil)
 
 		var p protobuf.Project
 		err := json.NewDecoder(response.Body).Decode(&p)
@@ -71,6 +79,10 @@ func TestProjectsPost(t *testing.T) {
 			t.Fatalf("Project ID wasn't created")
 		}
 
+		if response.Code != http.StatusOK {
+			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
+		}
+
 	})
 
 	t.Run("Invalid JSON", func(t *testing.T) {
@@ -78,7 +90,7 @@ func TestProjectsPost(t *testing.T) {
 		request, _ := http.NewRequest("POST", "/projects", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-
+		//mockDatabase.EXPECT().ReadProjectByName("test-project").Return(&protobuf.Project{}, nil)
 		hS.ProjectCreate(response, request, httprouter.Params{})
 
 		if response.Code != http.StatusBadRequest {

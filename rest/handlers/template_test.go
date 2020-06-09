@@ -17,6 +17,9 @@ import (
 )
 
 var commonTestTemplateRequest = protobuf.Template{
+	//ID:          "af916f2b-8c25-4e72-8cb6-27170583128c",
+	//ProjectID:   utils.CommonProjectID,
+	//Name:        "test1",
 	DisplayName: "test1",
 	Services:    nil,
 	NHosts:      1,
@@ -287,9 +290,7 @@ func TestTemplatesCreate(t *testing.T) {
 		request, _ := http.NewRequest("POST",
 			"/templates", bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
-		mockDatabase.EXPECT().ReadProject(testTemplate.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-common").Return(&testTemplateResponse, nil)
-		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{})
@@ -362,7 +363,6 @@ func TestTemplatesCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplate.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-"+testProject.Name).Return(&testTemplateResponse, nil)
-		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{{"projectIdOrName", testProjectID}})
@@ -408,13 +408,11 @@ func TestTemplatesUpdate(t *testing.T) {
 	t.Run("update common template with error from db side", func(t *testing.T) {
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		testTemplate := commonTestTemplateRequest
-		testTemplateResponse := commonTestTemplateResponse
 		jsonTemplate, _ := json.Marshal(testTemplate)
 		request, _ := http.NewRequest("PUT",
 			"/templates/"+testTemplate.ID, bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&testTemplate, nil)
-		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(errors.New("some db error"))
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
@@ -427,13 +425,11 @@ func TestTemplatesUpdate(t *testing.T) {
 	t.Run("Dont have common template with such ID", func(t *testing.T) {
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		testTemplate := commonTestTemplateRequest
-		testTemplateResponse := commonTestTemplateResponse
 		jsonTemplate, _ := json.Marshal(testTemplate)
 		request, _ := http.NewRequest("POST",
 			"/templates", bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
@@ -484,7 +480,6 @@ func TestTemplatesUpdate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplateResponse.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&testTemplate, nil)
-		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(errors.New("some db error"))
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
@@ -507,7 +502,6 @@ func TestTemplatesUpdate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplateResponse.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
@@ -573,7 +567,6 @@ func TestTemplatesDelete(t *testing.T) {
 			"/templates/"+testTemplate.ID, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
@@ -637,7 +630,6 @@ func TestTemplatesDelete(t *testing.T) {
 			"/projects/"+testProjectID+"/templates/"+testTemplate.ID, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{"projectIdOrName", testProjectID},

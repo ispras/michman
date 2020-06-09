@@ -244,7 +244,6 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 	in.PrintClusterData(aS.logger)
 
 	aS.logger.Print("Getting vault secrets...")
-
 	vaultClient, vaultCfg := aS.vaultCommunicator.ConnectVault()
 	if vaultClient == nil {
 		log.Fatalln("Error: can't connect to vault secrets storage")
