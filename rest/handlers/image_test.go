@@ -33,4 +33,26 @@ func TestImagesGetList(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
 	}
+} 
+
+func TestImageGet(t *testing.T) {
+	l := log.New(os.Stdout, "TestImageGet: ", log.Ldate|log.Ltime)
+	mockCtrl := gomock.NewController(t)
+	mockClient := mocks.NewMockGrpcClient(mockCtrl)
+	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	errHandler := HttpErrorHandler{}
+	ImageName := "testImageName"
+
+	request, _ := http.NewRequest("GET", "/images/"+ImageName, nil)
+	
+	response := httptest.NewRecorder()
+
+	mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&protobuf.Image{}, nil)
+	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+	hS.ImageGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: ImageName}})
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
+	}
 }
