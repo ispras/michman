@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	//"bytes"
-	//"encoding/json"
+	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest" 
@@ -14,6 +14,13 @@ import (
 	protobuf "github.com/ispras/michman/protobuf"
 	"github.com/julienschmidt/httprouter"
 )
+
+var image = protobuf.Image{
+	ID:           "",
+	Name:         "testImageName",
+	AnsibleUser:  "ubuntu",
+	CloudImageID: "456",
+}
 
 func TestImagesGetList(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/images", nil)
@@ -66,7 +73,7 @@ func TestImageDelete(t *testing.T) {
 	errHandler := HttpErrorHandler{}
 
 	t.Run ("Image isn't used", func(t *testing.T){
-		request, _ := http.NewRequest("PUT", "/images/"+imageName, nil)
+		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
@@ -81,8 +88,9 @@ func TestImageDelete(t *testing.T) {
 		}
 	})
 
+
 	t.Run ("Image is used", func(t *testing.T){
-		request, _ := http.NewRequest("PUT", "/images/"+imageName, nil)
+		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
 		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Name: "Name2",
@@ -99,6 +107,56 @@ func TestImageDelete(t *testing.T) {
 
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusBadRequest, response.Code)
+		}
+	})
+}
+
+func TestImagePost(t *testing.T) {
+	l := log.New(os.Stdout, "TestImagePost: ", log.Ldate|log.Ltime)
+	mockCtrl := gomock.NewController(t)
+	mockClient := mocks.NewMockGrpcClient(mockCtrl)
+	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	imageName := "testImageName"
+
+	errHandler := HttpErrorHandler{}
+	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+	t.Run("Valid JSON", func(t *testing.T) {
+		testBody, _ := json.Marshal(image)
+		request, _ := http.NewRequest("POST", "/images", bytes.NewReader(testBody))
+		request.Header.Set("Content-Type", "application/json") // непонятно
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadImage(imageName).Return(&image, nil)
+		mockDatabase.EXPECT().WriteImage(gomock.Any()).Return(nil)
+
+		hS.ImagesPost(response, request, httprouter.Params{})
+
+		var im protobuf.Image
+		err := json.NewDecoder(response.Body).Decode(&im)
+		if err != nil {
+			t.Fatalf("Get invalid JSON")
+		}
+
+		if im.ID == "" {
+			t.Fatalf("Image ID wasn't created")
+		}
+
+		if response.Code != http.StatusOK {
+			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
+		}
+	})
+
+	t.Run ("Invalid JSON", func(t *testing.T){
+		testBody := []byte(`this is invalid json`)
+		request, _ := http.NewRequest("POST", "/images", bytes.NewBuffer(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		hS.ImagesPost(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
 		}
 	})
 }
