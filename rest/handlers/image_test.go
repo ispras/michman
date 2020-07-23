@@ -15,7 +15,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func TestImagesGetList(t *testing.T) {
+func TestImagesGetList(t *testing.T) { //ok
 	request, _ := http.NewRequest("GET", "/images", nil)
 	response := httptest.NewRecorder()
 
@@ -35,7 +35,7 @@ func TestImagesGetList(t *testing.T) {
 	}
 }
 
-func TestImageGet(t *testing.T) {
+func TestImageGet(t *testing.T) { //ok
 	l := log.New(os.Stdout, "TestImageGet: ", log.Ldate|log.Ltime)
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
@@ -108,7 +108,7 @@ func TestImageDelete(t *testing.T) {
 	})
 }
 
-func TestImagePost(t *testing.T) {
+func TestImagePost(t *testing.T) { //переделать
 	var image1 = protobuf.Image{
 		ID:           "",
 		Name:         "testImageName",
@@ -199,7 +199,7 @@ func TestImagePost(t *testing.T) {
 	})
 }
 
-func TestValidateImage(t *testing.T) {
+func TestValidateImage(t *testing.T) { //ok
 	var imageVal1 = protobuf.Image{
 		ID:           "",
 		Name:         "testImageName",
@@ -266,7 +266,7 @@ func TestValidateImage(t *testing.T) {
 	})
 }
 
-func TestIsImageUsed(t *testing.T) {
+func TestIsImageUsed(t *testing.T) { //ok
 	l := log.New(os.Stdout, "TestIsImageUsed: ", log.Ldate|log.Ltime)
 
 	t.Run("Clusters exist, Projects not exist", func(t *testing.T) {
@@ -314,4 +314,132 @@ func TestIsImageUsed(t *testing.T) {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
+}
+
+func TestImagePut(t *testing.T) { // доделать
+	var imagePut = protobuf.Image{
+		ID:           "",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+
+	var image = protobuf.Image{
+		ID:           "123",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+
+	l := log.New(os.Stdout, "TestImagePut: ", log.Ldate|log.Ltime)
+
+	t.Run("Valid JSON, image has no clusters and no projects, new image is ok", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		testBody, _ := json.Marshal(imagePut)
+
+		request, _ := http.NewRequest("PUT", "/images", bytes.NewReader(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&imagePut, nil)
+		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&imagePut, nil)
+		mockDatabase.EXPECT().UpdateImage(gomock.Any(), &imagePut).Return(nil)
+
+		hS.ImagePut(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusOK {
+			t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
+		}
+	})
+
+	t.Run("Valid JSON, image has no clusters and no projects, new image isn't ok", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		testBody, _ := json.Marshal(imagePut)
+
+		request, _ := http.NewRequest("PUT", "/images", bytes.NewReader(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&imagePut, nil)
+		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&image, nil)
+
+		hS.ImagePut(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
+		}
+	})
+
+	t.Run("Valid JSON, image has clusters or projects", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		testBody, _ := json.Marshal(imagePut)
+
+		request, _ := http.NewRequest("PUT", "/images", bytes.NewReader(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Name: "Name2",
+			ID: "some_ID_123", ProjectID: "test-TEST-UUID-123", Image: imageName}}
+
+		var existedProject = []protobuf.Project{protobuf.Project{Name: "Name1",
+			ID: "some_ID_124", DefaultImage: imageName}}
+
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&imagePut, nil)
+		mockDatabase.EXPECT().ListClusters().Return(existedCluster, nil)
+		mockDatabase.EXPECT().ListProjects().Return(existedProject, nil)
+
+		hS.ImagePut(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
+		}
+
+	})
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		testBody := []byte(`this is invalid json`)
+
+		request, _ := http.NewRequest("PUT", "/images", bytes.NewBuffer(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&imagePut, nil)
+
+		hS.ImagePut(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
+		}
+	})
+
 }
