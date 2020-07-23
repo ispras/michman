@@ -160,3 +160,79 @@ func TestImagePost(t *testing.T) {
 		}
 	})
 }
+
+var imageVal1 = protobuf.Image{
+	ID:           "",
+	Name:         "testImageName",
+	AnsibleUser:  "ubuntu",
+	CloudImageID: "456",
+}
+
+var imageVal2 = protobuf.Image{
+	ID:           "123",
+	Name:         "testImageName",
+	AnsibleUser:  "ubuntu",
+	CloudImageID: "456",
+}
+
+
+var imageVal3 = protobuf.Image{
+	ID:           "",
+	Name:         "",
+	AnsibleUser:  "ubuntu",
+	CloudImageID: "456",
+}
+
+
+var imageVal4 = protobuf.Image{
+	ID:           "",
+	Name:         "testImageName",
+	AnsibleUser:  "",
+	CloudImageID: "456",
+}
+
+
+var imageVal5 = protobuf.Image{
+	ID:           "",
+	Name:         "testImageName",
+	AnsibleUser:  "ubuntu",
+	CloudImageID: "",
+}
+
+func TestValidateImage(t *testing.T) {
+	l := log.New(os.Stdout, "TestValidateImage: ", log.Ldate|log.Ltime)
+	errHandler := HttpErrorHandler{}
+	hS := HttpServer{Logger: l, ErrHandler: errHandler}
+
+	t.Run ("Valid Image", func(t *testing.T){
+		check, _ := validateImage(hS, &imageVal1)
+		if check != true {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+	t.Run ("ID not found", func(t *testing.T){
+		check, _ := validateImage(hS, &imageVal2)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+	t.Run ("Name not found", func(t *testing.T){
+		check, _ := validateImage(hS, &imageVal3)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+	t.Run ("AnsibleUser not found", func(t *testing.T){
+		check, _ := validateImage(hS, &imageVal4)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+	t.Run ("CloudImageID not found", func(t *testing.T){
+		check, _ := validateImage(hS, &imageVal5)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+
+}
