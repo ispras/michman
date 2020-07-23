@@ -234,5 +234,47 @@ func TestValidateImage(t *testing.T) {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
+}
+
+func TestIsImageUsed(t *testing.T) {
+	l := log.New(os.Stdout, "TestIsImageUsed: ", log.Ldate|log.Ltime)
+	mockCtrl := gomock.NewController(t)
+	mockClient := mocks.NewMockGrpcClient(mockCtrl)
+	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	imageName := "testImageName"
+	errHandler := HttpErrorHandler{}
+
+	t.Run ("Clusters exist, Projects not exist", func(t *testing.T){
+		var existedCluster = []protobuf.Cluster{protobuf.Cluster{ Image: imageName }}
+		mockDatabase.EXPECT().ListClusters().Return(existedCluster, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check := isImageUsed(hS, imageName)
+		if check != true {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+
+	t.Run ("Clusters not exist, Projects exist", func(t *testing.T){
+		var existedProject = []protobuf.Project{protobuf.Project{ DefaultImage: imageName }}
+		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().ListProjects().Return(existedProject, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check := isImageUsed(hS, imageName)
+		if check != true {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+
+	t.Run ("Clusters exist, Projects exist", func(t *testing.T){
+		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check := isImageUsed(hS, imageName)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+
+
 
 }
