@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/http/httptest" 
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -14,13 +14,6 @@ import (
 	protobuf "github.com/ispras/michman/protobuf"
 	"github.com/julienschmidt/httprouter"
 )
-
-var image = protobuf.Image{
-	ID:           "",
-	Name:         "testImageName",
-	AnsibleUser:  "ubuntu",
-	CloudImageID: "456",
-}
 
 func TestImagesGetList(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/images", nil)
@@ -40,7 +33,7 @@ func TestImagesGetList(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
 	}
-} 
+}
 
 func TestImageGet(t *testing.T) {
 	l := log.New(os.Stdout, "TestImageGet: ", log.Ldate|log.Ltime)
@@ -51,7 +44,7 @@ func TestImageGet(t *testing.T) {
 	ImageName := "testImageName"
 
 	request, _ := http.NewRequest("GET", "/images/"+ImageName, nil)
-	
+
 	response := httptest.NewRecorder()
 
 	mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&protobuf.Image{}, nil)
@@ -66,13 +59,13 @@ func TestImageGet(t *testing.T) {
 
 func TestImageDelete(t *testing.T) {
 	l := log.New(os.Stdout, "TestImageDelete: ", log.Ldate|log.Ltime)
-	mockCtrl := gomock.NewController(t)
-	mockClient := mocks.NewMockGrpcClient(mockCtrl)
-	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	imageName := "testImageName"
-	errHandler := HttpErrorHandler{}
 
-	t.Run ("Image isn't used", func(t *testing.T){
+	t.Run("Image isn't used", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+		errHandler := HttpErrorHandler{}
 		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
@@ -88,13 +81,17 @@ func TestImageDelete(t *testing.T) {
 		}
 	})
 
-
-	t.Run ("Image is used", func(t *testing.T){
+	t.Run("Image is used", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+		errHandler := HttpErrorHandler{}
 		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
 		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Name: "Name2",
-			ID: "some_ID_123", ProjectID: "test-TEST-UUID-123", Image:imageName }}
+			ID: "some_ID_123", ProjectID: "test-TEST-UUID-123", Image: imageName}}
 
 		var existedProject = []protobuf.Project{protobuf.Project{Name: "Name1",
 			ID: "some_ID_124", DefaultImage: imageName}}
@@ -112,22 +109,57 @@ func TestImageDelete(t *testing.T) {
 }
 
 func TestImagePost(t *testing.T) {
+	var image1 = protobuf.Image{
+		ID:           "",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+
+	var image2 = protobuf.Image{
+		ID:           "123",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+
 	l := log.New(os.Stdout, "TestImagePost: ", log.Ldate|log.Ltime)
-	mockCtrl := gomock.NewController(t)
-	mockClient := mocks.NewMockGrpcClient(mockCtrl)
-	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	imageName := "testImageName"
 
-	errHandler := HttpErrorHandler{}
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	t.Run("Valid JSON, image isn't ok", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
 
-	t.Run("Valid JSON", func(t *testing.T) {
-		testBody, _ := json.Marshal(image)
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		testBody, _ := json.Marshal(image2)
 		request, _ := http.NewRequest("POST", "/images", bytes.NewReader(testBody))
-		request.Header.Set("Content-Type", "application/json") // непонятно
+		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
 
-		mockDatabase.EXPECT().ReadImage(imageName).Return(&image, nil)
+		mockDatabase.EXPECT().ReadImage(imageName).Return(&image2, nil)
+		hS.ImagesPost(response, request, httprouter.Params{})
+
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("Expected status code %v, but received: %v", "400", response.Code)
+		}
+	})
+
+	t.Run("Valid JSON, image is ok", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		testBody, _ := json.Marshal(image1)
+		request, _ := http.NewRequest("POST", "/images", bytes.NewReader(testBody))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadImage(imageName).Return(&image1, nil)
 		mockDatabase.EXPECT().WriteImage(gomock.Any()).Return(nil)
 
 		hS.ImagesPost(response, request, httprouter.Params{})
@@ -147,7 +179,13 @@ func TestImagePost(t *testing.T) {
 		}
 	})
 
-	t.Run ("Invalid JSON", func(t *testing.T){
+	t.Run("Invalid JSON", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		testBody := []byte(`this is invalid json`)
 		request, _ := http.NewRequest("POST", "/images", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
@@ -161,74 +199,66 @@ func TestImagePost(t *testing.T) {
 	})
 }
 
-var imageVal1 = protobuf.Image{
-	ID:           "",
-	Name:         "testImageName",
-	AnsibleUser:  "ubuntu",
-	CloudImageID: "456",
-}
-
-var imageVal2 = protobuf.Image{
-	ID:           "123",
-	Name:         "testImageName",
-	AnsibleUser:  "ubuntu",
-	CloudImageID: "456",
-}
-
-
-var imageVal3 = protobuf.Image{
-	ID:           "",
-	Name:         "",
-	AnsibleUser:  "ubuntu",
-	CloudImageID: "456",
-}
-
-
-var imageVal4 = protobuf.Image{
-	ID:           "",
-	Name:         "testImageName",
-	AnsibleUser:  "",
-	CloudImageID: "456",
-}
-
-
-var imageVal5 = protobuf.Image{
-	ID:           "",
-	Name:         "testImageName",
-	AnsibleUser:  "ubuntu",
-	CloudImageID: "",
-}
-
 func TestValidateImage(t *testing.T) {
+	var imageVal1 = protobuf.Image{
+		ID:           "",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+	var imageVal2 = protobuf.Image{
+		ID:           "123",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+	var imageVal3 = protobuf.Image{
+		ID:           "",
+		Name:         "",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "456",
+	}
+	var imageVal4 = protobuf.Image{
+		ID:           "",
+		Name:         "testImageName",
+		AnsibleUser:  "",
+		CloudImageID: "456",
+	}
+	var imageVal5 = protobuf.Image{
+		ID:           "",
+		Name:         "testImageName",
+		AnsibleUser:  "ubuntu",
+		CloudImageID: "",
+	}
 	l := log.New(os.Stdout, "TestValidateImage: ", log.Ldate|log.Ltime)
 	errHandler := HttpErrorHandler{}
 	hS := HttpServer{Logger: l, ErrHandler: errHandler}
 
-	t.Run ("Valid Image", func(t *testing.T){
+	t.Run("Valid Image", func(t *testing.T) {
 		check, _ := validateImage(hS, &imageVal1)
 		if check != true {
 			t.Fatalf("Expected status code %v, but received: %v", true, check)
 		}
 	})
-	t.Run ("ID not found", func(t *testing.T){
+	t.Run("ID not found", func(t *testing.T) {
 		check, _ := validateImage(hS, &imageVal2)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
-	t.Run ("Name not found", func(t *testing.T){
+	t.Run("Name not found", func(t *testing.T) {
 		check, _ := validateImage(hS, &imageVal3)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
-	t.Run ("AnsibleUser not found", func(t *testing.T){
+	t.Run("AnsibleUser not found", func(t *testing.T) {
 		check, _ := validateImage(hS, &imageVal4)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
-	t.Run ("CloudImageID not found", func(t *testing.T){
+	t.Run("CloudImageID not found", func(t *testing.T) {
 		check, _ := validateImage(hS, &imageVal5)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
@@ -238,14 +268,14 @@ func TestValidateImage(t *testing.T) {
 
 func TestIsImageUsed(t *testing.T) {
 	l := log.New(os.Stdout, "TestIsImageUsed: ", log.Ldate|log.Ltime)
-	mockCtrl := gomock.NewController(t)
-	mockClient := mocks.NewMockGrpcClient(mockCtrl)
-	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	imageName := "testImageName"
-	errHandler := HttpErrorHandler{}
 
-	t.Run ("Clusters exist, Projects not exist", func(t *testing.T){
-		var existedCluster = []protobuf.Cluster{protobuf.Cluster{ Image: imageName }}
+	t.Run("Clusters exist, Projects not exist", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+		errHandler := HttpErrorHandler{}
+		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Image: imageName}}
 		mockDatabase.EXPECT().ListClusters().Return(existedCluster, nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		check := isImageUsed(hS, imageName)
@@ -254,8 +284,13 @@ func TestIsImageUsed(t *testing.T) {
 		}
 	})
 
-	t.Run ("Clusters not exist, Projects exist", func(t *testing.T){
-		var existedProject = []protobuf.Project{protobuf.Project{ DefaultImage: imageName }}
+	t.Run("Clusters not exist, Projects exist", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+		errHandler := HttpErrorHandler{}
+		var existedProject = []protobuf.Project{protobuf.Project{DefaultImage: imageName}}
 		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().ListProjects().Return(existedProject, nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
@@ -265,16 +300,18 @@ func TestIsImageUsed(t *testing.T) {
 		}
 	})
 
-	t.Run ("Clusters exist, Projects exist", func(t *testing.T){
+	t.Run("Clusters exist, Projects exist", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		imageName := "testImageName"
+		errHandler := HttpErrorHandler{}
 		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 		check := isImageUsed(hS, imageName)
 		if check != false {
-			t.Fatalf("Expected status code %v, but received: %v", true, check)
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
-
-
-
 }
