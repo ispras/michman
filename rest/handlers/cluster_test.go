@@ -54,6 +54,163 @@ func TestClustersGet(t *testing.T) {
 	}
 }
 
+
+
+func TestAddDependencies(t *testing.T){
+	l := log.New(os.Stdout, "TestAddDependencies: ", log.Ldate|log.Ltime)
+
+	t.Run("no Dependencies", func(t *testing.T){
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		var testServiceCluster *protobuf.Service = &protobuf.Service{
+			DisplayName: "test",
+			Type:        "spark",
+			Version: 	 "DefaultVersion",
+		}
+
+		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion"}
+		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		servicesList, _ := hS.AddDependencies(testClusterOk, testServiceCluster)
+		if servicesList != nil{
+			t.Fatalf("Expected servicesList without any parameters")
+		}
+
+	})
+
+	t.Run("Add service from dependencies", func(t *testing.T){
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		var testServiceCluster *protobuf.Service = &protobuf.Service{
+			DisplayName: "test",
+			Type:        "spark",
+			Version: 	 "DefaultVersion",
+		}
+
+		var D *protobuf.ServiceDependency = &protobuf.ServiceDependency{ServiceType: "sp"}
+
+		var Dependencies = []*protobuf.ServiceDependency{D}
+
+		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion", Dependencies: Dependencies}
+
+		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		servicesList, _ := hS.AddDependencies(testClusterOk, testServiceCluster)
+		if servicesList == nil{
+			t.Fatalf("Expected servicesList with parameters")
+		}
+		
+	})
+
+	t.Run("error: bad service version from user list", func(t *testing.T){
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		var testServiceCluster *protobuf.Service = &protobuf.Service{
+			DisplayName: "test",
+			Type:        "spark",
+			Version: 	 "DefaultVersion",
+		}
+
+		var D *protobuf.ServiceDependency = &protobuf.ServiceDependency{ServiceType: "spark"}
+
+		var Dependencies = []*protobuf.ServiceDependency{D}
+
+		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion", Dependencies: Dependencies}
+
+		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		_, err := hS.AddDependencies(testClusterOk, testServiceCluster)
+		if err == nil{
+			t.Fatalf("Expected error")
+		}
+		
+	})
+
+}
+func TestGetCluster(t *testing.T){
+	l := log.New(os.Stdout, "TestGetCluster: ", log.Ldate|log.Ltime)
+
+	t.Run("Cluster with Name", func(t *testing.T){
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		projectID := "some_ID_123"
+		IDorName := "testClusterName"
+
+		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID:projectID}
+
+		mockDatabase.EXPECT().ReadClusterByName(projectID, IDorName).Return(&existedCluster, nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		c, _ := hS.getCluster(projectID, IDorName)
+
+		if c.Name == "" {
+			t.Fatalf("Expected existing cluster")
+		}
+	})
+
+	t.Run("Cluster with ID", func(t *testing.T){
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		projectID := "some_ID_123"
+		IDorName := "e2246d19-1221-416e-8c49-ad6dac00000a"
+
+		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID:projectID}
+
+		mockDatabase.EXPECT().ReadCluster(IDorName).Return(&existedCluster, nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		c, _ := hS.getCluster(projectID, IDorName)
+
+		if c.Name == "" {
+			t.Fatalf("Expected existing cluster")
+		}
+	})
+
+}
+
+
 func TestClusterCreate(t *testing.T) {
 	l := log.New(os.Stdout, "TestClusterCreate: ", log.Ldate|log.Ltime)
 	projectName := "testProjectName"
@@ -63,7 +220,6 @@ func TestClusterCreate(t *testing.T) {
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
 	errHandler := HttpErrorHandler{}
-
 
 	//testCluster := []byte(`{
 	//	"DisplayName":"` + testClusterName + `",
@@ -79,7 +235,6 @@ func TestClusterCreate(t *testing.T) {
 	//	}],
 	//	"NHosts":1
 	//}`)
-
 
 	testInvalidCluster := []byte(`{
 		"Name":"` + testClusterName + `",
@@ -247,6 +402,111 @@ func TestClusterCreate(t *testing.T) {
 	})
 }
 
+func TestValidateCluster(t *testing.T) {
+	l := log.New(os.Stdout, "TestValidateClusters: ", log.Ldate|log.Ltime)
+
+	t.Run("Cluster is OK", func(t *testing.T) {
+
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		var testClusterOk = protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion"}
+
+		var Version = []*protobuf.ServiceVersion{V}
+
+		var existedServiceType = []protobuf.ServiceType{protobuf.ServiceType{Type: "spark", DefaultVersion: "DefaultVersion", Versions: Version}}
+
+		mockDatabase.EXPECT().ListServicesTypes().Return(existedServiceType, nil)
+
+		check := ValidateCluster(hS, &testClusterOk)
+		if check != true {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+
+	t.Run("Bad cluster's name", func(t *testing.T) {
+
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		var testClusterBadName = protobuf.Cluster{
+			DisplayName: "#test#",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		check := ValidateCluster(hS, &testClusterBadName)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+
+	t.Run("Bad cluster's hosts", func(t *testing.T) {
+
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		var testClusterQuantityofHosts = protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      0,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService},
+		}
+
+		check := ValidateCluster(hS, &testClusterQuantityofHosts)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+
+	})
+
+	t.Run("Bad cluster's service", func(t *testing.T) {
+
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		errHandler := HttpErrorHandler{}
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+
+		var testService1 = protobuf.Service{
+			DisplayName: "test",
+			Type:        "",
+		}
+
+		var testClusterService = protobuf.Cluster{
+			DisplayName: "test",
+			NHosts:      3,
+			Image:       "ubuntu",
+			Services:    []*protobuf.Service{&testService1},
+		}
+
+		check := ValidateCluster(hS, &testClusterService)
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+}
 func TestClustersGetByName(t *testing.T) {
 	l := log.New(os.Stdout, "TestClustersGetByName: ", log.Ldate|log.Ltime)
 	projectName := "testProjectName"
