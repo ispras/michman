@@ -28,7 +28,39 @@ var testImage = protobuf.Image{
 	AnsibleUser: "ubuntu",
 	CloudImageID: "e2246d19-1221-416e-8c49-ad6dac00000a",
 }
+func TestProjectValidate(t *testing.T) {
 
+	t.Run("Bad name for project", func(t *testing.T){
+		var projectBadName *protobuf.Project = &protobuf.Project{
+			Name:         "#test-project#",
+			DisplayName:  "#test-project#",
+			Description:  "some description",
+			DefaultImage: "ubuntu",
+		}
+
+		check := ValidateProject(projectBadName)
+
+		if check != false {
+			t.Fatalf("Expected status code %v, but received: %v", false, check)
+		}
+	})
+
+	t.Run("Name for Project is Ok", func(t *testing.T){
+		var projectOkName *protobuf.Project = &protobuf.Project{
+			Name:         "test-project",
+			DisplayName:  "test-project",
+			Description:  "some description",
+			DefaultImage: "ubuntu",
+		}
+
+		check := ValidateProject(projectOkName)
+
+		if check != true {
+			t.Fatalf("Expected status code %v, but received: %v", true, check)
+		}
+	})
+
+}
 func TestProjectsGetList(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/projects", nil)
 	response := httptest.NewRecorder()
