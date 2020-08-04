@@ -54,12 +54,10 @@ func TestClustersGet(t *testing.T) {
 	}
 }
 
-
-
-func TestAddDependencies(t *testing.T){
+func TestAddDependencies(t *testing.T) {
 	l := log.New(os.Stdout, "TestAddDependencies: ", log.Ldate|log.Ltime)
 
-	t.Run("no Dependencies", func(t *testing.T){
+	t.Run("no Dependencies", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -75,7 +73,7 @@ func TestAddDependencies(t *testing.T){
 		var testServiceCluster *protobuf.Service = &protobuf.Service{
 			DisplayName: "test",
 			Type:        "spark",
-			Version: 	 "DefaultVersion",
+			Version:     "DefaultVersion",
 		}
 
 		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion"}
@@ -84,13 +82,13 @@ func TestAddDependencies(t *testing.T){
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 
 		servicesList, _ := hS.AddDependencies(testClusterOk, testServiceCluster)
-		if servicesList != nil{
+		if servicesList != nil {
 			t.Fatalf("Expected servicesList without any parameters")
 		}
 
 	})
 
-	t.Run("Add service from dependencies", func(t *testing.T){
+	t.Run("Add service from dependencies", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -106,7 +104,7 @@ func TestAddDependencies(t *testing.T){
 		var testServiceCluster *protobuf.Service = &protobuf.Service{
 			DisplayName: "test",
 			Type:        "spark",
-			Version: 	 "DefaultVersion",
+			Version:     "DefaultVersion",
 		}
 
 		var D *protobuf.ServiceDependency = &protobuf.ServiceDependency{ServiceType: "sp"}
@@ -120,13 +118,13 @@ func TestAddDependencies(t *testing.T){
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 
 		servicesList, _ := hS.AddDependencies(testClusterOk, testServiceCluster)
-		if servicesList == nil{
+		if servicesList == nil {
 			t.Fatalf("Expected servicesList with parameters")
 		}
-		
+
 	})
 
-	t.Run("error: bad service version from user list", func(t *testing.T){
+	t.Run("error: bad service version from user list", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -142,7 +140,7 @@ func TestAddDependencies(t *testing.T){
 		var testServiceCluster *protobuf.Service = &protobuf.Service{
 			DisplayName: "test",
 			Type:        "spark",
-			Version: 	 "DefaultVersion",
+			Version:     "DefaultVersion",
 		}
 
 		var D *protobuf.ServiceDependency = &protobuf.ServiceDependency{ServiceType: "spark"}
@@ -156,17 +154,17 @@ func TestAddDependencies(t *testing.T){
 		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
 
 		_, err := hS.AddDependencies(testClusterOk, testServiceCluster)
-		if err == nil{
+		if err == nil {
 			t.Fatalf("Expected error")
 		}
-		
+
 	})
 
 }
-func TestGetCluster(t *testing.T){
+func TestGetCluster(t *testing.T) {
 	l := log.New(os.Stdout, "TestGetCluster: ", log.Ldate|log.Ltime)
 
-	t.Run("Cluster with Name", func(t *testing.T){
+	t.Run("Cluster with Name", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -175,7 +173,7 @@ func TestGetCluster(t *testing.T){
 		projectID := "some_ID_123"
 		IDorName := "testClusterName"
 
-		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID:projectID}
+		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID: projectID}
 
 		mockDatabase.EXPECT().ReadClusterByName(projectID, IDorName).Return(&existedCluster, nil)
 
@@ -187,7 +185,7 @@ func TestGetCluster(t *testing.T){
 		}
 	})
 
-	t.Run("Cluster with ID", func(t *testing.T){
+	t.Run("Cluster with ID", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -196,7 +194,7 @@ func TestGetCluster(t *testing.T){
 		projectID := "some_ID_123"
 		IDorName := "e2246d19-1221-416e-8c49-ad6dac00000a"
 
-		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID:projectID}
+		var existedCluster = protobuf.Cluster{Name: "testClusterName", ProjectID: projectID}
 
 		mockDatabase.EXPECT().ReadCluster(IDorName).Return(&existedCluster, nil)
 
@@ -209,7 +207,6 @@ func TestGetCluster(t *testing.T){
 	})
 
 }
-
 
 func TestClusterCreate(t *testing.T) {
 	l := log.New(os.Stdout, "TestClusterCreate: ", log.Ldate|log.Ltime)
