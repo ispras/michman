@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/ispras/michman/database"
 	protobuf "github.com/ispras/michman/protobuf"
 	"github.com/ispras/michman/utils"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -455,6 +455,21 @@ func setServiceUrl(ip string, port int32) string {
 	return ip + ":" + string(port)
 }
 
+func runAnsible(cmd string, args []string, stdout io.Writer, stderr io.Writer) (bool, error) {
+	prepCmd := exec.Command(cmd, args...)
+	prepCmd.Stdout = stdout
+	prepCmd.Stderr = stderr
+	if err := prepCmd.Start(); err != nil {
+		return false, err
+	}
+
+	if err := prepCmd.Wait(); err != nil {
+		log.Print("Error: ", err)
+		return false, err
+	}
+	return true, nil
+}
+
 func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string {
 	log.SetPrefix("LAUNCHER: ")
 
@@ -463,76 +478,39 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	//exporting ansible variables
 	err := setOsVars(osCreds, osConfig.OsVersion)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	//constructing ansible-playbook command
 	newExtraVars, err := makeExtraVars(aL, cluster, osCreds, osConfig, action)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 
 	newAnsibleArgs, err := json.Marshal(newExtraVars)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 
-	cmdName := utils.AnsiblePlaybookCmd
 	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(newAnsibleArgs)}
 	//saving cluster to database
 	log.Print("Writing new cluster to db...")
 	err = aL.couchbaseCommunicator.WriteCluster(cluster)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
-
-	log.Print("Running ansible...")
-
 	// create output log
 	f, err := os.Create("logs/ansible_output.log")
-
-	defer f.Close()
-	ansibleCmd := exec.Command(cmdName, cmdArgs...)
-	stdout, err := ansibleCmd.StdoutPipe()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
-	stderr, err := ansibleCmd.StderrPipe()
+	log.Print("Running ansible...")
+	res, err := runAnsible(utils.AnsiblePlaybookCmd, cmdArgs, f, f)
 	if err != nil {
-		log.Fatalln(err)
-	}
-
-	stdoutScanner := bufio.NewScanner(stdout)
-	stderrScanner := bufio.NewScanner(stderr)
-	go func() {
-		for stdoutScanner.Scan() {
-			_, err := f.WriteString(stdoutScanner.Text() + "\n")
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-	}()
-	go func() {
-		for stderrScanner.Scan() {
-			_, err = f.WriteString(stderrScanner.Text() + "\n")
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-	}()
-
-	ansibleOk := true
-	if err := ansibleCmd.Start(); err != nil {
-		ansibleOk = false
-		log.Print("Error: ", err)
-	}
-
-	if err := ansibleCmd.Wait(); err != nil {
-		ansibleOk = false
-		log.Print("Error: ", err)
+		log.Println(err)
 	}
 
 	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
-	if ansibleOk && (action == actionCreate || action == actionUpdate) {
+	if res && (action == actionCreate || action == actionUpdate) {
 
 		var v = map[string]string{
 			"cluster_name": cluster.Name,
@@ -543,23 +521,11 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			log.Fatalln(err)
 		}
 
-		cmdName := utils.AnsiblePlaybookCmd
 		args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
 
 		log.Print("Running ansible for getting master IP...")
-		cmd := exec.Command(cmdName, args...)
 		var outb bytes.Buffer
-		cmd.Stdout = &outb
-		//Get Master IP and save it
-		if err := cmd.Start(); err != nil {
-			log.Print("Error: ", err)
-		}
-
-		if err := cmd.Wait(); err != nil {
-			ansibleOk = false
-			log.Print("Error: ", err)
-		}
-
+		runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 		masterIp := findIP(outb.String())
 		storageIp := ""
 		//check if cluster has storage
@@ -572,21 +538,10 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			if err != nil {
 				log.Fatalln(err)
 			}
-			cmdName = utils.AnsiblePlaybookCmd
 			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
 			log.Print("Running ansible for getting NFS server IP...")
-			cmd := exec.Command(cmdName, args...)
 			var outb bytes.Buffer
-			cmd.Stdout = &outb
-			if err := cmd.Start(); err != nil {
-				log.Print("Error: ", err)
-			}
-
-			if err := cmd.Wait(); err != nil {
-				ansibleOk = false
-				log.Print("Error: ", err)
-			}
-
+			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			storageIp = findIP(outb.String())
 		}
 
@@ -632,7 +587,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 
 	}
 
-	if ansibleOk {
+	if res {
 		log.Print("Launch: OK")
 		return utils.AnsibleOk
 	} else {
