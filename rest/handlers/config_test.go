@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/ispras/michman/mocks"
 	protobuf "github.com/ispras/michman/protobuf"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"testing"
 )
+
 var serviceType = "test-service-type"
 var svId = "60c18874-f41d-4f7f-a45d-8503abd53e1c"
 
@@ -38,6 +40,301 @@ var testServiceType = protobuf.ServiceType{
 	DefaultVersion: "testVersion",
 	Versions:       []*protobuf.ServiceVersion{&testServiceVersion},
 	Class:          "storage",
+}
+
+func TestIsValidType(t *testing.T) {
+	t.Run("Return True", func(t *testing.T) {
+		check := IsValidType("int")
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+
+	t.Run("Return False", func(t *testing.T) {
+		check := IsValidType("wrongString")
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+}
+
+func TestCheckVersionUnique(t *testing.T) {
+	var testStVersions = []*protobuf.ServiceVersion{
+		&protobuf.ServiceVersion{Version: "testVersion_1"},
+		&protobuf.ServiceVersion{Version: "testVersion_2"},
+		&protobuf.ServiceVersion{Version: "testVersion_3"},
+	}
+	t.Run("Return True", func(t *testing.T) {
+		var testNewVersion = protobuf.ServiceVersion{
+			Version: "testVersion_unique",
+		}
+		check := checkVersionUnique(testStVersions, testNewVersion)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return False", func(t *testing.T) {
+		var testNewVersion = protobuf.ServiceVersion{
+			Version: "testVersion_2",
+		}
+		check := checkVersionUnique(testStVersions, testNewVersion)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+}
+
+func TestCheckDefaultVersion(t *testing.T) {
+	var testStVersions = []*protobuf.ServiceVersion{
+		&protobuf.ServiceVersion{Version: "testVersion_1"},
+		&protobuf.ServiceVersion{Version: "testVersion_2"},
+		&protobuf.ServiceVersion{Version: "testVersion_3"},
+	}
+	t.Run("Return True", func(t *testing.T) {
+		var testDefaultVersion string = "testVersion_2"
+		check := checkDefaultVersion(testStVersions, testDefaultVersion)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return False", func(t *testing.T) {
+		var testDefaultVersion string = "testBadVersion"
+		check := checkDefaultVersion(testStVersions, testDefaultVersion)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+}
+
+func TestCheckConfigs(t *testing.T) {
+	l := log.New(os.Stdout, "TestCheckConfigs: ", log.Ldate|log.Ltime)
+	errHandler := HttpErrorHandler{}
+	t.Run("IsValidType returns false", func(t *testing.T) {
+		var testVConfigs = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "int"},
+			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "wrongType"},
+			&protobuf.ServiceConfig{ParameterName: "Name3", Type: "bool"},
+		}
+		hS := HttpServer{Logger: l, ErrHandler: errHandler}
+		check, _ := hS.checkConfigs(testVConfigs)
+		if check != false {
+			t.Fatalf("ERROR: return is not false")
+		}
+	})
+
+	t.Run("Param name is nil", func(t *testing.T) {
+		var testVConfigs = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "", Type: "int"},
+			&protobuf.ServiceConfig{ParameterName: "", Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "", Type: "bool"},
+		}
+		hS := HttpServer{Logger: l, ErrHandler: errHandler}
+		check, _ := hS.checkConfigs(testVConfigs)
+		if check != false {
+			t.Fatalf("ERROR: param name is not nil")
+		}
+	})
+
+	t.Run("param name is not unique", func(t *testing.T) {
+		var testVConfigs = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "int"},
+			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "bool"},
+		}
+		hS := HttpServer{Logger: l, ErrHandler: errHandler}
+		check, _ := hS.checkConfigs(testVConfigs)
+		if check != false {
+			t.Fatalf("ERROR: param name is not unique")
+		}
+	})
+
+	t.Run("param name is unique", func(t *testing.T) {
+		var testVConfigs = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "int"},
+			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "Name3", Type: "bool"},
+		}
+		hS := HttpServer{Logger: l, ErrHandler: errHandler}
+		check, _ := hS.checkConfigs(testVConfigs)
+		if check != true {
+			t.Fatalf("ERROR: param name is unique")
+		}
+	})
+}
+
+func TestCheckDependency(t *testing.T) {
+	l := log.New(os.Stdout, "TestCheckConfigs: ", log.Ldate|log.Ltime)
+	mockCtrl := gomock.NewController(t)
+	mockClient := mocks.NewMockGrpcClient(mockCtrl)
+	mockDatabase := mocks.NewMockDatabase(mockCtrl)
+	errHandler := HttpErrorHandler{}
+
+	t.Run("ReadServiceType() error", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType: "testType",
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(nil, errors.New("ReadServiceType() returns this error"))
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: ReadServiceType() returns error")
+		}
+	})
+
+	t.Run("Type is nil", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType: "testType",
+		}
+		var retStruct = protobuf.ServiceType{
+			Type: "",
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: Type is not nil")
+		}
+	})
+
+	t.Run("ServiceVersions nil", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType:     "testType",
+			ServiceVersions: nil,
+		}
+		var retStruct = protobuf.ServiceType{
+			Type: "testType",
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: ServiceVersions not nil")
+		}
+	})
+
+	t.Run("DefaultServiceVersion nil", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType:           "testType",
+			ServiceVersions:       []string{"v_1", "v_2"},
+			DefaultServiceVersion: "",
+		}
+		var retStruct = protobuf.ServiceType{
+			Type: "testType",
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: DefaultServiceVersion not nil")
+		}
+	})
+
+	t.Run("Service version in dependency doesn't exist", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType:           "testType",
+			ServiceVersions:       []string{"v_1", "v_2"},
+			DefaultServiceVersion: "v_3",
+		}
+		var stVersions = []*protobuf.ServiceVersion{
+			&protobuf.ServiceVersion{Version: "v_4"},
+			&protobuf.ServiceVersion{Version: "v_5"},
+			&protobuf.ServiceVersion{Version: "v_6"},
+		}
+		var retStruct = protobuf.ServiceType{
+			Type:     "testType",
+			Versions: stVersions,
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: Service version in dependency doesn't exist")
+		}
+	})
+
+	t.Run("Service version in dependency exists, DefaultServiceVersion not", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType:           "testType",
+			ServiceVersions:       []string{"v_1", "v_2", "v_3"},
+			DefaultServiceVersion: "v_4",
+		}
+		var stVersions = []*protobuf.ServiceVersion{
+			&protobuf.ServiceVersion{Version: "v_1"},
+			&protobuf.ServiceVersion{Version: "v_2"},
+			&protobuf.ServiceVersion{Version: "v_3"},
+		}
+		var retStruct = protobuf.ServiceType{
+			Type:     "testType",
+			Versions: stVersions,
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != false {
+			t.Fatalf("ERROR: Service version in dependency exists, DefaultServiceVersion not")
+		}
+	})
+
+	t.Run("Service version in dependency exists, DefaultServiceVersion exists", func(t *testing.T) {
+		var testService = protobuf.ServiceDependency{
+			ServiceType:           "testType",
+			ServiceVersions:       []string{"v_1", "v_2", "v_3"},
+			DefaultServiceVersion: "v_2",
+		}
+		var stVersions = []*protobuf.ServiceVersion{
+			&protobuf.ServiceVersion{Version: "v_1"},
+			&protobuf.ServiceVersion{Version: "v_2"},
+			&protobuf.ServiceVersion{Version: "v_3"},
+		}
+		var retStruct = protobuf.ServiceType{
+			Type:     "testType",
+			Versions: stVersions,
+		}
+		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := hS.checkDependency(&testService)
+		if check != true {
+			t.Fatalf("ERROR: Service version in dependency exists, DefaultServiceVersion exists")
+		}
+	})
+}
+
+func TestCheckClass(t *testing.T) {
+	t.Run("Return true", func(t *testing.T) {
+		var testService = protobuf.ServiceType{
+			Class: "master-slave",
+		}
+		check := checkClass(&testService)
+		if check != true {
+			t.Fatalf("ERROR: not true")
+		}
+	})
+
+	t.Run("Return false", func(t *testing.T) {
+		var testService = protobuf.ServiceType{
+			Class: "badClass",
+		}
+		check := checkClass(&testService)
+		if check != false {
+			t.Fatalf("ERROR: not false")
+		}
+	})
+}
+
+func TestCheckPort(t *testing.T) {
+	t.Run("Return true", func(t *testing.T) {
+		check := checkPort(20)
+		if check != true {
+			t.Fatalf("ERROR: not true")
+		}
+	})
+
+	t.Run("Return false", func(t *testing.T) {
+		check := checkPort(-20)
+		if check != false {
+			t.Fatalf("ERROR: not false")
+		}
+	})
 }
 
 func TestConfigsGetServices(t *testing.T) {

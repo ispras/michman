@@ -52,17 +52,19 @@ func (hS HttpServer) checkConfigs(vConfigs []*protobuf.ServiceConfig) (bool, err
 	for i, curC := range vConfigs {
 		//check param type
 		if !IsValidType(curC.Type) {
-			hS.Logger.Print("ERROR: parameter type must be int, float, bool, string, error in param" + curC.ParameterName)
+			hS.Logger.Print("ERROR: parameter type must be int, float, bool, string, error in param " + curC.ParameterName)
 			return false, errors.New("ERROR: parameter type must be one of supported: int, float, bool, string")
 		}
 
 		//check param name is unique
 		curName := curC.ParameterName
 		if curName == "" {
+			hS.Logger.Print("ERROR: parameter names must be set")
 			return false, errors.New("ERROR: parameter names must be set")
 		}
 		for _, otherC := range vConfigs[i+1:] {
 			if curName == otherC.ParameterName {
+				hS.Logger.Print("ERROR: parameter names in service config must be uniques")
 				return false, errors.New("ERROR: parameter names in service config must be uniques")
 			}
 		}
@@ -78,14 +80,17 @@ func (hS HttpServer) checkDependency(d *protobuf.ServiceDependency) (bool, error
 	}
 
 	if st.Type == "" {
+		hS.Logger.Print("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
 		return false, errors.New("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
 	}
 
 	if d.ServiceVersions == nil {
+		hS.Logger.Print("Service versions list in dependencies can't be empty")
 		return false, errors.New("Service versions list in dependencies can't be empty")
 	}
 
 	if d.DefaultServiceVersion == "" {
+		hS.Logger.Print("Service default version in dependency can't be empty")
 		return false, errors.New("Service default version in dependency can't be empty")
 	}
 
@@ -100,6 +105,7 @@ func (hS HttpServer) checkDependency(d *protobuf.ServiceDependency) (bool, error
 			}
 		}
 		if !flag {
+			hS.Logger.Print("Service version in dependency doesn't exist")
 			return false, errors.New("Service version in dependency doesn't exist")
 		}
 		if dSv == d.DefaultServiceVersion {
