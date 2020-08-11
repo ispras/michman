@@ -38,10 +38,10 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 	}
 
 	//check service version
-
 	if service.Version == "" && sTypes[stIdx].DefaultVersion != "" {
 		service.Version = sTypes[stIdx].DefaultVersion
 	} else if service.Version == "" && sTypes[stIdx].DefaultVersion == "" {
+		log.Print("ERROR: service version and default version for service type " + service.Type + " are nil.")
 		return false, errors.New("ERROR: service version and default version for service type " + service.Type + " are nil.")
 	}
 
@@ -77,7 +77,7 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 						}
 					}
 					if !flagPV {
-						log.Print("ERROR: service config param value", v, " is not supported.")
+						log.Print("ERROR: service config param value ", v, " is not supported.")
 						return false, errors.New("ERROR: service version " + v + " is not supported.")
 					}
 				}
