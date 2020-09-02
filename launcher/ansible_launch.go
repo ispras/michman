@@ -452,7 +452,7 @@ func setOsVars(osCreds *utils.OsCredentials, version string) error {
 }
 
 func setServiceUrl(ip string, port int32) string {
-	return ip + ":" + string(port)
+	return ip + ":" + fmt.Sprintf("%d", port)
 }
 
 func runAnsible(cmd string, args []string, stdout io.Writer, stderr io.Writer) (bool, error) {
