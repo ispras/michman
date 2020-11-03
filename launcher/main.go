@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/ispras/michman/database"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	inputPort = ":5000"
+	launcherDefaultPort = "5000"
 
 	actionCreate = "create"
 	actionUpdate = "update"
@@ -279,11 +280,13 @@ func (aS *ansibleService) GetMasterIP(in *protobuf.Cluster, stream protobuf.Ansi
 }
 
 func main() {
-	args := os.Args[1:]
-	if len(args) > 0 {
-		fmt.Printf("Config path is %v\n", args[0])
-		utils.SetConfigPath(args[0])
-	}
+	//set flags for config path and ansible service adress
+	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
+	launcherPort := flag.String("port", launcherDefaultPort, "Launcher service default port")
+	flag.Parse()
+
+	//set config file path
+	utils.SetConfigPath(*configPath)
 
 	logFile, err := os.OpenFile("logs/launcher.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
@@ -302,7 +305,7 @@ func main() {
 	}
 	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: db}
 
-	lis, err := net.Listen("tcp", inputPort)
+	lis, err := net.Listen("tcp", ":" + *launcherPort)
 	if err != nil {
 		ansibleServiceLogger.Fatalf("failed to listen: %v", err)
 	}

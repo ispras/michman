@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/ispras/michman/database"
 	"github.com/ispras/michman/utils"
@@ -17,6 +18,7 @@ import (
 const (
 	addressAnsibleService = "localhost:5000"
 	addressDBService      = "localhost:5001"
+	restDefaultPort			  = "8081"
 )
 
 var VersionID string = "Default"
@@ -24,12 +26,14 @@ var VersionID string = "Default"
 func main() {
 	fmt.Printf("Build version: %v\n", VersionID)
 
-	// check if we get path to config
-	args := os.Args[1:]
-	if len(args) > 0 {
-		fmt.Printf("Config path is %v\n", args[0])
-		utils.SetConfigPath(args[0])
-	}
+	//set flags for config path and ansible service adress
+	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
+	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
+	restPort := flag.String("port", restDefaultPort, "Rest service port")
+	flag.Parse()
+
+	//set config file path
+	utils.SetConfigPath(*configPath)
 
 	// creating grpc client for communicating with services
 	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
@@ -42,7 +46,7 @@ func main() {
 	}
 	gc := grpc_client.GrpcClient{Db: db}
 	gc.SetLogger(grpcClientLogger)
-	gc.SetConnection(addressAnsibleService)
+	gc.SetConnection(*launcherAddr)
 
 	// create a multiwriter which writes to stout and a file simultaneously
 	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -124,6 +128,6 @@ func main() {
 	router.Handle("DELETE", "/images/:imageName", hS.ImageDelete)
 
 	httpServerLogger.Print("Server starts to work")
-	httpServerLogger.Fatal(http.ListenAndServe(":8080", router))
+	httpServerLogger.Fatal(http.ListenAndServe(*restPort, router))
 
 }
