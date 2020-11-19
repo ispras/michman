@@ -52,6 +52,17 @@ func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *
 	}
 	var osCreds utils.OsCredentials
 	switch version {
+	case utils.OsUssuriVersion:
+		osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
+		osCreds.OsProjectName = secretValues.Data[utils.OsProjectName].(string)
+		osCreds.OsProjectID = secretValues.Data[utils.OsProjectID].(string)
+		osCreds.OsInterface = secretValues.Data[utils.OsInterface].(string)
+		osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)
+		osCreds.OsRegionName = secretValues.Data[utils.OsRegionName].(string)
+		osCreds.OsUserName = secretValues.Data[utils.OsUsername].(string)
+		osCreds.OsUserDomainName = secretValues.Data[utils.OsUserDomainName].(string)
+		osCreds.OsProjectDomainID = secretValues.Data[utils.OsProjectDomainID].(string)
+		osCreds.OsIdentityApiVersion = secretValues.Data[utils.OsIdentityApiVersion].(string)
 	case utils.OsSteinVersion:
 		osCreds.OsAuthUrl = secretValues.Data[utils.OsAuthUrl].(string)
 		osCreds.OsPassword = secretValues.Data[utils.OsPassword].(string)

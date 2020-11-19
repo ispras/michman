@@ -8,36 +8,6 @@ import (
 	"path/filepath"
 )
 
-type OsCredentials struct {
-	OsAuthUrl            string
-	OsPassword           string
-	OsProjectName        string
-	OsRegionName         string
-	OsTenantId           string
-	OsTenantName         string
-	OsUserName           string
-	OsSwiftUserName      string
-	OsSwiftPassword      string
-	OsComputeApiVersion  string
-	OsNovaVersion        string
-	OsAuthType           string
-	OsCloudname          string
-	OsIdentityApiVersion string
-	OsImageApiVersion    string
-	OsNoCache            string
-	OsProjectDomainName  string
-	OsUserDomainName     string
-	OsVolumeApiVersion   string
-	OsPythonwarnings     string
-	OsNoProxy            string
-}
-
-type DockerCredentials struct {
-	Url      string
-	User     string
-	Password string
-}
-
 type Config struct {
 	// Openstack
 	Key            string `yaml:"os_key_name"`
@@ -47,7 +17,7 @@ type Config struct {
 	MasterFlavor   string `yaml:"master_flavor"`
 	SlavesFlavor   string `yaml:"slaves_flavor"`
 	StorageFlavor  string `yaml:"storage_flavor"`
-	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein' and 'liberty' versions
+	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein', 'ussuri' and 'liberty' versions
 
 	// Vault
 	Token       string `yaml:"token"`
@@ -56,6 +26,7 @@ type Config struct {
 	SshKey      string `yaml:"ssh_key"`
 	CbKey       string `yaml:"cb_key"`
 	RegistryKey string `yaml:"registry_key"`
+	HydraKey    string `yaml:"hydra_key"`
 
 	// Mirror
 	UsePackageMirror string `yaml:"use_package_mirror,omitempty"`
@@ -75,6 +46,16 @@ type Config struct {
 
 	SelfignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url,omitempty"`
 	SelfignedRegistryCert string `yaml:"docker_cert_path,omitempty"`
+
+	//Authentication
+	UseAuth bool `yaml:"use_auth"`
+	AuthorizationModel string `yaml:"authorization_model,omitempty"` //Now are supported only 'oauth2', 'none' or 'keystone' values
+	AdminGroup string `yaml:"admin_group,omitempty"` //name of the Admin user group
+	SessionIdleTimeout int `yaml:"session_idle_timeout,omitempty"'` //time in minutes, controls the maximum length of time a session can be inactive before it expires
+	SessionLifetime int `yaml:"session_lifetime,omitempty"` //time in minutes, controls the maximum length of time that a session is valid for before it expires
+	HydraAdmin string `yaml:"hydra_admin,omitempty"` //hydra admin address
+	HydraClient string `yaml:"hydra_client,omitempty"` //hydra client address
+	KeystoneAddr string `yaml:"keystone_addr,omitempty"` //keystone service address
 }
 
 func SetConfigPath(configPath string) {
@@ -99,6 +80,27 @@ func (Cfg *Config) MakeCfg() error {
 	osBs, err := ioutil.ReadFile(osConfigPath)
 	if err := yaml.Unmarshal(osBs, &Cfg); err != nil {
 		log.Fatalln(err)
+		return err
+	}
+
+	if Cfg.UseAuth && Cfg.AuthorizationModel != NoneAuthMode && Cfg.AuthorizationModel != OAuth2Mode &&
+		Cfg.AuthorizationModel != KeystoneMode {
+		log.Fatalln("For config parameter 'authorization_model' are supported only 'none', 'oauth2' or 'keystone' values")
+		return err
+	}
+
+	//check hydra address for oauth2 mode
+	if Cfg.UseAuth && Cfg.AuthorizationModel == OAuth2Mode {
+		if Cfg.HydraAdmin == "" || Cfg.HydraClient == "" {
+			log.Fatalln("For oauth2 authorization mode config parameters 'hydra_admin' and 'hydra_client' couldn't be empty")
+			return err
+		}
+	}
+
+	//check keystone address for keystone mode
+	if Cfg.UseAuth && Cfg.AuthorizationModel == KeystoneMode && Cfg.KeystoneAddr == ""{
+		log.Fatalln("For keystone authorization mode config parameters 'keystone_addr' couldn't be empty")
+		return err
 	}
 	return nil
 }

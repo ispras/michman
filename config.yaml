@@ -9,7 +9,7 @@ floating_ip_pool: IP_POOL
 master_flavor: FLAVOR
 slaves_flavor: FLAVOR
 storage_flavor: FLAVOR
-os_version: VERSION #stein or liberty
+os_version: VERSION #stein or liberty or ussuri
 
 
 ## Vault
@@ -19,24 +19,31 @@ vault_addr: VAULT_ADDR
 os_key: BUCKET_PATH
 cb_key: BUCKET_PATH
 ssh_key: BUCKET_PATH
+hydra_key: BUCKET_PATH
 
 ## Mirrors
 
-use_package_mirror: false
-use_pip_mirror: false
-# yum_mirror_address: REPOSITORY_URL
-# apt_mirror_address: REPOSITORY_URL
-# pip_mirror_address: REPOSITORY_URL
+use_mirror: true
+mirror_address: MIRROR_ADDR
 
-## Docker registry (optional)
-#
-# docker_insecure_registry: false
-# docker_selfsigned_registry: false
-# docker_gitlab_registry: false
+registry_key: BUCKET_PATH
+docker_selfsigned_registry: true
+docker_selfsigned_registry_ip: DOCKER_ADDR
+docker_selfsigned_registry_url: URL
+docker_cert_path: PATH
 
-# docker_insecure_registry_ip: 127.0.0.1:5000
-# docker_selfsigned_registry_ip: 127.0.0.1
-# docker_selfsigned_registry_url: michmanregistry.ru
-# docker_cert_path: /home/ubuntu/docker.crt
+#auth
+use_auth: true
+authorization_model: none #none or oauth2 or keystone
+admin_group: admin
+session_idle_timeout: 480 #time in minutes, controls the maximum length of time a session can be inactive before it expires
+session_lifetime: 960 #time in minutes, controls the maximum length of time that a session is valid for before it expires
 
+
+#hydra auth params
+hydra_admin: HYDRA_ADDR
+hydra_client: HYDRA_ADDR
+
+#keystone params
+keystone_addr: KEYSTONE_ADDR
 

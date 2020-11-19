@@ -9,6 +9,51 @@ import (
 	"path/filepath"
 )
 
+type OsCredentials struct {
+	OsAuthUrl            string
+	OsPassword           string
+	OsProjectID			 string
+	OsProjectName        string
+	OsProjectDomainID    string
+	OsInterface			 string
+	OsRegionName         string
+	OsTenantId           string
+	OsTenantName         string
+	OsUserName           string
+	OsSwiftUserName      string
+	OsSwiftPassword      string
+	OsComputeApiVersion  string
+	OsNovaVersion        string
+	OsAuthType           string
+	OsCloudname          string
+	OsIdentityApiVersion string
+	OsImageApiVersion    string
+	OsNoCache            string
+	OsProjectDomainName  string
+	OsUserDomainName     string
+	OsVolumeApiVersion   string
+	OsPythonwarnings     string
+	OsNoProxy            string
+}
+
+type DockerCredentials struct {
+	Url      string
+	User     string
+	Password string
+}
+
+type CbCredentials struct {
+	Address  string `yaml:"cb_address"`
+	Username string `yaml:"cb_username"`
+	Password string `yaml:"cb_password"`
+}
+
+type HydraCredentials struct {
+	RedirectUri string
+	ClientId string
+	ClientSecret string
+}
+
 type SecretStorage interface {
 	ConnectVault() (*vaultapi.Client, *Config)
 }

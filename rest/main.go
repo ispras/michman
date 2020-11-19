@@ -1,18 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/alexedwards/scs/v2"
+	"github.com/casbin/casbin"
 	"github.com/ispras/michman/database"
+	grpc_client "github.com/ispras/michman/rest/grpc"
+	"github.com/ispras/michman/rest/handlers"
 	"github.com/ispras/michman/utils"
+	"github.com/julienschmidt/httprouter"
+	auth "gitlab.at.ispras.ru/michman/auth"
+	"gitlab.at.ispras.ru/michman/rest/authorization"
 	"io"
 	"log"
 	"net/http"
 	"os"
-
-	grpc_client "github.com/ispras/michman/rest/grpc"
-	"github.com/ispras/michman/rest/handlers"
-	"github.com/julienschmidt/httprouter"
+	"strconv"
+	"time"
 )
 
 const (
@@ -21,33 +27,40 @@ const (
 	restDefaultPort			  = "8081"
 )
 
-var VersionID string = "Default"
+var (
+	VersionID string = "Default"
+	sessionManager *scs.SessionManager
+	httpServerLogger *log.Logger
+)
+
+func initAuth(authMode string) auth.Authenticate {
+	switch authMode {
+	case utils.OAuth2Mode:
+		hydraAuth, err := auth.NewHydraAuthenticate()
+		if err != nil {
+			httpServerLogger.Println("Can't create new authenticator")
+			os.Exit(1)
+		}
+		return hydraAuth
+	case utils.KeystoneMode:
+		keystoneAuth, err := auth.NewKeystoneAuthenticate()
+		if err != nil {
+			httpServerLogger.Println("Can't create new authenticator")
+			os.Exit(1)
+		}
+		return keystoneAuth
+	case utils.NoneAuthMode:
+		noneAuth, err := auth.NewNoneAuthenticate()
+		if err != nil {
+			httpServerLogger.Println("Can't create new authenticator")
+			os.Exit(1)
+		}
+		return noneAuth
+	}
+	return nil
+}
 
 func main() {
-	fmt.Printf("Build version: %v\n", VersionID)
-
-	//set flags for config path and ansible service adress
-	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
-	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
-	restPort := flag.String("port", restDefaultPort, "Rest service port")
-	flag.Parse()
-
-	//set config file path
-	utils.SetConfigPath(*configPath)
-
-	// creating grpc client for communicating with services
-	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
-	vaultCommunicator := utils.VaultCommunicator{}
-	vaultCommunicator.Init()
-	db, err := database.NewCouchBase(&vaultCommunicator)
-	if err != nil {
-		fmt.Println("Can't create couchbase communicator")
-		os.Exit(1)
-	}
-	gc := grpc_client.GrpcClient{Db: db}
-	gc.SetLogger(grpcClientLogger)
-	gc.SetConnection(*launcherAddr)
-
 	// create a multiwriter which writes to stout and a file simultaneously
 	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
@@ -56,12 +69,80 @@ func main() {
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
-	httpServerLogger := log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
+	httpServerLogger = log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
+
+	httpServerLogger.Printf("Build version: %v\n", VersionID)
+
+	//set flags for config path and ansible service adress
+	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
+	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
+	restPort := flag.String("port", restDefaultPort, "Rest service port")
+	flag.Parse()
+
+	//check rest port correctness
+	iRestPort, err := strconv.Atoi(*restPort)
+	if err != nil {
+		httpServerLogger.Fatal(err)
+	}
+	if iRestPort <= 0 {
+		*restPort = restDefaultPort
+	}
+
+	//set config file path
+	utils.SetConfigPath(*configPath)
+
+	// setup casbin auth rules
+	authEnforcer, err := casbin.NewEnforcerSafe("./auth_model.conf", "./policy.csv")
+	if err != nil {
+		httpServerLogger.Fatal(err)
+	}
+
+	// creating grpc client for communicating with services
+	grpcClientLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
+
+	// creating vault communicator
+	vaultCommunicator := utils.VaultCommunicator{}
+	vaultCommunicator.Init()
+
+	//initialize db connection
+	db, err := database.NewCouchBase(&vaultCommunicator)
+	if err != nil {
+		httpServerLogger.Println("Can't create couchbase communicator")
+		os.Exit(1)
+	}
+	gc := grpc_client.GrpcClient{Db: db}
+	gc.SetLogger(grpcClientLogger)
+	gc.SetConnection(*launcherAddr)
+
+	config	 := utils.Config{}
+	err = config.MakeCfg()
+	if err != nil {
+		httpServerLogger.Println(err)
+		os.Exit(1)
+	}
+
+	//setup session manager
+	sessionManager = scs.New()
+	//set session configurations
+	if config.SessionIdleTimeout > 0 {
+		sessionManager.IdleTimeout = time.Duration(config.SessionIdleTimeout) * time.Minute
+	}
+	if config.SessionLifetime > 0 {
+		sessionManager.Lifetime = time.Duration(config.SessionLifetime) * time.Minute
+	}
+
+	//setup authorize client
+	authorizeClientLogger := log.New(os.Stdout, "AUTHORIZE_CLIENT: ", log.Ldate|log.Ltime)
+	authorizeClient := authorization.AuthorizeClient{Logger: authorizeClientLogger, Db: db,
+		Config: config, SessionManager: sessionManager}
+
+	var usedAuth auth.Authenticate
+	usedAuth = initAuth(config.AuthorizationModel)
 
 	errHandler := handlers.HttpErrorHandler{}
 
 	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: db,
-		ErrHandler: errHandler}
+		ErrHandler: errHandler, Auth: usedAuth}
 
 	router := httprouter.New()
 
@@ -127,7 +208,45 @@ func main() {
 	router.Handle("PUT", "/images/:imageName", hS.ImagePut)
 	router.Handle("DELETE", "/images/:imageName", hS.ImageDelete)
 
-	httpServerLogger.Print("Server starts to work")
-	httpServerLogger.Fatal(http.ListenAndServe(*restPort, router))
+	//auth route
+	router.Handle("GET", "/auth", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+		//set auth facts
+		w, err := hS.Auth.SetAuth(sessionManager, w, r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			hS.Logger.Println(err)
+			return
+		}
 
+		g := sessionManager.GetString(r.Context(), utils.GroupKey)
+
+		hS.Logger.Println("Authentication success!")
+		hS.Logger.Println("User groups are: " + g)
+
+		var userGroups string
+		if g == "" {
+			userGroups = "You are not a member of any group."
+		} else {
+			userGroups = "You are a member of the following groups: " + g
+		}
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode("Authentication success! " + userGroups)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			hS.Logger.Print(err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	httpServerLogger.Print("Server starts to work")
+	//serve with session and authorization if authentication is used
+	if config.UseAuth {
+		httpServerLogger.Fatal(http.ListenAndServe(":" + *restPort,
+			sessionManager.LoadAndSave(authorizeClient.Authorizer(authEnforcer)(router))))
+	} else {
+		httpServerLogger.Fatal(http.ListenAndServe(":" + *restPort, router))
+	}
 }

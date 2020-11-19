@@ -61,6 +61,7 @@ func isImageUsed(hs HttpServer, name string) bool {
 
 func (hs HttpServer) ImagesGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hs.Logger.Print("Get /images GET")
+
 	images, err := hs.Db.ListImages()
 	if err != nil {
 		msg, _ := hs.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
@@ -98,6 +99,7 @@ func (hs HttpServer) ImageGet(w http.ResponseWriter, r *http.Request, params htt
 
 func (hs HttpServer) ImagesPost(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hs.Logger.Print("Get /images POST")
+
 	var image proto.Image
 	err := json.NewDecoder(r.Body).Decode(&image)
 	if err != nil {
@@ -142,6 +144,7 @@ func (hs HttpServer) ImagesPost(w http.ResponseWriter, r *http.Request, _ httpro
 
 func (hs HttpServer) ImagePut(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	hs.Logger.Print("Get /images/:imageName PUT")
+
 	oldImg, err := hs.Db.ReadImage(params.ByName("imageName"))
 	if err != nil {
 		msg, _ := hs.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
@@ -201,6 +204,7 @@ func (hs HttpServer) ImagePut(w http.ResponseWriter, r *http.Request, params htt
 
 func (hs HttpServer) ImageDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	hs.Logger.Print("Get /image/:imageName DELETE")
+
 	used := isImageUsed(hs, params.ByName("imageName"))
 	if used {
 		msg, _ := hs.ErrHandler.Handle(w, ImageUsed, ImageUsedMessage, nil)

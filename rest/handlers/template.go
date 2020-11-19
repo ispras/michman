@@ -83,6 +83,7 @@ func (hS HttpServer) TemplateCreate(w http.ResponseWriter, r *http.Request, para
 
 func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	hS.Logger.Print("Get /templates/templateID or /projects/projectIdOrName/templates PUT")
+
 	templateID := params.ByName("templateID")
 	var t protobuf.Template
 	err := json.NewDecoder(r.Body).Decode(&t)

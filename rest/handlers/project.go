@@ -151,6 +151,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 
 func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
+
 	hS.Logger.Print("Get /projects/", projectIdOrName, " GET")
 
 	hS.Logger.Print("Reading project information from db...")
@@ -204,7 +205,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	if p.Name != "" || p.ID != "" || p.GroupID != 0 || p.DisplayName != "" {
+	if p.Name != "" || p.ID != "" || p.GroupID != "" || p.DisplayName != "" {
 		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, err)
 		hS.Logger.Print(mess)
 		return

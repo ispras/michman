@@ -16,20 +16,8 @@ const (
 	imageBucketName       string = "images"
 )
 
-type vaultAuth struct {
-	Token     string `yaml:"token"`
-	VaultAddr string `yaml:"vault_addr"`
-	cbKey     string `yaml:"cb_key"`
-}
-
-type couchAuth struct {
-	Address  string `yaml:"cb_address"`
-	Username string `yaml:"cb_username"`
-	Password string `yaml:"cb_password"`
-}
-
 type CouchDatabase struct {
-	auth               *couchAuth
+	auth               *utils.CbCredentials
 	couchCluster       *gocb.Cluster
 	clustersBucket     *gocb.Bucket
 	projectsBucket     *gocb.Bucket
@@ -52,10 +40,10 @@ func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 		return nil, err
 	}
 
-	cb.auth = &couchAuth{
-		Address:  couchSecrets.Data["path"].(string),
-		Username: couchSecrets.Data["username"].(string),
-		Password: couchSecrets.Data["password"].(string),
+	cb.auth = &utils.CbCredentials{
+		Address:  couchSecrets.Data[utils.CouchbasePath].(string),
+		Username: couchSecrets.Data[utils.CouchbaseUsername].(string),
+		Password: couchSecrets.Data[utils.CouchbasePassword].(string),
 	}
 	cluster, err := gocb.Connect(cb.auth.Address)
 	if err != nil {
@@ -112,10 +100,10 @@ func (db *CouchDatabase) getCouchCluster() error {
 			return err
 		}
 
-		db.auth = &couchAuth{
-			Address:  couchSecrets.Data["path"].(string),
-			Username: couchSecrets.Data["username"].(string),
-			Password: couchSecrets.Data["password"].(string),
+		db.auth = &utils.CbCredentials{
+			Address:  couchSecrets.Data[utils.CouchbasePath].(string),
+			Username: couchSecrets.Data[utils.CouchbaseUsername].(string),
+			Password: couchSecrets.Data[utils.CouchbasePassword].(string),
 		}
 	}
 

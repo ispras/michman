@@ -5,10 +5,15 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 * Apache Hadoop
 * Apache Ignite
 * Apache Cassandra
+* ClickHouse
+* CouchDB
 * ElasticSearch with OpenDistro tools
 * Jupyter
 * Jupyterhub
 * Nextcloud
+* NFS-Server
+* PostgreSQL
+* Redis
 
 Clusters are created and managed via REST API (see swagger docs) with collaborative group-based access to computational resources.
 
@@ -41,6 +46,8 @@ go get -u gopkg.in/couchbase/gocb.v1
 go get github.com/google/uuid
 go get github.com/golang/mock/gomock
 go get github.com/golang/mock/mockgen
+go get github.com/alexedwards/scs
+go get github.com/casbin/casbin
 ```
 
 Also required `libprotoc 3.6.1`. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04) or may be used docker container [like this](https://hub.docker.com/r/znly/protoc/). Example:
@@ -50,20 +57,22 @@ cd $GOPATH/src/github.com/ispras/michman/protobuf
 docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc --go_out=plugins=grpc:. -I. protofile.proto
 ```
 ## Infrastructure requirements
-* **Openstack** cloud. Supported versions: _Liberty_, _Stein_.
-  * Currently project supports deploying of services only on VMs with Ubuntu (16.04 or 18.04), so should be prepared suitable image.
+* **Openstack** cloud. Supported versions: _Liberty_, _Stein_, _Ussuri_.
+  * Currently project supports deploying of services only on VMs with Ubuntu (16.04 or 18.04) or CentOS, so should be prepared suitable image.
   * It's recomended to prepare floating ip pool and flavors for created VMs.
-  * Also you should prepare security key-pair and pem-key to provide access to created VMs from launcher. Key should be pasted in `$PROJECT_ROOT/launcher/ansible/files/ssh_key` file.
+  * Also you should prepare security key-pair and pem-key to provide access to created VMs from launcher. Key should be pasted in `$PROJECT_ROOT/launcher/ansible/files/ssh_key` file or in Vault secrets storage.
 * **Couchbase** server.
   * Tested version: 6.0.0 community edition
-  * Must contain prepared buckets with primary indexes: _clusters_, _projects_, _templates_. The last one is optional and used only if you going to create templates.
+  * Must contain prepared buckets with primary indexes: _clusters_, _projects_, _templates_, _service_types_, _images_. Templates bucket is optional and used only if you going to create templates.
+  
 * **Vault** server:
   * Tested version: 1.2.3
   * Stored secrets (Secret engine type - _kv v1_, path: kv/):
     * kv/couchbase: _path, username, password_, where path means address of Couchbase server
-    * kv/openstack: 
-        -- `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_TENANT_ID, OS_TENANT_NAME, OS_USERNAME` for Liberty Openstack version
-        -- `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_USERNAME, OS_SWIFT_USERNAME, OS_SWIFT_PASSWORD, COMPUTE_API_VERSION, NOVA_VERSION, OS_AUTH_TYPE, OS_CLOUDNAME, OS_IDENTITY_API_VERSION, OS_IMAGE_API_VERSION, OS_NO_CACHE, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_VOLUME_API_VERSION, PYTHONWARNINGS, no_proxy` for Stein Openstack version
+    * kv/openstack should contain authentication info from Openstack rc file: 
+        * `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_TENANT_ID, OS_TENANT_NAME, OS_USERNAME` for Liberty Openstack version
+        * `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_REGION_NAME, OS_USERNAME, OS_SWIFT_USERNAME, OS_SWIFT_PASSWORD, COMPUTE_API_VERSION, NOVA_VERSION, OS_AUTH_TYPE, OS_CLOUDNAME, OS_IDENTITY_API_VERSION, OS_IMAGE_API_VERSION, OS_NO_CACHE, OS_PROJECT_DOMAIN_NAME, OS_USER_DOMAIN_NAME, OS_VOLUME_API_VERSION, PYTHONWARNINGS, no_proxy` for Stein Openstack version
+        * `OS_AUTH_URL, OS_PASSWORD, OS_PROJECT_NAME, OS_PROJECT_ID, OS_REGION_NAME, OS_DOMAIN_ID, OS_INTERFACE, OS_USERNAME, OS_USER_DOMAIN_NANE, OS_IDENTITY_API_VERSION` for Ussurri Openstack version
     * kv/pem_key: _key_bgt_ - must contain actual ssh key from Openstack key pair for `OS_USERNAME`
 * **Docker registry**  
   * Currently Nextcloud service deployment based on docker containers. It's possible to use local registry:
@@ -83,6 +92,7 @@ vault_addr: http://127.0.0.1:8200
 os_key: kv/openstack
 ssh_key: kv/ssh-keys
 cb_key: kv/couchbase/
+hydra_key: kv/hydra
 
 #Openstack
 os_key_name: my_key
@@ -107,6 +117,20 @@ docker_insecure_registry_ip: 10.10.17.242:5000
 docker_selfsigned_registry_ip: 10.10.17.246
 docker_selfsigned_registry_url: bgtregistry.ru
 docker_cert_path: /home/ubuntu/docker.crt 
+
+#auth
+use_auth: true
+authorization_model: none 
+admin_group: admin
+session_idle_timeout: 480 
+session_lifetime: 960 
+
+#hydra auth params
+hydra_admin: HYDRA_ADDR
+hydra_client: HYDRA_ADDR
+
+#keystone params
+keystone_addr: KEYSTONE_ADDR
 ```
 
 Where:
@@ -115,6 +139,7 @@ Where:
 * **os_key** - path to openstack's kv secrets engine
 * **ssh_key** - path to ssh_key's kv secrets engine
 * **cb_key** - path to couchbase's kv secrets engine
+* **hydra_key** -- path to hydra's kv secrets engine
 * **os_key_name** - key pair name of your Openstack account
 * **virtual_network** - your virtual network name or ID (in Neutron or Nova-networking)
 * **os_image** - ID of OS image
@@ -130,6 +155,14 @@ Where:
 * **docker_selfsigned_registry_ip** - Host ip of your selfsigned registry (optional)
 * **docker_selfsigned_registry_url** - Address of your selfsigned registry according to certificate (optional)
 * **docker_cert_path** - path to your selfsigned certificate (optional)
+* **use_auth** -- use authentication with sessions or no
+* **authorization_model** -- supports none, oauth2 or keystone values
+* **admin_group** -- name of the admin group
+* **session_idle_timeout** -- time in minutes, controls the maximum length of time a session can be inactive before it expires
+* **session_lifetime** -- time in minutes, controls the maximum length of time that a session is valid for before it expires
+* **hydra_admin** -- address of hydra admin server, if oauth2 authorization model is used
+* **hydra_client** -- address of hydra client server, if oauth2 authorization model is used
+* **keystone_addr** -- address of keystone service, if keystone authorization model is used
 
 ## Vault secrets 
 
@@ -176,20 +209,32 @@ Docker registry (registry_key) secret includes following key:
  * **url** -- Address of your selfsigned registry according to certificate or gitlab registry url
  * **user** -- Your selfsigned registry or gitlab username
  * **password** -- Your selfsigned registry or gitlab password
- 
- This secret is optional.
+  
+This secret is optional.
+
+Hydra (hydra_key) secret includes following key:
+ * **redirect_uri** -- OAuth 2.0 redirect URI
+ * **client_id** -- OAuth 2.0 client ID
+ * **client_secret** -- OAuth 2.0 client secret
+  
+ This secret is optional, it is used only for oauth2 authorization model.
 
 # Services
 
 Supported services types are:
-* **cassandra**
-* **spark**
-* **elastic**
-* **jupyter**
-* **ignite**
-* **jupyterhub** 
-* **nfs-server**
-* **nextcloud**
+* Apache Spark
+* Apache Hadoop
+* Apache Ignite
+* Apache Cassandra
+* ClickHouse
+* CouchDB
+* ElasticSearch with OpenDistro tools
+* Jupyter
+* Jupyterhub
+* Nextcloud
+* NFS-Server
+* PostgreSQL
+* Redis
 
 Config parameter for **spark** service type supports:
 * **use-yarn** -- Spark-on-YARN deploy mode  (has overhead on memory so do not use it if you don't know why)
@@ -280,7 +325,7 @@ mkdir $GOPATH/src/github.com/ispras
 mv ./michman $GOPATH/src/github.com/ispras/
 cd $GOPATH/src/github.com/ispras/michman
 ```
-Then, complete _config.yaml_ file.
+Then, complete _config.yaml_ file. Note: we use Michman without authentication (use_auth: false) for this example.
 
 To quick start you may use _build.sh_ script:
 ```
@@ -292,9 +337,9 @@ Manually launch ansible_runner service:
 go run ./launcher/ansible_launcher.go ./launcher/main.go
 ```
 
-Manually launch ansible_runner service specifying config:
+Manually launch ansible_runner service specifying config and port, defaults are config path in Michman root and 5000 as used port:
 ```
-go run ./launcher/ansible_launcher.go ./launcher/main.go /path/to/config.yaml
+go run ./launcher/ansible_launcher.go ./launcher/main.go --config /path/to/config.yaml --port PORT
 ```
 
 Manually launch http_server:
@@ -302,34 +347,34 @@ Manually launch http_server:
 go run ./rest/main.go
 ```
 
-Manually launch http_server specifying config:
+Manually launch http_server specifying config, port and launcher address, defaults are config path in Michman root, 8081 as used port and localhost:5000 for launcher address:
 ```
-go run ./rest/main.go /path/to/config.yaml
+go run ./rest/main.go --config /path/to/config.yaml --port PORT --launcher launcher_host:launcher_port
 ```
 
 Create new project:
 ```
-curl {IP}:8080/projects -XPOST -d '{"Name":"Test", "Description":"Project for tests"}'
+curl {IP}:{PORT}/projects -XPOST -d '{"Name":"Test", "Description":"Project for tests"}'
 ```
 
 Create new cluster with Jupyter service:
 ```
-curl {IP}:8080/projects/{ProjectID}/clusters -XPOST -d '{"DisplayName":"jupyter-test", "Services":[{"Name":"jupyter-project","Type":"jupyter"}],"NHosts":1}'
+curl {IP}:{PORT}/projects/{ProjectID}/clusters -XPOST -d '{"DisplayName":"jupyter-test", "Services":[{"Name":"jupyter-project","Type":"jupyter"}],"NHosts":1}'
 ```
 
 Get info about all clusters in project:
 ```
-curl {IP}:8080/projects/{ProjectID}/clusters
+curl {IP}:{PORT}/projects/{ProjectID}/clusters
 ```
 
 Get info about **jupyter-test** cluster in **Test** project (**note: cluster name id constructed as cluster _DisplayName-ProjectName_**):
 ```
-curl {IP}:8080/projects/{ProjectID}/clusters/jupyter-test-Test
+curl {IP}:{PORT}/projects/{ProjectID}/clusters/jupyter-test-Test
 ```
 
 Delete  **jupyter-test** cluster in **Test** project:
 ```
-curl {IP}:8080/projects/{ProjectID}/clusters/jupyter-test-Test -XDELETE
+curl {IP}:{PORT}/projects/{ProjectID}/clusters/jupyter-test-Test -XDELETE
 ```
 
-Get service API in browser by this URL: **{IP}:8080/api**
+Get service API in browser by this URL: **{IP}:{PORT}}/api**

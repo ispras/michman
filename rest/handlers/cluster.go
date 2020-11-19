@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
+	auth "gitlab.at.ispras.ru/michman/auth"
 	"github.com/ispras/michman/database"
 	proto "github.com/ispras/michman/protobuf"
 	"github.com/ispras/michman/utils"
@@ -29,6 +30,7 @@ type HttpServer struct {
 	Logger     *log.Logger
 	Db         database.Database
 	ErrHandler ErrorHandler
+	Auth       auth.Authenticate
 }
 
 type serviceExists struct {
@@ -584,7 +586,6 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
-	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " DELETE")
 
 	project, err := hS.getProject(projectIdOrName)
 	if err != nil {

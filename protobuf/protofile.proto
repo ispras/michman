@@ -13,7 +13,7 @@ message Project {
     string ID = 1;
     string Name = 2;
     string DisplayName = 3;
-    int32 GroupID = 4;
+    string GroupID = 4;
     string Description = 5;
     string DefaultImage = 6;
 }

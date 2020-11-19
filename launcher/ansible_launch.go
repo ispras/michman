@@ -275,6 +275,47 @@ func findIP(input string) string {
 
 func setOsVars(osCreds *utils.OsCredentials, version string) error {
 	switch version {
+	case utils.OsUssuriVersion:
+		err := os.Setenv(utils.OsAuthUrl, osCreds.OsAuthUrl)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsProjectID, osCreds.OsProjectID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsProjectDomainID, osCreds.OsProjectDomainID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsInterface, osCreds.OsInterface)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsProjectName, osCreds.OsProjectName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsUsername, osCreds.OsUserName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsPassword, osCreds.OsPassword)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsRegionName, osCreds.OsRegionName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsUserDomainName, osCreds.OsUserDomainName)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		err = os.Setenv(utils.OsIdentityApiVersion, osCreds.OsIdentityApiVersion)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	case utils.OsSteinVersion:
 		err := os.Setenv(utils.OsAuthUrl, osCreds.OsAuthUrl)
 		if err != nil {

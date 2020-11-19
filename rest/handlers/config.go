@@ -137,6 +137,7 @@ func checkPort(port int32) bool {
 
 func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /configs POST")
+
 	var st protobuf.ServiceType
 	err := json.NewDecoder(r.Body).Decode(&st)
 	if err != nil {
@@ -292,6 +293,7 @@ func (hS HttpServer) ConfigsGetServices(w http.ResponseWriter, r *http.Request, 
 func (hS HttpServer) ConfigsGetService(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceType")
 	hS.Logger.Print("Get /configs/", sTypeName, " GET")
+
 	queryValues := r.URL.Query()
 	respType := respTypeSummary
 

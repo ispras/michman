@@ -36,6 +36,11 @@ const (
 	ImageUsedMessage                       = "Image already in use. It can't be modified or deleted"
 	ImageUnmodField                        = 52
 	ImageUnmodFieldMessage                 = "Some fileds can't be modified"
+	AuthorizationHeaderIncorrect           = 61
+	AuthorizationHeaderIncorrectMessage    = "Authorization header is empty or doesn't contain access token"
+	AuthorizationFailed                    = 62
+	AuthorizationFailedMessage             = "Authentication failed"
+
 )
 
 // ErrorHandler handling interface

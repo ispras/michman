@@ -55,6 +55,9 @@ const (
 	OsAuthUrl            = "OS_AUTH_URL"
 	OsPassword           = "OS_PASSWORD"
 	OsProjectName        = "OS_PROJECT_NAME"
+	OsProjectID          = "OS_PROJECT_ID"
+	OsProjectDomainID    = "OS_PROJECT_DOMAIN_ID"
+	OsInterface          = "OS_INTERFACE"
 	OsRegionName         = "OS_REGION_NAME"
 	OsTenantId           = "OS_TENANT_ID"
 	OsTenantName         = "OS_TENANT_NAME"
@@ -79,6 +82,16 @@ const (
 	DockerLoginUser     = "user"
 	DockerLoginPassword = "password"
 
+	//Couchbase secret keys
+	CouchbasePath = "path"
+	CouchbaseUsername = "username"
+	CouchbasePassword = "password"
+
+	//Hydra secret keys
+	HydraRedirectUri = "redirect_uri"
+	HydraClientId = "client_id"
+	HydraClientSecret = "client_secret"
+
 	//ssh secrets keys
 	VaultSshKey = "key_bgt"
 
@@ -95,11 +108,21 @@ const (
 	//Openstack stein version
 	OsSteinVersion   string = "stein"
 	OsLibertyVersion string = "liberty"
+	OsUssuriVersion  string = "ussuri"
 
 	//Supported classes for service types
 	ClassStorage     string = "storage"
 	ClassMasterSlave string = "master-slave"
 	ClassStandAlone  string = "stand-alone"
+
+	//Authorization models
+	OAuth2Mode = "oauth2"
+	NoneAuthMode = "none"
+	KeystoneMode = "keystone"
+
+	//sessions keys
+	GroupKey = "groups"
+	AccessTokenKey = "AccessToken"
 )
 
 var (

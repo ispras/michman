@@ -49,7 +49,9 @@ RUN go get -u github.com/hashicorp/vault/api  && \
 	go get github.com/google/uuid  && \
 	go get github.com/golang/mock/gomock  && \
 	go get github.com/jinzhu/copier && \
-	go get github.com/golang/mock/mockgen
+	go get github.com/golang/mock/mockgen && \
+    go get github.com/alexedwards/scs && \
+    go get github.com/casbin/casbin
 
 #clone michman from github
 RUN git clone https://github.com/ispras/michman.git
