@@ -12,6 +12,8 @@ replace gitlab.at.ispras.ru/michman/auth => ../auth
 
 replace gitlab.at.ispras.ru/michman/rest/authorization => ./authorization
 
+replace gitlab.at.ispras.ru/michman/logger => ../logger
+
 go 1.14
 
 require (
@@ -26,6 +28,7 @@ require (
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/julienschmidt/httprouter v1.3.0
 	gitlab.at.ispras.ru/michman/auth v0.0.0-00010101000000-000000000000
+	gitlab.at.ispras.ru/michman/logger v0.0.0-00010101000000-000000000000
 	gitlab.at.ispras.ru/michman/rest/authorization v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.29.1
 

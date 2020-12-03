@@ -47,3 +47,8 @@ hydra_client: HYDRA_ADDR
 #keystone params
 keystone_addr: KEYSTONE_ADDR
 
+#cluster logs
+logs_output: file #file or logstash
+logs_file_path: PATH
+logstash_addr: LOGSTASH_ADDR
+elastic_addr: ELASTIC_ADDR

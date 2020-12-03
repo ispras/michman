@@ -23,8 +23,7 @@ import (
 
 const (
 	addressAnsibleService = "localhost:5000"
-	addressDBService      = "localhost:5001"
-	restDefaultPort			  = "8081"
+	restDefaultPort		  = "8081"
 )
 
 var (
@@ -61,7 +60,7 @@ func initAuth(authMode string) auth.Authenticate {
 }
 
 func main() {
-	// create a multiwriter which writes to stout and a file simultaneously
+	// create a multiwriter which writes to stdout and a file simultaneously
 	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Println("Can't create a log file. Exit...")
@@ -142,7 +141,7 @@ func main() {
 	errHandler := handlers.HttpErrorHandler{}
 
 	hS := handlers.HttpServer{Gc: gc, Logger: httpServerLogger, Db: db,
-		ErrHandler: errHandler, Auth: usedAuth}
+		ErrHandler: errHandler, Auth: usedAuth, Config: config}
 
 	router := httprouter.New()
 
@@ -188,9 +187,9 @@ func main() {
 	router.ServeFiles("/api/*filepath", http.Dir("./rest/swaggerui"))
 
 	// logs routes
-	router.Handle("GET", "/logs/ansible_output", hS.ServeAnsibleOutput)
 	router.Handle("GET", "/logs/launcher", hS.ServeAnsibleServiceLog)
 	router.Handle("GET", "/logs/http_server", hS.ServeHttpServerLog)
+	router.Handle("GET", "/logs/projects/:projectIdOrName/clusters/:clusterID", hS.ServeHttpServerLogstash)
 
 	// version of service
 	router.Handle("GET", "/version", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

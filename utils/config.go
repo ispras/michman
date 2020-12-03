@@ -56,6 +56,12 @@ type Config struct {
 	HydraAdmin string `yaml:"hydra_admin,omitempty"` //hydra admin address
 	HydraClient string `yaml:"hydra_client,omitempty"` //hydra client address
 	KeystoneAddr string `yaml:"keystone_addr,omitempty"` //keystone service address
+
+	//Cluster logs
+	LogsOutput string `yaml:"logs_output"` //file or logstash
+	LogsFilePath string `yaml:"logs_file_path,omitempty"` //path to directory with cluster logs if file output is used
+	LogstashAddr string `yaml:"logstash_addr,omitempty"` //logstash address if logstash output is used
+	ElasticAddr string `yaml:"elastic_addr,omitempty"` //elastic address if logstash output is used
 }
 
 func SetConfigPath(configPath string) {
@@ -86,21 +92,33 @@ func (Cfg *Config) MakeCfg() error {
 	if Cfg.UseAuth && Cfg.AuthorizationModel != NoneAuthMode && Cfg.AuthorizationModel != OAuth2Mode &&
 		Cfg.AuthorizationModel != KeystoneMode {
 		log.Fatalln("For config parameter 'authorization_model' are supported only 'none', 'oauth2' or 'keystone' values")
-		return err
 	}
 
 	//check hydra address for oauth2 mode
 	if Cfg.UseAuth && Cfg.AuthorizationModel == OAuth2Mode {
 		if Cfg.HydraAdmin == "" || Cfg.HydraClient == "" {
 			log.Fatalln("For oauth2 authorization mode config parameters 'hydra_admin' and 'hydra_client' couldn't be empty")
-			return err
 		}
 	}
 
 	//check keystone address for keystone mode
 	if Cfg.UseAuth && Cfg.AuthorizationModel == KeystoneMode && Cfg.KeystoneAddr == ""{
 		log.Fatalln("For keystone authorization mode config parameters 'keystone_addr' couldn't be empty")
-		return err
+	}
+
+	//check logs output values
+	if Cfg.LogsOutput != LogsFileOutput && Cfg.LogsOutput != LogsLogstashOutput {
+		log.Fatalln("For config parameter 'logs_output` are supported only 'file' or 'logstash' values")
+	}
+
+	//check file path not empty
+	if Cfg.LogsOutput == LogsFileOutput && Cfg.LogsFilePath == "" {
+		log.Fatalln("For file logs output config parameter 'logs_file_path' couldn't be empty")
+	}
+
+	//check logstash addr not empty
+	if Cfg.LogsOutput == LogsLogstashOutput && (Cfg.LogstashAddr == "" || Cfg.ElasticAddr == "") {
+		log.Fatalln("For logstash logs output config parameters 'logstash_addr' and 'elastic_addr' couldn't be empty")
 	}
 	return nil
 }

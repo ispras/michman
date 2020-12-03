@@ -123,6 +123,15 @@ const (
 	//sessions keys
 	GroupKey = "groups"
 	AccessTokenKey = "AccessToken"
+
+	//cluster logs outputs
+	LogsFileOutput = "file"
+	LogsLogstashOutput = "logstash"
+
+	//ansible actions
+	ActionCreate = "create"
+	ActionUpdate = "update"
+	ActionDelete = "delete"
 )
 
 var (

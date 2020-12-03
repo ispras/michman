@@ -106,15 +106,15 @@ os_version: liberty
 
 ## Apt and Pip mirror
 use_mirror: false
-mirror_address: 10.10.11.111
+mirror_address: ip
 
 ## Docker registry
 docker_insecure_registry: true
 docker_selfsigned_registry: true
 docker_gitlab_registry: false
 
-docker_insecure_registry_ip: 10.10.17.242:5000
-docker_selfsigned_registry_ip: 10.10.17.246
+docker_insecure_registry_ip: ip:5000
+docker_selfsigned_registry_ip: ip
 docker_selfsigned_registry_url: bgtregistry.ru
 docker_cert_path: /home/ubuntu/docker.crt 
 
@@ -131,6 +131,12 @@ hydra_client: HYDRA_ADDR
 
 #keystone params
 keystone_addr: KEYSTONE_ADDR
+
+#cluster logs
+logs_output: file #file or logstash
+logs_file_path: /home/ubuntu/go/src/gitlab.at.ispras.ru/michman/logs
+logstash_addr: http://ip:9000
+elastic_addr: http://ip:9200
 ```
 
 Where:
@@ -163,7 +169,10 @@ Where:
 * **hydra_admin** -- address of hydra admin server, if oauth2 authorization model is used
 * **hydra_client** -- address of hydra client server, if oauth2 authorization model is used
 * **keystone_addr** -- address of keystone service, if keystone authorization model is used
-
+* **logs_output** -- output for cluster deployment logs, supports file or logstash values
+* **logs_file_path** -- path to directory for cluster deployment logs if file output is used
+* **logstash_addr** -- logstash address if logstash output is used
+* **elastic_addr** -- elastic address if logstash output is used
 ## Vault secrets 
 
 Openstack (os_key) secrets includes following keys for **Liberty** version:

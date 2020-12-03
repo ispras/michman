@@ -17,10 +17,6 @@ import (
 
 const (
 	launcherDefaultPort = "5000"
-
-	actionCreate = "create"
-	actionUpdate = "update"
-	actionDelete = "delete"
 )
 
 type ansibleLaunch interface {
@@ -35,13 +31,11 @@ type ansibleService struct {
 }
 
 func (aS *ansibleService) Init(logger *log.Logger, ansibleLaunch AnsibleLauncher,
-	vaultCommunicator utils.SecretStorage) {
-	config := utils.Config{}
-	config.MakeCfg()
+	vaultCommunicator utils.SecretStorage, config *utils.Config) {
 	aS.logger = logger
 	aS.ansibleRunner = ansibleLaunch
 	aS.vaultCommunicator = vaultCommunicator
-	aS.config = config
+	aS.config = *config
 }
 
 func makeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *utils.OsCredentials {
@@ -204,7 +198,7 @@ func (aS *ansibleService) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
 	}
 
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionDelete)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, utils.ActionDelete)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -242,7 +236,7 @@ func (aS *ansibleService) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
 	}
 
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionUpdate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, utils.ActionUpdate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -277,7 +271,7 @@ func (aS *ansibleService) Create(in *protobuf.Cluster, stream protobuf.AnsibleRu
 		dockRegCreds = makeDockerCreds(vaultCfg.RegistryKey, vaultClient)
 	}
 
-	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, actionCreate)
+	ansibleStatus := aS.ansibleRunner.Run(in, osCreds, dockRegCreds, &aS.config, utils.ActionCreate)
 
 	if err := stream.Send(&protobuf.TaskStatus{Status: ansibleStatus}); err != nil {
 		return err
@@ -314,6 +308,10 @@ func main() {
 		fmt.Println("Can't create database connection. Exit...")
 		os.Exit(1)
 	}
+
+	config := utils.Config{}
+	config.MakeCfg()
+
 	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: db}
 
 	lis, err := net.Listen("tcp", ":" + *launcherPort)
@@ -323,7 +321,7 @@ func main() {
 
 	gas := grpc.NewServer()
 	aService := ansibleService{}
-	aService.Init(ansibleServiceLogger, ansibleLaunch, &vaultCommunicator)
+	aService.Init(ansibleServiceLogger, ansibleLaunch, &vaultCommunicator, &config)
 	protobuf.RegisterAnsibleRunnerServer(gas, &aService)
 
 	ansibleServiceLogger.Print("Ansible runner start work...\n")

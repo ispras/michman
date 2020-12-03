@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	cluster_logger "gitlab.at.ispras.ru/michman/logger"
 	"github.com/ispras/michman/database"
 	protobuf "github.com/ispras/michman/protobuf"
 	"github.com/ispras/michman/utils"
@@ -15,10 +16,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-)
-
-const (
-	jupyterPort = "8888"
 )
 
 type InterfaceMap map[string]interface{}
@@ -182,7 +179,7 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["sync"] = "async" //must be always async mode
 
 	extraVars["create_cluster"] = false
-	if action == actionCreate {
+	if action == utils.ActionCreate {
 		extraVars["create_cluster"] = true
 	}
 
@@ -213,9 +210,9 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 
 	//action must be "launch" in method "/clusters" POST and /clusters/{clusterName} PUT
 	//action must be "destroy" in method /clusters/{clusterName} DELETE
-	if action == actionCreate || action == actionUpdate {
+	if action == utils.ActionCreate || action == utils.ActionUpdate {
 		extraVars["act"] = utils.AnsibleLaunch
-	} else if action == actionDelete {
+	} else if action == utils.ActionDelete {
 		extraVars["act"] = utils.AnsibleDestroy
 	}
 
@@ -539,19 +536,22 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 	if err != nil {
 		log.Println(err)
 	}
-	// create output log
-	f, err := os.Create("logs/ansible_output.log")
+	// initialize output log
+	cLogger, err := cluster_logger.MakeNewClusterLogger(*osConfig, cluster.ID, action)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
+	buf, err := cLogger.PrepClusterLogsWriter()
 	log.Print("Running ansible...")
-	res, err := runAnsible(utils.AnsiblePlaybookCmd, cmdArgs, f, f)
+	res, err := runAnsible(utils.AnsiblePlaybookCmd, cmdArgs, buf, buf)
+	//write cluster logs
+	err = cLogger.FinClusterLogsWriter()
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
-	if res && (action == actionCreate || action == actionUpdate) {
+	if res && (action == utils.ActionCreate || action == utils.ActionUpdate) {
 
 		var v = map[string]string{
 			"cluster_name": cluster.Name,
@@ -580,7 +580,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 				log.Fatalln(err)
 			}
 			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-			log.Print("Running ansible for getting NFS server IP...")
+			log.Print("Running ansible for getting storage IP...")
 			var outb bytes.Buffer
 			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			storageIp = findIP(outb.String())
