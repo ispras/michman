@@ -2,63 +2,62 @@ package auth
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"github.com/alexedwards/scs/v2"
 	"github.com/ispras/michman/utils"
 	"net/http"
-	"encoding/json"
 	"net/url"
 	"regexp"
 	"strings"
-	"github.com/alexedwards/scs/v2"
 )
-
 
 const (
 	authHeader = "Authorization"
 
-	tokenReqPath = "/oauth2/token"
-	uInfoReqPath = "/userinfo"
+	tokenReqPath      = "/oauth2/token"
+	uInfoReqPath      = "/userinfo"
 	introspectReqPath = "/oauth2/introspect"
 )
 
 type HydraAuthenticate struct {
-	hydraAdminUrl string
-	hydraClientUrl string
-	config utils.Config
-	vaultCommunicator  utils.SecretStorage
-	hydraAuth *utils.HydraCredentials
+	hydraAdminUrl     string
+	hydraClientUrl    string
+	config            utils.Config
+	vaultCommunicator utils.SecretStorage
+	hydraAuth         *utils.HydraCredentials
 }
 
-type hydraIntrospect struct{
-	Active bool `json:"active"`
-	Aud []string `json:"aud,omitempty"`
-	ClientId string `json:"client_id,omitempty"`
-	Exp int `json:"exp,omitempty"`
-	Ext interface{} `json:"ext,omitempty"`
-	Iat int `json:"iat,omitempty"`
-	Iss string `json:"iss,omitempty"`
-	Nbf int `json:"nbf,omitempty"`
-	ObfuscatedSubject string `json:"obfuscated_subject,omitempty"`
-	Scope string `json:"scope,omitempty"`
-	Sub string `json:"sub,omitempty"`
-	TokenType string `json:"token_type,omitempty"`
-	Username string `json:"username,omitempty"`
+type hydraIntrospect struct {
+	Active            bool        `json:"active"`
+	Aud               []string    `json:"aud,omitempty"`
+	ClientId          string      `json:"client_id,omitempty"`
+	Exp               int         `json:"exp,omitempty"`
+	Ext               interface{} `json:"ext,omitempty"`
+	Iat               int         `json:"iat,omitempty"`
+	Iss               string      `json:"iss,omitempty"`
+	Nbf               int         `json:"nbf,omitempty"`
+	ObfuscatedSubject string      `json:"obfuscated_subject,omitempty"`
+	Scope             string      `json:"scope,omitempty"`
+	Sub               string      `json:"sub,omitempty"`
+	TokenType         string      `json:"token_type,omitempty"`
+	Username          string      `json:"username,omitempty"`
 }
 
 type hydraToken struct {
 	AccessToken string `json:"access_token"`
-	ExpiresIn int `json:"expires_in"`
-	IdToken string `json:"id_token"`
-	Scope string `json:"scope"`
-	TokenType string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+	IdToken     string `json:"id_token"`
+	Scope       string `json:"scope"`
+	TokenType   string `json:"token_type"`
 }
 
 type hydraUserInfo struct {
-	Email string `json:"email"`
+	Email      string `json:"email"`
 	FamilyName string `json:"family_name"`
-	Groups string `json:"groups"`
-	Sid string `json:"sid"`
-	Sub string `json:"sub"`
+	Groups     string `json:"groups"`
+	Sid        string `json:"sid"`
+	Sub        string `json:"sub"`
 }
 
 func NewHydraAuthenticate() (Authenticate, error) {
@@ -80,20 +79,20 @@ func NewHydraAuthenticate() (Authenticate, error) {
 		return nil, err
 	}
 
-	hydra.hydraAuth = &utils.HydraCredentials {
-		RedirectUri: hydraSecrets.Data[utils.HydraRedirectUri].(string),
-		ClientId: hydraSecrets.Data[utils.HydraClientId].(string),
+	hydra.hydraAuth = &utils.HydraCredentials{
+		RedirectUri:  hydraSecrets.Data[utils.HydraRedirectUri].(string),
+		ClientId:     hydraSecrets.Data[utils.HydraClientId].(string),
 		ClientSecret: hydraSecrets.Data[utils.HydraClientSecret].(string),
 	}
 
 	return hydra, nil
 }
 
-func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error){
+func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
 	var body []byte
 	body = []byte("token=" + token)
 
-	req, err := http.NewRequest(http.MethodPost, hydra.hydraAdminUrl + introspectReqPath, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, hydra.hydraAdminUrl+introspectReqPath, bytes.NewBuffer(body))
 	if err != nil {
 		return false, err
 	}
@@ -103,18 +102,18 @@ func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error){
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false,  err
+		return false, err
 	}
 
 	var intrBody *hydraIntrospect
 	err = json.NewDecoder(resp.Body).Decode(&intrBody)
 	if err != nil {
-		return false,  err
+		return false, err
 	}
 
 	jBody, err := json.Marshal(intrBody)
 	if err != nil {
-		return false,  err
+		return false, err
 	}
 
 	if !intrBody.Active {
@@ -149,7 +148,7 @@ func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, w http.ResponseWr
 	body.Set("client_id", hydra.hydraAuth.ClientId)
 	body.Set("client_secret", hydra.hydraAuth.ClientSecret)
 
-	tokenReq, err := http.NewRequest(http.MethodPost, hydra.hydraClientUrl + tokenReqPath, strings.NewReader(body.Encode()))
+	tokenReq, err := http.NewRequest(http.MethodPost, hydra.hydraClientUrl+tokenReqPath, strings.NewReader(body.Encode()))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return w, err
@@ -157,60 +156,59 @@ func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, w http.ResponseWr
 	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	tokenReq.Header.Add("Accept", "application/json")
 
-
 	client := &http.Client{}
 	//make token request for getting information about access token
 	resp, err := client.Do(tokenReq)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		w.WriteHeader(resp.StatusCode)
-		return w,  err
+		return w, err
 	}
 
 	var tokenBody *hydraToken
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	//access token have to be not nil
 	if tokenBody.AccessToken == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  errors.New("ERROR: access token can't be empty")
+		return w, errors.New("ERROR: access token can't be empty")
 	}
 
 	//set params for userinfo request
-	uInfoReq, err := http.NewRequest(http.MethodGet, hydra.hydraClientUrl + uInfoReqPath, nil)
+	uInfoReq, err := http.NewRequest(http.MethodGet, hydra.hydraClientUrl+uInfoReqPath, nil)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return w, err
 	}
 
-	uInfoReq.Header.Add("Authorization", "Bearer " + tokenBody.AccessToken)
+	uInfoReq.Header.Add("Authorization", "Bearer "+tokenBody.AccessToken)
 	uInfoReq.Header.Add("Accept", "application/json")
 
 	//make userinfo request for getting information about user group
 	uInfoResp, err := client.Do(uInfoReq)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	var uInfoBody *hydraUserInfo
 	err = json.NewDecoder(uInfoResp.Body).Decode(&uInfoBody)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	if uInfoBody.Groups == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  errors.New("ERROR: access token can't be empty")
+		return w, errors.New("ERROR: access token can't be empty")
 	}
 
 	//init session for current user

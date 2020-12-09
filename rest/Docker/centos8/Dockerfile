@@ -53,19 +53,12 @@ RUN go get -u github.com/hashicorp/vault/api  && \
     go get github.com/alexedwards/scs && \
     go get github.com/casbin/casbin
 
-#clone michman from github
-RUN git clone https://github.com/ispras/michman.git
-
-#move michman
+#create michman directory
 RUN mkdir -p ${GOPATH}/src/github.com/ispras && \
-	mv ./michman  ${GOPATH}/src/github.com/ispras/
-
-#create gitlab directory
-RUN mkdir -p ${GOPATH}/src/gitlab.at.ispras.ru && \
-	mkdir -p ${GOPATH}/src/gitlab.at.ispras.ru/michman
+	mkdir -p ${GOPATH}/src/github.com/ispras/michman
 
 #set workdir
-WORKDIR ${GOPATH}/src/gitlab.at.ispras.ru/michman
+WORKDIR ${GOPATH}/src/github.com/ispras/michman
 COPY . .
 
 #generate proto files and compile michman

@@ -12,10 +12,10 @@ import (
 type OsCredentials struct {
 	OsAuthUrl            string
 	OsPassword           string
-	OsProjectID			 string
+	OsProjectID          string
 	OsProjectName        string
 	OsProjectDomainID    string
-	OsInterface			 string
+	OsInterface          string
 	OsRegionName         string
 	OsTenantId           string
 	OsTenantName         string
@@ -49,8 +49,8 @@ type CbCredentials struct {
 }
 
 type HydraCredentials struct {
-	RedirectUri string
-	ClientId string
+	RedirectUri  string
+	ClientId     string
 	ClientSecret string
 }
 

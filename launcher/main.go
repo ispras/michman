@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/ispras/michman/database"
-	protobuf "github.com/ispras/michman/protobuf"
+	"github.com/ispras/michman/protobuf"
 	"github.com/ispras/michman/utils"
 	"google.golang.org/grpc"
 	"io"
@@ -292,29 +291,28 @@ func main() {
 
 	//set config file path
 	utils.SetConfigPath(*configPath)
-
-	logFile, err := os.OpenFile("logs/launcher.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	config := utils.Config{}
+	if err := config.MakeCfg(); err != nil {
+		panic(err)
+	}
+	logFile, err := os.OpenFile(config.LogsFilePath+"/launcher.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		fmt.Println("Can't create a log file. Exit...")
-		os.Exit(1)
+		panic(err)
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
 	ansibleServiceLogger := log.New(mw, "LAUNCHER: ", log.Ldate|log.Ltime)
 	vaultCommunicator := utils.VaultCommunicator{}
-	vaultCommunicator.Init()
+	err = vaultCommunicator.Init()
+	if err != nil {
+		panic(err)
+	}
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		fmt.Println("Can't create database connection. Exit...")
-		os.Exit(1)
+		panic("Can't create database connection. Exit...")
 	}
-
-	config := utils.Config{}
-	config.MakeCfg()
-
 	ansibleLaunch := AnsibleLauncher{couchbaseCommunicator: db}
-
-	lis, err := net.Listen("tcp", ":" + *launcherPort)
+	lis, err := net.Listen("tcp", ":"+*launcherPort)
 	if err != nil {
 		ansibleServiceLogger.Fatalf("failed to listen: %v", err)
 	}

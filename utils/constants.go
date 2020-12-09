@@ -83,13 +83,13 @@ const (
 	DockerLoginPassword = "password"
 
 	//Couchbase secret keys
-	CouchbasePath = "path"
+	CouchbasePath     = "path"
 	CouchbaseUsername = "username"
 	CouchbasePassword = "password"
 
 	//Hydra secret keys
-	HydraRedirectUri = "redirect_uri"
-	HydraClientId = "client_id"
+	HydraRedirectUri  = "redirect_uri"
+	HydraClientId     = "client_id"
 	HydraClientSecret = "client_secret"
 
 	//ssh secrets keys
@@ -116,16 +116,16 @@ const (
 	ClassStandAlone  string = "stand-alone"
 
 	//Authorization models
-	OAuth2Mode = "oauth2"
+	OAuth2Mode   = "oauth2"
 	NoneAuthMode = "none"
 	KeystoneMode = "keystone"
 
 	//sessions keys
-	GroupKey = "groups"
+	GroupKey       = "groups"
 	AccessTokenKey = "AccessToken"
 
 	//cluster logs outputs
-	LogsFileOutput = "file"
+	LogsFileOutput     = "file"
 	LogsLogstashOutput = "logstash"
 
 	//ansible actions

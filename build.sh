@@ -1,10 +1,63 @@
-#!/bin/sh
+#!/bin/bash
 
-usage="usage: build.sh [proto|mock|test|compile|start|stop|clean]"
+usage="usage: build.sh [OPTION...] [COMMAND] \n
+Available commands:\n
+ proto - creates required protobuf code\n
+ mock - creates required mocks for testing\n
+ test - run test\n
+ compile - build binary files\n
+ start - run michman (launcher and rest api)\n
+ \tAvailable options:\n
+ \t     -c|--config - config path\n
+ \t     -l|--launcher-port - launcher port (default vaule is 5000)\n
+ \t     -r|--rest-port|--http-port - http port (default value is 8081)\n
+ help - show this message"
+
 LAUNCHER_BIN=launch
 REST_BIN=http
+CONFIG=./config.yaml
+LAUNCHER_PORT=5000
+HTTP_PORT=8081
+while [[ $# -gt 0 ]]
+do
+key=$1
+case $key in
+	-c|--config)
+		CONFIG=$2
+		shift
+		shift
+		;;
+	-l|--launcher-port)
+		LAUNCHER_PORT=$2
+		shift
+		shift
+		;;
+	-r|--rest-port|--http-port)
+		HTTP_PORT=$2
+		shift
+		shift
+		;;
+	-h|--help)
+		COMMAND=help
+		break
+		;;
+	proto|mock|test|compile|start|stop|clean|help)
+		if [[ -n $COMMAND ]]
+		then
+			echo $usage
+			break
+		fi
+		COMMAND=$key
+		shift
+		;;
+	*)
+		echo $usage
+		break
+		;;
+esac
+done
 
-case $1 in
+case $COMMAND in
 proto) 
 	echo "generate protobuf code..."
 	cd protobuf/; protoc --go_out=plugins=grpc:. protofile.proto; cd ..
@@ -60,7 +113,7 @@ start)
 		./build.sh compile
 	fi
 	echo "run launcher..."
-	1>/dev/null 2>/dev/null ./$LAUNCHER_BIN $2 &
+	1>/dev/null 2>/dev/null ./$LAUNCHER_BIN --config $CONFIG --port $LAUNCHER_PORT &
 	echo $! > .$LAUNCHER_BIN.pid
 	sleep 1
 	if [ -z $(ps | grep $(cat .$LAUNCHER_BIN.pid)| awk '{print $1}') ]
@@ -70,7 +123,7 @@ start)
 		exit
 	fi
 	echo "run rest api server..."
-	1>/dev/null 2>/dev/null ./$REST_BIN $2 &
+	1>/dev/null 2>/dev/null ./$REST_BIN --config $CONFIG --port $HTTP_PORT --launcher localhost:$LAUNCHER_PORT &
 	echo $! > .$REST_BIN.pid
 	sleep 1
 	if [ -z $(ps | grep $(cat .$REST_BIN.pid) | awk '{print $1}') ]
@@ -92,6 +145,7 @@ clean)
 	echo "remove all generated and binary files"
 	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN ./protobuf/protofile.pb.go ./mocks/mock_*
 	;;
-*) echo $usage
+help) echo -e $usage
+#*) echo $usage
 esac
 

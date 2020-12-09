@@ -2,16 +2,16 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/ispras/michman/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"encoding/json"
 )
 
 type clusterLog struct {
 	ClusterName string `json:"Cluster_name"`
-	Data string `json:"Data"`
+	Data        string `json:"Data"`
 }
 
 const (
@@ -24,10 +24,10 @@ type queryLog struct {
 
 type LogstashLogger struct {
 	logstashAddr string
-	elasticAddr string
-	clusterID string
-	action string
-	logsBuffer *bytes.Buffer
+	elasticAddr  string
+	clusterID    string
+	action       string
+	logsBuffer   *bytes.Buffer
 }
 
 func NewLogstashLogger(clusterID string, action string) (Logger, error) {
@@ -54,7 +54,7 @@ func (ll LogstashLogger) FinClusterLogsWriter() error {
 	cLog := clusterLog{ClusterName: makeClusterName(ll.clusterID, ll.action), Data: ll.logsBuffer.String()}
 	client := http.Client{}
 
-	jsonLogs, err:= json.Marshal(cLog)
+	jsonLogs, err := json.Marshal(cLog)
 	if err != nil {
 		return err
 	}
@@ -77,19 +77,19 @@ func (ll LogstashLogger) ReadClusterLogs() (string, error) {
 
 	client := http.Client{}
 
-	jsonLog, err:= json.Marshal(logs)
+	jsonLog, err := json.Marshal(logs)
 	if err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, ll.elasticAddr + sqlQueryPath, bytes.NewBuffer(jsonLog) )
+	req, err := http.NewRequest(http.MethodPost, ll.elasticAddr+sqlQueryPath, bytes.NewBuffer(jsonLog))
 	if err != nil {
 		return "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err:= client.Do(req)
+	resp, err := client.Do(req)
 	if resp.StatusCode != http.StatusOK {
 		return "", err
 	}

@@ -9,10 +9,10 @@ import (
 )
 
 type FileLogger struct {
-	filePath string
-	logFile *os.File
+	filePath  string
+	logFile   *os.File
 	clusterID string
-	action string
+	action    string
 }
 
 func NewFileLogger(clusterID string, action string) (Logger, error) {

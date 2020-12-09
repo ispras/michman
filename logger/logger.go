@@ -27,5 +27,3 @@ func MakeNewClusterLogger(cfg utils.Config, clusterID string, action string) (Lo
 	}
 	return clusterLogger, nil
 }
-
-

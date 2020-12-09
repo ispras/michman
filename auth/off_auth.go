@@ -18,7 +18,7 @@ func NewNoneAuthenticate() (Authenticate, error) {
 	return n, nil
 }
 
-func (n NoneAuthenticate) CheckAuth(token string) (bool, error){
+func (n NoneAuthenticate) CheckAuth(token string) (bool, error) {
 	return true, nil
 }
 

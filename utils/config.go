@@ -48,20 +48,20 @@ type Config struct {
 	SelfignedRegistryCert string `yaml:"docker_cert_path,omitempty"`
 
 	//Authentication
-	UseAuth bool `yaml:"use_auth"`
-	AuthorizationModel string `yaml:"authorization_model,omitempty"` //Now are supported only 'oauth2', 'none' or 'keystone' values
-	AdminGroup string `yaml:"admin_group,omitempty"` //name of the Admin user group
-	SessionIdleTimeout int `yaml:"session_idle_timeout,omitempty"'` //time in minutes, controls the maximum length of time a session can be inactive before it expires
-	SessionLifetime int `yaml:"session_lifetime,omitempty"` //time in minutes, controls the maximum length of time that a session is valid for before it expires
-	HydraAdmin string `yaml:"hydra_admin,omitempty"` //hydra admin address
-	HydraClient string `yaml:"hydra_client,omitempty"` //hydra client address
-	KeystoneAddr string `yaml:"keystone_addr,omitempty"` //keystone service address
+	UseAuth            bool   `yaml:"use_auth"`
+	AuthorizationModel string `yaml:"authorization_model,omitempty"`   //Now are supported only 'oauth2', 'none' or 'keystone' values
+	AdminGroup         string `yaml:"admin_group,omitempty"`           //name of the Admin user group
+	SessionIdleTimeout int    `yaml:"session_idle_timeout,omitempty"'` //time in minutes, controls the maximum length of time a session can be inactive before it expires
+	SessionLifetime    int    `yaml:"session_lifetime,omitempty"`      //time in minutes, controls the maximum length of time that a session is valid for before it expires
+	HydraAdmin         string `yaml:"hydra_admin,omitempty"`           //hydra admin address
+	HydraClient        string `yaml:"hydra_client,omitempty"`          //hydra client address
+	KeystoneAddr       string `yaml:"keystone_addr,omitempty"`         //keystone service address
 
 	//Cluster logs
-	LogsOutput string `yaml:"logs_output"` //file or logstash
+	LogsOutput   string `yaml:"logs_output"`              //file or logstash
 	LogsFilePath string `yaml:"logs_file_path,omitempty"` //path to directory with cluster logs if file output is used
-	LogstashAddr string `yaml:"logstash_addr,omitempty"` //logstash address if logstash output is used
-	ElasticAddr string `yaml:"elastic_addr,omitempty"` //elastic address if logstash output is used
+	LogstashAddr string `yaml:"logstash_addr,omitempty"`  //logstash address if logstash output is used
+	ElasticAddr  string `yaml:"elastic_addr,omitempty"`   //elastic address if logstash output is used
 }
 
 func SetConfigPath(configPath string) {
@@ -102,7 +102,7 @@ func (Cfg *Config) MakeCfg() error {
 	}
 
 	//check keystone address for keystone mode
-	if Cfg.UseAuth && Cfg.AuthorizationModel == KeystoneMode && Cfg.KeystoneAddr == ""{
+	if Cfg.UseAuth && Cfg.AuthorizationModel == KeystoneMode && Cfg.KeystoneAddr == "" {
 		log.Fatalln("For keystone authorization mode config parameters 'keystone_addr' couldn't be empty")
 	}
 
@@ -112,8 +112,8 @@ func (Cfg *Config) MakeCfg() error {
 	}
 
 	//check file path not empty
-	if Cfg.LogsOutput == LogsFileOutput && Cfg.LogsFilePath == "" {
-		log.Fatalln("For file logs output config parameter 'logs_file_path' couldn't be empty")
+	if Cfg.LogsFilePath == "" {
+		log.Fatalln("'logs_file_path' couldn't be empty")
 	}
 
 	//check logstash addr not empty

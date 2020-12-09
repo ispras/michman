@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"github.com/ispras/michman/utils"
-	cluster_logger "gitlab.at.ispras.ru/michman/logger"
+	cluster_logger "github.com/ispras/michman/logger"
 )
 
 const (

@@ -1,55 +1,54 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ispras/michman/utils"
 	"net/http"
-	"encoding/json"
 	"strings"
 )
 
 const (
 	checkTokenPath = "/v3/auth/tokens"
-	authTokenKey = "X-Auth-Token"
-	subTokenKey = "X-Subject-Token"
-
+	authTokenKey   = "X-Auth-Token"
+	subTokenKey    = "X-Subject-Token"
 )
 
 type KeystoneAuthenticate struct {
 	keystoneUrl string
-	config utils.Config
+	config      utils.Config
 }
 
 type keystoneRole struct {
-	Id string `json:"id"`
-	Links map[string]string `json:"links,omitempty"`
-	Description string `json:"description,omitempty"`
-	Name string `json:"name"`
+	Id          string            `json:"id"`
+	Links       map[string]string `json:"links,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Name        string            `json:"name"`
 }
 
 type tokenInfo struct {
-	Methods []string `json:"methods"`
-	Links interface{} `json:"links"`
-	User interface{} `json:"user"`
-	Token interface{} `json:"token"`
-	ExpiresAt string `json:"expires_at"`
-	Catalog []interface{} `json:"catalog,omitempty"`
-	System interface{} `json:"system,omitempty"`
-	Domain interface{} `json:"domain,omitempty"`
-	Project interface{} `json:"project,omitempty"`
-	Roles []keystoneRole `json:"roles"`
-	AuditIds []string `json:"audit_ids"`
-	IssuedAt string `json:"issued_at"`
-	Id string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	Methods   []string       `json:"methods"`
+	Links     interface{}    `json:"links"`
+	User      interface{}    `json:"user"`
+	Token     interface{}    `json:"token"`
+	ExpiresAt string         `json:"expires_at"`
+	Catalog   []interface{}  `json:"catalog,omitempty"`
+	System    interface{}    `json:"system,omitempty"`
+	Domain    interface{}    `json:"domain,omitempty"`
+	Project   interface{}    `json:"project,omitempty"`
+	Roles     []keystoneRole `json:"roles"`
+	AuditIds  []string       `json:"audit_ids"`
+	IssuedAt  string         `json:"issued_at"`
+	Id        string         `json:"id,omitempty"`
+	Name      string         `json:"name,omitempty"`
 }
 
 type keystoneToken struct {
 	Token tokenInfo `json:"token"`
 }
 
-func NewKeystoneAuthenticate() (Authenticate, error){
+func NewKeystoneAuthenticate() (Authenticate, error) {
 	k := new(KeystoneAuthenticate)
 
 	config := utils.Config{}
@@ -59,7 +58,7 @@ func NewKeystoneAuthenticate() (Authenticate, error){
 	return k, nil
 }
 
-func (keystone KeystoneAuthenticate) CheckAuth(token string) (bool, error){
+func (keystone KeystoneAuthenticate) CheckAuth(token string) (bool, error) {
 	return true, nil
 }
 
@@ -81,7 +80,7 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.Resp
 	}
 
 	//prepare request
-	tokenReq, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl + checkTokenPath, nil)
+	tokenReq, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl+checkTokenPath, nil)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return w, err
@@ -94,12 +93,12 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.Resp
 	resp, err := client.Do(tokenReq)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		w.WriteHeader(resp.StatusCode)
-		return w,  err
+		return w, err
 	}
 
 	//parse request body
@@ -107,13 +106,13 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.Resp
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return w,  err
+		return w, err
 	}
 
 	//generate user groups by roles names
 	var userGroups strings.Builder
 	for i, r := range tokenBody.Token.Roles {
-		if (i == 0) {
+		if i == 0 {
 			//join role without comma for the first time
 			userGroups.WriteString(r.Name)
 		} else {

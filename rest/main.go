@@ -3,16 +3,15 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
+	auth "github.com/ispras/michman/auth"
 	"github.com/ispras/michman/database"
+	"github.com/ispras/michman/rest/authorization"
 	grpc_client "github.com/ispras/michman/rest/grpc"
 	"github.com/ispras/michman/rest/handlers"
 	"github.com/ispras/michman/utils"
 	"github.com/julienschmidt/httprouter"
-	auth "gitlab.at.ispras.ru/michman/auth"
-	"gitlab.at.ispras.ru/michman/rest/authorization"
 	"io"
 	"log"
 	"net/http"
@@ -23,12 +22,12 @@ import (
 
 const (
 	addressAnsibleService = "localhost:5000"
-	restDefaultPort		  = "8081"
+	restDefaultPort       = "8081"
 )
 
 var (
-	VersionID string = "Default"
-	sessionManager *scs.SessionManager
+	VersionID        string = "Default"
+	sessionManager   *scs.SessionManager
 	httpServerLogger *log.Logger
 )
 
@@ -60,23 +59,29 @@ func initAuth(authMode string) auth.Authenticate {
 }
 
 func main() {
+	//set flags for config path and ansible service adress
+	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
+	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
+	restPort := flag.String("port", restDefaultPort, "Rest service port")
+	flag.Parse()
+
+	//set config file path
+	utils.SetConfigPath(*configPath)
 	// create a multiwriter which writes to stdout and a file simultaneously
-	logFile, err := os.OpenFile("logs/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	config := utils.Config{}
+	err := config.MakeCfg()
 	if err != nil {
-		fmt.Println("Can't create a log file. Exit...")
-		os.Exit(1)
+		panic(err)
+	}
+	logFile, err := os.OpenFile(config.LogsFilePath+"/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		panic(err)
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
 	httpServerLogger = log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
 
 	httpServerLogger.Printf("Build version: %v\n", VersionID)
-
-	//set flags for config path and ansible service adress
-	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
-	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
-	restPort := flag.String("port", restDefaultPort, "Rest service port")
-	flag.Parse()
 
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
@@ -86,9 +91,6 @@ func main() {
 	if iRestPort <= 0 {
 		*restPort = restDefaultPort
 	}
-
-	//set config file path
-	utils.SetConfigPath(*configPath)
 
 	// setup casbin auth rules
 	authEnforcer, err := casbin.NewEnforcerSafe("./auth_model.conf", "./policy.csv")
@@ -112,13 +114,6 @@ func main() {
 	gc := grpc_client.GrpcClient{Db: db}
 	gc.SetLogger(grpcClientLogger)
 	gc.SetConnection(*launcherAddr)
-
-	config	 := utils.Config{}
-	err = config.MakeCfg()
-	if err != nil {
-		httpServerLogger.Println(err)
-		os.Exit(1)
-	}
 
 	//setup session manager
 	sessionManager = scs.New()
@@ -243,9 +238,9 @@ func main() {
 	httpServerLogger.Print("Server starts to work")
 	//serve with session and authorization if authentication is used
 	if config.UseAuth {
-		httpServerLogger.Fatal(http.ListenAndServe(":" + *restPort,
+		httpServerLogger.Fatal(http.ListenAndServe(":"+*restPort,
 			sessionManager.LoadAndSave(authorizeClient.Authorizer(authEnforcer)(router))))
 	} else {
-		httpServerLogger.Fatal(http.ListenAndServe(":" + *restPort, router))
+		httpServerLogger.Fatal(http.ListenAndServe(":"+*restPort, router))
 	}
 }

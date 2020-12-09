@@ -4,7 +4,7 @@ import (
 	"github.com/ispras/michman/database"
 	proto "github.com/ispras/michman/protobuf"
 	"github.com/ispras/michman/utils"
-	"gitlab.at.ispras.ru/michman/auth"
+	"github.com/ispras/michman/auth"
 	"log"
 )
 
