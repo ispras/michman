@@ -95,11 +95,13 @@ func TestProjectsCreate(t *testing.T) {
 		request, _ := http.NewRequest("POST", "/projects", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-		hS.ProjectCreate(response, request, httprouter.Params{})
-
+		
+ 
 		mockDatabase.EXPECT().ReadProjectByName(project.DisplayName).Return(&protobuf.Project{}, nil)
 		mockDatabase.EXPECT().ReadImage(project.DefaultImage).Return(&testImage, nil)
-		mockDatabase.EXPECT().WriteProject(&project).Return(nil)
+		mockDatabase.EXPECT().WriteProject(gomock.Any()).Return(nil) 
+
+		hS.ProjectCreate(response, request, httprouter.Params{})
 
 		var p protobuf.Project
 		err := json.NewDecoder(response.Body).Decode(&p)
@@ -258,22 +260,6 @@ func TestProjectDelete(t *testing.T) {
 	projectName := "testProjectName"
 	projectID := "someID123"
 
-	t.Run("Project has no clusters", func(t *testing.T) {
-		request, _ := http.NewRequest("PUT", "/projects/"+projectName, nil)
-		response := httptest.NewRecorder()
-
-		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectID}, nil)
-		mockDatabase.EXPECT().ReadProjectClusters(projectID).Return([]protobuf.Cluster{}, nil)
-		mockDatabase.EXPECT().DeleteProject(projectID).Return(nil)
-
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		hS.ProjectDelete(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
-
-		if response.Code != http.StatusOK {
-			t.Fatalf("Expected status code %v, but received: %v", http.StatusOK, response.Code)
-		}
-	})
-
 	t.Run("Project has clusters", func(t *testing.T) {
 		request, _ := http.NewRequest("PUT", "/projects/"+projectName, nil)
 		response := httptest.NewRecorder()
@@ -291,6 +277,24 @@ func TestProjectDelete(t *testing.T) {
 			t.Fatalf("Expected status code %v, but received: %v", http.StatusBadRequest, response.Code)
 		}
 	})
+
+	t.Run("Project has no clusters", func(t *testing.T) {
+		request, _ := http.NewRequest("PUT", "/projects/"+projectName, nil)
+		response := httptest.NewRecorder()
+
+		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectID}, nil)
+		mockDatabase.EXPECT().ReadProjectClusters(projectID).Return([]protobuf.Cluster{}, nil)
+		mockDatabase.EXPECT().DeleteProject(projectID).Return(nil)
+
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS.ProjectDelete(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
+
+		if response.Code != http.StatusOK {
+			t.Fatalf("Expected status code %v, but received: %v", http.StatusOK, response.Code)
+		}
+	})
+
+	
 
 	t.Run("Project didn't exist", func(t *testing.T) {
 		request, _ := http.NewRequest("DELETE", "/projects/"+projectName, nil)

@@ -40,7 +40,7 @@ var testProject = protobuf.Project{
 	ID:          "2f20b979-6eb8-46b2-8f14-984f87d96978]",
 	Name:        "test1",
 	DisplayName: "test1",
-	GroupID:     0,
+	GroupID:     "0",
 	Description: "test-description",
 }
 
