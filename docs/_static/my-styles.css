@@ -1,0 +1,40 @@
+/* Unused samples for overrides example. */
+/*.wy-side-nav-search, .wy-nav-top {
+    background: rgb(0, 60, 130);
+}*/
+/*.wy-nav-side {
+  background: red;
+}*/
+/*.navbar-default .navbar-brand {
+  color: red;
+}
+*/
+
+.navbar.navbar-inverse {
+	background-color: rgb(0, 60, 130);
+	border-color: rgb(0, 60, 130);
+}
+
+.alert.alert-info {
+	background-color: rgb(0, 60, 130);
+	border-color: rgb(0, 60, 130);
+}
+
+/*
+footer {
+  background-color: rgb(0, 60, 130);
+}*/
+
+/*header {
+  background-color: rgb(0, 60, 130);
+}*/
+
+/*.navbar .navbar .navbar-inverse {
+	background-color: rgb(0, 60, 130);
+	border-color: red;
+}*/
+
+/*.navbar-default {
+	background-color: rgb(0, 60, 130);
+	border-color: red;
+}*/

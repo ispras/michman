@@ -10,7 +10,7 @@
 Michman Initial Configuration
 =============================
 
-This section gives information about Michman initial configuration and describes, how to start working with it. Michman depends on different components, that are responsible for specific functionality, such as data storage, authentication, logging, etc. Of course Michman must be connected to the IaaS cloud. Now we support cluster deploying in OpenStack-based clouds.
+This section provides information about the initial Michman setup and how to get started with it. Michman depends on various components that are responsible for certain functions such as data storage, authentication, logging, and so on. Of course, Michman must be connected to the IaaS cloud. Currently, we support the deployment of a cluster in the clouds based on OpenStack.
 
 OpenStack configuration
 -----------------------
@@ -211,7 +211,7 @@ Cluster logs could be accessed via REST API by the cluster ID.
 Docker registry configurations
 -------------------------------
 
-Currently Nextcloud service deployment based on docker containers. It's possible to use local registry:
+Currently Nextcloud service deployment is based on docker containers. It's possible to use local registry:
 
     #. Prepare your registry. It may be insecure registry (without any sertificates and user controls), selfsigned registry or gitlab registry.
     #. Configure in *config.yaml*:
@@ -267,7 +267,7 @@ This authentication type is used when you want to use Michman with your LDAP-ser
 
 You have to deploy following services: Hydra Admin, Hydra Client and Werther, connected to your LDAP. The easiest way to do it is deploy these services using docker-compose from Wearthers `README`_.
 
-Note! You should customize following Werther environment parameters:
+.. note:: You should customize following Werther environment parameters:
 
 	* **WERTHER_LDAP_ROLE_CLAIM**
 	* **WERTHER_IDENTP_CLAIM_SCOPES**
@@ -276,14 +276,14 @@ Note! You should customize following Werther environment parameters:
 Be sure to specify the "groups" parameter, it will be used for user authorization in Michmans projects.
 
 
-Note! You should customize following Hydra Admin environment parameters:
+.. note:: You should customize following Hydra Admin environment parameters:
 
 	* **WEBFINGER_OIDC_DISCOVERY_SUPPORTED_SCOPES**
 	* **WEBFINGER_OIDC_DISCOVERY_SUPPORTED_CLAIMS**
 
 Be sure to specify the "groups" parameter in scopes and claims, it will be used for user authorization in Michmans projects.
 
-Note! Launching "hydra clients create" command you should specify following parameters:
+.. note:: Launching "hydra clients create" command you should specify following parameters:
 
     * grant\-types
     * token\-endpoint\-auth\-method

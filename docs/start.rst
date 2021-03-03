@@ -7,10 +7,16 @@ This guide describes how to start Michman. It is usefull, if you don't use Michm
 
 Don't forget to fill the *config.yaml* file.
 
+Quick start
+------------
+
 To quick start you may use *build.sh* script:
 
 .. parsed-literal::
 	./build.sh start
+
+Start in manual mode
+--------------------
 
 Also, you can use mannualy startup. First, build proto-file:
 
@@ -39,6 +45,9 @@ Manually launch http_server specifying config, port and launcher address, defaul
 
 .. parsed-literal::
 	go run ./rest/main.go --config /path/to/config.yaml --port PORT --launcher launcher_host:launcher_port
+
+Compilation with *build.sh* script 
+--------------------------------------
 
 Furthermore, you can compile michman services with  *build.sh* script:
 

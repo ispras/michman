@@ -30,7 +30,7 @@ Also are required:
 	* openssh-client
 	* wget 
 
-Note! You have to set up Go environment and configure your work directory for Go-projects. See this `link`_. 
+.. note:: You have to set up Go environment and configure your work directory for Go-projects. See this `link`_. 
 
 Install following python-packages:
 
@@ -87,7 +87,7 @@ First, you have to clone Michman repo:
 
 Then, fill Michmans configuration file *config.yaml* with your settings.
 
-**Note:** you can read more about Michman configuration in next section.
+.. note:: You can read more about Michman configuration in next section.
 
 Following instructions are given for Michman over Ubuntu18.04 image. If you want to use Centos8 images, replace **Ubuntu18.04** folder in path with the **Centos8** folder.
 

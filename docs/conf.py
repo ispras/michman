@@ -14,8 +14,11 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
+from jupyter_sphinx_theme import *
+
+init_theme()
+
 
 project = 'Michman'
 copyright = '2021, Elena Aksenova, Nikita Lazarev, David Badalyan, Oleg Borisenko'
@@ -31,11 +34,16 @@ release = 'v1.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-	'docxbuilder'
+	'docxbuilder',
+	"sphinx.ext.intersphinx",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+html_static_path = ["_static"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -48,12 +56,19 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 locale_dirs = ['./locale/']   # po files will be created in this directory
 gettext_compact = False     # optional: avoid file concatenation in sub directories.
+
+def setup(app):
+    app.add_css_file('my-styles.css')
+
+# import kotti_docs_theme
+# html_theme = "kotti_docs_theme"
+# html_theme_path = [kotti_docs_theme.get_theme_dir()]

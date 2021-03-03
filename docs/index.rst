@@ -17,6 +17,8 @@ Welcome to Michman's documentation!
    start
    use
    services
+   api
+   customize
 
 Indices and tables
 ==================
