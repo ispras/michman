@@ -16,6 +16,8 @@
    start
    use
    services
+   api
+   customize
 
 Indices and tables
 ==================
