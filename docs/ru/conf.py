@@ -19,7 +19,7 @@ init_theme()
 
 # -- Project information -----------------------------------------------------
 
-project = 'Michman'
+project = ''
 copyright = '2021, Елена Аксенова, Никита Лазарев, Давид Бадалян, Олег Борисенко'
 author = 'Елена Аксенова, Никита Лазарев, Давид Бадалян, Олег Борисенко'
 
@@ -72,3 +72,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 def setup(app):
     app.add_css_file('my-styles.css')
+
+html_logo = "_static/logo.png"
+
+html_theme_options = {
+    "navbar_site_name": "",
+    "navbar_links": [("English Version", "../en/_build/html/index.html")]
+}

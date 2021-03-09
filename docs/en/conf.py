@@ -20,7 +20,7 @@ from jupyter_sphinx_theme import *
 init_theme()
 
 
-project = 'Michman'
+project = ''
 copyright = '2021, Elena Aksenova, Nikita Lazarev, David Badalyan, Oleg Borisenko'
 author = 'Elena Aksenova, Nikita Lazarev, David Badalyan, Oleg Borisenko'
 
@@ -69,6 +69,12 @@ gettext_compact = False     # optional: avoid file concatenation in sub director
 def setup(app):
     app.add_css_file('my-styles.css')
 
+html_logo = "_static/logo.png"
+
+html_theme_options = {
+    "navbar_site_name": "",
+    "navbar_links": [("Russian Version", "../ru/_build/html/index.html")]
+}
 # import kotti_docs_theme
 # html_theme = "kotti_docs_theme"
 # html_theme_path = [kotti_docs_theme.get_theme_dir()]
