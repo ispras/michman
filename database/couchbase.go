@@ -408,7 +408,7 @@ func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.S
 
 func (db CouchDatabase) UpdateServiceType(st *proto.ServiceType) error {
 	var cas gocb.Cas
-	_, err := db.clustersBucket.Replace(st.Type, st, cas, 0)
+	_, err := db.serviceTypesBucket.Replace(st.Type, st, cas, 0)
 	return err
 }
 
