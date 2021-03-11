@@ -73,8 +73,10 @@ html_logo = "_static/logo.png"
 
 html_theme_options = {
     "navbar_site_name": "",
-    "navbar_links": [("Russian Version", "../ru/_build/html/index.html")]
+    "navbar_links": [("Russian Version", "../ru/index")]
 }
+
+# navbar_links =[("Russian Version", "../ru/build/html/index")]
 # import kotti_docs_theme
 # html_theme = "kotti_docs_theme"
 # html_theme_path = [kotti_docs_theme.get_theme_dir()]

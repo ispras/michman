@@ -77,5 +77,5 @@ html_logo = "_static/logo.png"
 
 html_theme_options = {
     "navbar_site_name": "",
-    "navbar_links": [("English Version", "../en/_build/html/index.html")]
+    "navbar_links": [("English Version", "../en/index")]
 }
