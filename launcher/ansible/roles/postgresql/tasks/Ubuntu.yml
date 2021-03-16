@@ -13,9 +13,16 @@
     state: present
     filename: postgresql_repo
 
+- name: add security repo
+  apt_repository:
+    repo: deb http://security.ubuntu.com/ubuntu xenial-security main
+    state: present
+    filename: postgresql_repo
+
 - name: install PostgreSQL
   apt:
     name:
+      - libicu55
       - postgresql-{{ postgresql_version }}
       - python-psycopg2
       - python-ipaddress
