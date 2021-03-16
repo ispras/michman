@@ -2,9 +2,3 @@
 
 - include: "{{ act + '_' + sync }}.yml"
   tags: create
-
-# Delay for correct connection to the created instances
-- pause:
-    echo: no
-    seconds: 10
-  when: act == "launch"

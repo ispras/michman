@@ -10,6 +10,11 @@
       when: act != "destroy"
 
 - hosts: all
+  gather_facts: no
+  tasks:
+    - wait_for_connection:
+
+- hosts: all
   tasks:
     - include_role:
         name: deploy_ssh
