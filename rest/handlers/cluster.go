@@ -22,27 +22,52 @@ type serviceExists struct {
 	service *proto.Service
 }
 
-func ValidateCluster(hS HttpServer, cluster *proto.Cluster) bool {
+//returns true if master-slave service exists
+func checkMSServices(hS HttpServer, cluster *proto.Cluster) (bool, error) {
+	for _, service := range cluster.Services {
+		st, err := hS.Db.ReadServiceType(service.Type)
+		if err != nil {
+			return false, err
+		}
+		if st.Class == utils.ClassMasterSlave {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func ValidateCluster(hS HttpServer, cluster *proto.Cluster) (bool, error) {
 	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
 
 	if !validName(cluster.DisplayName) {
 		log.Print("ERROR: bad name for cluster. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol.")
-		return false
-	}
-
-	if cluster.NHosts < 1 {
-		log.Print(cluster.NHosts)
-		log.Print("ERROR: NHosts parameter must be number >= 1.")
-		return false
+		return false, nil
 	}
 
 	for _, service := range cluster.Services {
 		if res, err := ValidateService(hS, service); !res {
 			log.Print(err)
-			return false
+			return false, nil
 		}
 	}
-	return true
+
+	if cluster.NHosts < 0 {
+		log.Print("ERROR: NHosts parameter must be number >= 0.")
+		return false, nil
+	}
+
+	if cluster.NHosts == 0 {
+		res, err := checkMSServices(hS, cluster)
+		if err != nil {
+			return false, err
+		}
+		if res {
+			log.Print("ERROR: NHosts parameter must be number >= 1 if you want to install master-slave services.")
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func (hS HttpServer) AddDependencies(c *proto.Cluster, curS *proto.Service) ([]*proto.Service, error) {
@@ -166,7 +191,13 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	// validate struct
-	if !ValidateCluster(hS, c) {
+	validateRes, err := ValidateCluster(hS, c)
+	if err != nil { //only db error returns
+		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		hS.Logger.Print(mess)
+		return
+	}
+	if !validateRes {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 		hS.Logger.Print(mess)
 		return
@@ -252,6 +283,19 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 				}
 			}
+		}
+
+		//cluster should be validated after addition services from dependencies
+		validateRes, err := ValidateCluster(hS, c)
+		if err != nil { //only db error returns
+			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+			hS.Logger.Print(mess)
+			return
+		}
+		if !validateRes {
+			mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
+			hS.Logger.Print(mess)
+			return
 		}
 
 		c.ProjectID = project.ID

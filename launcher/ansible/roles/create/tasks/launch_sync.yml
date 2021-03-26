@@ -16,7 +16,9 @@
     security_groups: "{{ cluster_name }}"
     meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master"
   retries: 3
-  when: floating_ip_pool != "None"
+  when:
+    - floating_ip_pool != "None"
+    - create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
 
 - name: create master without ip pool
@@ -33,7 +35,9 @@
     security_groups: "{{ cluster_name }}"
     meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master"
   retries: 3
-  when: floating_ip_pool == "None"
+  when:
+    - floating_ip_pool == "None"
+    - create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
 - name: create slaves with ip pool
   os_server:
@@ -47,9 +51,11 @@
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
     meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
-  with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
+  with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1 }} format={{ cluster_name }}-slave-%d
   retries: 3
-  when: floating_ip_pool != "None" 
+  when:
+    - floating_ip_pool != "None"
+    - create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
 
 - name: create slaves without ip pool
@@ -65,9 +71,11 @@
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
     meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
-  with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
+  with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1 }} format={{ cluster_name }}-slave-%d
   retries: 3
-  when: floating_ip_pool == "None" 
+  when:
+    - floating_ip_pool == "None"
+    - create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
 - name: create storage with ip pool
   os_server:

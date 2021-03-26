@@ -19,6 +19,7 @@
     async: 300
     poll: 0
     register: master_waitress
+    when: create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
   - name: Create slave instances
     os_server:
@@ -32,12 +33,13 @@
       security_groups: "{{ cluster_name }}"
       auto_ip: False
       meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
-    with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
+    with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1  }} format={{ cluster_name }}-slave-%d
     delay: 1
     retries: 3
     async: 300
     poll: 0
     register: slave_waitress
+    when: create_master_slave is defined and create_master_slave
 
   - name: Create storage instance
     os_server:
@@ -63,6 +65,7 @@
     until: mstr.finished
     retries: 60
     delay: 5
+    when: create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
   - name: 'Checking slaves started'
     async_status: jid={{ item.ansible_job_id }}
@@ -71,6 +74,7 @@
     retries: 60
     delay: 5
     with_items: "{{ slave_waitress.results }}"
+    when: create_master_slave is defined and create_master_slave
 
   - name: 'Checking storage started'
     async_status: jid={{ storage_waitress.ansible_job_id }}
@@ -93,7 +97,9 @@
     async: 60
     poll: 1
     register: master_ip_waitress
-    when: floating_ip_pool != 'None'
+    when:
+      - floating_ip_pool != 'None'
+      - create_master_slave is defined and create_master_slave or create_master is defined and create_master
 
   - name: 'Acquiring floating IPs for slave instances'
     os_floating_ip:
@@ -103,13 +109,13 @@
       network: "{{ floating_ip_pool }}"
       wait: no
       timeout: 20
-    with_sequence: start=1 end={{ n_slaves }} format={{ cluster_name }}-slave-%d
+    with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1 }} format={{ cluster_name }}-slave-%d
     retries: 3
     delay: 1
     async: 60
     poll: 1
     register: slave_ip_waitress
-    when: floating_ip_pool != 'None'
+    when: floating_ip_pool != 'None' and create_master_slave is defined and create_master_slave
 
   - name: 'Acquiring floating IPs for storage instance'
     os_floating_ip:
@@ -132,7 +138,9 @@
     until: mstr.finished
     retries: 60
     delay: 1
-    when: floating_ip_pool != 'None'
+    when:
+      - floating_ip_pool != 'None' and create_master_slave is defined and create_master_slave
+      - floating_ip_pool != 'None' and create_master is defined and create_master
 
   - name: 'Waiting for slave IPs'
     async_status: jid={{ item.ansible_job_id }}
@@ -141,7 +149,7 @@
     retries: 60
     delay: 1
     with_items: "{{ slave_ip_waitress.results }}"
-    when: floating_ip_pool != 'None'
+    when: floating_ip_pool != 'None' and create_master_slave is defined and create_master_slave
 
   - name: 'Waiting for storage IP'
     async_status: jid={{ storage_ip_waitress.ansible_job_id }}
