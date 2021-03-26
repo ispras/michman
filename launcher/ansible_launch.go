@@ -166,8 +166,14 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 					extraVars[sc.AnsibleVarName] = convertParamValue(sc.DefaultValue, sc.Type)
 				}
 			}
+
+			//set node-types deployment flags
 			if st.Class == utils.ClassStorage {
 				extraVars["create_storage"] = true
+			} else if st.Class == utils.ClassStandAlone {
+				extraVars["create_master"] = true
+			} else {
+				extraVars["create_master_slave"] = true
 			}
 
 		} else {
@@ -247,6 +253,19 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["pip_mirror_address"] = osConfig.PipMirrorAddress
 	extraVars["pip_trusted_host"] = osConfig.PipTrustedHost
 	extraVars["yum_mirror_address"] = osConfig.YumMirrorAddress
+
+	//if no services in cluster -- create master-slave nodes
+	if len(cluster.Services) == 0 && cluster.NHosts > 0 {
+		extraVars["create_master_slave"] = true
+	} else if len(cluster.Services) == 0 && cluster.NHosts == 0 {
+		extraVars["create_master"] = true
+		extraVars["create_master_slave"] = false
+	}
+
+	//create slaves if NHosts > 0 and master is created
+	if extraVars["create_master"] == true && cluster.NHosts > 0 {
+		extraVars["create_master_slave"] = true
+	}
 
 	return extraVars, nil
 }
