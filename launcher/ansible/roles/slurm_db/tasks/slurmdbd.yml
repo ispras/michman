@@ -1,0 +1,59 @@
+---
+- name: Include MariaDB installation tasks
+  include_tasks: db.yml
+
+- name: Change ownership, group and permisssions for var/lib/dpkg/lock
+  become: true
+  file:
+    path: /var/lib/dpkg/lock
+    mode: 0777
+
+- name: Change ownership, group and permisssions for /var/lib/dpkg/lock-frontend
+  become: true
+  file:
+    path: /var/lib/dpkg/lock-frontend
+    mode: 0777
+
+- name: Change ownership, group and permisssions for /var/cache/apt/archives/lock
+  become: true
+  file:
+    path: /var/cache/apt/archives/lock
+    mode: 0777
+
+- name: Install Slurm DB packages
+  become: true
+  package:
+    name: "{{ SLURM_PACKAGES.slurmdbd }}"
+    state: latest
+
+- name: Install slurmdbd.conf 
+  become: true
+  template:
+    src: slurmdbd.conf.j2
+    dest: "{{ SLURM_CONFIG_DIR }}/slurmdbd.conf"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0700
+  notify:
+    - reload slurmdbd
+
+- name: Create slurm log directory
+  become: true
+  file:
+    path: "{{ SLURM_PATH_TO_LOG_FILE }}"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0755
+    state: directory
+  #when: slurm_create_dirs and __slurmdbd_config_merged.LogFile != omit
+
+- name: Create slurm pid directory
+  become: true
+  file:
+    path: "{{SLURM_PATH_TO_PID_FILE}}"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0755
+    state: directory
+  
+

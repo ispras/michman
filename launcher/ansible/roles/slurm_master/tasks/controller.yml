@@ -1,0 +1,76 @@
+---
+
+- name: Install Slurm controller packages
+  become: yes
+  package:
+    name: "{{ SLURM_PACKAGES.slurmctld }}"
+    state: latest
+
+- name: Create slurm state directory
+  become: yes
+  file:
+    path: "{{ STATE_SAVE_LOCATION_MASTER }}"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0755
+    state: directory
+  #when: slurm_create_dirs
+  notify:
+    - reload slurmctld
+
+- name: Create slurm log directory
+  become: true
+  file:
+    path: "{{ SLURM_PATH_TO_LOG_FILE_MASTER }}"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0755
+    state: directory
+  #when: slurm_create_dirs and __slurm_config_merged.SlurmctldLogFile != omit
+
+- name: Create slurm pid directory
+  become: true
+  file:
+    path: "{{ SLURM_PATH_TO_PID_FILE_MASTER}}"
+    owner: "{{ SLURM_USER.name}}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0771
+    state: directory
+  #when: slurm_create_dirs and __slurm_config_merged.SlurmctldPidFile != omit
+
+#Redhat
+# - name: Include config dir creation tasks
+#  include_tasks: _inc_create_config_dir.yml
+#  when: slurm_create_dirs
+
+- name: Install cgroup.conf
+  become: true
+  template:
+    src: "cgroup.conf.j2"
+    dest: "{{ SLURM_CONFIG_DIR }}/cgroup.conf"
+    owner: root
+    group: root
+    mode: 0444
+  notify:
+    - reload slurmctld
+
+# !!!!! ПЕРЕДЕЛАТЬ !!!!!
+#- name: Install extra execution host configs
+  #become: yes
+  #template:
+    #src: "{{ item.template }}"
+    #dest: "{{ SLURM_CONFIG_DIR }}/{{ item.name }}"
+    #backup: yes
+  #with_items:
+    #- name: cgroup.conf
+      #config: slurm_cgroup_config
+      #template: "generic.conf.j2"
+   # - name: gres.conf
+     # config: slurm_gres_config
+     # template: "gres.conf.j2"
+  #loop_control:
+    #label: "{{ item.name }}"
+  #when: item.config in vars
+  #notify:
+   # - reload slurmctld
+

@@ -1,0 +1,16 @@
+- name: Include user creation tasks
+  include_tasks: user.yml
+  #when: slurm_create_user
+
+- name: Include DB installation tasks
+  include_tasks: slurmdbd.yml
+
+- name: Import common tasks
+  import_tasks: common.yml
+
+- name: Ensure slurmdbd is enabled and running
+  become: yes
+  service:
+    name: "{{ SLURMDBD_SERVICE_NAME }}"
+    enabled: yes
+    state: started

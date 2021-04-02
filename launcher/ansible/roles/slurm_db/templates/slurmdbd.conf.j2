@@ -1,0 +1,37 @@
+  # Configuration file for slurmdbd
+  
+  #Define the authentication method for communications between Slurm components.
+  AuthType= auth/munge
+
+  #Name of the machine where the Slurm Database Daemon is executed 
+  DbdHost= {{SLURM_ACCOUNTING_DB_HOST_NAME}}
+
+  #The port number that the Slurm Database Daemon listens to for work. 
+  DbdPort= 6819
+
+  #The name of the user that the slurmdbd daemon executes as. 
+  #This user must exist on the machine executing the Slurm Database Daemon and have the same UID as the hosts on which slurmctld execute.
+  SlurmUser= {{ SLURM_USER.name}}
+
+  #Pathname of a file with process ID of Slurm Database Daemon
+  PidFile= /var/run/slurm-llnl/slurmdbd.pid
+
+  #Pathname of a file into which the Slurm Database Daemon's logs are written. 
+  LogFile= /var/log/slurm-llnl/slurmdbd.log
+
+  #Specify the name of the database as the location where accounting records are written.
+  StorageLoc= {{SLURM_ACCOUNTING_DB_NAME}}
+
+  #Define the name of the user we are going to connect 
+  #to the database with to store the job accounting data.
+  StorageUser= {{SLURM_ACCOUNTING_DB_USER}}
+
+  #Define the password used to gain access to the database to store the job accounting data.
+  StoragePass= {{SLURM_ACCOUNTING_DB_PASS}}
+
+  #The port number that the Slurm Database Daemon (slurmdbd) communicates with the database.
+  StoragePort= 3306
+
+  #Define the accounting storage mechanism type. (accounting_storage/mysql -> MySQL or MariaDB )
+  StorageType= accounting_storage/mysql
+

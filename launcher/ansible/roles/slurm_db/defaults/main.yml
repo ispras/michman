@@ -1,0 +1,41 @@
+#defaults for slurmdbd
+
+SLURMDBD_SERVICE_NAME: slurmdbd
+#packages to install
+SLURM_PACKAGES: 
+  client:  [slurm-client, slurm-wlm-doc]
+  slurmdbd: [slurmdbd]
+
+#parameters for slurm.conf
+ACCOUNTING_STORAGE_HOST: "{{ cluster_name }}-storage"
+CLUSTER_NAME: "{{ cluster_name }}"
+SLURM_MASTER: "{{ cluster_name }}-master"
+SLURM_PATH_TO_PID_FILE_MASTER: /var/run/slurm-llnl
+SLURM_PATH_TO_LOG_FILE_MASTER: /var/log/slurm-llnl
+SLURM_PATH_TO_LOG_FILE_SLAVE: /var/log/slurm-llnl
+SLURM_PATH_TO_PID_FILE_SLAVE: /var/run/slurm-llnl
+STATE_SAVE_LOCATION_MASTER: /var/spool/slurmctld
+STATE_SAVE_LOCATION_SLAVE: /var/spool/slurmd
+
+SLURM_CONFIG_DIR: /etc/slurm-llnl
+
+#parameters for config file for slurmdbd
+SLURM_ACCOUNTING_DB_HOST_NAME: "{{ cluster_name }}-storage"
+SLURM_PATH_TO_PID_FILE: /var/run/slurm-llnl
+SLURM_PATH_TO_LOG_FILE: /var/log/slurm-llnl
+#parameters for database
+SLURM_ACCOUNTING_DB_NAME: mariadb
+SLURM_ACCOUNTING_DB_USER: slurm
+SLURM_ACCOUNTING_DB_PASS: slurmdbd
+
+DIR_TO_SAVE_MUNGE_KEY: ./files
+SLURM_CONFIG_DIR: /etc/slurm-llnl
+#defaults for user 
+SLURM_USER:
+  name: slurm
+  comment: "Slurm Workload Manager"
+  uid: 888
+  gid: 888
+  home: /var/lib/slurm
+  shell: /usr/sbin/nologin
+  group: slurm

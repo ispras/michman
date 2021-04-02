@@ -1,0 +1,58 @@
+---
+
+- name: Install Slurm execution host packages
+  become: true
+  package:
+    name: "{{ SLURM_PACKAGES.slurmd }}"
+    state: latest
+
+- name: Create slurm spool directory
+  become: yes
+  file:
+    path: "{{ STATE_SAVE_LOCATION_SLAVE }}"
+    owner: slurm
+    group: slurm
+    mode: 0755
+    state: directory
+  #when: slurm_create_dirs
+  notify:
+    - reload slurmd
+
+- name: Create slurm log directory
+  become: true
+  file:
+    path: "{{ SLURM_PATH_TO_LOG_FILE_SLAVE }}"
+    owner: "{{ SLURM_USER.name }}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0755
+    state: directory
+  #when: slurm_create_dirs and __slurm_config_merged.SlurmctldLogFile != omit
+
+- name: Create slurm pid directory
+  become: true
+  file:
+    path: "{{ SLURM_PATH_TO_PID_FILE_SLAVE}}"
+    owner: "{{ SLURM_USER.name}}"
+    group: "{{ SLURM_USER.group }}"
+    mode: 0771
+    state: directory
+  #when: slurm_create_dirs and __slurm_config_merged.SlurmctldPidFile != omit
+
+- name: Create slurm config dir
+  file:
+    path: "{{ SLURM_CONFIG_DIR }}"
+    state: directory
+    mode: 0755
+
+- name: Install cgroup.conf
+  become: true
+  template:
+    src: "cgroup.conf.j2"
+    dest: "{{ SLURM_CONFIG_DIR }}/cgroup.conf"
+    owner: root
+    group: root
+    mode: 0444
+  notify:
+    - restart slurmd
+    
+

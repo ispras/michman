@@ -1,0 +1,19 @@
+---
+
+- name: restart munge
+  become: yes
+  service:
+    name: munge
+    state: restarted
+
+- name: reload slurmctld
+  become: yes
+  service:
+    name: "{{ SLURMCTLD_SERVICE_NAME }}"
+    state: reloaded
+ 
+- name: restart slurmctld
+  become: yes
+  service:
+    name: "{{ SLURMCTLD_SERVICE_NAME }}"
+    state: restarted

@@ -1,0 +1,75 @@
+#Configuration file for slurm
+
+#The name of the machine hosting the accounting storage database.
+AccountingStorageHost= {{ACCOUNTING_STORAGE_HOST}}
+
+#The accounting storage mechanism type.
+AccountingStorageType= accounting_storage/slurmdbd 
+
+#The name by which this Slurm managed cluster is known in the accounting database. 
+ClusterName= {{CLUSTER_NAME}}
+
+#Hostname of the machine where Slurm control daemon is executed
+ControlMachine= {{SLURM_MASTER}}
+
+#The job accounting mechanism type. 
+JobAcctGatherType= jobacct_gather/linux
+
+#Identifies the default type of MPI to be used.
+MpiDefault= none
+
+#Identifies the plugin to be used for process tracking on a job step basis. 
+#proctrack/cgroup. Uses linux cgroups to constrain and track processes, and is the default for systems with cgroup support. 
+ProctrackType= proctrack/cgroup
+
+#Controls when a DOWN node will be returned to service. 
+# 1  means,  DOWN node will become available for use upon registration with a valid configuration only if it was set DOWN due to being non-responsive. 
+#For any other reason, its state will not automatically be changed. 
+ReturnToService= 1
+
+#Identifies the type of scheduler to be used.
+#For a backfill scheduling module to augment the default FIFO scheduling. 
+#Backfill scheduling will initiate lower-priority jobs if doing so does not delay the expected initiation time of any higher priority job.
+SchedulerType= sched/backfill
+
+#Identifies the type of resource selection algorithm to be used.
+#select/cons_res - the resources (cores and memory) within a node are individually allocated as consumable resources.
+SelectType= select/cons_res
+
+#Parameters for SelectType
+SelectTypeParameters= CR_Core
+
+#Pathname of a file into which the slurmctld daemon's logs are written.
+SlurmctldLogFile= {{SLURM_PATH_TO_LOG_FILE_MASTER}}/slurmctld.log
+
+#Pathname of a file into which the slurmctld daemon may write its process id. 
+SlurmctldPidFile= {{SLURM_PATH_TO_PID_FILE_MASTER}}/slurmctld.pid
+
+#Pathname of a file into which the slurmd daemon's logs are written. 
+SlurmdLogFile= {{SLURM_PATH_TO_LOG_FILE_SLAVE}}/slurmd.log
+
+#Pathname of a file into which the slurmd daemon may write its process id. 
+SlurmdPidFile= {{SLURM_PATH_TO_PID_FILE_SLAVE}}/slurmd.pid
+
+#Pathname of a directory into which the slurmd daemon's state information 
+#and batch job script information are written.
+SlurmdSpoolDir= {{STATE_SAVE_LOCATION_SLAVE}}
+
+#Pathname of a directory into which the Slurm controller, slurmctld, saves its state.
+#Slurm state will be saved here to recover from system failures.
+StateSaveLocation= {{STATE_SAVE_LOCATION_MASTER}}
+
+#Identifies the type of task launch plugin, typically used to provide resource management within a node.
+#task/affinity enables resource containment using sched_setaffinity(). 
+#task/cgroup enables resource containment using Linux control cgroups.
+TaskPlugin= task/affinity,task/cgroup
+
+#Optional parameters for the task plugin. 
+TaskPluginParam= Sched 
+
+#Nodes 
+    NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}]
+
+ #Partition
+    PartitionName=main Nodes ={{ cluster_name }}-slave-[1-{{n_slaves}}] Default=YES 
+

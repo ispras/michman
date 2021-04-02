@@ -1,0 +1,45 @@
+---
+
+- name: Install Slurm client
+  become: true
+  package:
+    name: "{{ SLURM_PACKAGES.client }}"
+    state: latest
+
+#Redhat
+# - name: Include config dir creation tasks
+#  include_tasks: _inc_create_config_dir.yml
+#  when: slurm_create_dirs
+
+#Redhat
+# - name: Install log rotation configuration
+#  template:
+#    src: logrotate.j2
+#    dest: /etc/logrotate.d/slurm
+#  when: slurm_rotate_logs
+
+- name: Install slurm.conf
+  become: true
+  template:
+    src: "slurm.conf.j2"
+    dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
+    owner: root
+    group: root
+    mode: 0444
+  notify:
+    - restart slurmd
+    
+
+#- name: Change ownership, group and permisssions for /var/spool
+  #become: true
+  #file:
+    #path: /var/spool
+    #owner: slurm 
+    #group: slurm
+    #mode: 0771
+
+
+- name: Include munge tasks
+  include_tasks: munge.yml
+  #when: slurm_configure_munge
+

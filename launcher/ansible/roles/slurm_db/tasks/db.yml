@@ -1,0 +1,68 @@
+- name: Install MariaDB, used for SLURM accounting
+  become: true
+  package:
+    name:
+      - mariadb-server
+      - python-mysqldb
+    state: present
+
+- name: install pip3
+  become: true 
+  apt: 
+    name: python3-pip 
+    state: present 
+
+- name: Make sure pymysql is present
+  become: true 
+  pip:
+    name: pymysql
+    state: present
+
+- name: Ensure InnoDB parameters are large enough for SLURM DBD
+  become: true
+  blockinfile:
+    path: '/etc/mysql/my.cnf'
+    state: present
+    backup: yes
+    insertafter: EOF
+    content: |
+      # See https://wiki.fysik.dtu.dk/niflheim/Slurm_database#id5
+      [mysqld]
+      innodb_buffer_pool_size=1G
+      innodb_log_file_size=64M
+      innodb_lock_wait_timeout=900
+
+- name: Change configuration file for mariadb
+  become: true
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address'
+    line: 'bind-address={{active_master_ip}} ' 
+
+- name: Ensure MariaDB daemon is up
+  become: true
+  service:
+    name: 'mariadb'
+    enabled: yes
+    state: started
+
+
+- name: Create DB for SLURMDBD
+  become: true
+  mysql_db:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: mariadb
+    state: present
+
+
+- name: Create DB user for SLURMDBD
+  become: true
+  mysql_user:
+    login_user: root
+    login_password: ' '
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: "{{ SLURM_ACCOUNTING_DB_USER }}"
+    password: "{{ SLURM_ACCOUNTING_DB_PASS }}"
+    priv: 'mariadb.*:ALL'
+    state: present
+

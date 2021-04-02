@@ -1,0 +1,27 @@
+---
+
+- name: Install Slurm client
+  become: true
+  package:
+    name: "{{ SLURM_PACKAGES.client }}" 
+    state: latest
+
+- name: Create slurm config dir
+  file:
+    path: "{{ SLURM_CONFIG_DIR }}"
+    state: directory
+    mode: 0755
+
+- name: Install slurm.conf
+  become: true
+  template:
+    src: "slurm.conf.j2"
+    dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
+    owner: root
+    group: root
+    mode: 0444
+
+
+- name: Include munge tasks
+  include_tasks: munge.yml
+  # when: slurm_configure_munge 

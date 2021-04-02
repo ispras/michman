@@ -1,0 +1,18 @@
+---
+
+- name: Include user creation tasks
+  include_tasks: user.yml
+  #when: slurm_create_user
+
+- name: Include controller installation tasks
+  include_tasks: controller.yml
+
+- name: Import common tasks
+  import_tasks: common.yml
+
+- name: Ensure slurmctld is enabled and running
+  become: yes
+  service:
+    name: "{{ SLURMCTLD_SERVICE_NAME }}"
+    enabled: yes
+    state: started

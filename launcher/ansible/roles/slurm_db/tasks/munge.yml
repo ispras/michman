@@ -1,0 +1,28 @@
+---
+
+- name: Check munge dir
+  become: true
+  file:
+    path: /etc/munge
+    owner: munge
+    group: munge
+    mode: 0700
+    state: directory
+
+
+- name: Ensure Munge is enabled and running
+  become: yes
+  service:
+    name: munge
+    enabled: yes
+    state: started
+
+
+- name: Retrieve key for munge cluster
+  become: true
+  fetch:
+    src: /etc/munge/munge.key
+    dest: "{{ DIR_TO_SAVE_MUNGE_KEY }}/munge.key"
+    flat: yes
+  notify: restart munge
+
