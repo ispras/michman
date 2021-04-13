@@ -3,6 +3,7 @@
   "Description": "Nextcloud service",
   "DefaultVersion": "default",
   "Class": "storage",
+  "AccessPort": 80,
   "Versions": [
     {
       "Version": "default",
@@ -32,7 +33,21 @@
                   "Type": "string",
                   "Required": true,
                   "Description": "NFS server IP"
-                }
+                },
+                {
+                  "ParameterName": "admin_password",
+                  "Type": "string",
+                  "DefaultValue": "password",
+                  "Required": true,
+                  "Description": "Admin user password for Nextcloud, you can change it"
+                },
+               {
+                 "ParameterName": "admin_user",
+                 "Type": "string",
+                 "DefaultValue": "admin",
+                 "Required": true,
+                 "Description": "Admin user password for Nextcloud, you can change it"
+               }
       ]
     }]
 }
