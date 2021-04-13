@@ -10,4 +10,4 @@
       become: yes
 
 - include_tasks: "login.yml"
-  when: docker_selfsigned_registry is defined and docker_selfsigned_registry or docker_gitlab_registry is defined docker_gitlab_registry
+  when: docker_selfsigned_registry is defined and docker_selfsigned_registry or docker_gitlab_registry is defined and docker_gitlab_registry

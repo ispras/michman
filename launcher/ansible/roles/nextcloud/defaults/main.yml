@@ -5,6 +5,9 @@ weblab_dir_name: "weblabs"
 nextcloud_users_group: "users"
 nextcloud_group_dir: "/external_data/shared_dir_{{ weblab_name }}"
 
+nextcloud_admin_user: admin
+nextcloud_admin_password: password
+
 mariadb_image: "mariadb:10.4-bionic"
 nextcloud_image: "nextcloud:17"
 
