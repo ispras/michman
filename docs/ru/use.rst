@@ -28,7 +28,7 @@
 				"Name": "spark-service",
 				"Type": "spark",
 				"Version": "2.3.0",
-				"Configs": {
+				"Config": {
 					"worker_mem_mb": "10240"
 				}
 
