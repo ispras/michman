@@ -267,6 +267,10 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 		extraVars["create_master_slave"] = true
 	}
 
+	if cluster.Keys != nil && len(cluster.Keys) > 0 {
+		extraVars["public_keys"] = cluster.Keys
+	}
+	
 	return extraVars, nil
 }
 

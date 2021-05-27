@@ -30,7 +30,8 @@ message Cluster {
     string MasterIP = 9;
     string ProjectID = 10;
     string Description = 11;
-    string Image = 12; 
+    string Image = 12;
+    repeated string Keys = 13;
 }
 
 message Service {
