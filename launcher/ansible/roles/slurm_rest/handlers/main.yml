@@ -1,0 +1,14 @@
+---
+
+- name: reload slurmrestd
+  become: true
+  systemd:
+    name: slurmrestd
+    state: reloaded
+
+- name: restart slurmrestd
+  become: true
+  systemd:
+    name: slurmrestd
+    state: restarted
+

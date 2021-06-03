@@ -1,15 +1,12 @@
 ---
 
 - name: Create slurm group
-  become: true
   group:
     name: "{{ SLURM_USER.group }}"
     gid: "{{ SLURM_USER.gid }}"
     system: "{{ SLURM_USER.system | default('yes')}}"
-  #when: (slurm_user | default({})).group is defined
 
 - name: Create slurm user
-  become: true
   user:
     name: "{{ SLURM_USER.name }}"
     comment: "{{ SLURM_USER.comment | default(omit) }}"

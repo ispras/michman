@@ -1,0 +1,3 @@
+
+OS_IMAGE: "{{ slurm_os_image == 'ubuntu21.04' }}"
+SLURM_CONFIG_DIR: "{{'/etc/slurm' if OS_IMAGE else '/etc/slurm-llnl'}}"

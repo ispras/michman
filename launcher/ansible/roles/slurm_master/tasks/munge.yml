@@ -1,16 +1,15 @@
 ---
 
 - name: Check munge dir
-  become: true
   file:
     path: /etc/munge
     owner: munge
     group: munge
     mode: 0700
     state: directory
+  
 
 - name: Install munge key
-  become: true
   copy:
     src: "{{ DIR_TO_INSTALL_MUNGE_KEY }}/munge.key"
     dest: /etc/munge/munge.key
@@ -19,14 +18,18 @@
     group: munge
     mode: 0400
   notify: restart munge
-
+  when: slurm_use_db is defined and slurm_use_db
 
 - name: Ensure Munge is enabled and running
-  become: yes
-  service:
+  systemd:
     name: munge
     enabled: yes
     state: started
 
-
-
+- name: Retrieve key for munge cluster
+  fetch:
+    src: /etc/munge/munge.key
+    dest: "{{ DIR_TO_SAVE_MUNGE_KEY }}/munge.key"
+    flat: yes
+  notify: restart munge
+  when: slurm_use_db is defined and not slurm_use_db

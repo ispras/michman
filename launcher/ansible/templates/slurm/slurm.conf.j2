@@ -1,22 +1,34 @@
 #Configuration file for slurm
+#Authentification
+AuthType=auth/munge
+#JWT autentification for slurmrestd
+{%if slurm_use_rest%} 
+AuthAltTypes=auth/jwt
+AuthAltParameters=jwt_key=/etc/slurm/jwt_hs256.key
+{% endif %}
+
+#The accounting storage mechanism type.
+{%if slurm_use_db%}
+AccountingStorageType= accounting_storage/slurmdbd
+{% else %}
+AccountingStorageType= accounting_storage/none
+{% endif %}
 
 #The name of the machine hosting the accounting storage database.
 AccountingStorageHost= {{ACCOUNTING_STORAGE_HOST}}
-
-#The accounting storage mechanism type.
-AccountingStorageType= accounting_storage/slurmdbd 
 
 #The name by which this Slurm managed cluster is known in the accounting database. 
 ClusterName= {{CLUSTER_NAME}}
 
 #Hostname of the machine where Slurm control daemon is executed
-ControlMachine= {{SLURM_MASTER}}
+{%if OS_IMAGE%}
+   SlurmctldHost = {{SLURM_MASTER}}
+{% else %}
+   ControlMachine= {{SLURM_MASTER}}
+{% endif %}
 
 #The job accounting mechanism type. 
 JobAcctGatherType= jobacct_gather/linux
-
-#Identifies the default type of MPI to be used.
-MpiDefault= none
 
 #Identifies the plugin to be used for process tracking on a job step basis. 
 #proctrack/cgroup. Uses linux cgroups to constrain and track processes, and is the default for systems with cgroup support. 
@@ -40,16 +52,16 @@ SelectType= select/cons_res
 SelectTypeParameters= CR_Core
 
 #Pathname of a file into which the slurmctld daemon's logs are written.
-SlurmctldLogFile= {{SLURM_PATH_TO_LOG_FILE_MASTER}}/slurmctld.log
+SlurmctldLogFile= {{SLURM_PATH_TO_LOG_FILE}}/slurmctld.log
 
 #Pathname of a file into which the slurmctld daemon may write its process id. 
-SlurmctldPidFile= {{SLURM_PATH_TO_PID_FILE_MASTER}}/slurmctld.pid
+SlurmctldPidFile= {{SLURM_PATH_TO_PID_FILE}}/slurmctld.pid
 
 #Pathname of a file into which the slurmd daemon's logs are written. 
-SlurmdLogFile= {{SLURM_PATH_TO_LOG_FILE_SLAVE}}/slurmd.log
+SlurmdLogFile= {{SLURM_PATH_TO_LOG_FILE}}/slurmd.log
 
 #Pathname of a file into which the slurmd daemon may write its process id. 
-SlurmdPidFile= {{SLURM_PATH_TO_PID_FILE_SLAVE}}/slurmd.pid
+SlurmdPidFile= {{SLURM_PATH_TO_PID_FILE}}/slurmd.pid
 
 #Pathname of a directory into which the slurmd daemon's state information 
 #and batch job script information are written.
@@ -65,7 +77,7 @@ StateSaveLocation= {{STATE_SAVE_LOCATION_MASTER}}
 TaskPlugin= task/affinity,task/cgroup
 
 #Optional parameters for the task plugin. 
-TaskPluginParam= Sched 
+TaskPluginParam= {{Task_Plugin_Param}} 
 
 #Nodes 
     NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}]

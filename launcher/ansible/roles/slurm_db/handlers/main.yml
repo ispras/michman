@@ -1,13 +1,13 @@
 ---
 
 - name: restart munge
-  become: yes
+  become: true
   service:
     name: munge
     state: restarted
 
 - name: reload slurmdbd
-  become: yes
-  service:
-    name: "{{ SLURMDBD_SERVICE_NAME }}"
+  become: true
+  systemd:
+    name: slurmdbd
     state: reloaded

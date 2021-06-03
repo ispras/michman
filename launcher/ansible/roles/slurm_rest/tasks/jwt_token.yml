@@ -1,0 +1,22 @@
+---
+
+- name: Generate token
+  shell: sudo scontrol token lifespan=315360000
+  register: slurm_token
+
+- name: Print return information from the previous task
+  ansible.builtin.debug:
+   var: slurm_token.stdout
+
+- name: Create file for token 
+  become: true
+  file: 
+    path: /var/log/slurm/slurm_token
+    state: touch
+    mode: 0777
+
+- name: Add token to file 
+  become: true 
+  lineinfile:
+    path: /var/log/slurm/slurm_token
+    line: "{{ slurm_token.stdout }}"

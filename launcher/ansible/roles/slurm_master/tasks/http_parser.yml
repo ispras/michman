@@ -1,0 +1,15 @@
+---
+
+- name: Clone repository http_parser 
+  shell: git clone --depth 1 --single-branch -b v2.9.4 https://github.com/nodejs/http-parser.git http_parser
+
+- name: Build the default target
+  make:
+    chdir: http_parser
+  become: yes
+
+- name: Run 'install' target as root
+  make: 
+    chdir: http_parser
+    target: install
+  become: yes

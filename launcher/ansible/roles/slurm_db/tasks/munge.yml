@@ -1,14 +1,13 @@
 ---
 
 - name: Check munge dir
-  become: true
+  become: yes
   file:
     path: /etc/munge
     owner: munge
     group: munge
     mode: 0700
     state: directory
-
 
 - name: Ensure Munge is enabled and running
   become: yes
@@ -17,9 +16,8 @@
     enabled: yes
     state: started
 
-
 - name: Retrieve key for munge cluster
-  become: true
+  become: yes
   fetch:
     src: /etc/munge/munge.key
     dest: "{{ DIR_TO_SAVE_MUNGE_KEY }}/munge.key"
