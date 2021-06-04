@@ -53,7 +53,8 @@ RUN go get -u github.com/hashicorp/vault/api  && \
 
 #create michman directory
 RUN mkdir -p ${GOPATH}/src/github.com/ispras && \
-	mkdir -p ${GOPATH}/src/github.com/ispras/michman
+	mkdir -p ${GOPATH}/src/github.com/ispras/michman && \
+    mkdir -p /logs
 
 #set workdir
 WORKDIR ${GOPATH}/src/github.com/ispras/michman
