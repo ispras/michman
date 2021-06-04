@@ -1,4 +1,6 @@
 ---
+nextcloud_version: "nextcloud_simple"
+
 weblab_name: "lab1"
 weblab_dir_name: "weblabs"
 
@@ -7,6 +9,10 @@ nextcloud_group_dir: "/external_data/shared_dir_{{ weblab_name }}"
 
 nextcloud_admin_user: admin
 nextcloud_admin_password: password
+
+
+nextcloud_distrib: https://download.nextcloud.com/server/releases/nextcloud-21.0.1.zip
+nextcloud_db_password: dbpassword
 
 mariadb_image: "mariadb:10.4-bionic"
 nextcloud_image: "nextcloud:17"

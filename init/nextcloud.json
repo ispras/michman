@@ -1,13 +1,13 @@
 {
   "Type": "nextcloud",
   "Description": "Nextcloud service",
-  "DefaultVersion": "default",
+  "DefaultVersion": "simple",
   "Class": "storage",
   "AccessPort": 80,
   "Versions": [
     {
-      "Version": "default",
-      "Description": "NFS server default version",
+      "Version": "docker",
+      "Description": "Nextcloud service in docker containers",
       "Configs":
        [
                 {
@@ -48,6 +48,34 @@
                  "Required": true,
                  "Description": "Admin user password for Nextcloud, you can change it"
                }
+      ]
+    },
+    {
+      "Version": "simple",
+      "Description": "Nextcloud service with installation from official distributive. Works only with Ubuntu 20.04.",
+      "Configs":
+      [
+        {
+          "ParameterName": "admin_password",
+          "Type": "string",
+          "DefaultValue": "password",
+          "Required": true,
+          "Description": "Admin user password for Nextcloud, you can change it"
+        },
+        {
+          "ParameterName": "admin_user",
+          "Type": "string",
+          "DefaultValue": "admin",
+          "Required": true,
+          "Description": "Admin user password for Nextcloud, you can change it"
+        },
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "dbpassword",
+          "Required": true,
+          "Description": "Database password for Nextcloud, you can change it"
+        }
       ]
     }]
 }
