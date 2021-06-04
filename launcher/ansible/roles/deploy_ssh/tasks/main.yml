@@ -81,3 +81,12 @@
   with_items: "{{ play_hosts }}"
   #  template: src=templates/hosts.j2 dest=/etc/hosts
   tags: prepare
+
+- name: Add public keys to authorized keys
+  lineinfile:
+    path: /home/{{ hadoop_user }}/.ssh/authorized_keys
+    state: present
+    create: yes
+    line: "{{ item }}"
+  with_items: "{{ public_keys }}"
+  when: public_keys is defined and public_keys | length > 0
