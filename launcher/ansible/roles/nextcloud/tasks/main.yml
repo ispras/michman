@@ -1,3 +1,7 @@
 ---
 
-- include_tasks: "{{ nextcloud_version }}.yml"
+- include_tasks: docker.yml
+  when: nextcloud_version == "docker"
+
+- include_tasks: simple.yml
+  when: nextcloud_version != "docker"

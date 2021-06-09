@@ -1,7 +1,7 @@
 {
   "Type": "nextcloud",
   "Description": "Nextcloud service",
-  "DefaultVersion": "simple",
+  "DefaultVersion": "21.0.1",
   "Class": "storage",
   "AccessPort": 80,
   "Versions": [
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "Version": "simple",
+      "Version": "21.0.1",
       "Description": "Nextcloud service with installation from official distributive. Works only with Ubuntu 20.04.",
       "Configs":
       [
