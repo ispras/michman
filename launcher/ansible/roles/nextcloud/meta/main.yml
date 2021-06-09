@@ -1,0 +1,3 @@
+dependencies:
+  - role: docker
+    when: nextcloud_version == "docker"

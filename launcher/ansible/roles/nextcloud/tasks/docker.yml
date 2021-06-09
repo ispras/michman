@@ -1,0 +1,75 @@
+---
+
+- name: Create mariadb container
+  docker_container:
+    name: "mariadb"
+    image: "{{ mariadb_image }}"
+    env:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: nextcloud
+      MARIADB_USER: nc_user
+      MARIADB_PASSWORD: "{{ nextcloud_db_password }}"
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nc_user
+      MYSQL_PASSWORD: "{{ nextcloud_db_password }}"
+    restart_policy: always
+
+- name: get mariadb IP address
+  command: "docker inspect --format '{''{ .NetworkSettings.IPAddress }''}' mariadb"
+  register: mariadb_ip_address
+
+- name: wait for mariadb to become ready
+  wait_for:
+    host: "{{ mariadb_ip_address.stdout }}"
+    port: 3306
+    state: started
+    connect_timeout: 2
+    timeout: 180
+    sleep: 2
+
+- name: deploy authorized keys
+  become: yes
+  become_user: root
+  lineinfile:
+    path: "/root/.ssh/authorized_keys"
+    line: "{{ lookup('file', 'files/keys/{{ cluster_name }}.pub') }}"
+  tags: prepare
+  when: create_master is defined and create_master or create_master_slave is defined and create_master_slave
+
+- name: Create nextcloud container
+  docker_container:
+    name: "nextcloud"
+    image: "{{ nextcloud_image }}"
+    env:
+      MYSQL_HOST: mariadb
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nc_user
+      MYSQL_PASSWORD: "{{ nextcloud_db_password }}"
+      NEXTCLOUD_ADMIN_USER: '{{ nextcloud_admin_user }}'
+      NEXTCLOUD_ADMIN_PASSWORD: '{{ nextcloud_admin_password }}'
+      NEXTCLOUD_TRUSTED_DOMAINS: '{{ ansible_host }}'
+    links:
+      - "mariadb:mariadb"
+    ports:
+      - "80:80"
+      - "2022:22"
+    restart_policy: always
+    volumes:
+      - /root/.ssh/authorized_keys:/root/.ssh/authorized_keys
+
+- name: Wait for nextcloud setup
+  command: curl {{ ansible_host }}:80
+  register: result
+  until: not result.rc
+  retries: 60
+  delay: 2
+
+- name: configure nextcloud apps
+  shell: "docker exec -u www-data nextcloud php occ app:{{ item.key }} {{ item.value }}"
+  with_items: "{{ nc_app_config }}"
+  ignore_errors: true
+
+- name: remove default nextcloud files
+  shell: "docker exec -u www-data nextcloud bash -c 'rm -rf core/skeleton/*'"
+

@@ -1,0 +1,115 @@
+---
+- name: install packages
+  apt:
+    name:
+      - unzip
+      - apache2
+      - mariadb-server
+      - libapache2-mod-php
+      - python3-pymysql
+      - php-common
+      - php-mysql
+      - php-xml
+      - php-zip
+      - php-mbstring
+      - php-gd
+      - php-curl
+      - php-bz2
+      - php-imagick
+      - php-intl
+      - php-bcmath
+      - php-gmp
+    update_cache: yes
+    state: present
+
+- name: copy apache config
+  copy:
+    src: nextcloud.conf
+    dest: /etc/apache2/sites-available/nextcloud.conf
+
+- name: a2ensite nextcloud
+  command: a2ensite nextcloud
+
+- name: enable apache modules
+  apache2_module:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - rewrite
+    - headers
+    - env
+    - dir
+    - mime
+
+- name: Get path to php.ini
+  find:
+    paths: /etc/php
+    file_type: directory
+    recurse: no
+  register: ini_path
+
+- name: set PHP memory_limit
+  ini_file:
+    path: "{{ ini_path.files[0].path }}/apache2/php.ini"
+    section: PHP
+    option: memory_limit
+    value: 1G
+
+- name: set PHP post_max_size
+  ini_file:
+    path: "{{ ini_path.files[0].path }}/apache2/php.ini"
+    section: PHP
+    option: post_max_size
+    value: 1G
+
+- name: set PHP upload_max_filesize
+  ini_file:
+    path: "{{ ini_path.files[0].path }}/apache2/php.ini"
+    section: PHP
+    option: upload_max_filesize
+    value: 1G
+
+- name: enable and restart apache
+  service:
+    name: apache2
+    state: restarted
+    enabled: yes
+
+- name: download and unzip nextcloud
+  unarchive:
+    src: "{{ nextcloud_distrib }}"
+    dest: /var/www
+    remote_src: True
+
+- name: change nextcloud dir owner
+  file:
+    path: /var/www/nextcloud
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: create mariadb user
+  mysql_user:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud
+    password: "{{ nextcloud_db_password }}"
+    priv: 'nextcloud_db.*:ALL'
+    state: present
+
+- name: Create nextcloud database
+  mysql_db:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud_db
+    state: present
+
+- name: setup nextcloud
+  command: "sudo -u www-data php occ maintenance:install --database mysql
+  --database-name nextcloud_db --database-user nextcloud --database-pass {{ nextcloud_db_password }}
+  --admin-user {{ nextcloud_admin_user }} --admin-pass {{ nextcloud_admin_password }}"
+  args:
+    chdir: /var/www/nextcloud
+
+- name: allow all nextcloud trusted domains
+  command: "sudo -u www-data php occ config:system:set trusted_domains 1 --value '*'"
+  args:
+    chdir: /var/www/nextcloud
