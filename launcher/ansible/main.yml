@@ -33,7 +33,7 @@
       include_role:
         name: basic
       when: create_cluster is defined and create_cluster
-   - name: install Spark
+    - name: install Spark
       include_role:
         name: spark_common
       when: deploy_spark is defined and deploy_spark
@@ -69,13 +69,6 @@
       vars:
         python_version: 3
       when: deploy_jupyterhub is defined and deploy_jupyterhub
-
-- hosts: all
-  become: yes
-  tasks:
-    - include_role:
-        name: slurm_all
-      when: deploy_slurm is defined and deploy_slurm
 
 - hosts: "{{ cluster_name }}_storage"
   become: yes
@@ -158,7 +151,7 @@
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic is defined and deploy_elastic
 
-# When create_storage is true, such instance would be created
+ When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"
   become: yes
   vars:

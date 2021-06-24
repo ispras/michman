@@ -1,4 +1,14 @@
 ---
+
+- name: Install slurm-wlm package
+  apt:
+    update_cache: yes
+    name: slurm-wlm
+    state: latest
+
+- name: Include tasks for creation directoriees
+  include: directory.yml
+
 - name: Include execution host installation tasks
   include_tasks: slave.yml
 

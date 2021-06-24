@@ -1,0 +1,127 @@
+{
+  "Type": "slurm",
+  "Description": "Slurm service",
+  "DefaultVersion": "Slurm without db",
+  "Class": "master-slave",
+  "Versions": [
+    {
+      "Version": "Slurm with db",
+      "Description": "Deploing Slurm with logging system",
+      "Configs": [
+        {
+          "ParameterName": "use_db",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "true",
+          "Required": true,
+          "Description": "Use MariaDB and slurmdbd",
+          "AnsibleVarName": "slurm_use_db"
+        },
+        {
+          "ParameterName": "use_rest",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Slurm REST API",
+          "AnsibleVarName": "slurm_use_rest"
+        },
+        
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "slurmdbd",
+          "Required": true,
+          "Description": "Default user password for Mariadb for user slurm, you can change it",
+          "AnsibleVarName": "slurm_db_password"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "slurm",
+          "Required": true,
+          "Description": "Default db_user for Mariadb, you can change it",
+          "AnsibleVarName": "slurm_db_user"
+        },
+        {
+          "ParameterName": "TaskPluginParam",
+          "Type": "string",
+          "PossibleValues": [
+            "Boards",
+            "Cores",
+            "None",
+            "Sockets",
+            "Threads",
+            "Verbose"
+          ],
+          "DefaultValue": "None",
+          "Required": true,
+          "Description": "Optional parameters for the task plugin. ",
+          "AnsibleVarName": "slurm_TaskPluginParam"
+        }
+      ],
+      "Dependencies": [
+        {
+          "ServiceType": "mariadb",
+          "ServiceVersions": [
+            "latest"
+          ],
+          "DefaultServiceVersion": "latest",
+          "Description": "Dependency mariedb-slurm"
+        }
+      ]
+    },
+    {
+      "Version": "Slurm without db",
+      "Description": "Deploing Slurm without logging system",
+      "Configs": [
+        {
+          "ParameterName": "use_db",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use MariaDB and slurmdbd",
+          "AnsibleVarName": "slurm_use_db"
+        },
+        {
+          "ParameterName": "use_rest",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Slurm REST API",
+          "AnsibleVarName": "slurm_use_rest"
+        },
+        {
+          "ParameterName": "TaskPluginParam",
+          "Type": "string",
+          "PossibleValues": [
+            "Boards",
+            "Cores",
+            "None",
+            "Sockets",
+            "Threads",
+            "Verbose"
+          ],
+          "DefaultValue": "None",
+          "Required": true,
+          "Description": "Optional parameters for the task plugin. ",
+          "AnsibleVarName": "slurm_TaskPluginParam"
+        }
+      ]
+    }
+  ]
+}

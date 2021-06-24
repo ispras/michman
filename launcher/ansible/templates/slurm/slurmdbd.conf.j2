@@ -1,9 +1,10 @@
-  # Configuration file for slurmdbd
+  #Configuration file for slurmdbd
   #JWT autentification for slurmrestd
   {%if slurm_use_rest%} 
   AuthAltTypes=auth/jwt
   AuthAltParameters=jwt_key=/etc/slurm/jwt_hs256.key
   {% endif %}
+
   #Define the authentication method for communications between Slurm components.
   AuthType= auth/munge
 
@@ -12,10 +13,6 @@
 
   #The port number that the Slurm Database Daemon listens to for work. 
   DbdPort= 6819
-
-  #The name of the user that the slurmdbd daemon executes as. 
-  #This user must exist on the machine executing the Slurm Database Daemon and have the same UID as the hosts on which slurmctld execute.
-  #SlurmUser= {{ SLURM_USER.name}}
 
   #Pathname of a file with process ID of Slurm Database Daemon
   PidFile= {{SLURM_PATH_TO_PID_FILE}}/slurmdbd.log

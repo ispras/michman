@@ -1,13 +1,13 @@
 ---
 
 - name: reload slurmrestd
-  become: true
+  become: yes
   systemd:
     name: slurmrestd
     state: reloaded
 
 - name: restart slurmrestd
-  become: true
+  become: yes
   systemd:
     name: slurmrestd
     state: restarted

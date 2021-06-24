@@ -1,13 +1,12 @@
 ---
 
 - name: Install Slurm DB packages
-  become: yes
   package:
     name: slurmdbd
     state: latest
 
+#TODO: parameters + dir for user 
 - name: Install slurm.conf
-  become: true
   template:
     src: "templates/slurm/slurm.conf.j2"
     dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
@@ -15,8 +14,8 @@
     group: root
     mode: 0444
 
+#TODO: parameters + dir for user 
 - name: Install slurmdbd.conf
-  become: yes 
   template:
     src: templates/slurm/slurmdbd.conf.j2
     dest: "{{ SLURM_CONFIG_DIR }}/slurmdbd.conf"

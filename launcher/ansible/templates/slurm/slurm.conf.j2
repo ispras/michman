@@ -2,7 +2,7 @@
 #Authentification
 AuthType=auth/munge
 #JWT autentification for slurmrestd
-{%if slurm_use_rest%} 
+{%if slurm_use_rest %} 
 AuthAltTypes=auth/jwt
 AuthAltParameters=jwt_key=/etc/slurm/jwt_hs256.key
 {% endif %}
@@ -22,9 +22,9 @@ ClusterName= {{CLUSTER_NAME}}
 
 #Hostname of the machine where Slurm control daemon is executed
 {%if OS_IMAGE%}
-   SlurmctldHost = {{SLURM_MASTER}}
+SlurmctldHost = {{SLURM_MASTER}}
 {% else %}
-   ControlMachine= {{SLURM_MASTER}}
+ControlMachine= {{SLURM_MASTER}}
 {% endif %}
 
 #The job accounting mechanism type. 
@@ -49,7 +49,14 @@ SchedulerType= sched/backfill
 SelectType= select/cons_res
 
 #Parameters for SelectType
-SelectTypeParameters= CR_Core
+SelectTypeParameters= CR_CPU_Memory
+
+#Maximum real memory size available per allocated CPU in megabytes. Used to avoid over-subscribing memory and causing paging.
+MaxMemPerCPU=900
+
+#Default real memory size available per allocated CPU in megabytes. Parameter iss used, when SelectType = select/cons_res or select/cons_tres 
+#and consumable resources include memory and CPUs/cores
+DefMemPerCPU=900
 
 #Pathname of a file into which the slurmctld daemon's logs are written.
 SlurmctldLogFile= {{SLURM_PATH_TO_LOG_FILE}}/slurmctld.log
@@ -80,7 +87,9 @@ TaskPlugin= task/affinity,task/cgroup
 TaskPluginParam= {{Task_Plugin_Param}} 
 
 #Nodes 
-    NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}]
+#CPUs - number of logical processors on the node.
+#RealMemory - size of real memory on the node in megabytes. Parameter is going to be set, if memory is consumable resource.
+    NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}] CPUs=8 RealMemory=7951
 
  #Partition
     PartitionName=main Nodes ={{ cluster_name }}-slave-[1-{{n_slaves}}] Default=YES 

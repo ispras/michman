@@ -1,22 +1,7 @@
 ---
 
-- name: Install Slurm execution host packages
-  package:
-    name: slurmd
-    state: latest
-
-- name: Create slurm spool directory
-  file:
-    path: "{{ STATE_SAVE_LOCATION_SLAVE }}"
-    owner: root
-    group: root
-    mode: 0744
-    state: directory
-  notify:
-    - reload slurmd
-
+#TODO: Parameters + dir for user
 - name: Install slurm.conf
-  become: true
   template:
     src: "templates/slurm/slurm.conf.j2"
     dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
@@ -26,6 +11,7 @@
   notify:
     - reload slurmd
 
+#TODO: Parameters + dir for user
 - name: Install cgroup.conf
   template:
     src: "templates/slurm/cgroup.conf.j2"
@@ -34,6 +20,6 @@
     group: root
     mode: 0444
   notify:
-    - restart slurmd
+    - reload slurmd
     
 

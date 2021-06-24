@@ -8,10 +8,9 @@
     mode: 0700
     state: directory
   
-
 - name: Install munge key
   copy:
-    src: "{{ DIR_TO_INSTALL_MUNGE_KEY }}/munge.key"
+    src: "{{ DIR_FOR_KEY }}/munge.key"
     dest: /etc/munge/munge.key
     force: yes
     owner: munge
@@ -20,7 +19,7 @@
   notify: restart munge
   when: slurm_use_db is defined and slurm_use_db
 
-- name: Ensure Munge is enabled and running
+- name: Ensure munge is enabled and running
   systemd:
     name: munge
     enabled: yes
@@ -29,7 +28,7 @@
 - name: Retrieve key for munge cluster
   fetch:
     src: /etc/munge/munge.key
-    dest: "{{ DIR_TO_SAVE_MUNGE_KEY }}/munge.key"
+    dest: "{{ DIR_FOR_KEY }}/munge.key"
     flat: yes
   notify: restart munge
   when: slurm_use_db is defined and not slurm_use_db

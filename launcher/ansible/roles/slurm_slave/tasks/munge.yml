@@ -10,7 +10,7 @@
 
 - name: Install munge key
   copy:
-    src: "{{ DIR_TO_INSTALL_MUNGE_KEY }}/munge.key"
+    src: "{{ DIR_FOR_KEY }}/munge.key"
     dest: /etc/munge/munge.key
     force: yes
     owner: munge
@@ -19,12 +19,7 @@
   notify: restart munge
 
 - name: Ensure Munge is enabled and running
-  service:
+  systemd:
     name: munge
     enabled: yes
     state: started
-
-- name: Remove munge key
-  file: 
-    path: "{{ DIR_TO_INSTALL_MUNGE_KEY }}/munge.key"
-    state: absent

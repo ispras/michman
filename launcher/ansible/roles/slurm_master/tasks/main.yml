@@ -1,5 +1,14 @@
 ---
 
+- name: Install slurm-wlm package
+  apt:
+    update_cache: yes
+    name: slurm-wlm
+    state: latest
+
+- name: Include tasks for creation directoriees
+  include: directory.yml
+
 - name: Include jwt auth instalation tasks 
   include_tasks: jwt.yml
   when: slurm_use_rest is defined and slurm_use_rest

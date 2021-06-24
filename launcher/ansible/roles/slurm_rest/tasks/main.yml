@@ -3,7 +3,7 @@
 - name: Include tasks for slurmrestd 
   include_tasks: slurmrestd.yml
 
-- name: Include tasks for tpken 
+- name: Include tasks for token 
   include_tasks: jwt_token.yml
 
 - name: Ensure slurmrestd is enabled 

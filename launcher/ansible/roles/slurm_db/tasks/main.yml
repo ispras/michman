@@ -1,5 +1,14 @@
 ---
 
+- name: Install slurm-wlm package
+  apt:
+    update_cache: yes
+    name: slurm-wlm
+    state: latest
+
+- name: Include tasks for creation directoriees
+  include: directory.yml
+
 - name: Include JWT auth
   include: jwt.yml
   when: slurm_use_rest is defined and slurm_use_rest
@@ -11,13 +20,11 @@
   include_tasks: munge.yml
 
 - name: Ensure slurmdbd is enabled 
-  become: yes
   systemd:
     name: slurmdbd
     enabled: yes
     state: started
 
 - name: Create cluster in accounting database
-  become: yes
   shell: 
     sacctmgr -i -Q add cluster {{ cluster_name }}

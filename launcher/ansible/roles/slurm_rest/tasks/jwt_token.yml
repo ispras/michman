@@ -1,22 +1,30 @@
 ---
 
 - name: Generate token
-  shell: sudo scontrol token lifespan=315360000
+  become: yes
+  shell: scontrol token lifespan=315360000
   register: slurm_token
 
-- name: Print return information from the previous task
-  ansible.builtin.debug:
-   var: slurm_token.stdout
-
+#TODO: dir for token
 - name: Create file for token 
-  become: true
+  become: yes
   file: 
     path: /var/log/slurm/slurm_token
     state: touch
     mode: 0777
 
 - name: Add token to file 
-  become: true 
+  become: yes 
   lineinfile:
     path: /var/log/slurm/slurm_token
     line: "{{ slurm_token.stdout }}"
+
+- name: Export envs for configurating slurmrestd
+  become: yes
+  lineinfile:
+     path: /etc/environment
+     line: export SLURMRESTD_AUTH_TYPES=rest_auth/jwt 
+
+- name: Source envs
+  shell: 
+    . /etc/environment

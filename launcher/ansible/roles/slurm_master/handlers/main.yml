@@ -1,7 +1,7 @@
 ---
 
 - name: restart munge
-  service:
+  systemd:
     name: munge
     state: restarted
 

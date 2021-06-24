@@ -1,20 +1,6 @@
 ---
 
-- name: Install Slurm controller packages
-  package:
-    name: slurmctld
-    state: latest
-
-- name: Create slurm state directory
-  file:
-    path: "{{ STATE_SAVE_LOCATION_MASTER }}"
-    owner: root
-    group: root
-    mode: 0744
-    state: directory
-  notify:
-    - reload slurmctld
-
+#TODO: parameters + dir for user
 - name: Install slurm.conf
   become: true
   template:
@@ -26,6 +12,7 @@
   notify:
     - reload slurmctld
 
+#TODO: dir for user
 - name: Install cgroup.conf
   template:
     src: "templates/slurm/cgroup.conf.j2"

@@ -10,7 +10,7 @@ ACCOUNTING_STORAGE_HOST: "{{ cluster_name }}-storage"
 CLUSTER_NAME: "{{ cluster_name }}"
 SLURM_MASTER: "{{ cluster_name }}-master"
 
-OS_IMAGE: "{{ slurm_os_image == 'ubuntu21.04' }}"
+OS_IMAGE: "{{ ansible_facts ['distribution_version'] == '21.04' }}"
 
 SLURM_PATH_TO_PID_FILE: "{{'/var/run/slurm' if OS_IMAGE else '/var/run/slurm-llnl'}}"
 SLURM_PATH_TO_LOG_FILE: "{{'/var/log/slurm' if OS_IMAGE else '/var/log/slurm-llnl'}}"
@@ -22,15 +22,4 @@ STATE_SAVE_LOCATION_SLAVE: /var/spool/slurmd
 Task_Plugin_Param: None
 
 #parameters for database
-DIR_TO_INSTALL_MUNGE_KEY: ./files
-
-
-#defaults for user 
-SLURM_USER:
-  name: slurm
-  comment: "Slurm Workload Manager"
-  uid: 888
-  gid: 888
-  home: /var/lib/slurm
-  shell: /usr/sbin/nologin
-  group: slurm
+DIR_FOR_KEY: ./files

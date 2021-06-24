@@ -6,10 +6,8 @@
 - name: Build the default target
   make:
     chdir: http_parser
-  become: yes
-
+  
 - name: Run 'install' target as root
   make: 
     chdir: http_parser
     target: install
-  become: yes

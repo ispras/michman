@@ -1,13 +1,11 @@
 ---
 
 - name: restart munge
-  become: true
   service:
     name: munge
     state: restarted
 
 - name: reload slurmdbd
-  become: true
   systemd:
     name: slurmdbd
     state: reloaded
