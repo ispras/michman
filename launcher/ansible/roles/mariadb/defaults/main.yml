@@ -1,0 +1,3 @@
+#parameteres fo created db
+slurm_db_user: slurm
+slurm_db_password: slurmdbd
