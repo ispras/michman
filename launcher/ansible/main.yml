@@ -151,7 +151,7 @@
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic is defined and deploy_elastic
 
- When create_storage is true, such instance would be created
+ #When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"
   become: yes
   vars:
@@ -165,5 +165,6 @@
     - { role: couchdb, when: deploy_couchdb is defined and deploy_couchdb }
     - { role: postgresql, when: deploy_postgresql is defined and deploy_postgresql }
     - { role: redis, when: deploy_redis is defined and deploy_redis }
+    - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb }
    
 

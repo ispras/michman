@@ -24,12 +24,14 @@
       innodb_buffer_pool_size=1G
       innodb_log_file_size=64M
       innodb_lock_wait_timeout=900
+  when: deploy_slurm is defined and deploy_slurm
 
 - name: Change configuration file for mariaDB
   lineinfile:
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
     regexp: '^bind-address'
-    line: 'bind-address={{active_master_ip}} ' 
+    line: 'bind-address={{active_master_ip}} '
+  when: deploy_slurm is defined and deploy_slurm
 
 - name: Ensure MariaDB daemon is started
   systemd:
@@ -43,12 +45,19 @@
     name: mariadb
     state: present
 
+- name: Print parameters of db
+  debug:
+    var: "{{ item }}"
+  loop: 
+      - "{{ db_user }}"
+      - "{{ db_password }}"
+
 - name: Create DB user
   mysql_user:
     login_user: root
     login_password: ' '
     login_unix_socket: /var/run/mysqld/mysqld.sock
-    name: "{{ slurm_db_user }}"
-    password: "{{ slurm_db_password }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
     priv: 'mariadb.*:ALL'
     state: present

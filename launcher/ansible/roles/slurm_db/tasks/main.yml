@@ -20,6 +20,7 @@
   include_tasks: munge.yml
 
 - name: Ensure slurmdbd is enabled 
+  become: true 
   systemd:
     name: slurmdbd
     enabled: yes

@@ -1,3 +1,3 @@
 #parameteres fo created db
-slurm_db_user: slurm
-slurm_db_password: slurmdbd
+db_user: "{{slurm_db_user if deploy_slurm else mariadb_db_user}}" 
+db_password: "{{slurm_db_password if deploy_slurm else mariadb_db_password}}" 

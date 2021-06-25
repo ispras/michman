@@ -1,20 +1,16 @@
 {
   "Type": "slurm",
-  "Description": "Slurm service",
-  "DefaultVersion": "Slurm without db",
+  "Description": "Slurm service. The vrsion of the service is slurm-wlm 20.11.4",
+  "DefaultVersion": "Slurm-without-db",
   "Class": "master-slave",
   "Versions": [
     {
-      "Version": "Slurm with db",
+      "Version": "Slurm-with-db",
       "Description": "Deploing Slurm with logging system",
       "Configs": [
         {
           "ParameterName": "use_db",
           "Type": "bool",
-          "PossibleValues": [
-            "true",
-            "false"
-          ],
           "DefaultValue": "true",
           "Required": true,
           "Description": "Use MariaDB and slurmdbd",
@@ -29,7 +25,7 @@
           ],
           "DefaultValue": "false",
           "Required": true,
-          "Description": "Use Slurm REST API",
+          "Description":  "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
         },
         
@@ -73,21 +69,17 @@
             "latest"
           ],
           "DefaultServiceVersion": "latest",
-          "Description": "Dependency mariedb-slurm"
+          "Description": "Dependency mariadb-slurm"
         }
       ]
     },
     {
-      "Version": "Slurm without db",
+      "Version": "Slurm-without-db",
       "Description": "Deploing Slurm without logging system",
       "Configs": [
         {
           "ParameterName": "use_db",
           "Type": "bool",
-          "PossibleValues": [
-            "true",
-            "false"
-          ],
           "DefaultValue": "false",
           "Required": true,
           "Description": "Use MariaDB and slurmdbd",
@@ -96,13 +88,9 @@
         {
           "ParameterName": "use_rest",
           "Type": "bool",
-          "PossibleValues": [
-            "true",
-            "false"
-          ],
           "DefaultValue": "false",
           "Required": true,
-          "Description": "Use Slurm REST API",
+          "Description":  "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
         },
         {

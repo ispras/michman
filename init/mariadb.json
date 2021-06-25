@@ -11,16 +11,18 @@
         {
             "ParameterName": "db_password",
             "Type": "string",
-            "DefaultValue": "slurmdbd",
+            "DefaultValue": "password",
             "Required": true,
-            "Description": "Default user password for Mariadb for user slurm, you can change it"
+            "Description": "Default user password for Mariadb for default user, you can change it",
+            "AnsibleVarName": "mariadb_db_password"
           },
           {
             "ParameterName": "db_user",
             "Type": "string",
-            "DefaultValue": "slurm",
+            "DefaultValue": "user",
             "Required": true,
-            "Description": "Default db_user for Mariadb, you can change it"
+            "Description": "Default db_user for Mariadb, you can change it",
+            "AnsibleVarName": "mariadb_db_user"
           }
       ]
       
