@@ -1,0 +1,23 @@
+---
+
+- name: Create slurm log directory for storage
+  file:
+    path: "{{ SLURM_PATH_TO_LOG_FILE }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+
+- name: Create slurm pid directory for storage
+  file:
+    path: "{{SLURM_PATH_TO_PID_FILE}}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+
+- name: Create slurm config dir for storage
+  file:
+    path: "{{ SLURM_CONFIG_DIR }}"
+    state: directory
+    mode: 0755

@@ -1,0 +1,22 @@
+# Slurm cgroup support configuration file 
+#cgroup.conf is an ASCII file which defines parameters used by Slurm's Linux cgroup related plugins. 
+
+      CgroupMountpoint= "/sys/fs/cgroup"
+
+      CgroupAutomount= yes
+      
+      ConstrainCores= yes
+
+      ConstrainRAMSpace= yes
+
+      ConstrainSwapSpace= no
+
+      AllowedRamSpace= 100
+
+      AllowedSwapSpace= 0
+
+      MaxRAMPercent= 100
+
+      MaxSwapPercent= 100
+
+      MinRAMSpace= 30

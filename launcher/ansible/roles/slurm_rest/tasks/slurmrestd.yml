@@ -1,0 +1,43 @@
+---
+
+- name: Install Slurm REST-API packages
+  become: yes
+  package:
+    name: slurmrestd
+    state: latest
+
+- name: Install slurmrestd.conf
+  become: yes
+  template:
+    src: "templates/slurm/slurmrestd.conf.j2"
+    dest: "{{ SLURM_CONFIG_DIR }}/slurmrestd.conf"
+    owner: root
+    group: root
+    mode: 0444
+
+- name: Change unit file for slurmrestd
+  become: yes
+  lineinfile: 
+    path: /lib/systemd/system/slurmrestd.service
+    state: absent
+    regexp: '^ExecStart=/usr/sbin'
+
+- name: Сonfiguration for TCP/IP socket
+  become: yes
+  lineinfile: 
+    backrefs: yes
+    path: /lib/systemd/system/slurmrestd.service
+    regexp: "{{ item.line }}"
+    line: "{{ item.change }}"
+  loop:
+    - { line: '^#ExecStart=/usr/sbin/', change: ExecStart=/usr/sbin/slurmrestd $SLURMRESTD_OPTIONS 0.0.0.0:6820 }
+    - { line: '^#Environment="SLURM_JWT=daemon"', change: Environment="SLURM_JWT=daemon" }
+  notify:
+    - reload slurmrestd
+    - restart slurmrestd
+    
+- name: Reload systemd
+  become: yes
+  systemd:
+    daemon_reload: yes
+  

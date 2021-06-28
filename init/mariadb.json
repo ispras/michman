@@ -1,0 +1,32 @@
+{
+  "Type":"mariadb",
+  "Description":"MariaDB database service",
+  "DefaultVersion":"latest",
+  "Class": "storage",
+  "Versions":[
+    {
+      "Version":"latest",
+      "Description":"MariaDB default version",
+      "Configs": [
+        {
+            "ParameterName": "db_password",
+            "Type": "string",
+            "DefaultValue": "password",
+            "Required": true,
+            "Description": "Default user password for Mariadb for default user, you can change it",
+            "AnsibleVarName": "mariadb_db_password"
+          },
+          {
+            "ParameterName": "db_user",
+            "Type": "string",
+            "DefaultValue": "user",
+            "Required": true,
+            "Description": "Default db_user for Mariadb, you can change it",
+            "AnsibleVarName": "mariadb_db_user"
+          }
+      ]
+      
+    }
+  ]
+
+}

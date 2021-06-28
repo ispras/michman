@@ -1,0 +1,36 @@
+---
+
+- name: Clone repository for jwt 
+  shell: git clone --depth 1 --single-branch -b v1.12.0 https://github.com/benmcollins/libjwt.git libjwt
+
+- name: Installation packages to configure
+  apt:
+    name: 
+      - autoconf
+      - libtool
+      - pkg-config
+      - libssl-dev
+      - libjansson-dev
+      - make 
+
+- name: Configure 
+  command: "{{ item }}"
+  loop: 
+    - autoreconf --force --install
+    - ./configure --prefix=/usr/local
+    - make -j
+  args:
+    chdir: libjwt
+
+- name: Run 'install' target as root
+  make: 
+    chdir: libjwt
+    target: install
+  
+- name: Install jwt key
+  copy: 
+    src: "{{ DIR_FOR_KEY }}/jwt_hs256.key"
+    dest: /etc/slurm/jwt_hs256.key
+    owner: root
+    group: root
+    mode: 0744

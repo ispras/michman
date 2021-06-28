@@ -1,0 +1,25 @@
+---
+
+- name: Check munge dir
+  file:
+    path: /etc/munge
+    owner: munge
+    group: munge
+    mode: 0700
+    state: directory
+
+- name: Install munge key
+  copy:
+    src: "{{ DIR_FOR_KEY }}/munge.key"
+    dest: /etc/munge/munge.key
+    force: yes
+    owner: munge
+    group: munge
+    mode: 0400
+  notify: restart munge
+
+- name: Ensure Munge is enabled and running
+  systemd:
+    name: munge
+    enabled: yes
+    state: started

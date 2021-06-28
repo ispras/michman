@@ -1,0 +1,30 @@
+---
+
+- name: Install slurm-wlm package
+  apt:
+    update_cache: yes
+    name: slurm-wlm
+    state: latest
+
+- name: Include tasks for creation directoriees
+  include: directory.yml
+
+- name: Include jwt auth instalation tasks 
+  include_tasks: jwt.yml
+  when: slurm_use_rest is defined and slurm_use_rest
+
+- name: Include http_parser instalation tasks
+  include_tasks: http_parser.yml
+  when: slurm_use_rest is defined and slurm_use_rest
+
+- name: Include controller installation tasks
+  include_tasks: controller.yml
+
+- name: Include task for configuring munge 
+  include_tasks: munge.yml
+
+- name: Ensure slurmctld is enabled and running
+  systemd:
+    name: slurmctld
+    enabled: yes
+    state: started

@@ -1,0 +1,23 @@
+#defaults for slurmdbd
+#parameters for slurm.conf
+ACCOUNTING_STORAGE_HOST: "{{ cluster_name }}-storage"
+CLUSTER_NAME: "{{ cluster_name }}"
+SLURM_MASTER: "{{ cluster_name }}-master"
+
+STATE_SAVE_LOCATION_MASTER: /var/spool/slurmctld
+STATE_SAVE_LOCATION_SLAVE: /var/spool/slurmd
+Task_Plugin_Param: None
+
+#parameters for config file for slurmdbd
+SLURM_ACCOUNTING_DB_HOST_NAME: "{{ cluster_name }}-storage"
+
+OS_IMAGE: "{{ ansible_facts ['distribution_version']  == '21.04' }}"
+
+SLURM_PATH_TO_PID_FILE: "{{'/var/run/slurm' if OS_IMAGE else '/var/run/slurm-llnl'}}"
+SLURM_PATH_TO_LOG_FILE: "{{'/var/log/slurm' if OS_IMAGE else '/var/log/slurm-llnl'}}"
+SLURM_CONFIG_DIR: "{{'/etc/slurm' if OS_IMAGE else '/etc/slurm-llnl'}}"
+
+DIR_FOR_KEY: ./files
+
+#parameters for database
+SLURM_ACCOUNTING_DB_NAME: mariadb

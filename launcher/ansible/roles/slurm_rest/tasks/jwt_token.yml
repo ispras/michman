@@ -1,0 +1,30 @@
+---
+
+- name: Generate token
+  become: yes
+  shell: scontrol token lifespan=315360000
+  register: slurm_token
+
+#TODO: dir for token
+- name: Create file for token 
+  become: yes
+  file: 
+    path: /var/log/slurm/slurm_token
+    state: touch
+    mode: 0777
+
+- name: Add token to file 
+  become: yes 
+  lineinfile:
+    path: /var/log/slurm/slurm_token
+    line: "{{ slurm_token.stdout }}"
+
+- name: Export envs for configurating slurmrestd
+  become: yes
+  lineinfile:
+     path: /etc/environment
+     line: export SLURMRESTD_AUTH_TYPES=rest_auth/jwt 
+
+- name: Source envs
+  shell: 
+    . /etc/environment

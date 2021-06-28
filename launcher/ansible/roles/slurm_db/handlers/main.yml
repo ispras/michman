@@ -1,0 +1,11 @@
+---
+
+- name: restart munge
+  service:
+    name: munge
+    state: restarted
+
+- name: reload slurmdbd
+  systemd:
+    name: slurmdbd
+    state: reloaded
