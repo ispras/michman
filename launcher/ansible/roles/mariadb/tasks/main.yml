@@ -6,7 +6,7 @@
     state: present 
   loop: 
     - mariadb-server
-    - python3-pip
+    - "{{ python_packages }}"
   
 - name: Make sure pymysql is present
   pip:

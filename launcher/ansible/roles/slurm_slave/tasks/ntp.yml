@@ -1,0 +1,15 @@
+---
+
+- name: Install NTP packages to synchronize the clock
+  apt:
+    name: ntp 
+
+- name: NTP daemon is enabled and running 
+  systemd:
+    name: ntp
+    enabled: yes
+    state: started
+
+- name: Set timezone to Europe/Moscow
+  timezone: 
+    name: Europe/Moscow
