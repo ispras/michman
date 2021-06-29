@@ -164,6 +164,6 @@
     - { role: couchdb, when: deploy_couchdb is defined and deploy_couchdb }
     - { role: postgresql, when: deploy_postgresql is defined and deploy_postgresql }
     - { role: redis, when: deploy_redis is defined and deploy_redis }
-    - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb }
+    - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb and not deploy_slurm}
    
 
