@@ -1,12 +1,30 @@
 ---
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
-  
-- name: Install slurm-wlm package
+
+- name: Change parameters of limits.conf for MPI
+  pam_limits:
+    domain: '*'
+    limit_type: "{{ item }}"
+    limit_item: memlock
+    value: unlimited 
+  loop: 
+    - soft
+    - hard  
+ 
+#TODO: test it  
+- name: Install slurm-wlm and pam_slurm packages
   apt:
     update_cache: yes
-    name: slurm-wlm
+    name: 
+      - slurm-wlm
+      - libpam-slurm
     state: latest
+
+- name: Configure ssh access restrictions
+  lineinfile: 
+    path: /etc/pam.d/sshd
+    line: account required pam_slurm_adopt.so
 
 - name: Include tasks for creation directoriees
   include: directory.yml
