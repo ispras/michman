@@ -105,7 +105,7 @@ Ansible-playbook, используемый для создания виртуа�
 	#. **Запрос на регистрацию нового поддерживаемого сервиса.** Администратор Michman должен отправить следующий запрос:
 
 .. parsed-literal::
-	curl -X POST -d "data=@michman/init/ignite.json" http://michman_addr:michman_port/configs
+	curl -X POST -d @michman/init/ignite.json http://michman_addr:michman_port/configs
 
 .. parsed-literal::
 	
