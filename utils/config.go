@@ -111,9 +111,19 @@ func (Cfg *Config) MakeCfg() error {
 		log.Fatalln("For config parameter 'logs_output` are supported only 'file' or 'logstash' values")
 	}
 
-	//check file path not empty
-	if Cfg.LogsFilePath == "" {
+	//check file path not empty if logs output is 'file'
+	if Cfg.LogsOutput == LogsFileOutput && Cfg.LogsFilePath == "" {
 		log.Fatalln("'logs_file_path' couldn't be empty")
+	}
+
+	//check if directory for logs exists and create it if not
+	if Cfg.LogsOutput == LogsFileOutput {
+		if _, err := os.Stat(Cfg.LogsFilePath); os.IsNotExist(err) {
+			err := os.Mkdir(Cfg.LogsFilePath, os.ModePerm)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
 	}
 
 	//check logstash addr not empty
