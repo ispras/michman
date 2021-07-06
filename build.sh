@@ -118,7 +118,7 @@ start)
 	sleep 1
 	if [ -z $(ps | grep $(cat .$LAUNCHER_BIN.pid)| awk '{print $1}') ]
 	then 
-		echo "launcher did't start, check config and logs"
+		echo "launcher didn't start, check config and logs"
 		rm .$LAUNCHER_BIN.pid
 		exit
 	fi
@@ -128,7 +128,7 @@ start)
 	sleep 1
 	if [ -z $(ps | grep $(cat .$REST_BIN.pid) | awk '{print $1}') ]
         then
-                echo "rest api did't start, check config and logs"
+                echo "rest api didn't start, check config and logs"
                 rm .$REST_BIN.pid
                 exit
         fi
