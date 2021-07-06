@@ -343,12 +343,12 @@ To quick start you may use _build.sh_ script:
 
 Manually launch ansible_runner service:
 ```
-go run ./launcher/ansible_launcher.go ./launcher/main.go
+go run ./launcher/ansible_launch.go ./launcher/main.go
 ```
 
 Manually launch ansible_runner service specifying config and port, defaults are config path in Michman root and 5000 as used port:
 ```
-go run ./launcher/ansible_launcher.go ./launcher/main.go --config /path/to/config.yaml --port PORT
+go run ./launcher/ansible_launch.go ./launcher/main.go --config /path/to/config.yaml --port PORT
 ```
 
 Manually launch http_server:
