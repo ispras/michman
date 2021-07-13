@@ -45,13 +45,6 @@
     name: mariadb
     state: present
 
-- name: Print parameters of db
-  debug:
-    var: "{{ item }}"
-  loop: 
-      - "{{ db_user }}"
-      - "{{ db_password }}"
-
 - name: Create DB user
   mysql_user:
     login_user: root

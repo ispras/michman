@@ -4,12 +4,18 @@
   apt: 
     name: libpam-slurm
 
-- name: Configure access for user ubuntu 
+- name: Configure access only for user ubuntu in access.conf
   lineinfile:
     path: /etc/security/access.conf
     line: -:ALL EXCEPT ubuntu :ALL
 
+- name: Configure access for user ubuntu in sshd file 
+  lineinfile: 
+    path: /etc/pam.d/sshd
+    line: account required pam_access.so
+
 - name: Configure ssh access restrictions
   lineinfile: 
     path: /etc/pam.d/sshd
-    line: account required pam_slurm.so
+    line: account sufficient pam_slurm_adopt.so
+    insertbefore: account required pam_access.so

@@ -14,6 +14,7 @@ AccountingStorageType= accounting_storage/slurmdbd
 AccountingStorageType= accounting_storage/none
 {% endif %}
 
+
 #The name of the machine hosting the accounting storage database.
 AccountingStorageHost= {{ACCOUNTING_STORAGE_HOST}}
 
@@ -29,6 +30,10 @@ ControlMachine= {{SLURM_MASTER}}
 
 #The job accounting mechanism type. 
 JobAcctGatherType= jobacct_gather/linux
+
+#If set to "ALL" then jobs which exceed a partition's size and/or time limits will be rejected at submission time. 
+#If job is submitted to multiple partitions, the job must satisfy the limits on all the requested partitions.
+EnforcePartLimits= ALL
 
 #Identifies the plugin to be used for process tracking on a job step basis. 
 #proctrack/cgroup. Uses linux cgroups to constrain and track processes, and is the default for systems with cgroup support. 

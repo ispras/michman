@@ -1,4 +1,10 @@
 ---
+- name: Install slurm-wlm packages
+  apt:
+    update_cache: yes
+    name: slurm-wlm
+    state: latest
+
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
 
@@ -11,17 +17,10 @@
   loop: 
     - soft
     - hard  
-  
-- name: Install slurm-wlm packages
-  apt:
-    update_cache: yes
-    name: slurm-wlm
-    state: latest
 
-- name: Include tasks for configuration ssh access
-  include_tasks: ssh_access.yml
+#- name: Include tasks for configuration ssh access
+#  include_tasks: ssh_access.yml
   
-
 - name: Include tasks for creation directoriees
   include: directory.yml
 
