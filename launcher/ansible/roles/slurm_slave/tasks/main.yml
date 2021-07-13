@@ -18,8 +18,9 @@
     name: slurm-wlm
     state: latest
 
-- name: Include tasks for ssh access restriction
-  include: ssh_access.yml
+- name: Include tasks for configuration ssh access
+  include_tasks: ssh_access.yml
+  
 
 - name: Include tasks for creation directoriees
   include: directory.yml
