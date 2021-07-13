@@ -11,20 +11,15 @@
   loop: 
     - soft
     - hard  
- 
-#TODO: test it  
-- name: Install slurm-wlm and pam_slurm packages
+  
+- name: Install slurm-wlm packages
   apt:
     update_cache: yes
-    name: 
-      - slurm-wlm
-      - libpam-slurm
+    name: slurm-wlm
     state: latest
 
-- name: Configure ssh access restrictions
-  lineinfile: 
-    path: /etc/pam.d/sshd
-    line: account required pam_slurm_adopt.so
+- name: Include tasks for ssh access restriction
+  include: ssh_access.yml
 
 - name: Include tasks for creation directoriees
   include: directory.yml

@@ -1,0 +1,15 @@
+---
+
+- name: Install packages for ssh access restriction
+  apt: 
+    name: libpam-slurm
+
+- name: Configure access for user ubuntu 
+  lineinfile:
+    path: /etc/security/access.conf
+    line: -:ALL EXCEPT ubuntu :ALL
+
+- name: Configure ssh access restrictions
+  lineinfile: 
+    path: /etc/pam.d/sshd
+    line: account required pam_slurm.so

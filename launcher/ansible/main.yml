@@ -75,6 +75,7 @@
   tasks:
     - include_role:
         name: mariadb
+      when: slurm_use_db is defined and slurm_use_db
     - include_role:
         name: slurm_db
       when: slurm_use_db is defined and slurm_use_db
