@@ -18,8 +18,8 @@
     - soft
     - hard  
 
-#- name: Include tasks for configuration ssh access
-#  include_tasks: ssh_access.yml
+- name: Include tasks for configuration ssh access
+  include_tasks: ssh_access.yml
   
 - name: Include tasks for creation directoriees
   include: directory.yml
