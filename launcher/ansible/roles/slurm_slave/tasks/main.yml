@@ -1,11 +1,26 @@
 ---
-
-- name: Install slurm-wlm package
+- name: Install slurm-wlm packages
   apt:
     update_cache: yes
     name: slurm-wlm
     state: latest
 
+- name: Include tasks for time synchronization
+  include_tasks: ntp.yml
+
+- name: Change parameters of limits.conf for MPI
+  pam_limits:
+    domain: '*'
+    limit_type: "{{ item }}"
+    limit_item: memlock
+    value: unlimited 
+  loop: 
+    - soft
+    - hard  
+
+- name: Include tasks for configuration ssh access
+  include_tasks: ssh_access.yml
+  
 - name: Include tasks for creation directoriees
   include: directory.yml
 

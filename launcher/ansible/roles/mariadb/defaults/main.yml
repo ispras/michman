@@ -1,3 +1,9 @@
 #parameteres fo created db
 db_user: "{{slurm_db_user if deploy_slurm else mariadb_db_user}}" 
 db_password: "{{slurm_db_password if deploy_slurm else mariadb_db_password}}" 
+
+OS_IMAGE: "{{ ansible_facts ['distribution_version']  == '21.04' }}"
+
+python_packages: "{{ python_packages_21 if OS_IMAGE else python_packages_18 }}"
+python_packages_18: [python3-pip, python-mysqldb]
+python_packages_21: python3-pip

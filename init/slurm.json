@@ -1,6 +1,6 @@
 {
   "Type": "slurm",
-  "Description": "Slurm service. The vrsion of the service is slurm-wlm 20.11.4",
+  "Description": "Slurm service. There are 2 versions of Slurm service, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are two versions of deploying Slurm: with accounting system (Slurm-with-db) or without it (Slurm-without-db).",
   "DefaultVersion": "Slurm-without-db",
   "Class": "master-slave",
   "Versions": [
@@ -70,6 +70,14 @@
           ],
           "DefaultServiceVersion": "latest",
           "Description": "Dependency mariadb-slurm"
+        }, 
+        {
+          "ServiceType": "nfs_server",
+          "ServiceVersions": [
+            "default"
+          ],
+          "DefaultServiceVersion": "default",
+          "Description": "Dependency nfs-server-slurm"
         }
       ]
     },
@@ -108,6 +116,16 @@
           "Required": true,
           "Description": "Optional parameters for the task plugin. ",
           "AnsibleVarName": "slurm_TaskPluginParam"
+        }
+      ], 
+      "Dependencies": [
+        {
+          "ServiceType": "nfs_server",
+          "ServiceVersions": [
+            "default"
+          ],
+          "DefaultServiceVersion": "default",
+          "Description": "Dependency nfs-server-slurm"
         }
       ]
     }

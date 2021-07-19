@@ -6,7 +6,7 @@
     state: present 
   loop: 
     - mariadb-server
-    - python3-pip
+    - "{{ python_packages }}"
   
 - name: Make sure pymysql is present
   pip:
@@ -44,13 +44,6 @@
     login_unix_socket: /var/run/mysqld/mysqld.sock
     name: mariadb
     state: present
-
-- name: Print parameters of db
-  debug:
-    var: "{{ item }}"
-  loop: 
-      - "{{ db_user }}"
-      - "{{ db_password }}"
 
 - name: Create DB user
   mysql_user:
