@@ -70,6 +70,14 @@
           ],
           "DefaultServiceVersion": "latest",
           "Description": "Dependency mariadb-slurm"
+        }, 
+        {
+          "ServiceType": "nfs_server",
+          "ServiceVersions": [
+            "default"
+          ],
+          "DefaultServiceVersion": "default",
+          "Description": "Dependency nfs-server-slurm"
         }
       ]
     },
@@ -108,6 +116,16 @@
           "Required": true,
           "Description": "Optional parameters for the task plugin. ",
           "AnsibleVarName": "slurm_TaskPluginParam"
+        }
+      ], 
+      "Dependencies": [
+        {
+          "ServiceType": "nfs_server",
+          "ServiceVersions": [
+            "default"
+          ],
+          "DefaultServiceVersion": "default",
+          "Description": "Dependency nfs-server-slurm"
         }
       ]
     }
