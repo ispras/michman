@@ -9,10 +9,20 @@
       "Description": "NFS server default version",
       "Configs": [
         {
-          "ParameterName": "weblab_name",
+          "ParameterName": "dir_to_share",
           "Type": "string",
+          "DefaultValue": "/var/shared_dir",
           "Required": true,
-          "Description": "name of Web Laboratory"
+          "Description": "Directory that is going to be shared among cluster",
+          "AnsibleVarName": "nfs_server_dir_to_share"
+        }, 
+        {
+          "ParameterName": "client_dir_to_share",
+          "Type": "string",
+          "DefaultValue": "/var/shared_dir",
+          "Required": true,
+          "Description": "Directory that is going to be shared among cluster",
+          "AnsibleVarName": "nfs_server_client_dir_to_share"
         }
       ]
     }]

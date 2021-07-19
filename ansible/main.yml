@@ -25,7 +25,6 @@
     - include_role:
             name: mem_mb
 
-
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
   tasks:
