@@ -1,11 +1,14 @@
 ---
 
-- name: create dir
-  file: path={{item.mount_path}} state=directory owner={{nfs_user}}
-
-- name: crate mount point
+- name: Create dir for sharing 
+  file: 
+    path: "{{ nfs_server_dir_to_share }}" 
+    state: directory 
+    mode: 0777
+    
+- name: Create mount point
   lineinfile:
-    dest=/etc/fstab
-    state=present insertafter=EOF
-    line="{{ item.nfs_path }}  {{item.mount_path}}       nfs    owner={{nfs_user}}        0       2"
-    create=true
+    dest: /etc/fstab
+    state: present 
+    insertafter: EOF
+    line: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}:{{ nfs_server_dir_to_share }}  {{ nfs_server_dir_to_share }}       nfs     auto,nofail,rw,nodev       0       0"

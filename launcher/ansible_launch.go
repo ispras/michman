@@ -207,7 +207,6 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["os_image"] = image.CloudImageID
 	extraVars["skip_packages"] = false
 	extraVars["os_project_name"] = osCreds.OsProjectName
-	extraVars["nfs_shares"] = []string{}
 
 	extraVars["floating_ip_pool"] = osConfig.FloatingIP
 	extraVars["os_auth_url"] = osCreds.OsAuthUrl

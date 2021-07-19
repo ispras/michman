@@ -1,4 +1,6 @@
 # Create a new primary partition
+---
+
 - parted:
     device: "{{ openstack_volume }}"
     number: 1
@@ -11,12 +13,9 @@
     dev: "{{ openstack_volume }}1"
   tags: fdisk
 
-
-
 - shell: blkid "{{ openstack_volume }}1" |awk '{print $2}'
   register: UUID
   tags: fdisk
-
 
 - name: Creates directory
   file:

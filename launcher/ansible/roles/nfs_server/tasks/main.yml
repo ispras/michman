@@ -1,13 +1,14 @@
-#- include: repo.yml
-#  when: local_repo_url != False
+--- 
 
-- include: nfs-server.yml
-  tags: repo
+- name: Install nfs-server and update cache
+  apt:
+    name: nfs-kernel-server
+    state: latest
+    update_cache: yes
 
-- include: nfs-add-export.yml
-  when: nfs_server_export_directories is defined and nfs_server_export_directories != False
-  tags: ["nfs,nfs-server"]
-
+- name: Include tasks for edding configuration file export 
+  include: nfs-add-export.yml
+  
 #- include: fdisk.yml
 #  tags: fdisk
 
