@@ -520,6 +520,12 @@ func runAnsible(cmd string, args []string, stdout io.Writer, stderr io.Writer) (
 	prepCmd := exec.Command(cmd, args...)
 	prepCmd.Stdout = stdout
 	prepCmd.Stderr = stderr
+
+	err := os.Setenv(utils.AnsibleConfigVar, utils.AnsibleConfigPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	if err := prepCmd.Start(); err != nil {
 		return false, err
 	}

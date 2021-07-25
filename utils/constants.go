@@ -42,6 +42,10 @@ const (
 	//ansible-playbook command
 	AnsiblePlaybookCmd = "ansible-playbook"
 
+	//path for ansible.cfg
+	AnsibleConfigVar = "ANSIBLE_CONFIG"
+	AnsibleConfigPath = "launcher/ansible/ansible.cfg"
+
 	//base path
 	BasePath = "michman"
 	//ansible main role path
