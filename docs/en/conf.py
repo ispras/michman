@@ -19,7 +19,7 @@ from jupyter_sphinx_theme import *
 
 init_theme()
 
-
+master_doc = 'index'
 project = ''
 copyright = '2021, Elena Aksenova, Nikita Lazarev, David Badalyan, Oleg Borisenko'
 author = 'Elena Aksenova, Nikita Lazarev, David Badalyan, Oleg Borisenko'
