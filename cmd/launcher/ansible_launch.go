@@ -87,32 +87,82 @@ func setServiceVersion(stype string) string {
 	return stype + "_version"
 }
 
-func convertParamValue(value string, vType string) interface{} {
-	switch vType {
-	case "int":
-		if v, err := strconv.ParseInt(value, 10, 32); err != nil {
-			log.Print(err)
-			return nil
-		} else {
-			return v
+func convertParamValue(value string, vType string, flagLst bool) interface{} {
+	if !flagLst {
+		switch vType {
+		case "int":
+			if v, err := strconv.ParseInt(value, 10, 32); err != nil {
+				log.Print(err)
+				return nil
+			} else {
+				return v
+			}
+		case "float":
+			if v, err := strconv.ParseFloat(value, 64); err != nil {
+				log.Print(err)
+				return nil
+			} else {
+				return v
+			}
+		case "bool":
+			if v, err := strconv.ParseBool(value); err != nil {
+				log.Print(err)
+				return nil
+			} else {
+				return v
+			}
+		case "string":
+			return value
 		}
-	case "float":
-		if v, err := strconv.ParseFloat(value, 64); err != nil {
-			log.Print(err)
-			return nil
-		} else {
-			return v
+	} else {
+		splitFunc := func(r rune) bool {
+			return strings.ContainsRune(" ,'", r)
 		}
-	case "bool":
-		if v, err := strconv.ParseBool(value); err != nil {
-			log.Print(err)
-			return nil
-		} else {
-			return v
+		valString := strings.FieldsFunc(value, splitFunc)
+
+		switch vType {
+		case "int":
+			var valList []int64
+			for _, val := range valString {
+				if v, err := strconv.ParseInt(val, 10, 32); err != nil {
+					log.Print(err)
+					return err
+				} else {
+					valList = append(valList, v)
+				}
+			}
+			return valList
+		case "float":
+			var valList []float64
+			for _, val := range valString {
+				if v, err := strconv.ParseFloat(val, 64); err != nil {
+					log.Print(err)
+					return err
+				} else {
+					valList = append(valList, v)
+				}
+			}
+			return valList
+		case "bool":
+			var valList []bool
+			for _, val := range valString {
+				if v, err := strconv.ParseBool(val); err != nil {
+					log.Print(err)
+					return err
+				} else {
+					valList = append(valList, v)
+				}
+			}
+			return valList
+		case "string":
+			var valList []string
+			for _, val := range valString {
+				valList = append(valList, val)
+			}
+			return valList
 		}
-	case "string":
-		return value
 	}
+
 	return nil
 }
 
@@ -160,10 +210,10 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 			for _, sc := range curSv.Configs {
 				//check if in request presents current config param
 				if value, ok := curS.Config[sc.ParameterName]; ok {
-					extraVars[sc.AnsibleVarName] = convertParamValue(value, sc.Type)
+					extraVars[sc.AnsibleVarName] = convertParamValue(value, sc.Type, sc.IsList)
 				} else if sc.Required {
 					//set default value if param is obligated
-					extraVars[sc.AnsibleVarName] = convertParamValue(sc.DefaultValue, sc.Type)
+					extraVars[sc.AnsibleVarName] = convertParamValue(sc.DefaultValue, sc.Type, sc.IsList)
 				}
 			}
 
@@ -270,7 +320,7 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	if cluster.Keys != nil && len(cluster.Keys) > 0 {
 		extraVars["public_keys"] = cluster.Keys
 	}
-	
+
 	return extraVars, nil
 }
 

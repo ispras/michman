@@ -5,6 +5,7 @@ import (
 	protobuf "github.com/ispras/michman/internal/protobuf"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
@@ -81,22 +82,55 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 						return false, errors.New("ERROR: service version " + v + " is not supported.")
 					}
 				}
+
 				//check type
-				switch sc.Type {
-				case "int":
-					if _, err := strconv.ParseInt(v, 10, 32); err != nil {
-						log.Print(err)
-						return false, err
+				if !sc.IsList {
+					switch sc.Type {
+					case "int":
+						if _, err := strconv.ParseInt(v, 10, 32); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "float":
+						if _, err := strconv.ParseFloat(v, 64); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "bool":
+						if _, err := strconv.ParseBool(v); err != nil {
+							log.Print(err)
+							return false, err
+						}
 					}
-				case "float":
-					if _, err := strconv.ParseFloat(v, 64); err != nil {
-						log.Print(err)
-						return false, err
+				} else {
+					splitFunc := func(r rune) bool {
+						return strings.ContainsRune(" ,'", r)
 					}
-				case "bool":
-					if _, err := strconv.ParseBool(v); err != nil {
-						log.Print(err)
-						return false, err
+
+					valString := strings.FieldsFunc(v, splitFunc)
+
+					switch sc.Type {
+					case "int":
+						for _, val := range valString {
+							if _, err := strconv.ParseInt(val, 10, 32); err != nil {
+								log.Print(err)
+								return false, err
+							}
+						}
+					case "float":
+						for _, val := range valString {
+							if _, err := strconv.ParseFloat(val, 64); err != nil {
+								log.Print(err)
+								return false, err
+							}
+						}
+					case "bool":
+						for _, val := range valString {
+							if _, err := strconv.ParseBool(val); err != nil {
+								log.Print(err)
+								return false, err
+							}
+						}
 					}
 				}
 				break

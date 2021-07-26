@@ -99,6 +99,7 @@ message ServiceConfig {
     bool Required = 5; //add this param to ansible extra vars or no
     string Description = 6;
     string AnsibleVarName = 7;
+    bool IsList = 8;
 }
 
 message ServiceDependency {
