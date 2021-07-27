@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	protobuf "github.com/ispras/michman/protobuf"
 	"log"
 	"strconv"
-	"strings"
 )
 
 func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
@@ -103,33 +103,30 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 						}
 					}
 				} else {
-					splitFunc := func(r rune) bool {
-						return strings.ContainsRune(" ,'", r)
-					}
-
-					valString := strings.FieldsFunc(v, splitFunc)
-
 					switch sc.Type {
 					case "int":
-						for _, val := range valString {
-							if _, err := strconv.ParseInt(val, 10, 32); err != nil {
-								log.Print(err)
-								return false, err
-							}
+						var valList []int64
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
 						}
 					case "float":
-						for _, val := range valString {
-							if _, err := strconv.ParseFloat(val, 64); err != nil {
-								log.Print(err)
-								return false, err
-							}
+						var valList []float64
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
 						}
 					case "bool":
-						for _, val := range valString {
-							if _, err := strconv.ParseBool(val); err != nil {
-								log.Print(err)
-								return false, err
-							}
+						var valList []bool
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "string":
+						var valList []string
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
 						}
 					}
 				}
