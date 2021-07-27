@@ -115,51 +115,39 @@ func convertParamValue(value string, vType string, flagLst bool) interface{} {
 			return value
 		}
 	} else {
-		splitFunc := func(r rune) bool {
-			return strings.ContainsRune(" ,'", r)
-		}
-		valString := strings.FieldsFunc(value, splitFunc)
-
 		switch vType {
 		case "int":
 			var valList []int64
-			for _, val := range valString {
-				if v, err := strconv.ParseInt(val, 10, 32); err != nil {
-					log.Print(err)
-					return err
-				} else {
-					valList = append(valList, v)
-				}
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				log.Print(err)
+				return err
+			} else {
+				return valList
 			}
-			return valList
 		case "float":
 			var valList []float64
-			for _, val := range valString {
-				if v, err := strconv.ParseFloat(val, 64); err != nil {
-					log.Print(err)
-					return err
-				} else {
-					valList = append(valList, v)
-				}
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				log.Print(err)
+				return err
+			} else {
+				return valList
 			}
-			return valList
 		case "bool":
 			var valList []bool
-			for _, val := range valString {
-				if v, err := strconv.ParseBool(val); err != nil {
-					log.Print(err)
-					return err
-				} else {
-					valList = append(valList, v)
-				}
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				log.Print(err)
+				return err
+			} else {
+				return valList
 			}
-			return valList
 		case "string":
 			var valList []string
-			for _, val := range valString {
-				valList = append(valList, val)
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				log.Print(err)
+				return err
+			} else {
+				return valList
 			}
-			return valList
 		}
 	}
 
