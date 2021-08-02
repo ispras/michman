@@ -3,12 +3,6 @@
 - name: remove old apt cache
   shell: rm -rf /var/lib/apt/lists/*
 
-- name: add debian strech repo
-  lineinfile:
-    path: /etc/apt/sources.list
-    state: present
-    line: "deb http://deb.debian.org/debian stretch main"
-
 - name: add apt key for clickhouse repo
   apt_key:
     keyserver: keyserver.ubuntu.com
@@ -28,9 +22,3 @@
     state: latest
     update_cache: yes
     allow_unauthenticated: yes
-
-#- name: set zero_if_notfound to yes for default mandate level
-#  lineinfile:
-#    path: "/etc/parsec/mswitch.conf"
-#    regexp: '^zero_if_notfound: no'
-#    line: 'zero_if_notfound: yes'

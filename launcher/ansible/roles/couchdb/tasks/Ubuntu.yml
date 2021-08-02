@@ -3,20 +3,14 @@
 - name: remove old apt cache
   shell: rm -rf /var/lib/apt/lists/*
 
-- name: add debian strech repo
-  lineinfile:
-    path: /etc/apt/sources.list
-    state: present
-    line: "deb http://deb.debian.org/debian stretch main"
-
 - name: add apt key for couchdb repo
   apt_key:
     keyserver: keyserver.ubuntu.com
-    id: 8756C4F765C9AC3CB6B85D62379CE192D401AB61
+    id: 0EE62FB37A00258D
 
 - name: add apt repo for couchdb
   apt_repository:
-    repo: deb https://apache.bintray.com/couchdb-deb stretch main
+    repo: deb https://apache.jfrog.io/artifactory/couchdb-deb/ {{ansible_lsb.codename}} main
     state: present
     filename: couchdb
 
@@ -27,4 +21,3 @@
     state: latest
     update_cache: yes
     allow_unauthenticated: yes
-
