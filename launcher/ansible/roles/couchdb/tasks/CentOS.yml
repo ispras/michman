@@ -2,7 +2,7 @@
 
 - name: "add yum repo for couchdb"
   yum_repository:
-    baseurl: http://apache.bintray.com/couchdb-rpm/el$releasever/$basearch/
+    baseurl: https://apache.jfrog.io/artifactory/couchdb-rpm/el$releasever/$basearch/
     state: present
     name: couchdb
     description: couchdb repo
