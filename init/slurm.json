@@ -46,6 +46,18 @@
           "AnsibleVarName": "slurm_db_user"
         },
         {
+          "ParameterName": "use_open_foam",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description":  "Use Open FOAM",
+          "AnsibleVarName": "slurm_use_open_foam"
+        },
+        {
           "ParameterName": "TaskPluginParam",
           "Type": "string",
           "PossibleValues": [
@@ -92,6 +104,18 @@
           "Required": true,
           "Description": "Use MariaDB and slurmdbd",
           "AnsibleVarName": "slurm_use_db"
+        },
+        {
+          "ParameterName": "use_open_foam",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description":  "Use Open FOAM",
+          "AnsibleVarName": "slurm_use_open_foam"
         },
         {
           "ParameterName": "use_rest",
