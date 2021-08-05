@@ -1,7 +1,11 @@
 ---
 
-- name: Include task to install and configure Open FOAM
+- name: Include tasks to install and configure Open FOAM
   include_tasks: open_foam.yml
+  when: slurm_use_open_foam is defined and slurm_use_open_foam
+
+- name: Include tasks to install and configure QGDsolver
+  include_tasks: qgd_solver.yml
   when: slurm_use_open_foam is defined and slurm_use_open_foam
 
 - name: Install slurm-wlm package
@@ -13,7 +17,7 @@
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
 
-- name: Include tasks for creation directoriees
+- name: Include tasks for creation directories
   include: directory.yml
 
 - name: Include jwt auth instalation tasks 
