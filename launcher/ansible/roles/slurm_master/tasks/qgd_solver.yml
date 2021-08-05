@@ -1,0 +1,38 @@
+--- 
+
+- name: Install gcc 
+  apt: 
+    name: build-essential
+
+#- name: Create an empty directory
+#  ansible.builtin.file:
+#    path: /home/ubuntu/QGDsolver
+#    state: directory
+#    mode: '0755'
+
+- name: Clone the repository for QGDsolver
+  shell: git clone https://github.com/unicfdlab/QGDsolver.git -b digitef-dev-v2012
+
+- name: Change mode of directories 
+  file:
+    path: "{{ item }}"
+    mode: 0777
+    state: directory
+  loop: 
+    #- /usr 
+    #- /usr/lib/
+    #- /usr/lib/openfoam
+    #- /usr/lib/openfoam/openfoam2012
+    #- /usr/lib/openfoam/openfoam2012/platforms
+    #- /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt
+    - /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/lib
+    - /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/bin
+
+- name: Build QGDsolver
+  shell: "{{ item }}"
+  args:
+    chdir: /home/ubuntu/QGDsolver
+  loop: 
+    - ./SwitchDest
+    - ./Allwmake
+  

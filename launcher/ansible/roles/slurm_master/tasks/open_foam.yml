@@ -25,8 +25,3 @@
 
 - name: Source ~/.bashrc  
   shell: . ~/.bashrc
-
-- name: Clone the repository for module of Open Foam v2012 QGDsolver
-  git:
-    repo: https://github.com/unicfdlab/QGDsolver.git
-    dest: /home/ubuntu 
