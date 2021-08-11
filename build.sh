@@ -15,9 +15,10 @@ Available commands:\n
 
 LAUNCHER_BIN=launch
 REST_BIN=http
-CONFIG=./config.yaml
+CONFIG=./configs/config.yaml
 LAUNCHER_PORT=5000
 HTTP_PORT=8081
+PROTO_CODE=./internal/protobuf/launcher.pb.go
 while [[ $# -gt 0 ]]
 do
 key=$1
@@ -60,15 +61,15 @@ done
 case $COMMAND in
 proto) 
 	echo "generate protobuf code..."
-	cd protobuf/; protoc --go_out=plugins=grpc:. protofile.proto; cd ..
+	cd internal/protobuf/; bash generate.sh; cd ../..
 	;;
 mock)
-        if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
+        if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]
         then
                 ./build.sh proto
         fi
 	echo "generate mocks..."
-	cd ./database
+	cd ./internal/database
 	mockgen --destination=../mocks/mock_database.go -package=mocks . Database
         cd ..
         cd ./rest/handlers
@@ -76,35 +77,29 @@ mock)
         cd ../..
         cd ./utils
         mockgen --destination=../mocks/mock_vault.go -package=mocks . SecretStorage
-        cd ..
+        cd ../..
         ;;
 test) 
-	if [ -z $( 2>/dev/null ls ./mocks/mock_database.go ./mocks/mock_grpcclient.go ./mocks/mock_vault.go ) ]
+	if [ -z $( 2>/dev/null ls ./internal/mocks/mock_database.go ./internal/mocks/mock_grpcclient.go ./internal/mocks/mock_vault.go ) ]
 	then
 		./build.sh mock
 	fi
 	echo "run tests..."
-	cd ./rest/handlers
+	cd ./internal/rest/handlers
 	go test
 	;;
 compile)
-        if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
+        if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]
         then
                 ./build.sh proto
         fi
 	echo "build launcher..."
-	cd launcher
-	go build
-	cd ..
-	mv ./launcher/launcher ./$LAUNCHER_BIN
+	go build -o $LAUNCHER_BIN ./cmd/launcher 
 	echo "build rest api server..."
-	cd rest
-	go build
-	cd ..
-	mv rest/rest ./$REST_BIN
+  go build -o $REST_BIN ./cmd/rest
 	;;
 start)
-	if [ -z $( 2>/dev/null ls ./protobuf/protofile.pb.go ) ]
+	if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]
 	then
 		./build.sh proto
 	fi
@@ -143,7 +138,7 @@ stop)
 	;;
 clean)
 	echo "remove all generated and binary files"
-	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN ./protobuf/protofile.pb.go ./mocks/mock_*
+	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN $PROTO_CODE ./internal/mocks/mock_*
 	;;
 help) echo -e $usage
 #*) echo $usage

@@ -1,4 +1,4 @@
-![Michman](michman-public-version-logo.png)
+![Michman](./docs/logo/michman-public-version-logo.png)
 
 Michman is an orchestration self-hosted service intended to simplify process of creating distributed clusters and management of services in cloud environments. At now it provides capabilities for deployment a part of Apache big data stack respecting user ability to choose needed versions with additional tools and services:
 * Apache Spark
@@ -15,52 +15,40 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 * PostgreSQL
 * Redis
 
+More detailed description of supported services can be found at 
+[docs/services.md](./docs/services.md).
+
 Clusters are created and managed via REST API (see swagger docs) with collaborative group-based access to computational resources.
 
 This project follows up spark-openstack project (ISP RAS).
 
 ## Dependencies
+
 Apt packages:
-```shell script
-sudo add-apt-repository ppa:longsleep/golang-backports
-sudo apt update
-sudo apt install golang-go
-sudo apt install unzip apt-transport-https \
-  ca-certificates curl software-properties-common \
-  python python-pip python-setuptools
-```
+- golang
+- libprotoc 3.6.1
+- unzip
+- apt-transport-https
+- ca-certificates
+- curl
+- software-properties-common
+- python, python-pip, python-setuptools
 
 Python packages:
-```shell script
-pip install ansible==2.9.4 openstacksdk==0.40.0 # latest tested versions or
-# pip3 install ansible==2.9.4 openstacksdk==0.40.0
-```
-Go packages:
-```shell script
-go get -u google.golang.org/grpc
-go get -u github.com/golang/protobuf/protoc-gen-go
-go get -u github.com/hashicorp/vault/api
-go get -u gopkg.in/yaml.v2
-go get github.com/julienschmidt/httprouter
-go get -u gopkg.in/couchbase/gocb.v1
-go get github.com/google/uuid
-go get github.com/golang/mock/gomock
-go get github.com/golang/mock/mockgen
-go get github.com/alexedwards/scs
-go get github.com/casbin/casbin
-```
+- ansible
+- openstacksdk
 
-Also required `libprotoc 3.6.1`. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04) or may be used docker container [like this](https://hub.docker.com/r/znly/protoc/). Example:
-```
-docker pull znly/protoc
-cd $GOPATH/src/github.com/ispras/michman/protobuf
-docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc --go_out=plugins=grpc:. -I. protofile.proto
-```
+Go packages:
+- are listed in [go.mod](./go.mod) file
+- protoc-gen-go (for generating grpc code)
+- mockgen (for generating mocks)
+
 ## Infrastructure requirements
+
 * **Openstack** cloud. Supported versions: _Liberty_, _Stein_, _Ussuri_.
   * Currently project supports deploying of services only on VMs with Ubuntu (16.04 or 18.04) or CentOS, so should be prepared suitable image.
   * It's recomended to prepare floating ip pool and flavors for created VMs.
-  * Also you should prepare security key-pair and pem-key to provide access to created VMs from launcher. Key should be pasted in `$PROJECT_ROOT/launcher/ansible/files/ssh_key` file or in Vault secrets storage.
+  * Also you should prepare security key-pair and pem-key to provide access to created VMs from launcher. Key should be pasted in `$PROJECT_ROOT/ansible/files/ssh_key` file or in Vault secrets storage.
 * **Couchbase** server.
   * Tested version: 6.0.0 community edition
   * Must contain prepared buckets with primary indexes: _clusters_, _projects_, _templates_, _service_types_, _images_. Templates bucket is optional and used only if you going to create templates.
@@ -83,8 +71,65 @@ docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc --go_out=plugins=grpc:. -
       3. If you use gitlab registry you should set `docker_gitlab_registry: true`
     3. In case of using selfsigned or gitlab registry you should add secret with _url_, _user_ and _password_ to **vault** and set `registry_key: key_of_docker_secret` in _config.yaml_
 
-## Configurations
-Configuration of the project is stored in **config.yaml** file. Example:
+## Vault secrets 
+
+Openstack (os_key) secrets includes following keys for **Liberty** version:
+* **OS_AUTH_URL**
+* **OS_PASSWORD**
+* **OS_PROJECT_NAME**
+* **OS_REGION_NAME**
+* **OS_TENANT_ID**
+* **OS_TENANT_NAME**
+* **OS_USERNAME** 
+* **OS_SWIFT_USERNAME** -- optional
+* **OS_SWIFT_PASSWORD** -- optional 
+
+Openstack (os_key) secrets includes following keys for **Stein** version:
+* **OS_AUTH_URL**
+* **OS_PASSWORD**
+* **OS_PROJECT_NAME**
+* **OS_REGION_NAME**
+* **OS_USERNAME** 
+* **COMPUTE_API_VERSION**
+* **NOVA_VERSION**
+* **OS_AUTH_TYPE**
+* **OS_CLOUDNAME**
+* **OS_IDENTITY_API_VERSION**
+* **OS_IMAGE_API_VERSION**
+* **OS_NO_CACHE**
+* **OS_PROJECT_DOMAIN_NAME**
+* **OS_USER_DOMAIN_NAME**
+* **OS_VOLUME_API_VERSION**
+* **PYTHONWARNINGS**
+* **no_proxy**
+
+Ssh (ssh_key) secrets includes following keys:
+* **key_bgt** -- private ssh key for Ansible commands
+
+Couchbase (cb_key) secretes includes following keys:
+* **clusterBucket** -- name of the bucket storing clusters
+* **password** -- password of couchbase
+* **path** -- address of couchbase
+* **username** -- user name of couchbase 
+
+Docker registry (registry_key) secret includes following key:
+ * **url** -- Address of your selfsigned registry according to certificate or gitlab registry url
+ * **user** -- Your selfsigned registry or gitlab username
+ * **password** -- Your selfsigned registry or gitlab password
+  
+This secret is optional.
+
+Hydra (hydra_key) secret includes following key:
+ * **redirect_uri** -- OAuth 2.0 redirect URI
+ * **client_id** -- OAuth 2.0 client ID
+ * **client_secret** -- OAuth 2.0 client secret
+  
+This secret is optional, it is used only for oauth2 authorization model.
+
+## Configuration
+
+Configuration of the project is stored in the **configs/config.yaml** file. Example:
+
 ```yaml
 ## Vault
 token: MY-TOKEN
@@ -173,217 +218,132 @@ Where:
 * **logs_file_path** -- path to directory for cluster deployment logs if file output is used
 * **logstash_addr** -- logstash address if logstash output is used
 * **elastic_addr** -- elastic address if logstash output is used
-## Vault secrets 
 
-Openstack (os_key) secrets includes following keys for **Liberty** version:
-* **OS_AUTH_URL**
-* **OS_PASSWORD**
-* **OS_PROJECT_NAME**
-* **OS_REGION_NAME**
-* **OS_TENANT_ID**
-* **OS_TENANT_NAME**
-* **OS_USERNAME** 
-* **OS_SWIFT_USERNAME** -- optional
-* **OS_SWIFT_PASSWORD** -- optional 
+## Getting started
 
-Openstack (os_key) secrets includes following keys for **Stein** version:
-* **OS_AUTH_URL**
-* **OS_PASSWORD**
-* **OS_PROJECT_NAME**
-* **OS_REGION_NAME**
-* **OS_USERNAME** 
-* **COMPUTE_API_VERSION**
-* **NOVA_VERSION**
-* **OS_AUTH_TYPE**
-* **OS_CLOUDNAME**
-* **OS_IDENTITY_API_VERSION**
-* **OS_IMAGE_API_VERSION**
-* **OS_NO_CACHE**
-* **OS_PROJECT_DOMAIN_NAME**
-* **OS_USER_DOMAIN_NAME**
-* **OS_VOLUME_API_VERSION**
-* **PYTHONWARNINGS**
-* **no_proxy**
+### Install dependencies
 
-Ssh (ssh_key) secrets includes following keys:
-* **key_bgt** -- private ssh key for Ansible commands
+Before start, make sure, all the dependencies are installed and go environment
+is set up.
 
-Couchbase (cb_key) secretes includes following keys:
-* **clusterBucket** -- name of the bucket storing clusters
-* **password** -- password of couchbase
-* **path** -- address of couchbase
-* **username** -- user name of couchbase 
+```bash
+sudo add-apt-repository ppa:longsleep/golang-backports
+sudo apt update
+sudo apt install golang-go
+sudo apt install unzip apt-transport-https \
+  ca-certificates curl software-properties-common \
+  python python-pip python-setuptools
+```
 
-Docker registry (registry_key) secret includes following key:
- * **url** -- Address of your selfsigned registry according to certificate or gitlab registry url
- * **user** -- Your selfsigned registry or gitlab username
- * **password** -- Your selfsigned registry or gitlab password
+Also, `libprotoc 3.6.1` is required. Working installation discribed [here](https://askubuntu.com/questions/1072683/how-can-i-install-protoc-on-ubuntu-16-04) or may be used docker container [like this](https://hub.docker.com/r/znly/protoc/):
+```bash
+docker pull znly/protoc
+```
+
+Python packages:
+```bash
+pip install ansible==2.9.4 openstacksdk==0.40.0 # latest tested versions
+# or
+pip3 install ansible==2.9.4 openstacksdk==0.40.0
+```
+
+Go packages:
+```bash
+go get -u github.com/golang/protobuf/protoc-gen-go
+go get github.com/golang/mock/mockgen
+```
+
+### Build
+
+First, place the project code in the $GOPATH:
+```bash
+mkdir -p $GOPATH/src/github.com/ispras
+git clone https://github.com/ispras/michman.git $GOPATH/src/github.com/ispras/michman
   
-This secret is optional.
-
-Hydra (hydra_key) secret includes following key:
- * **redirect_uri** -- OAuth 2.0 redirect URI
- * **client_id** -- OAuth 2.0 client ID
- * **client_secret** -- OAuth 2.0 client secret
-  
- This secret is optional, it is used only for oauth2 authorization model.
-
-# Services
-
-Supported services types are:
-* Apache Spark
-* Apache Hadoop
-* Apache Ignite
-* Apache Cassandra
-* ClickHouse
-* CouchDB
-* ElasticSearch with OpenDistro tools
-* Jupyter
-* Jupyterhub
-* Nextcloud
-* NFS-Server
-* PostgreSQL
-* Redis
-
-Config parameter for **spark** service type supports:
-* **use-yarn** -- Spark-on-YARN deploy mode  (has overhead on memory so do not use it if you don't know why)
-* **hadoop-version** -- use specific Hadoop version for Spark. Default is the latest supported in Spark.
-* **spark-worker-mem-mb** --  don't auto-detect spark worker memory and use specified value, can be useful if other
-                             processes on slave nodes (e.g. python) need more memory, default for 10Gb-20Gb RAM slaves is to leave 2Gb to
-                             system/other processes; 
-* **yarn-master-mem-mb** -- Amount of physical memory, in MB, that can be allocated for containers. Default value if 10240.
-                             
-Example:
-```json
-"Config": {
-  "use-yarn": "false",
-  "hadoop-version": "2.6",
-  "spark-worker-mem-mb": "10240",
-  "yarn-master-mem-mb": "10240"
-}
-```
-
-Config parameter for **jupyter** service type supports:
-* **toree-version** -- use specific Toree version for Jupyter.
-
-Example:
-```json
-"Config": {
-  "toree-version": "1" 
-}
-```
-
-Config parameter for **ignite** service type supports:
-* **ignite-memory** -- percentage (integer number from 0 to 100) of worker memory to be assigned to Apache Ignite.
-                       Currently this simply reduces spark executor memory, Apache Ignite memory usage must be manually configured.
-
-Example:
-```json
-"Config": {
-  "ignite-memory": "30" 
-}
-```
-
-Config parameter for **elastic** service type supports:
-* **heap-size** -- use specific ElasticSearch heap size. Default heap size is 1g (1 GB).
-
-Example:
-```json
-"Config": {
-  "heap-size": "1g" 
-}
-```
-
-Config parameter for **nfs-server** service type supports:
-* **weblab_name** -- name of Web Laboratory.
-
-Example:
-```json
-"Config": {
-  "weblab_name": "Name"
-}
-```
-
-Config parameter for **nextcloud** service type supports:
-
-* **weblab_name** -- name of Web Laboratory.
-* **nfs_server_ip** -- NFS server IP.
-* **mariadb_image** -- your docker image with mariadb
-* **nextcloud_image** -- your docker image with nextcloud
-
-Example:
-```json
-"Config": {
-  "weblab_name": "Name",
-  "nfs_server_ip": "IP",
-  "mariadb_image": "bgtregistry.ru:5000/mariadb",
-  "nextcloud_image": "bgtregistry.ru:5000/nextcloud"
-}
-```
-
-## Protobuf
-
-Contains proto file for gRPC that must be used to generate protobuf package. Used in rest and launcher services.
-
-# How to get it worked
-First, place project code in $GOPATH:
-```shell script
-git clone https://github.com/ispras/michman.git
-mkdir $GOPATH/src/github.com
-mkdir $GOPATH/src/github.com/ispras
-mv ./michman $GOPATH/src/github.com/ispras/
 cd $GOPATH/src/github.com/ispras/michman
 ```
-Then, complete _config.yaml_ file. Note: we use Michman without authentication (use_auth: false) for this example.
 
-To quick start you may use _build.sh_ script:
-```
+Then, complete _config.yaml_ file. Note: we use Michman without authentication 
+(use_auth: false) for this example.
+
+> Note: if you use protoc inside a docker container, run
+> ```bash
+> cd internal/protobuf
+> docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc -- go_out=plugins=grpc:. -I. launcher.proto
+> ```
+> before the next step.
+
+To quick start you may use [build.sh](./build.sh) script:
+```bash
 ./build.sh start
 ```
 
+Or services can be launched manually:
+
+### ansible_runner
+
 Manually launch ansible_runner service:
-```
-go run ./launcher/ansible_launch.go ./launcher/main.go
+```bash
+go run ./cmd/launcher
 ```
 
 Manually launch ansible_runner service specifying config and port, defaults are config path in Michman root and 5000 as used port:
-```
-go run ./launcher/ansible_launch.go ./launcher/main.go --config /path/to/config.yaml --port PORT
-```
-
-Manually launch http_server:
-```
-go run ./rest/main.go
+```bash
+go run ./cmd/launcher --config /path/to/config.yaml --port PORT
 ```
 
-Manually launch http_server specifying config, port and launcher address, defaults are config path in Michman root, 8081 as used port and localhost:5000 for launcher address:
+### api_server
+
+Manually launch api_server:
+```bash
+go run ./cmd/rest
 ```
-go run ./rest/main.go --config /path/to/config.yaml --port PORT --launcher launcher_host:launcher_port
+
+Manually launch api_server specifying config, port and launcher address, defaults are config path in Michman root, 8081 as used port and localhost:5000 for launcher address:
+```bash
+go run ./cmd/rest --config /path/to/config.yaml --port PORT --launcher launcher_host:launcher_port
 ```
+
+## Working with Michman
+
+Clusters are created and managed via HTTP requests to the api_server.
 
 Create new project:
-```
-curl {IP}:{PORT}/projects -XPOST -d '{"Name":"Test", "Description":"Project for tests"}'
+```bash
+curl {IP}:{PORT}/projects -XPOST -d '{
+  "Name":"Test", 
+  "Description":"Project for tests"
+}'
 ```
 
 Create new cluster with Jupyter service:
-```
-curl {IP}:{PORT}/projects/{ProjectID}/clusters -XPOST -d '{"DisplayName":"jupyter-test", "Services":[{"Name":"jupyter-project","Type":"jupyter"}],"NHosts":1}'
+```bash
+curl {IP}:{PORT}/projects/{ProjectID}/clusters -XPOST -d '{
+  "DisplayName":"jupyter-test", 
+  "Services":[
+    {
+      "Name":"jupyter-project",
+      "Type":"jupyter"
+    }
+  ],
+  "NHosts":1
+}'
 ```
 
 Get info about all clusters in project:
-```
+```bash
 curl {IP}:{PORT}/projects/{ProjectID}/clusters
 ```
 
 Get info about **jupyter-test** cluster in **Test** project (**note: cluster name id constructed as cluster _DisplayName-ProjectName_**):
-```
+```bash
 curl {IP}:{PORT}/projects/{ProjectID}/clusters/jupyter-test-Test
 ```
 
 Delete  **jupyter-test** cluster in **Test** project:
-```
+```bash
 curl {IP}:{PORT}/projects/{ProjectID}/clusters/jupyter-test-Test -XDELETE
 ```
 
-Get service API in browser by this URL: **{IP}:{PORT}}/api**
+Get service API in browser by this URL: `{IP}:{PORT}/api`
+
