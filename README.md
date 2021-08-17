@@ -266,12 +266,8 @@ cd $GOPATH/src/github.com/ispras/michman
 Then, complete _config.yaml_ file. Note: we use Michman without authentication 
 (use_auth: false) for this example.
 
-> Note: if you use protoc inside a docker container, run
-> ```bash
-> cd internal/protobuf
-> docker run --rm -v $(pwd):$(pwd) -w $(pwd) znly/protoc -- go_out=plugins=grpc:. -I. launcher.proto
-> ```
-> before the next step.
+> Note: if you use protoc inside a docker container, set `USE_DOCKER` 
+> environment variable to `true` before running `build.sh` script.
 
 To quick start you may use [build.sh](./build.sh) script:
 ```bash
