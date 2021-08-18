@@ -1,16 +1,19 @@
 ---
 
 - name: restart munge
+  become: true
   systemd:
     name: munge
     state: restarted
 
 - name: reload slurmd
+  become: true 
   systemd:
     name: slurmd
     state: reloaded
 
 - name: restart slurmd
+  become: true
   systemd:
     name: slurmd
     state: restarted

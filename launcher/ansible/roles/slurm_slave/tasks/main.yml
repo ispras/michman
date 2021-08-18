@@ -1,14 +1,18 @@
 ---
-- name: Install slurm-wlm packages
+
+- name: Install slurm-wlm and openmpi packages
+  become: true
   apt:
     update_cache: yes
-    name: slurm-wlm
+    name: 
+      - slurm-wlm
     state: latest
 
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
 
 - name: Change parameters of limits.conf for MPI
+  become: true
   pam_limits:
     domain: '*'
     limit_type: "{{ item }}"
@@ -17,6 +21,9 @@
   loop: 
     - soft
     - hard  
+
+- name: Include tasks for installing OpenMpi
+  include_tasks: open_mpi.yml
 
 - name: Include tasks for configuration ssh access
   include_tasks: ssh_access.yml
@@ -31,7 +38,12 @@
   include_tasks: munge.yml
 
 - name: Ensure slurmd is enabled and running
+  become: true 
   systemd:
     name: slurmd
     enabled: yes
     state: started
+
+- name: Include tasks to install and configure Open FOAM
+  include_tasks: open_foam.yml
+  when: slurm_use_open_foam is defined and slurm_use_open_foam

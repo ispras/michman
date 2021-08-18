@@ -1,6 +1,0 @@
-- name: Install nfs-server
-  apt:
-    name: nfs-kernel-server
-    state: latest
-    update_cache: yes
-

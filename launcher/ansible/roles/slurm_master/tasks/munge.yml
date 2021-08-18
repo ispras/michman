@@ -9,6 +9,7 @@
     state: directory
   
 - name: Install munge key
+  become: true
   copy:
     src: "{{ DIR_FOR_KEY }}/munge.key"
     dest: /etc/munge/munge.key
@@ -20,12 +21,14 @@
   when: slurm_use_db is defined and slurm_use_db
 
 - name: Ensure munge is enabled and running
+  become: true
   systemd:
     name: munge
     enabled: yes
     state: started
 
 - name: Retrieve key for munge cluster
+  become: true 
   fetch:
     src: /etc/munge/munge.key
     dest: "{{ DIR_FOR_KEY }}/munge.key"

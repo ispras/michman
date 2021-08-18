@@ -1,0 +1,36 @@
+--- 
+
+- name: Create directories for installation and building OpenMPI and UCX
+  file: 
+    path: /home/ubuntu/ucx
+    state: directory 
+    mode: 0777
+
+- name: Clone the repository for UCX
+  git: 
+    repo: https://github.com/openucx/ucx.git
+    dest: /home/ubuntu/ucx
+
+- name: Download UCX
+  shell: ./autogen.sh
+  args:
+    chdir: /home/ubuntu/ucx
+
+- name: Create directories for installation and building OpenMPI and UCX
+  file: 
+    path: /home/ubuntu/ucx/build
+    state: directory 
+    mode: 0777
+
+- name: Configure UCX 
+  shell: "{{ item }}"
+  args:
+    chdir: /home/ubuntu/ucx/build
+  loop: 
+     - ../configure --prefix=/home/ubuntu/ucx
+     - make -j4
+
+- name: Make install
+  make:
+    target: install
+    chdir: /home/ubuntu/ucx/build

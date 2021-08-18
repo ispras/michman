@@ -1,0 +1,44 @@
+---
+
+- name: Include taasks for building UCX 
+  include_tasks: ucx.yml
+
+- name: Install pandoc
+  apt: 
+    name: pandoc 
+
+- name: Create directories for installation and building OpenMPI and UCX
+  file: 
+    path: /home/ubuntu/ompi
+    state: directory 
+    mode: 0777
+  
+- name: Clone the repository for OpenMPI
+  git: 
+    repo: https://github.com/open-mpi/ompi.git
+    dest: /home/ubuntu/ompi
+
+- name: Download OpenMPI
+  shell: ./autogen.sh
+  args:
+    chdir: /home/ubuntu/ompi
+
+- name: Create directories for installation and building OpenMPI and UCX
+  file: 
+    path: /home/ubuntu/ompi/build-ucx
+    state: directory 
+    mode: 0777
+
+- name: Configure OpenMPI with UCX
+  shell: ../configure --prefix=/home/ubuntu/ompi --with-ucx=/home/ubuntu/ucx
+  args:
+    chdir: /home/ubuntu/ompi/build-ucx
+
+- name: Build the default target 
+  make: 
+    chdir: /home/ubuntu/ompi/build-ucx
+
+- name: Run 'install' target
+  make: 
+    target: install 
+    chdir: /home/ubuntu/ompi/build-ucx

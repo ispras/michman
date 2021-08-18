@@ -1,6 +1,7 @@
 ---
 
 - name: Create slurm log directory for master, slave, storage
+  become: true
   file:
     path: "{{ SLURM_PATH_TO_LOG_FILE }}"
     owner: root
@@ -9,6 +10,7 @@
     state: directory
 
 - name: Create slurm pid directory for master, slave, storage
+  become: true
   file:
     path: "{{SLURM_PATH_TO_PID_FILE}}"
     owner: root
@@ -17,12 +19,14 @@
     state: directory
 
 - name: Create slurm config dir for master, slave, storage
+  become: true 
   file:
     path: "{{ SLURM_CONFIG_DIR }}"
     state: directory
     mode: 0755
 
 - name: Create slurm spool directory
+  become: true
   file:
     path: "{{ STATE_SAVE_LOCATION_SLAVE }}"
     owner: root
