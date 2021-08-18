@@ -1,12 +1,14 @@
 ---
 
 - name: Create dir for sharing 
+  become: true
   file: 
     path: "{{ nfs_server_dir_to_share }}" 
     state: directory 
     mode: 0777
     
 - name: Create mount point
+  become: true
   lineinfile:
     dest: /etc/fstab
     state: present 

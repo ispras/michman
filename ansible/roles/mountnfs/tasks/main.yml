@@ -1,6 +1,7 @@
 ---
 
 - name: Install nfs-client and update cache
+  become: true
   apt:
     name: nfs-common
     state: latest
@@ -10,4 +11,5 @@
   include: add_share.yml
   
 - name: mount
+  become: true 
   shell: mount -a

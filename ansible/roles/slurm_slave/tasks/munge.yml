@@ -9,6 +9,7 @@
     state: directory
 
 - name: Install munge key
+  become: true
   copy:
     src: "{{ DIR_FOR_KEY }}/munge.key"
     dest: /etc/munge/munge.key
@@ -19,6 +20,7 @@
   notify: restart munge
 
 - name: Ensure Munge is enabled and running
+  become: true
   systemd:
     name: munge
     enabled: yes

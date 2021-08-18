@@ -1,0 +1,8 @@
+---
+
+- name: Include tasks to install and configure Open FOAM
+  include_tasks: open_foam.yml
+
+- name: Include tasks to install and configure Open FOAM
+  include_tasks: qgdsolver.yml
+

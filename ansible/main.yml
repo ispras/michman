@@ -73,6 +73,9 @@
   become: yes
   tasks:
     - include_role:
+        name: nfs_server
+      when: deploy_slurm is defined and deploy_slurm
+    - include_role:
         name: '{{ roleinputvar }}'
       loop:
         - mariadb
@@ -80,12 +83,8 @@
       loop_control:
         loop_var: roleinputvar
       when: slurm_use_db is defined and slurm_use_db
-    - include_role:
-        name: nfs_server
-      when: deploy_slurm is defined and deploy_slurm
-
+    
 - hosts: "{{ cluster_name }}_master"
-  become: yes
   tasks:
     - include_role:
         name: '{{ roleinputvar }}'
@@ -96,9 +95,7 @@
         loop_var: roleinputvar
       when: deploy_slurm is defined and deploy_slurm
 
-
 - hosts: "{{ cluster_name }}_slaves"
-  become: yes
   tasks:
     - include_role:
         name: '{{ roleinputvar }}'
@@ -108,6 +105,12 @@
       loop_control:
         loop_var: roleinputvar
       when: deploy_slurm is defined and deploy_slurm
+
+- hosts: "{{ cluster_name }}_storage"
+  tasks:
+    - include_role: 
+        name: slurm_openfoam
+      when: slurm_use_open_foam is defined and slurm_use_open_foam 
 
 - hosts: "{{ cluster_name }}_master"
   tasks:

@@ -3,7 +3,13 @@
 - name: Clone repository for jwt 
   shell: git clone --depth 1 --single-branch -b v1.12.0 https://github.com/benmcollins/libjwt.git libjwt
 
+- name: Upgrade all packages 
+  become: true
+  apt:
+    upgrade: full
+
 - name: Installation packages to configure
+  become: true
   apt:
     name: 
       - autoconf
