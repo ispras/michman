@@ -61,7 +61,7 @@ done
 case $COMMAND in
 proto) 
 	echo "generate protobuf code..."
-	cd internal/protobuf/; bash generate.sh; cd ../..
+  cd internal/protobuf/; bash generate.sh; cd ../..
 	;;
 mock)
         if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]
