@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/ispras/michman/internal/mocks"
-	protobuf "github.com/ispras/michman/protobuf"
+	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -24,6 +24,7 @@ var testServiceConfig = protobuf.ServiceConfig{
 	DefaultValue:  "t",
 	Required:      false,
 	Description:   "test param",
+	IsList:        false,
 }
 
 var testServiceVersion = protobuf.ServiceVersion{

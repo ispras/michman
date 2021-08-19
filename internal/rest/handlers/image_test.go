@@ -11,7 +11,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	mocks "github.com/ispras/michman/internal/mocks"
-	protobuf "github.com/ispras/michman/protobuf"
+	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/julienschmidt/httprouter"
 )
 

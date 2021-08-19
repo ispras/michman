@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-option go_package = "github.com/ispras/michman/protobuf";
-
 package protobuf;
 
 service AnsibleRunner {
