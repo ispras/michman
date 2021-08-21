@@ -12,7 +12,7 @@
     line: -:ALL EXCEPT ubuntu :ALL
 
 - name: Configure access for user ubuntu in sshd file 
-become: true
+  become: true
   lineinfile: 
     path: /etc/pam.d/sshd
     line: account required pam_access.so

@@ -12,8 +12,6 @@
   become: true
   apt:
     name: 
-      - autoconf
-      - libtool
       - pkg-config
       - libssl-dev
       - libjansson-dev
