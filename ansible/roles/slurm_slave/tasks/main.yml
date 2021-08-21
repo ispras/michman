@@ -1,5 +1,8 @@
 ---
 
+- name: Include tasks for installing OpenMpi
+  include_tasks: open_mpi.yml
+
 - name: Install slurm-wlm and openmpi packages
   become: true
   apt:
@@ -21,9 +24,6 @@
   loop: 
     - soft
     - hard  
-
-- name: Include tasks for installing OpenMpi
-  include_tasks: open_mpi.yml
 
 - name: Include tasks for configuration ssh access
   include_tasks: ssh_access.yml

@@ -12,12 +12,6 @@
     update_cache: yes 
     #update_cache_retries: 100000 ansible2.10
 
-- name: Install packages for gcc 
-  become: true 
-  apt: 
-    name: build-essential
-    update_cache: yes
-
 - name: Install packages for Open FOAM 
   become: true 
   apt: 

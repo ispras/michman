@@ -1,5 +1,16 @@
 --- 
 
+- name: Install packages
+  become: true 
+  apt: 
+    name:
+      - pandoc 
+      - autogen
+      - autoconf
+      - libtool
+      - build-essential
+      - flex
+
 - name: Create directories for installation and building OpenMPI and UCX
   file: 
     path: /home/ubuntu/ucx

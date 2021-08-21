@@ -1,11 +1,7 @@
 ---
 
 - name: Include taasks for building UCX 
-  include_tasks: ucx.yml
-
-- name: Install pandoc
-  apt: 
-    name: pandoc 
+  include_tasks: ucx.yml 
 
 - name: Create directories for installation and building OpenMPI and UCX
   file: 
@@ -17,9 +13,10 @@
   git: 
     repo: https://github.com/open-mpi/ompi.git
     dest: /home/ubuntu/ompi
+    recursive: true
 
 - name: Download OpenMPI
-  shell: ./autogen.sh
+  shell: ./autogen.pl
   args:
     chdir: /home/ubuntu/ompi
 
