@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  ansible_launcher:
+    build:
+      context: ../../
+      dockerfile: deployments/centos8/launcher/Dockerfile
+    ports:
+      - "5000:5000"
+  api_server:
+    depends_on:
+      - ansible_launcher
+    build:
+      context: ../../
+      dockerfile: deployments/centos8/rest/Dockerfile
+      args:
+        LAUNCHER_ADDRESS: ansible_launcher:5000
+    ports:
+      - "8081:8081"
