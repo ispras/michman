@@ -140,6 +140,6 @@ const (
 
 var (
 	SshKeyPath  = os.Getenv("PWD") + "/ansible/files/ssh_key"
-	ConfigPath  = "config.yaml"
+	ConfigPath  = "configs/config.yaml"
 	UseBasePath = true
 )
