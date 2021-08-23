@@ -1,72 +1,45 @@
-FROM centos:centos8 as base
+# Generate protobuf code
+FROM znly/protoc AS protoc
+WORKDIR /go/src/github.com/ispras/michman/
+COPY . .
+RUN /bin/sh ./build.sh proto
+
+# Build launcher
+FROM golang:1.16 AS builder
+WORKDIR /go/src/github.com/ispras/michman/
+COPY --from=protoc /go/src/github.com/ispras/michman/ .
+RUN go build -o launch ./cmd/launcher
+
+# Setup runtime
+FROM centos:centos8 AS runtime
+WORKDIR /go/src/github.com/ispras/michman/
+COPY --from=builder /go/src/github.com/ispras/michman/ .
+
+# Install crypto-policies
+RUN dnf update -y && \
+    dnf install crypto-policies -y
 
 # Openstack Liberty fix
 RUN update-crypto-policies --set LEGACY
 
-#install go
-ADD https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz .
-RUN sha256sum go1.13.5.linux-amd64.tar.gz && \
-	tar -C /usr/local -xf go1.13.5.linux-amd64.tar.gz
-
-#configure Go
-ENV GOROOT /usr/local/go
-ENV GOPATH /go
-ENV PATH /usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
-ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
-
-
-RUN mkdir -p ${GOPATH}/src ${GOPATH}/bin
-
-#install development tools
-RUN yum -y update && \
-    yum -y install git unzip autoconf libtool && \
-    yum -y groupinstall "Development Tools"
-
-#install python3.7 and pip
+# Install python3.7 and pip
 RUN dnf update -y && \
     dnf install python3 -y
 
-#install pip packages
-RUN pip3 install ansible==2.9.4 openstacksdk==0.40.0
+# Install pip packages
+RUN pip3 install       \
+  setuptools-rust      \
+  ansible==2.9.4       \
+  openstacksdk==0.40.0 \
+  decorator==4.4.2
 
-# install protobuf
-ADD https://github.com/protocolbuffers/protobuf/releases/download/v3.12.3/protobuf-all-3.12.3.zip .
-RUN unzip protobuf-all-3.12.3.zip && \
-    cd protobuf-3.12.3 && \
-    ./configure && \
-    make && \
-    make check && \
-    make install && \
-    ldconfig && \
-    make clean
-
-# Get the source from GitHub
-RUN go get google.golang.org/grpc
-
-# Get go packages
-RUN go get github.com/golang/protobuf/protoc-gen-go && \
-  go get google.golang.org/protobuf/reflect/protoreflect && \
-  go get google.golang.org/protobuf/runtime/protoimpl && \
-	go get github.com/golang/mock/mockgen
-
-#create michman directory
-RUN mkdir -p ${GOPATH}/src/github.com/ispras && \
-	mkdir -p ${GOPATH}/src/github.com/ispras/michman
-
-#set workdir
-WORKDIR ${GOPATH}/src/github.com/ispras/michman
-COPY . .
-
-
-#generate proto files and compile michman
-RUN ["/bin/sh","./build.sh","proto"]
-RUN ["/bin/sh","./build.sh","compile"]
-
-#set environment variables
+# Set environment variables
 ENV CONFIG ./configs/config.yaml
 ENV PORT 5000
-#start launch service
+
+# Start launch service
 CMD ./launch --config ${CONFIG} --port ${PORT}
 
-#expose launcher port
+# Expose launcher port
 EXPOSE ${PORT}
+
