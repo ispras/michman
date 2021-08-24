@@ -8,6 +8,101 @@ import (
 	"strconv"
 )
 
+func convertPosVal(posVal []string, vType string) []interface{} {
+	var pV []interface{}
+	switch vType {
+	case "int":
+		for _, v := range posVal {
+			val, err := strconv.ParseInt(v, 10, 32)
+			if err != nil {
+				log.Print(err)
+				return nil
+			}
+			pV = append(pV, val)
+		}
+		return pV
+	case "float":
+		for _, v := range posVal {
+			val, err := strconv.ParseFloat(v, 64)
+			if err != nil {
+				log.Print(err)
+				return nil
+			}
+			pV = append(pV, val)
+		}
+		return pV
+	case "bool":
+		for _, v := range posVal {
+			val, err := strconv.ParseBool(v)
+			if err != nil {
+				log.Print(err)
+				return nil
+			}
+			pV = append(pV, val)
+		}
+		return pV
+	case "string":
+		for _, v := range posVal {
+			pV = append(pV, v)
+		}
+		return pV
+	}
+	return nil
+}
+
+func checkPossibleValue(val string, posVal []string, isList bool, vType string) bool {
+	if !isList {
+		for _, pv := range posVal {
+			if val == pv {
+				return true
+			}
+		}
+		return false
+	} else {
+		switch vType {
+		case "int":
+			var values []int64
+			if err := json.Unmarshal([]byte(val), &values); err != nil {
+				log.Print(err)
+				return false
+			}
+			for _, val := range values {
+				flag := false
+				pV := convertPosVal(posVal, vType)
+				for _, pv := range pV {
+					if val == pv {
+						flag = true
+						break
+					}
+				}
+				if !flag {
+					return false
+				}
+			}
+		default:
+			var values []interface{}
+			if err := json.Unmarshal([]byte(val), &values); err != nil {
+				log.Print(err)
+				return false
+			}
+			for _, val := range values {
+				flag := false
+				pV := convertPosVal(posVal, vType)
+				for _, pv := range pV {
+					if val == pv {
+						flag = true
+						break
+					}
+				}
+				if !flag {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
 func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 	hS.Logger.Print("Validating service type and config params...")
 
@@ -70,13 +165,7 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 				flagPN = true
 				//check for possible values
 				if sc.PossibleValues != nil {
-					flagPV := false
-					for _, pv := range sc.PossibleValues {
-						if v == pv {
-							flagPV = true
-							break
-						}
-					}
+					flagPV := checkPossibleValue(v, sc.PossibleValues, sc.IsList, sc.Type)
 					if !flagPV {
 						log.Print("ERROR: service config param value ", v, " is not supported.")
 						return false, errors.New("ERROR: service version " + v + " is not supported.")

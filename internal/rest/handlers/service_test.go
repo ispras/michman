@@ -263,9 +263,9 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: nil, Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: nil, Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
@@ -311,9 +311,9 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: nil, Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: nil, Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
@@ -359,9 +359,9 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: nil, Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: nil, Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: nil, Type: "bool"},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
@@ -642,7 +642,7 @@ func TestValidateService(t *testing.T) {
 		}
 	})
 
-	t.Run("sc.PossibleValues != nil, PossibleValues are OK", func(t *testing.T) {
+	t.Run("sc.PossibleValues != nil, PossibleValues are OK, value isn't list", func(t *testing.T) {
 		testMapService := map[string]string{
 			"config_1": "123456789",
 			"config_2": "+Inf",
@@ -655,9 +655,9 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"val31", "val32", "true"}, Type: "bool"},
 			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"val11", "123456789", "val13"}, Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "val22", "val23"}, Type: "float"},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"val31", "val32", "true"}, Type: "bool"},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
@@ -690,10 +690,10 @@ func TestValidateService(t *testing.T) {
 		}
 	})
 
-	t.Run("sc.PossibleValues != nil, PossibleValues are not OK", func(t *testing.T) {
+	t.Run("sc.PossibleValues != nil, PossibleValues are not OK, value isn't list", func(t *testing.T) {
 		testMapService := map[string]string{
-			"config_1": "123456789",
-			"config_2": "+Inf",
+			"config_1": "123",
+			"config_2": "15.3",
 			"config_3": "true",
 		}
 		var testService = protobuf.Service{
@@ -703,9 +703,111 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"123", "456", "789"}, Type: "int"},
+			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "2.0", "0.0"}, Type: "float"},
 			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"val31", "val32", "true"}, Type: "bool"},
-			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"val11", "val23", "val13"}, Type: "int"},
-			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "val22", "val23"}, Type: "float"},
+		}
+
+		var testServiceVersion = []*protobuf.ServiceVersion{
+			&protobuf.ServiceVersion{Version: "test_1"},
+			&protobuf.ServiceVersion{
+				Version: "TestDefaultVersion",
+				Configs: testServiceConfig,
+			},
+			&protobuf.ServiceVersion{Version: "test_2"},
+		}
+
+		var testServiceExpect = []protobuf.ServiceType{
+			protobuf.ServiceType{Type: "bad_type_1"},
+			protobuf.ServiceType{Type: "bad_type_2"},
+			protobuf.ServiceType{
+				Type:           "test_type",
+				DefaultVersion: "TestDefaultVersion",
+				Versions:       testServiceVersion,
+			},
+		}
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := ValidateService(hS, &testService)
+		if check != false {
+			t.Fatalf("ERROR: service config param value is not supported")
+		}
+	})
+
+	t.Run("sc.PossibleValues != nil, PossibleValues are OK, value is list", func(t *testing.T) {
+		testMapService := map[string]string{
+			"config_1": "[123, 456]",
+			"config_2": "[0.0, 2.0]",
+			"config_3": "[true, true, false, true]",
+			"config_4": "[\"val1\", \"val3\", \"val2\"]",
+			"config_5": "3.0485",
+		}
+		var testService = protobuf.Service{
+			Type:    "test_type",
+			Version: "",
+			Config:  testMapService,
+		}
+
+		var testServiceConfig = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"123", "456", "789"}, Type: "int", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.4"}, Type: "float", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"false", "true"}, Type: "bool", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"val1", "val2", "val3", "val4"}, Type: "string", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_5", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.0485"}, Type: "float"},
+		}
+
+		var testServiceVersion = []*protobuf.ServiceVersion{
+			&protobuf.ServiceVersion{Version: "test_1"},
+			&protobuf.ServiceVersion{
+				Version: "TestDefaultVersion",
+				Configs: testServiceConfig,
+			},
+			&protobuf.ServiceVersion{Version: "test_2"},
+		}
+
+		var testServiceExpect = []protobuf.ServiceType{
+			protobuf.ServiceType{Type: "bad_type_1"},
+			protobuf.ServiceType{Type: "bad_type_2"},
+			protobuf.ServiceType{
+				Type:           "test_type",
+				DefaultVersion: "TestDefaultVersion",
+				Versions:       testServiceVersion,
+			},
+		}
+		mockCtrl := gomock.NewController(t)
+		mockClient := mocks.NewMockGrpcClient(mockCtrl)
+		mockDatabase := mocks.NewMockDatabase(mockCtrl)
+		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
+		errHandler := HttpErrorHandler{}
+		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		check, _ := ValidateService(hS, &testService)
+		if check != true {
+			t.Fatalf("ERROR: service config param value is not supported")
+		}
+	})
+
+	t.Run("sc.PossibleValues != nil, PossibleValues aren't OK, value is list", func(t *testing.T) {
+		testMapService := map[string]string{
+			"config_1": "[15, 46]",
+			"config_2": "[0.0, 2.0]",
+			"config_3": "[false, false, true]",
+			"config_4": "[\"val1\", \"val32\", \"val2\"]",
+		}
+		var testService = protobuf.Service{
+			Type:    "test_type",
+			Version: "",
+			Config:  testMapService,
+		}
+
+		var testServiceConfig = []*protobuf.ServiceConfig{
+			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"123", "456", "789"}, Type: "int", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.4"}, Type: "float", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"false"}, Type: "bool", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"val1", "val2", "val3", "val4"}, Type: "string", IsList: true},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
