@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 usage="usage: build.sh [OPTION...] [COMMAND] \n
 Available commands:\n
@@ -43,7 +43,7 @@ case $key in
 		break
 		;;
 	proto|mock|test|compile|start|stop|clean|help)
-		if [[ -n $COMMAND ]]
+		if [[ -n "$COMMAND" ]]
 		then
 			echo $usage
 			break
@@ -61,7 +61,7 @@ done
 case $COMMAND in
 proto) 
 	echo "generate protobuf code..."
-  cd internal/protobuf/; bash generate.sh; cd ../..
+  cd internal/protobuf/; /bin/sh generate.sh; cd ../..
 	;;
 mock)
         if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]
