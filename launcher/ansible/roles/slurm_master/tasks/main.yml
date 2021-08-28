@@ -2,6 +2,7 @@
 
 - name: Include tasks for installing OpenMpi
   include_tasks: open_mpi.yml
+  when: slurm_use_open_mpi is defined and slurm_use_open_mpi
 
 - name: Include tasks to install and configure Open FOAM
   include_tasks: open_foam.yml
