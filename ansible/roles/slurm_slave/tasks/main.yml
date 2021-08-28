@@ -2,8 +2,9 @@
 
 - name: Include tasks for installing OpenMpi
   include_tasks: open_mpi.yml
+  when: slurm_use_open_mpi is defined and slurm_use_open_mpi
 
-- name: Install slurm-wlm and openmpi packages
+- name: Install slurm-wlm packages
   become: true
   apt:
     update_cache: yes

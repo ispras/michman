@@ -1,12 +1,12 @@
 {
   "Type": "slurm",
-  "Description": "Slurm service. There are 2 versions of Slurm service, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are two versions of deploying Slurm: with accounting system (Slurm-with-db) or without it (Slurm-without-db).",
-  "DefaultVersion": "Slurm-without-db",
+  "Description": "Slurm service. There are 2 versions of Slurm service, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are four versions of deploying Slurm: with accounting system and NFS (Slurm-db-nfs), with accounting system and without NFS (Slurm-db), with NFS and without accounting system (Slurm-nfs), without NFS and accounting (Slurm).",
+  "DefaultVersion": "Slurm",
   "Class": "master-slave",
   "Versions": [
     {
-      "Version": "Slurm-with-db",
-      "Description": "Deploing Slurm with logging system",
+      "Version": "Slurm-db-nfs",
+      "Description": "Deploing Slurm with logging system and NFS",
       "Configs": [
         {
           "ParameterName": "use_db",
@@ -25,10 +25,25 @@
           ],
           "DefaultValue": "false",
           "Required": true,
-          "Description":  "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
+          "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
         },
-        
+        {
+          "ParameterName": "config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/slurm.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file slurm.conf",
+          "AnsibleVarName": "slurm_config_dir"
+        },
+        {
+          "ParameterName": "cgroup_config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/cgroup.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file cgroup.conf",
+          "AnsibleVarName": "slurm_cgroup_config_dir"
+        },
         {
           "ParameterName": "db_password",
           "Type": "string",
@@ -54,8 +69,20 @@
           ],
           "DefaultValue": "false",
           "Required": true,
-          "Description":  "Use Open FOAM",
+          "Description": "Use Open FOAM",
           "AnsibleVarName": "slurm_use_open_foam"
+        },
+        {
+          "ParameterName": "use_open_mpi",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open MPI",
+          "AnsibleVarName": "slurm_use_open_mpi"
         },
         {
           "ParameterName": "TaskPluginParam",
@@ -82,7 +109,7 @@
           ],
           "DefaultServiceVersion": "latest",
           "Description": "Dependency mariadb-slurm"
-        }, 
+        },
         {
           "ServiceType": "nfs_server",
           "ServiceVersions": [
@@ -94,8 +121,116 @@
       ]
     },
     {
-      "Version": "Slurm-without-db",
-      "Description": "Deploing Slurm without logging system",
+      "Version": "Slurm-db",
+      "Description": "Deploing Slurm without NFS and with logging system",
+      "Configs": [
+        {
+          "ParameterName": "use_db",
+          "Type": "bool",
+          "DefaultValue": "true",
+          "Required": true,
+          "Description": "Use MariaDB and slurmdbd",
+          "AnsibleVarName": "slurm_use_db"
+        },
+        {
+          "ParameterName": "use_rest",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
+          "AnsibleVarName": "slurm_use_rest"
+        },
+        {
+          "ParameterName": "config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/slurm.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file slurm.conf",
+          "AnsibleVarName": "slurm_config_dir"
+        },
+        {
+          "ParameterName": "cgroup_config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/cgroup.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file cgroup.conf",
+          "AnsibleVarName": "slurm_cgroup_config_dir"
+        },
+        {
+          "ParameterName": "db_password",
+          "Type": "string",
+          "DefaultValue": "slurmdbd",
+          "Required": true,
+          "Description": "Default user password for Mariadb for user slurm, you can change it",
+          "AnsibleVarName": "slurm_db_password"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "slurm",
+          "Required": true,
+          "Description": "Default db_user for Mariadb, you can change it",
+          "AnsibleVarName": "slurm_db_user"
+        },
+        {
+          "ParameterName": "use_open_foam",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open FOAM",
+          "AnsibleVarName": "slurm_use_open_foam"
+        },
+        {
+          "ParameterName": "use_open_mpi",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open MPI",
+          "AnsibleVarName": "slurm_use_open_mpi"
+        },
+        {
+          "ParameterName": "TaskPluginParam",
+          "Type": "string",
+          "PossibleValues": [
+            "Boards",
+            "Cores",
+            "None",
+            "Sockets",
+            "Threads",
+            "Verbose"
+          ],
+          "DefaultValue": "None",
+          "Required": true,
+          "Description": "Optional parameters for the task plugin. ",
+          "AnsibleVarName": "slurm_TaskPluginParam"
+        }
+      ],
+      "Dependencies": [
+        {
+          "ServiceType": "mariadb",
+          "ServiceVersions": [
+            "latest"
+          ],
+          "DefaultServiceVersion": "latest",
+          "Description": "Dependency mariadb-slurm"
+        }
+      ]
+    },
+    {
+      "Version": "Slurm-nfs",
+      "Description": "Deploing Slurm without logging system and with NFS",
       "Configs": [
         {
           "ParameterName": "use_db",
@@ -114,15 +249,43 @@
           ],
           "DefaultValue": "false",
           "Required": true,
-          "Description":  "Use Open FOAM",
+          "Description": "Use Open FOAM",
           "AnsibleVarName": "slurm_use_open_foam"
+        },
+        {
+          "ParameterName": "use_open_mpi",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open MPI",
+          "AnsibleVarName": "slurm_use_open_mpi"
+        },
+        {
+          "ParameterName": "config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/slurm.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file slurm.conf",
+          "AnsibleVarName": "slurm_config_dir"
+        },
+        {
+          "ParameterName": "cgroup_config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/cgroup.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file cgroup.conf",
+          "AnsibleVarName": "slurm_cgroup_config_dir"
         },
         {
           "ParameterName": "use_rest",
           "Type": "bool",
           "DefaultValue": "false",
           "Required": true,
-          "Description":  "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
+          "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
         },
         {
@@ -141,7 +304,7 @@
           "Description": "Optional parameters for the task plugin. ",
           "AnsibleVarName": "slurm_TaskPluginParam"
         }
-      ], 
+      ],
       "Dependencies": [
         {
           "ServiceType": "nfs_server",
@@ -150,6 +313,84 @@
           ],
           "DefaultServiceVersion": "default",
           "Description": "Dependency nfs-server-slurm"
+        }
+      ]
+    },
+    {
+      "Version": "Slurm",
+      "Description": "Deploing Slurm without logging system and NFS",
+      "Configs": [
+        {
+          "ParameterName": "use_db",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use MariaDB and slurmdbd",
+          "AnsibleVarName": "slurm_use_db"
+        },
+        {
+          "ParameterName": "use_open_foam",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open FOAM",
+          "AnsibleVarName": "slurm_use_open_foam"
+        },
+        {
+          "ParameterName": "use_open_mpi",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Open MPI",
+          "AnsibleVarName": "slurm_use_open_mpi"
+        },
+        {
+          "ParameterName": "config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/slurm.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file slurm.conf",
+          "AnsibleVarName": "slurm_config_dir"
+        },
+        {
+          "ParameterName": "cgroup_config_dir",
+          "Type": "string",
+          "DefaultValue": "templates/slurm/cgroup.conf.j2",
+          "Required": true,
+          "Description": "Default path to template of configuration file cgroup.conf",
+          "AnsibleVarName": "slurm_cgroup_config_dir"
+        },
+        {
+          "ParameterName": "use_rest",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
+          "AnsibleVarName": "slurm_use_rest"
+        },
+        {
+          "ParameterName": "TaskPluginParam",
+          "Type": "string",
+          "PossibleValues": [
+            "Boards",
+            "Cores",
+            "None",
+            "Sockets",
+            "Threads",
+            "Verbose"
+          ],
+          "DefaultValue": "None",
+          "Required": true,
+          "Description": "Optional parameters for the task plugin. ",
+          "AnsibleVarName": "slurm_TaskPluginParam"
         }
       ]
     }
