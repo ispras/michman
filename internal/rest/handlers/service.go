@@ -8,99 +8,24 @@ import (
 	"strconv"
 )
 
-func convertPosVal(posVal []string, vType string) []interface{} {
-	var pV []interface{}
-	switch vType {
-	case "int":
-		for _, v := range posVal {
-			val, err := strconv.ParseInt(v, 10, 32)
-			if err != nil {
-				log.Print(err)
-				return nil
-			}
-			pV = append(pV, val)
+func deleteSpaces(valStr string) string {
+	resStr := ""
+	for _, ch := range valStr {
+		if ch != ' ' {
+			resStr += string(ch)
 		}
-		return pV
-	case "float":
-		for _, v := range posVal {
-			val, err := strconv.ParseFloat(v, 64)
-			if err != nil {
-				log.Print(err)
-				return nil
-			}
-			pV = append(pV, val)
-		}
-		return pV
-	case "bool":
-		for _, v := range posVal {
-			val, err := strconv.ParseBool(v)
-			if err != nil {
-				log.Print(err)
-				return nil
-			}
-			pV = append(pV, val)
-		}
-		return pV
-	case "string":
-		for _, v := range posVal {
-			pV = append(pV, v)
-		}
-		return pV
 	}
-	return nil
+	return resStr
 }
 
-func checkPossibleValue(val string, posVal []string, isList bool, vType string) bool {
-	if !isList {
-		for _, pv := range posVal {
-			if val == pv {
-				return true
-			}
-		}
-		return false
-	} else {
-		switch vType {
-		case "int":
-			var values []int64
-			if err := json.Unmarshal([]byte(val), &values); err != nil {
-				log.Print(err)
-				return false
-			}
-			for _, val := range values {
-				flag := false
-				pV := convertPosVal(posVal, vType)
-				for _, pv := range pV {
-					if val == pv {
-						flag = true
-						break
-					}
-				}
-				if !flag {
-					return false
-				}
-			}
-		default:
-			var values []interface{}
-			if err := json.Unmarshal([]byte(val), &values); err != nil {
-				log.Print(err)
-				return false
-			}
-			for _, val := range values {
-				flag := false
-				pV := convertPosVal(posVal, vType)
-				for _, pv := range pV {
-					if val == pv {
-						flag = true
-						break
-					}
-				}
-				if !flag {
-					return false
-				}
-			}
+func checkValuesAllowed(val string, posVal []string) bool {
+	val = deleteSpaces(val)
+	for _, pv := range posVal {
+		if val == pv {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
@@ -163,14 +88,6 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 		for _, sc := range sTypes[stIdx].Versions[svIdx].Configs {
 			if k == sc.ParameterName {
 				flagPN = true
-				//check for possible values
-				if sc.PossibleValues != nil {
-					flagPV := checkPossibleValue(v, sc.PossibleValues, sc.IsList, sc.Type)
-					if !flagPV {
-						log.Print("ERROR: service config param value ", v, " is not supported.")
-						return false, errors.New("ERROR: service version " + v + " is not supported.")
-					}
-				}
 
 				//check type
 				if !sc.IsList {
@@ -219,6 +136,16 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 						}
 					}
 				}
+
+				//check for possible values
+				if sc.PossibleValues != nil {
+					flagPV := checkValuesAllowed(v, sc.PossibleValues)
+					if !flagPV {
+						log.Print("ERROR: service config param value ", v, " is not supported.")
+						return false, errors.New("ERROR: service version " + v + " is not supported.")
+					}
+				}
+
 				break
 			}
 		}

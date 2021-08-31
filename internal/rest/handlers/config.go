@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -48,6 +49,82 @@ func checkDefaultVersion(stVersions []*protobuf.ServiceVersion, defaultV string)
 	return false
 }
 
+func checkPossibleValues(vPossibleValues []string, vType string, IsList bool) bool {
+	//check PossibleValues type
+	if !IsList {
+		switch vType {
+		case "int":
+			for _, pV := range vPossibleValues {
+				if _, err := strconv.ParseInt(pV, 10, 32); err != nil {
+					return false
+				}
+			}
+		case "float":
+			for _, pV := range vPossibleValues {
+				if _, err := strconv.ParseFloat(pV, 64); err != nil {
+					return false
+				}
+			}
+		case "bool":
+			for _, pV := range vPossibleValues {
+				if _, err := strconv.ParseBool(pV); err != nil {
+					return false
+				}
+			}
+		}
+	} else {
+		switch vType {
+		case "int":
+			var valList []int64
+			for _, pV := range vPossibleValues {
+				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
+					return false
+				}
+			}
+		case "float":
+			var valList []float64
+			for _, pV := range vPossibleValues {
+				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
+					return false
+				}
+			}
+		case "bool":
+			var valList []bool
+			for _, pV := range vPossibleValues {
+				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
+					return false
+				}
+			}
+		case "string":
+			var valList []string
+			for _, pV := range vPossibleValues {
+				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
+					return false
+				}
+			}
+		}
+
+		//format PossibleValue strings
+		for i, pV := range vPossibleValues {
+			vPossibleValues[i] = deleteSpaces(pV)
+		}
+	}
+
+	//check PossibleValues are unique
+	for i, curVal := range vPossibleValues[:len(vPossibleValues)-1] {
+		if curVal == "" {
+			return false
+		}
+		for _, otherVal := range vPossibleValues[i+1:] {
+			if curVal == otherVal {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
 func (hS HttpServer) checkConfigs(vConfigs []*protobuf.ServiceConfig) (bool, error) {
 	for i, curC := range vConfigs {
 		//check param type
@@ -66,6 +143,14 @@ func (hS HttpServer) checkConfigs(vConfigs []*protobuf.ServiceConfig) (bool, err
 			if curName == otherC.ParameterName {
 				hS.Logger.Print("ERROR: parameter names in service config must be uniques")
 				return false, errors.New("ERROR: parameter names in service config must be uniques")
+			}
+		}
+
+		//check param possible values
+		if curC.PossibleValues != nil {
+			if flag := checkPossibleValues(curC.PossibleValues, curC.Type, curC.IsList); flag != true {
+				hS.Logger.Print("ERROR: possible values are set incorrectly, check the value type or spelling")
+				return false, errors.New("ERROR: possible values are set incorrectly, check the value type or spelling")
 			}
 		}
 	}

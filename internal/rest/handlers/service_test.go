@@ -10,6 +10,30 @@ import (
 	"testing"
 )
 
+func TestDeleteSpaces(t *testing.T) {
+	t.Run("Return True", func(t *testing.T) {
+		valStr := "[ 11, 22  , 33, 4]"
+		resStr := deleteSpaces(valStr)
+		if resStr != "[11,22,33,4]" {
+			t.Fatalf("ERROR: Invalid output string format")
+		}
+	})
+	t.Run("Return True", func(t *testing.T) {
+		valStr := "[ true, false  ,true, false  ]"
+		resStr := deleteSpaces(valStr)
+		if resStr != "[true,false,true,false]" {
+			t.Fatalf("ERROR: Invalid output string format")
+		}
+	})
+	t.Run("Return True", func(t *testing.T) {
+		valStr := "[\"val1\"  ,\"val2\", \"val3\", \"val4\"  ]"
+		resStr := deleteSpaces(valStr)
+		if resStr != "[\"val1\",\"val2\",\"val3\",\"val4\"]" {
+			t.Fatalf("ERROR: Invalid output string format")
+		}
+	})
+}
+
 func TestValidateService(t *testing.T) {
 
 	l := log.New(os.Stdout, "TestValidateService: ", log.Ldate|log.Ltime)
@@ -647,6 +671,7 @@ func TestValidateService(t *testing.T) {
 			"config_1": "123456789",
 			"config_2": "+Inf",
 			"config_3": "true",
+			"config_4": "value1",
 		}
 		var testService = protobuf.Service{
 			Type:    "test_type",
@@ -658,6 +683,7 @@ func TestValidateService(t *testing.T) {
 			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"val11", "123456789", "val13"}, Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "val22", "val23"}, Type: "float"},
 			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"val31", "val32", "true"}, Type: "bool"},
+			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"val2", "value1", "val3"}, Type: "string"},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
@@ -753,10 +779,10 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"123", "456", "789"}, Type: "int", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.4"}, Type: "float", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"false", "true"}, Type: "bool", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"val1", "val2", "val3", "val4"}, Type: "string", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"[12,15,3,0]", "[123,456]", "[1,2,3,4,5]"}, Type: "int", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"[2.0,1.0]", "[0.0,2.0]", "[3.4, 1.1]"}, Type: "float", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"[true,true,false,true]", "[false,true]"}, Type: "bool", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"[\"val1\",\"val3\",\"val2\"]", "[\"val4\",\"val5\"]"}, Type: "string", IsList: true},
 			&protobuf.ServiceConfig{ParameterName: "config_5", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.0485"}, Type: "float"},
 		}
 
@@ -804,10 +830,10 @@ func TestValidateService(t *testing.T) {
 		}
 
 		var testServiceConfig = []*protobuf.ServiceConfig{
-			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"123", "456", "789"}, Type: "int", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"+Inf", "2.0", "0.0", "3.4"}, Type: "float", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"false"}, Type: "bool", IsList: true},
-			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"val1", "val2", "val3", "val4"}, Type: "string", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_1", PossibleValues: []string{"[123,456,789]", "[15,41]"}, Type: "int", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_2", PossibleValues: []string{"[+Inf,-Inf]", "[2.0,0.0]", "[3.4,1.012]"}, Type: "float", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_3", PossibleValues: []string{"[false,true,false]"}, Type: "bool", IsList: true},
+			&protobuf.ServiceConfig{ParameterName: "config_4", PossibleValues: []string{"[\"val1\",\"val2\",\"val3\",\"val4\"]"}, Type: "string", IsList: true},
 		}
 
 		var testServiceVersion = []*protobuf.ServiceVersion{
