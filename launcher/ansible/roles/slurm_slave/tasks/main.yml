@@ -8,8 +8,7 @@
   become: true
   apt:
     update_cache: yes
-    name: 
-      - slurm-wlm
+    name: slurm-wlm
     state: latest
 
 - name: Include tasks for time synchronization
