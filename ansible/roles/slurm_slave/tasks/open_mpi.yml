@@ -14,6 +14,7 @@
     repo: https://github.com/open-mpi/ompi.git
     dest: /home/ubuntu/ompi
     recursive: true
+    version: v2.0.x
 
 - name: Download OpenMPI
   shell: ./autogen.pl
@@ -39,3 +40,27 @@
   make: 
     target: install 
     chdir: /home/ubuntu/ompi/build-ucx
+
+
+- name: content of /etc/environment 
+  shell: cut -c 7- /etc/environment 
+  register: content_of_env
+
+- name: Configure environment variable LD_LIBRARY_PATH
+  become: yes 
+  lineinfile:
+     path: /etc/environment 
+     line: LD_LIBRARY_PATH=/home/ubuntu/ompi/lib
+
+- name: Remove PATH in /etc/environments
+  become: yes  
+  lineinfile: 
+      path: /etc/environment 
+      regexp: PATH="/usr/local/sbin
+      state: absent 
+
+- name: Add correct PATH in /etc/environments
+  become: yes 
+  lineinfile: 
+      path: /etc/environment
+      line: PATH="/home/ubuntu/ompi/bin:{{content_of_env.stdout}}
