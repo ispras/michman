@@ -6,11 +6,10 @@
     url: https://dl.openfoam.com/pubkey.gpg
 
 - name: Adding dl.openfoam.org to the list of software repositories
-  become: true 
+  become: true
   apt_repository:
-    repo:  deb [arch=amd64] https://dl.openfoam.com/repos/deb hirsute main
-    update_cache: yes 
-    #update_cache_retries: 100000 ansible2.10
+    repo: deb [arch=amd64] {{ apt_mirror_address }}/repository/proxy-openfoam/ {{ ansible_distribution_release }} main
+  when:  use_package_mirror
 
 - name: Install packages for Open FOAM 
   become: true 
