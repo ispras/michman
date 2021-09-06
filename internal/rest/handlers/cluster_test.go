@@ -12,7 +12,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	mocks "github.com/ispras/michman/internal/mocks"
 	protobuf "github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/utils"
+	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -426,7 +426,7 @@ func TestValidateCluster(t *testing.T) {
 
 		mockDatabase.EXPECT().ListServicesTypes().Return(existedServiceType, nil)
 
-		check := ValidateCluster(hS, &testClusterOk)
+		check, _ := ValidateCluster(hS, &testClusterOk)
 		if check != true {
 			t.Fatalf("Expected status code %v, but received: %v", true, check)
 		}
@@ -448,7 +448,7 @@ func TestValidateCluster(t *testing.T) {
 			Services:    []*protobuf.Service{&testService},
 		}
 
-		check := ValidateCluster(hS, &testClusterBadName)
+		check, _ := ValidateCluster(hS, &testClusterBadName)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
@@ -470,7 +470,7 @@ func TestValidateCluster(t *testing.T) {
 			Services:    []*protobuf.Service{&testService},
 		}
 
-		check := ValidateCluster(hS, &testClusterQuantityofHosts)
+		check, _ := ValidateCluster(hS, &testClusterQuantityofHosts)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
@@ -498,7 +498,7 @@ func TestValidateCluster(t *testing.T) {
 			Services:    []*protobuf.Service{&testService1},
 		}
 
-		check := ValidateCluster(hS, &testClusterService)
+		check, _ := ValidateCluster(hS, &testClusterService)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}

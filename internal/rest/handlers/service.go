@@ -1,11 +1,32 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	protobuf "github.com/ispras/michman/internal/protobuf"
 	"log"
 	"strconv"
 )
+
+func deleteSpaces(valStr string) string {
+	resStr := ""
+	for _, ch := range valStr {
+		if ch != ' ' {
+			resStr += string(ch)
+		}
+	}
+	return resStr
+}
+
+func checkValuesAllowed(val string, posVal []string) bool {
+	val = deleteSpaces(val)
+	for _, pv := range posVal {
+		if val == pv {
+			return true
+		}
+	}
+	return false
+}
 
 func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 	hS.Logger.Print("Validating service type and config params...")
@@ -67,38 +88,64 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 		for _, sc := range sTypes[stIdx].Versions[svIdx].Configs {
 			if k == sc.ParameterName {
 				flagPN = true
-				//check for possible values
-				if sc.PossibleValues != nil {
-					flagPV := false
-					for _, pv := range sc.PossibleValues {
-						if v == pv {
-							flagPV = true
-							break
+
+				//check type
+				if !sc.IsList {
+					switch sc.Type {
+					case "int":
+						if _, err := strconv.ParseInt(v, 10, 32); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "float":
+						if _, err := strconv.ParseFloat(v, 64); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "bool":
+						if _, err := strconv.ParseBool(v); err != nil {
+							log.Print(err)
+							return false, err
 						}
 					}
+				} else {
+					switch sc.Type {
+					case "int":
+						var valList []int64
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "float":
+						var valList []float64
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "bool":
+						var valList []bool
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					case "string":
+						var valList []string
+						if err := json.Unmarshal([]byte(v), &valList); err != nil {
+							log.Print(err)
+							return false, err
+						}
+					}
+				}
+
+				//check for possible values
+				if sc.PossibleValues != nil {
+					flagPV := checkValuesAllowed(v, sc.PossibleValues)
 					if !flagPV {
 						log.Print("ERROR: service config param value ", v, " is not supported.")
 						return false, errors.New("ERROR: service version " + v + " is not supported.")
 					}
 				}
-				//check type
-				switch sc.Type {
-				case "int":
-					if _, err := strconv.ParseInt(v, 10, 32); err != nil {
-						log.Print(err)
-						return false, err
-					}
-				case "float":
-					if _, err := strconv.ParseFloat(v, 64); err != nil {
-						log.Print(err)
-						return false, err
-					}
-				case "bool":
-					if _, err := strconv.ParseBool(v); err != nil {
-						log.Print(err)
-						return false, err
-					}
-				}
+
 				break
 			}
 		}

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/ispras/michman/internal/mocks"
-	protobuf "github.com/ispras/michman/protobuf"
+	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -24,6 +24,7 @@ var testServiceConfig = protobuf.ServiceConfig{
 	DefaultValue:  "t",
 	Required:      false,
 	Description:   "test param",
+	IsList:        false,
 }
 
 var testServiceVersion = protobuf.ServiceVersion{
@@ -100,6 +101,161 @@ func TestCheckDefaultVersion(t *testing.T) {
 	t.Run("Return False", func(t *testing.T) {
 		var testDefaultVersion string = "testBadVersion"
 		check := checkDefaultVersion(testStVersions, testDefaultVersion)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+}
+
+func TestCheckPossibleValues(t *testing.T) {
+	//return True
+	t.Run("Return True, type int, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"15", "12", "123", "456"}
+		check := checkPossibleValues(testPossibleValue, "int", false)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type float, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"0.0", "1.01", "-0.32"}
+		check := checkPossibleValues(testPossibleValue, "float", false)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type bool, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"true", "false"}
+		check := checkPossibleValues(testPossibleValue, "bool", false)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type int list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[12,  24, 345  ,6]", "[3,4,5,6]", "[7, 8, 9]"}
+		check := checkPossibleValues(testPossibleValue, "int", true)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type float list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  8.2]"}
+		check := checkPossibleValues(testPossibleValue, "float", true)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type bool list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[ true,   false, false]", "[false, true, true ]"}
+		check := checkPossibleValues(testPossibleValue, "bool", true)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+	t.Run("Return True, type string list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[\"val11\",\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
+		check := checkPossibleValues(testPossibleValue, "string", true)
+		if check != true {
+			t.Fatalf("ERROR: return not true")
+		}
+	})
+
+	//return False
+	t.Run("Return False, type int, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"12", "23", "notInt"}
+		check := checkPossibleValues(testPossibleValue, "int", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type float, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"-0.02", "notFloat", "1.111"}
+		check := checkPossibleValues(testPossibleValue, "float", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type bool, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"true", "false", "notBool"}
+		check := checkPossibleValues(testPossibleValue, "bool", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type int list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[12,  24, 345  ,6]", "3,4,5,6", "[7, 8, 9]"}
+		check := checkPossibleValues(testPossibleValue, "int", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type float list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  notFloat]"}
+		check := checkPossibleValues(testPossibleValue, "float", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type bool list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[ true,   false, notBool]", "[false, true, true ]"}
+		check := checkPossibleValues(testPossibleValue, "bool", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return False, type string list, parameters are unique", func(t *testing.T) {
+		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[val11,\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
+		check := checkPossibleValues(testPossibleValue, "string", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+
+	//return False, parameters aren't unique
+	t.Run("Return True, type int, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"15", "12", "123", "456", "6", "6"}
+		check := checkPossibleValues(testPossibleValue, "int", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type float, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"0.0", "1.01", "-0.32", "1.01"}
+		check := checkPossibleValues(testPossibleValue, "float", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type bool, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"true", "false", "true"}
+		check := checkPossibleValues(testPossibleValue, "bool", false)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type int list, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"[12,  24, 345  ,6]", "[3,4,5,6]", "[12,  24, 345  ,6]", "[7, 8, 9]"}
+		check := checkPossibleValues(testPossibleValue, "int", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type float list, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"[  -0.00001,  8.2]", "[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  8.2]", "[  -0.00001,  8.2]"}
+		check := checkPossibleValues(testPossibleValue, "float", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type bool list, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"[ true,   false, false]", "[false, true, true ]", "[ true,   false, false]", "[false, true, true]"}
+		check := checkPossibleValues(testPossibleValue, "bool", true)
+		if check != false {
+			t.Fatalf("ERROR: return not false")
+		}
+	})
+	t.Run("Return True, type string list, parameters aren't unique", func(t *testing.T) {
+		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[\"val11\",\"val21\",\"val31\"]", "[\"val11\",\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
+		check := checkPossibleValues(testPossibleValue, "string", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
