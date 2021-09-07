@@ -41,6 +41,7 @@
     target: install 
     chdir: /home/ubuntu/ompi/build-ucx
 
+
 - name: content of /etc/environment 
   shell: cut -c 7- /etc/environment 
   register: content_of_env
