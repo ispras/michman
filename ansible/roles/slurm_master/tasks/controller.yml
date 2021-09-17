@@ -1,6 +1,8 @@
 ---
+- name: Print var
+  debug:
+    var: slurm_config_dir
 
-#TODO: parameters + dir for user
 - name: Install slurm.conf
   become: true
   template:
@@ -12,7 +14,6 @@
   notify:
     - reload slurmctld
 
-#TODO: dir for user
 - name: Install cgroup.conf
   become: true
   template:

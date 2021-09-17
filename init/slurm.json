@@ -84,6 +84,33 @@
           "Description": "Use Open MPI",
           "AnsibleVarName": "slurm_use_open_mpi"
         },
+	{
+          "ParameterName": "open_mpi_version",
+          "Type": "string",
+          "PossibleValues": [
+            "v1.10",
+	    "v2.x",
+            "v2.0.x",
+            "v3.0.x",
+            "v3.1.x",
+            "v4.0.x",
+            "v4.1.x",
+            "v5.0.x"
+          ],
+          "DefaultValue": "v2.0.x",
+          "Required": true,
+          "Description": "Version of Open MPI",
+          "AnsibleVarName": "slurm_open_mpi_version"
+        },
+	{
+	 "ParameterName": "partitions",
+	 "Type": "string",
+         "DefaultValue": "[\"main:all\"]",
+	 "Required": true,
+         "Description": "List for configuring slurm partitions in slurm.conf",
+         "AnsibleVarName": "slurm_partitions",
+         "IsList": true
+	},
         {
           "ParameterName": "TaskPluginParam",
           "Type": "string",
@@ -160,6 +187,15 @@
           "Description": "Default path to template of configuration file cgroup.conf",
           "AnsibleVarName": "slurm_cgroup_config_dir"
         },
+	{
+         "ParameterName": "partitions",
+         "Type": "string",
+         "DefaultValue": "[\"main:all\"]",
+         "Required": true,
+         "Description": "List for configuring slurm partitions in slurm.conf",
+         "AnsibleVarName": "slurm_partitions",
+         "IsList": true
+       },
         {
           "ParameterName": "db_password",
           "Type": "string",
@@ -199,6 +235,24 @@
           "Required": true,
           "Description": "Use Open MPI",
           "AnsibleVarName": "slurm_use_open_mpi"
+        },
+	{
+          "ParameterName": "open_mpi_version",
+          "Type": "string",
+          "PossibleValues": [
+            "v1.10",
+            "v2.x",
+            "v2.0.x",
+            "v3.0.x",
+            "v3.1.x",
+            "v4.0.x",
+            "v4.1.x",
+            "v5.0.x"
+          ],
+          "DefaultValue": "v2.0.x",
+          "Required": true,
+          "Description": "Version of Open MPI",
+          "AnsibleVarName": "slurm_open_mpi_version"
         },
         {
           "ParameterName": "TaskPluginParam",
@@ -264,6 +318,24 @@
           "Description": "Use Open MPI",
           "AnsibleVarName": "slurm_use_open_mpi"
         },
+	{
+          "ParameterName": "open_mpi_version",
+          "Type": "string",
+          "PossibleValues": [
+            "v1.10",
+            "v2.x",
+            "v2.0.x",
+            "v3.0.x",
+            "v3.1.x",
+            "v4.0.x",
+            "v4.1.x",
+            "v5.0.x"
+          ],
+          "DefaultValue": "v2.0.x",
+          "Required": true,
+          "Description": "Version of Open MPI",
+          "AnsibleVarName": "slurm_open_mpi_version"
+        },
         {
           "ParameterName": "config_dir",
           "Type": "string",
@@ -287,6 +359,15 @@
           "Required": true,
           "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
+        },
+	{
+         "ParameterName": "partitions",
+         "Type": "string",
+         "DefaultValue": "[\"main:all\"]",
+         "Required": true,
+         "Description": "List for configuring slurm partitions in slurm.conf",
+         "AnsibleVarName": "slurm_partitions",
+         "IsList": true
         },
         {
           "ParameterName": "TaskPluginParam",
@@ -352,6 +433,24 @@
           "Description": "Use Open MPI",
           "AnsibleVarName": "slurm_use_open_mpi"
         },
+	{
+          "ParameterName": "open_mpi_version",
+          "Type": "string",
+          "PossibleValues": [
+            "v1.10",
+            "v2.x",
+            "v2.0.x",
+            "v3.0.x",
+            "v3.1.x",
+            "v4.0.x",
+            "v4.1.x",
+            "v5.0.x"
+          ],
+          "DefaultValue": "v2.0.x",
+          "Required": true,
+          "Description": "Version of Open MPI",
+          "AnsibleVarName": "slurm_open_mpi_version"
+        },
         {
           "ParameterName": "config_dir",
           "Type": "string",
@@ -359,6 +458,15 @@
           "Required": true,
           "Description": "Default path to template of configuration file slurm.conf",
           "AnsibleVarName": "slurm_config_dir"
+        },
+	{
+         "ParameterName": "partitions",
+         "Type": "string",
+         "DefaultValue": "[\"main:all\"]",
+         "Required": true,
+         "Description": "List for configuring slurm partitions in slurm.conf",
+         "AnsibleVarName": "slurm_partitions",
+         "IsList": true
         },
         {
           "ParameterName": "cgroup_config_dir",

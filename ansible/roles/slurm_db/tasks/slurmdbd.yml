@@ -4,17 +4,15 @@
   package:
     name: slurmdbd
     state: latest
-
-#TODO: parameters + dir for user 
+ 
 - name: Install slurm.conf
   template:
-    src: "templates/slurm/slurm.conf.j2"
+    src: "{{ slurm_config_dir }}"
     dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
     owner: root
     group: root
     mode: 0444
 
-#TODO: parameters + dir for user 
 - name: Install slurmdbd.conf
   template:
     src: templates/slurm/slurmdbd.conf.j2

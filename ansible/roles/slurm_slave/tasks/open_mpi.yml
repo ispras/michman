@@ -14,7 +14,7 @@
     repo: https://github.com/open-mpi/ompi.git
     dest: /home/ubuntu/ompi
     recursive: true
-    version: v2.0.x
+    version: "{{ slurm_open_mpi_version  }}"
 
 - name: Download OpenMPI
   shell: ./autogen.pl

@@ -27,11 +27,13 @@
     chdir: libjwt
 
 - name: Run 'install' target as root
+  become: true
   make: 
     chdir: libjwt
     target: install
   
 - name: Install jwt key
+  become: true
   copy: 
     src: "{{ DIR_FOR_KEY }}/jwt_hs256.key"
     dest: /etc/slurm/jwt_hs256.key

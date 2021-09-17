@@ -14,10 +14,10 @@
     update_cache: yes
     name: slurm-wlm
     state: latest
-
+  
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
-
+  
 - name: Include tasks for creation directories
   include: directory.yml
 
