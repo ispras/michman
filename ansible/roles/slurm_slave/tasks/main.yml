@@ -44,6 +44,3 @@
     enabled: yes
     state: started
 
-- name: Include tasks to install and configure Open FOAM
-  include_tasks: open_foam.yml
-  when: slurm_use_open_foam is defined and slurm_use_open_foam

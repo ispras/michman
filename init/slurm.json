@@ -106,8 +106,8 @@
 	 "ParameterName": "partitions",
 	 "Type": "string",
          "DefaultValue": "[\"main:all\"]",
-	 "Required": true,
-         "Description": "List for configuring slurm partitions in slurm.conf",
+	       "Required": true,
+         "Description": "The list describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"  ",
          "AnsibleVarName": "slurm_partitions",
          "IsList": true
 	},
@@ -187,12 +187,12 @@
           "Description": "Default path to template of configuration file cgroup.conf",
           "AnsibleVarName": "slurm_cgroup_config_dir"
         },
-	{
+	     {
          "ParameterName": "partitions",
          "Type": "string",
          "DefaultValue": "[\"main:all\"]",
          "Required": true,
-         "Description": "List for configuring slurm partitions in slurm.conf",
+         "Description": "The list describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"  ",
          "AnsibleVarName": "slurm_partitions",
          "IsList": true
        },
@@ -360,12 +360,12 @@
           "Description": "Use Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-with-db and OS Image is == 21.04",
           "AnsibleVarName": "slurm_use_rest"
         },
-	{
+	      {
          "ParameterName": "partitions",
          "Type": "string",
          "DefaultValue": "[\"main:all\"]",
          "Required": true,
-         "Description": "List for configuring slurm partitions in slurm.conf",
+         "Description": "The list describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"  ",
          "AnsibleVarName": "slurm_partitions",
          "IsList": true
         },
@@ -459,12 +459,12 @@
           "Description": "Default path to template of configuration file slurm.conf",
           "AnsibleVarName": "slurm_config_dir"
         },
-	{
+	     {
          "ParameterName": "partitions",
          "Type": "string",
          "DefaultValue": "[\"main:all\"]",
          "Required": true,
-         "Description": "List for configuring slurm partitions in slurm.conf",
+         "Description": "The list describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"  ",
          "AnsibleVarName": "slurm_partitions",
          "IsList": true
         },
@@ -504,3 +504,4 @@
     }
   ]
 }
+
