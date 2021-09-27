@@ -1,10 +1,12 @@
 ---
+- name: Print var
+  debug:
+    var: slurm_config_dir
 
-#TODO: parameters + dir for user
 - name: Install slurm.conf
   become: true
   template:
-    src: "templates/slurm/slurm.conf.j2"
+    src: "{{ slurm_config_dir }}"
     dest: "{{ SLURM_CONFIG_DIR }}/slurm.conf"
     owner: root
     group: root
@@ -12,10 +14,10 @@
   notify:
     - reload slurmctld
 
-#TODO: dir for user
 - name: Install cgroup.conf
+  become: true
   template:
-    src: "templates/slurm/cgroup.conf.j2"
+    src: "{{ slurm_cgroup_config_dir }}"
     dest: "{{ SLURM_CONFIG_DIR }}/cgroup.conf"
     owner: root
     group: root

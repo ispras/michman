@@ -1,17 +1,16 @@
-- name: Creates exported directories if needed
+---
+#DYRECTORY
+- name: Create exported directories if needed
   file:
-    path: "{{ item.path }}"
+    path: "{{ nfs_server_dir_to_share }}"
     state: directory
-  with_items: ["{{ nfs_server_export_directories }}"]
+    mode: 0777
 
 - name: Adds required directories to exports
   lineinfile:
     dest: /etc/exports
-    line: "{{ item.path }} {{ item.clients | join(' ') }}"
-    state: present
+    line: "{{ nfs_server_dir_to_share }} *(rw,no_subtree_check)"
     create: yes
-    regexp: "^{{ item.path }}"
-  with_items: ["{{ nfs_server_export_directories }}"]
-  notify:
-    - Refresh nfs exports
 
+- name: Export the shared directory 
+  shell: exportfs -a

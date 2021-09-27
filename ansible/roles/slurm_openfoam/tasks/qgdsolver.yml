@@ -1,0 +1,71 @@
+---
+
+
+- name: Build QGDsolver
+  shell:
+    cmd: "{{ item }}"
+    chdir: "{{ nfs_server_dir_to_share }}"
+  loop: 
+    - "{{ nfs_server_dir_to_share }}/Allwmake"
+  environment:
+    PATH: '{{ ansible_env.PATH }}:/home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/bin:/usr/lib/openfoam/openfoam2012/wmake'
+    SHELL: /bin/bash
+    WM_COMPILER: Gcc
+    CGAL_ARCH_PATH: /usr/lib/openfoam/openfoam2012/ThirdParty/platforms/linux64Gcc/cgal-system
+    FOAM_MPI: sys-openmpi
+    WM_PRECISION_OPTION: DP
+    WM_PROJECT_USER_DIR: /home/ubuntu/OpenFOAM/ubuntu-v2012
+    WM_MPLIB: SYSTEMOPENMPI
+    FOAM_RUN: /home/ubuntu/OpenFOAM/ubuntu-v2012/run
+    PWD: /home/ubuntu/QGDsolver/lib/QGD/Make
+    LOGNAME: ubuntu
+    XDG_SESSION_TYPE: tty
+    WM_OPTIONS: linux64GccDPInt32Opt
+    WM_ARCH: linux64
+    FFTW_ARCH_PATH: /usr/lib/openfoam/openfoam2012/ThirdParty/platforms/linux64Gcc/fftw-system
+    FOAM_TUTORIALS: /usr/lib/openfoam/openfoam2012/tutorials
+    WM_LABEL_SIZE: 32
+    WM_PROJECT: OpenFOAM
+    MOTD_SHOWN: pam
+    FOAM_APPBIN: /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/bin
+    WM_THIRD_PARTY_DIR: /usr/lib/openfoam/openfoam2012/ThirdParty
+    HOME: /home/ubuntu
+    LANG: C.UTF-8
+    WM_LABEL_OPTION: Int32
+    FOAM_LIBBIN: /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/lib
+    FOAM_ETC: /usr/lib/openfoam/openfoam2012/etc
+    SSH_CONNECTION: 10.10.164.68 61839 192.168.13.33 22
+    FOAM_UTILITIES: /usr/lib/openfoam/openfoam2012/applications/utilities
+    FOAM_SITE_LIBBIN: /usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/lib
+    WM_PROJECT_VERSION: v2012
+    LESSCLOSE: /usr/bin/lesspipe %s %s
+    XDG_SESSION_CLASS: user
+    WM_DIR: /usr/lib/openfoam/openfoam2012/wmake
+    TERM: xterm-256color
+    ADIOS2_ARCH_PATH: /usr/lib/openfoam/openfoam2012/ThirdParty/platforms/linux64Gcc/ADIOS2-2.6.0
+    FOAM_SITE_APPBIN: /usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/bin
+    LESSOPEN: /usr/bin/lesspipe %s
+    USER: ubuntu
+    MPI_ARCH_PATH: /usr/lib/x86_64-linux-gnu/openmpi
+    FOAM_SRC: /usr/lib/openfoam/openfoam2012/src
+    SCOTCH_ARCH_PATH: /usr/lib/openfoam/openfoam2012/ThirdParty/platforms/linux64GccDPInt32/scotch-system
+    BOOST_ARCH_PATH: /usr/lib/openfoam/openfoam2012/ThirdParty/platforms/linux64Gcc/boost-system
+    SHLVL: 1
+    FOAM_USER_LIBBIN: /home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/lib
+    XDG_SESSION_ID: 196
+    FOAM_APP: /usr/lib/openfoam/openfoam2012/applications
+    FOAM_API: 2012
+    LD_LIBRARY_PATH: /usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/lib/sys-openmpi:/usr/lib/x86_64-linux-gnu/openmpi/lib:/home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/lib:/usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/lib:/usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/lib:/usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/lib/dummy
+    XDG_RUNTIME_DIR: /run/user/1000
+    WM_COMPILE_OPTION: Opt
+    SSH_CLIENT: 10.10.164.68 61839 22
+    FOAM_SOLVERS: /usr/lib/openfoam/openfoam2012/applications/solvers
+    WM_PROJECT_DIR: /usr/lib/openfoam/openfoam2012
+    WM_COMPILER_TYPE: system
+    XDG_DATA_DIRS: /usr/local/share:/usr/share:/var/lib/snapd/desktop
+    FOAM_USER_APPBIN: /home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/bin
+    PATH: /home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/bin:/usr/lib/openfoam/openfoam2012/wmake:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+    WM_COMPILER_LIB_ARCH: 64
+    SSH_TTY: /dev/pts/1
+    OLDPWD: /home/ubuntu/QGDsolver/lib/QGD
+    _: /usr/bin/env

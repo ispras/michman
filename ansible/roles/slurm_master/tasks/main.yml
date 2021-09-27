@@ -1,15 +1,20 @@
 ---
 
+- name: Include tasks for installing OpenMpi
+  include_tasks: open_mpi.yml
+  when: slurm_use_open_mpi is defined and slurm_use_open_mpi
+
 - name: Install slurm-wlm package
+  become: true
   apt:
     update_cache: yes
     name: slurm-wlm
     state: latest
-
+  
 - name: Include tasks for time synchronization
   include_tasks: ntp.yml
-
-- name: Include tasks for creation directoriees
+  
+- name: Include tasks for creation directories
   include: directory.yml
 
 - name: Include jwt auth instalation tasks 
@@ -27,6 +32,7 @@
   include_tasks: munge.yml
 
 - name: Ensure slurmctld is enabled and running
+  become: true
   systemd:
     name: slurmctld
     enabled: yes

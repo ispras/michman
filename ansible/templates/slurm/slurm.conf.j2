@@ -97,5 +97,10 @@ TaskPluginParam= {{Task_Plugin_Param}}
     NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}] CPUs=8 RealMemory=7951
 
  #Partition
-    PartitionName=main Nodes ={{ cluster_name }}-slave-[1-{{n_slaves}}] Default=YES 
-
+   {% set amount_of_slaves = namespace( value=1)  %}
+   {%  for partition in slurm_partitions %} 
+   {%    set list = partition.split(":") %}  
+   {% set number = list[1] | int  %}
+    PartitionName={{ list[0] }} Nodes  = {% if list[1] == "all" %} {{ cluster_name }}-slave-[1-{{n_slaves}}] {% else  %} {{ cluster_name }}-slave-[{{amount_of_slaves.value}}-{{ number + amount_of_slaves.value - 1}}] {% endif %} Default= {% if list[0] == "main" %} YES {% else %} NO {% endif %} 
+   {% set  amount_of_slaves.value = number + amount_of_slaves.value %}
+  {% endfor %}

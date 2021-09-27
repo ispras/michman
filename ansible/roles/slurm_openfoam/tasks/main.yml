@@ -1,0 +1,12 @@
+---
+
+- name: Include tasks to install and configure Open FOAM
+  include_tasks: open_foam.yml
+ 
+- name: Include tasks to install and configure Open FOAM on storage
+  include_tasks: qgdsolver_storage.yml
+  when: ansible_facts ['hostname'] == "{{cluster_name}}-storage"
+
+- name: Include tasks to install and configure Open FOAM
+  include_tasks: qgdsolver.yml
+  when: ansible_facts ['hostname'] != "{{cluster_name}}-storage"

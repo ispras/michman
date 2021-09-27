@@ -25,7 +25,6 @@
     - include_role:
             name: mem_mb
 
-
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
   tasks:
@@ -70,45 +69,52 @@
         python_version: 3
       when: deploy_jupyterhub is defined and deploy_jupyterhub
 
+#When create_storage is true, such instance would be created
+- hosts: "{{ cluster_name }}_storage"
+  become: yes
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  roles:
+    - { role: network_storage, when: mount_external_storage is defined and mount_external_storage } # nextcloud_nfs_server_ip must be defined
+    - { role: nfs_server, when: deploy_nfs_server is defined and deploy_nfs_server}
+    - { role: nextcloud, when: deploy_nextcloud is defined and deploy_nextcloud }
+    - { role: clickhouse, when: deploy_clickhouse is defined and deploy_clickhouse }
+    - { role: couchdb, when: deploy_couchdb is defined and deploy_couchdb }
+    - { role: postgresql, when: deploy_postgresql is defined and deploy_postgresql }
+    - { role: redis, when: deploy_redis is defined and deploy_redis }
+    - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb}
+   
+
 - hosts: "{{ cluster_name }}_storage"
   become: yes
   tasks:
     - include_role:
-        name: '{{ roleinputvar }}'
-      loop:
-        - mariadb
-        - slurm_db
-      loop_control:
-        loop_var: roleinputvar
+        name:  slurm_db
       when: slurm_use_db is defined and slurm_use_db
-    - include_role:
-        name: nfs_server
-      when: deploy_slurm is defined and deploy_slurm
-
+    
 - hosts: "{{ cluster_name }}_master"
-  become: yes
   tasks:
     - include_role:
-        name: '{{ roleinputvar }}'
-      loop:
-        - slurm_master
-        - mountnfs
-      loop_control:
-        loop_var: roleinputvar
+        name: slurm_master
       when: deploy_slurm is defined and deploy_slurm
-
+    - include_role:
+        name: mountnfs
+      when: deploy_slurm is defined and deploy_slurm and deploy_nfs_server is defined and deploy_nfs_server
 
 - hosts: "{{ cluster_name }}_slaves"
-  become: yes
   tasks:
     - include_role:
-        name: '{{ roleinputvar }}'
-      loop:
-        - slurm_slave
-        - mountnfs
-      loop_control:
-        loop_var: roleinputvar
+        name: slurm_slave
       when: deploy_slurm is defined and deploy_slurm
+    - include_role:
+        name: mountnfs
+      when: deploy_slurm is defined and deploy_slurm and deploy_nfs_server is defined and deploy_nfs_server
+
+- hosts: all
+  tasks:
+    - include_role: 
+        name: slurm_openfoam
+      when: slurm_use_open_foam is defined and slurm_use_open_foam 
 
 - hosts: "{{ cluster_name }}_master"
   tasks:
@@ -167,20 +173,3 @@
           discovery:
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic is defined and deploy_elastic
-
- #When create_storage is true, such instance would be created
-- hosts: "{{ cluster_name }}_storage"
-  become: yes
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-  roles:
-    - { role: network_storage, when: mount_external_storage is defined and mount_external_storage } # nextcloud_nfs_server_ip must be defined
-    - { role: nfs_server, when: deploy_nfs_server is defined and deploy_nfs_server and not deploy_slurm}
-    - { role: nextcloud, when: deploy_nextcloud is defined and deploy_nextcloud }
-    - { role: clickhouse, when: deploy_clickhouse is defined and deploy_clickhouse }
-    - { role: couchdb, when: deploy_couchdb is defined and deploy_couchdb }
-    - { role: postgresql, when: deploy_postgresql is defined and deploy_postgresql }
-    - { role: redis, when: deploy_redis is defined and deploy_redis }
-    - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb and not deploy_slurm}
-   
-
