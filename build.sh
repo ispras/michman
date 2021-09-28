@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 usage="usage: build.sh [OPTION...] [COMMAND] \n
 Available commands:\n
@@ -61,7 +61,7 @@ done
 case $COMMAND in
 proto) 
 	echo "generate protobuf code..."
-  cd internal/protobuf/; /bin/sh generate.sh; cd ../..
+  cd internal/protobuf/; /bin/bash generate.sh; cd ../..
 	;;
 mock)
         if [ -z $( 2>/dev/null ls $PROTO_CODE ) ]

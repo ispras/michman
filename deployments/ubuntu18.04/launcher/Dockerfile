@@ -2,7 +2,7 @@
 FROM znly/protoc AS protoc
 WORKDIR /go/src/github.com/ispras/michman/
 COPY . .
-RUN /bin/sh ./build.sh proto
+RUN cd internal/protobuf && /bin/sh generate.sh
 
 # Build launcher
 FROM golang:1.16 AS builder
