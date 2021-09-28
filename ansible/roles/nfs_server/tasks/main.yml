@@ -9,8 +9,6 @@
 - name: Include tasks for edding configuration file export 
   include: nfs-add-export.yml
   
-#- include: fdisk.yml
-#  tags: fdisk
 
 - name: Restart nfs-server
   service:

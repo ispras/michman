@@ -1,11 +1,17 @@
 ---
 
-
-- name: Build QGDsolver
+- name: Clone the repository for QGDsolver on storage
+  git: 
+    repo: https://github.com/unicfdlab/QGDsolver.git
+    dest: "{{ nfs_server_dir_to_share }}"
+    version: digitef-dev-v2012
+  
+- name: Build QGDsolver on storage 
   shell:
     cmd: "{{ item }}"
     chdir: "{{ nfs_server_dir_to_share }}"
   loop: 
+    - "{{ nfs_server_dir_to_share }}/SwitchDest"
     - "{{ nfs_server_dir_to_share }}/Allwmake"
   environment:
     PATH: '{{ ansible_env.PATH }}:/home/ubuntu/OpenFOAM/ubuntu-v2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/site/2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/platforms/linux64GccDPInt32Opt/bin:/usr/lib/openfoam/openfoam2012/bin:/usr/lib/openfoam/openfoam2012/wmake'

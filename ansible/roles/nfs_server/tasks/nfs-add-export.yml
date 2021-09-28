@@ -1,5 +1,5 @@
 ---
-#DYRECTORY
+
 - name: Create exported directories if needed
   file:
     path: "{{ nfs_server_dir_to_share }}"
