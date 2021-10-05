@@ -558,4 +558,3 @@ Comming soon
 In 2021 we are planning to add following services:
 
 * `Kubernetes`_ -- container-orchestration system for automating computer application deployment, scaling, and management.
-* `Slurm`_ -- job scheduler for Linux and Unix-like kernels.

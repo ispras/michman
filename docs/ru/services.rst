@@ -548,7 +548,7 @@ Michman позволяет развернуть в облаке стандарт
 
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/elastic
-
+ 
 Ближайшие планы
 ----------------
 
