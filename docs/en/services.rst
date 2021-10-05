@@ -30,6 +30,8 @@
 
 .. _Slurm: https://slurm.schedmd.com/documentation.html
 
+.. _MariaDB: https://mariadb.org/
+
 Supported Services
 ==================
 
@@ -184,6 +186,40 @@ Full and actual information about supported CouchDB configurations and versions 
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/couchdb
 
+**MariaDB**
+
+`MariaDB`_ - is a free and open-source relational database. It can be deployed as a cloud storage with the help of orchestration system Michman.
+Config parameter for **MariaDB** service type supports:
+
+* **db_password** -- password for database. Default meaning: password.
+* **db_user** -- user for database. Default meaning: user. 
+
+Following example shows request to get the MariaDB in the cloud.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d 
+	'{
+		"DisplayName": "test",
+		"Services": [
+			{
+				"Name": "mariadb",
+				"Type": "mariadb",
+				"Config": {
+					"db_password": "secret"
+				}
+			}
+		],
+		"Image": "ubuntu21.04",
+		"NHosts": 1
+	}'
+
+
+Full and actual information about supported MariaDB configurations and versions you can get via following url:
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/configs/mariadb
+
+
 **PostgreSQl**
 
 `PostgreSQL`_ is a free and open-source relational database management system (RDBMS) emphasizing extensibility and SQL compliance. It could be deployed in the storage node in the cloud with Michman. 
@@ -303,6 +339,53 @@ Full and actual information about supported Apache Spark configurations and vers
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/spark
 
+**Slurm**
+
+`Slurm`_ is an open source, and highly scalable cluster management and job scheduling system for large and small Linux clusters. The job scheduling system can be deployed in the cluster of virtual machines in the cloud with the help of orchestration system Michman. At the moment Slurm can be deployed on operating system Ubuntu. Two versions of slurm are supported now, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are four versions of deploying Slurm: Slurm - version of service without any additional services, Slurm-db -version with an accounting system, Slurm-nfs - version with shared file system, Slurm-db-nfs - version of service with shared file system and with an accounting system. REST API interface for Slurm is provided too.
+
+Config parameter for **Slurm** service type supports: 
+
+* **use_rest** -- parameter for setting or not Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-db and OS Image is == Ubuntu21.04. Defaault value: false. For correct working Slurm REST API user must export shell variable SLURM_JWT, that has been already generated, on the host from which the request will be sent. For these purposes user has to login to master-host, copy content of the file /var/log/slurm/slurm_token to terminal (execute SLURM_JWT= ...). Variables X-SLURM-USER-NAME and X-SLURM-USER-TOKEN must be mentioned in the request, which values are fixed: X-SLURM-USER-NAME:root and X-SLURM-USER-TOKEN:${SLURM_JWT}. 
+
+	Example of the request: 
+	
+	.. parsed-literal::
+		curl -H "X-SLURM-USER-NAME:root" -H "X-SLURM-USER-TOKEN:${SLURM_JWT}" http://{IP-адрес master-хоста}:6820/slurm/v0.0.36/ping
+	
+	Examples of requests are located here: https://app.swaggerhub.com/apis/rherrick/slurm-rest_api/0.0.35.
+
+* **db_password** -- password for database. This parameter is available, if selected version of Slurm is Slurm-db. Default value: slurmdbd
+* **db_user** -- user for database. This parameter is available, if selected version of Slurm is Slurm-db. Default value: slurm
+* **TaskPluginParam** -- parameter of configuration file slurm.conf. The parameter is used for TaskPlugin, that identifies the type of task launch plugin, typically used to provide resource management within a node. Allowable values: None, Boards, Sockets, Cores, Threads, and/or Verbose. Multiple options should be comma separated. Default value: None.
+* **use_open_foam** -- parameter for using or not OpenFOAM with Slurm. 
+* **config_dir** -- path to template of configuration file slurm.conf.
+* **cgroup_config_dir** -- path to template of configuration file cgroup.conf.
+* **use_open_mpi** -- parameter for using or not OpenMPI with Slurm. 
+* **partitions** -- list that describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"
+* **open_mpi_version** -- version of OpenMPI.
+Following example shows request to create 2-nodes cluster with Slurm service, including accounting system and REST API interface.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d 
+ 	'{
+		"DisplayName":"test", 
+		"Services":[{
+			"Name":"Slurm service",
+			"Type":"slurm",
+			"Version": "Slurm-db",
+			"Config":{
+				"use_rest": "true"
+			}
+		}], 
+		"Description": "cluster", 
+		"Image": "ubuntu21.04", 
+		"NHosts": 2
+	}'
+
+Full and actual information about supported Slurm configurations and versions you can get via following url:
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/configs/slurm
 
 Web UI
 -------
