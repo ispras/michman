@@ -12,6 +12,7 @@ Supported services types are:
 * Jupyterhub
 * Nextcloud
 * NFS-Server
+* Slurm
 * PostgreSQL
 * Redis
 
@@ -32,6 +33,35 @@ Example:
   "hadoop-version": "2.6",
   "spark-worker-mem-mb": "10240",
   "yarn-master-mem-mb": "10240"
+}
+```
+
+## Slurm 
+Config parameter for **slurm** service type supports:
+* **use_rest** -- parameter for setting or not Slurm REST API.
+* **db_password** -- password for database.
+* **db_user** -- user for database.
+* **TaskPluginParam** -- parameter of configuration file slurm.conf. More detailed information about the parameter can be found at [Slurm docs](https://slurm.schedmd.com/slurm.conf.html).  
+* **use_open_foam** -- parameter for using or not OpenFOAM with Slurm.
+* **config_dir** -- path to template of configuration file slurm.conf.
+* **cgroup_config_dir** -- path to template of configuration file cgroup.conf.
+* **use_open_mpi** -- parameter for using or not OpenMPI with Slurm.
+* **partitions** -- list that describes partitions of Slurm-cluster. More detailed information about the parameter can be found at [Slurm docs](https://slurm.schedmd.com/documentation.html)
+* **open_mpi_version** -- version of OpenMPI.
+
+Example:
+```json
+"Config": {
+  "use_rest": "true",
+  "db_password": "password",
+  "db_user": "user",
+  "TaskPluginParam": "Cores",
+  "use_open_foam": "true",
+  "config_dir": "templates/slurm/slurm.conf.j2",
+  "cgroup_config_dir": "templates/slurm/cgroup.conf.j2",
+  "use_open_mpi": "true",
+  "partitions": "main:5",
+  "open_mpi_version":"v1.10"
 }
 ```
 
