@@ -1,0 +1,46 @@
+---
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  gather_facts: no
+  tasks:
+    - name: Add all hosts to kubespray group
+      group_by:
+        key: kubespray
+
+    - name: Add all master and slave hosts to k8s_cluster group
+      group_by:
+        key: k8s_cluster
+        parents:
+          - kubespray
+
+    - name: Add all master and slave hosts to Kubernetes etcd
+      group_by:
+        key: etcd
+        parents:
+          - kubespray
+
+- hosts: "{{ cluster_name }}_master"
+  gather_facts: no
+  tasks:
+    - name: Add all master hosts to Kubernetes control plane
+      group_by:
+        key: kube_control_plane
+        parents:
+          - k8s_cluster
+
+- hosts: "{{ cluster_name }}_slaves"
+  gather_facts: no
+  tasks:
+    - name: Add all slave hosts to Kubernetes workers
+      group_by:
+        key: kube_node
+        parents:
+          - k8s_cluster
+
+- name: Deploy Kubernetes with Kubespray
+  import_playbook: kubespray-cluster.yml
+  vars:
+    # Kubespray playbook requires privilege escalation
+    ansible_become: yes
+    ansible_become_user: root
+    access_ip: "{{ active_master_public_ip | default('0.0.0.0') }}"
+    supplementary_addresses_in_ssl_keys: ["{{ access_ip }}"]

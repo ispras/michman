@@ -27,11 +27,8 @@ RUN dnf update -y && \
     dnf install python3 -y
 
 # Install pip packages
-RUN pip3 install       \
-  setuptools-rust      \
-  ansible==2.9.4       \
-  openstacksdk==0.40.0 \
-  decorator==4.4.2
+RUN pip3 install setuptools-rust
+RUN pip3 install -r requirements.txt
 
 # Set environment variables
 ENV CONFIG ./configs/config.yaml

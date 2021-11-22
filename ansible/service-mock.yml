@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - fail:
+        msg: >
+          The service is absent. Please, pull git submodules with the command
+          `git submodules update --init --recursive`
