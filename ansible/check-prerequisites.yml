@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: no
+  tasks:
+    - name: Stat Kubespray folder
+      stat:
+        path: third_party/kubespray
+      register: kubespray
+      when: deploy_kubernetes is defined and deploy_kubernetes
+
+    - name: Check that Kubespray is present
+      assert:
+        msg: Kubespray is not installed! Pull it with running `git submodule update --init --recursive`
+        that:
+          - kubespray.stat.exists
+      when: deploy_kubernetes is defined and deploy_kubernetes

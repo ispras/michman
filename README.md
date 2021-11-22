@@ -10,6 +10,7 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 * ElasticSearch with OpenDistro tools
 * Jupyter
 * Jupyterhub
+* Kubernetes
 * Nextcloud
 * NFS-Server
 * Slurm
@@ -243,9 +244,9 @@ docker pull znly/protoc
 
 Python packages:
 ```bash
-pip install ansible==2.9.4 openstacksdk==0.40.0 # latest tested versions
+pip install -r requirements.txt
 # or
-pip3 install ansible==2.9.4 openstacksdk==0.40.0
+pip3 install -r requirements.txt
 ```
 
 Go packages:
@@ -262,6 +263,7 @@ mkdir -p $GOPATH/src/github.com/ispras
 git clone https://github.com/ispras/michman.git $GOPATH/src/github.com/ispras/michman
   
 cd $GOPATH/src/github.com/ispras/michman
+git submodule update --init --recursive
 ```
 
 Then, complete _config.yaml_ file. Note: we use Michman without authentication 
