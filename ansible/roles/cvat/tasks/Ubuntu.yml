@@ -1,0 +1,50 @@
+---
+
+- name: Install git
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Clean cvat directory if exists
+  file:
+    state: absent
+    path: '/home/{{ ansible_user }}/cvat'
+
+- name: Clone cvat from github
+  git:
+    repo: https://github.com/openvinotoolkit/cvat.git
+    dest: '/home/{{ ansible_user }}/cvat'
+
+- name: Install Docker-Compose
+  pip:
+    name: docker-compose
+    state: latest
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Install albumentations library
+  pip:
+    name: albumentations
+    state: latest
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Copy overrided compose file
+  template:
+    src: docker-compose.override.yml.j2
+    dest: /home/{{ ansible_user }}/cvat/docker-compose.yml
+    mode: '0644'
+
+- name: Build and run docker-compose
+  docker_compose:
+    project_src: /home/{{ ansible_user }}/cvat
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Register superuser
+  command: docker exec -it cvat bash -ic 'python3 ~/manage.py createsuperuser --noinput --username {{ cvat_username }} --email {{ cvat_email }}'
+  ignore_errors: yes

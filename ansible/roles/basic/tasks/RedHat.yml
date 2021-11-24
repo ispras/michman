@@ -38,6 +38,7 @@
   template:
     src: "pip.conf.j2"
     dest: "/home/centos/.pip/pip.conf"
+  when: use_pip_mirror
 
 - name: update yum cache
   become: yes

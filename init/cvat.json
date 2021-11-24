@@ -1,0 +1,28 @@
+{
+  "Type": "cvat",
+  "Description": "Cvat service -- video and image annotation tool for computer vision.",
+  "DefaultVersion": "1.7.0",
+  "Class": "stand-alone",
+  "AccessPort": 8080,
+  "Versions": [
+    {
+      "Version": "1.7.0",
+      "Description": "Latest cvat version",
+      "Configs": [
+        {
+          "ParameterName": "username",
+          "Type": "string",
+          "DefaultValue": "admin",
+          "Required": true,
+          "Description": "Cvat superuser name."
+        },
+        {
+          "ParameterName": "email",
+          "Type": "string",
+          "DefaultValue": "a@a.a",
+          "Required": true,
+          "Description": "Cvat superuser email."
+        }
+      ]
+    }]
+}
