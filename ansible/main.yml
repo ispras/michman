@@ -179,3 +179,9 @@
           discovery:
             seed_hosts: "{{ active_master_ip }}"
       when: deploy_elastic is defined and deploy_elastic
+
+- hosts: "{{ cluster_name }}_master"
+  tasks:
+    - include_role:
+        name: cvat
+      when: deploy_cvat is defined and deploy_cvat

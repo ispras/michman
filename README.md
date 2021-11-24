@@ -7,6 +7,7 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 * Apache Cassandra
 * ClickHouse
 * CouchDB
+* СVAT
 * ElasticSearch with OpenDistro tools
 * Jupyter
 * Jupyterhub
