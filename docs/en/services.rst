@@ -30,6 +30,22 @@
 
 .. _Slurm: https://slurm.schedmd.com/documentation.html
 
+.. _MariaDB: https://mariadb.org/
+
+.. _netnecker: https://github.com/Mirantis/k8s-netchecker-server
+
+.. _helm: https://helm.sh/
+
+.. _GitHub: https://github.com/kubernetes/cloud-provider-openstack/releases
+
+.. _k8s-keystone-auth: https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/keystone-auth/using-keystone-webhook-authenticator-and-authorizer.md
+
+.. _crictl: https://kubernetes.io/docs/tasks/debug-application-cluster/crictl/
+
+.. _ways: https://github.com/kubernetes/dashboard/blob/master/docs/user/accessing-dashboard/README.md
+
+.. _CVAT: https://github.com/openvinotoolkit/cvat
+
 Supported Services
 ==================
 
@@ -184,6 +200,39 @@ Full and actual information about supported CouchDB configurations and versions 
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/couchdb
 
+**MariaDB**
+
+`MariaDB`_ - is a free and open-source relational database. It can be deployed as a cloud storage with the help of orchestration system Michman.
+Config parameter for **MariaDB** service type supports:
+
+* **db_password** -- password for database. Default meaning: password.
+* **db_user** -- user for database. Default meaning: user.
+
+Following example shows request to get the MariaDB in the cloud.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d
+	'{
+		"DisplayName": "test",
+		"Services": [
+			{
+				"Name": "mariadb",
+				"Type": "mariadb",
+				"Config": {
+					"db_password": "secret"
+				}
+			}
+		],
+		"Image": "ubuntu21.04",
+		"NHosts": 1
+	}'
+
+
+Full and actual information about supported MariaDB configurations and versions you can get via following url:
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/configs/mariadb
+
 **PostgreSQl**
 
 `PostgreSQL`_ is a free and open-source relational database management system (RDBMS) emphasizing extensibility and SQL compliance. It could be deployed in the storage node in the cloud with Michman. 
@@ -303,6 +352,54 @@ Full and actual information about supported Apache Spark configurations and vers
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/spark
 
+**Slurm**
+
+`Slurm`_ is an open source, and highly scalable cluster management and job scheduling system for large and small Linux clusters. The job scheduling system can be deployed in the cluster of virtual machines in the cloud with the help of orchestration system Michman. At the moment Slurm can be deployed on operating system Ubuntu. Two versions of slurm are supported now, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are four versions of deploying Slurm: Slurm - version of service without any additional services, Slurm-db -version with an accounting system, Slurm-nfs - version with shared file system, Slurm-db-nfs - version of service with shared file system and with an accounting system. REST API interface for Slurm is provided too.
+
+Config parameter for **Slurm** service type supports:
+
+* **use_rest** -- parameter for setting or not Slurm REST API. Parameter value can become true, if selected version of Slurm is Slurm-db and OS Image is == Ubuntu21.04. Defaault value: false. For correct working Slurm REST API user must export shell variable SLURM_JWT, that has been already generated, on the host from which the request will be sent. For these purposes user has to login to master-host, copy content of the file /var/log/slurm/slurm_token to terminal (execute SLURM_JWT= ...). Variables X-SLURM-USER-NAME and X-SLURM-USER-TOKEN must be mentioned in the request, which values are fixed: X-SLURM-USER-NAME:root and X-SLURM-USER-TOKEN:${SLURM_JWT}.
+
+	Example of the request:
+
+	.. parsed-literal::
+		curl -H "X-SLURM-USER-NAME:root" -H "X-SLURM-USER-TOKEN:${SLURM_JWT}" http://{IP-адрес master-хоста}:6820/slurm/v0.0.36/ping
+
+Examples of requests are located here: https://app.swaggerhub.com/apis/rherrick/slurm-rest_api/0.0.35.
+
+* **db_password** -- password for database. This parameter is available, if selected version of Slurm is Slurm-db. Default value: slurmdbd
+* **db_user** -- user for database. This parameter is available, if selected version of Slurm is Slurm-db. Default value: slurm
+* **TaskPluginParam** -- parameter of configuration file slurm.conf. The parameter is used for TaskPlugin, that identifies the type of task launch plugin, typically used to provide resource management within a node. Allowable values: None, Boards, Sockets, Cores, Threads, and/or Verbose. Multiple options should be comma separated. Default value: None.
+* **use_open_foam** -- parameter for using or not OpenFOAM with Slurm.
+* **config_dir** -- path to template of configuration file slurm.conf.
+* **cgroup_config_dir** -- path to template of configuration file cgroup.conf.
+* **use_open_mpi** -- parameter for using or not OpenMPI with Slurm.
+* **partitions** -- list that describes partitions of Slurm-cluster. These configuratios are located in slurm.conf. The list consists of strings, where argumants are separated with the help of :. First argument is name of partition, second one - amount of hosts, related to the partition. Partition witn name \"main\" must be in every users' request, as the partition is going to be default. Example of list from users' request: \"main:5\", \"part_1:2\", \"part_2:3\", \"part_3:4\"
+* **open_mpi_version** -- version of OpenMPI.
+
+Following example shows request to create 2-nodes cluster with Slurm service, including accounting system and REST API interface.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d
+ 	'{
+		"DisplayName":"test",
+		"Services":[{
+			"Name":"Slurm service",
+			"Type":"slurm",
+			"Version": "Slurm-db",
+			"Config":{
+				"use_rest": "true"
+			}
+		}],
+		"Description": "cluster",
+		"Image": "ubuntu21.04",
+		"NHosts": 2
+	}'
+
+Full and actual information about supported Slurm configurations and versions you can get via following url:
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/configs/slurm
 
 Web UI
 -------
@@ -363,6 +460,44 @@ Full and actual information about supported JupyterHub configurations and versio
 
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/jupyterhub
+
+**CVAT**
+
+`CVAT`_ is open-source, online, interactive video and image annotation tool for computer vision.
+
+For now we support the *1.7.0* CVAT version.
+
+Config parameter for **cvat** service type supports:
+
+* **username** -- CVAT superuser name
+* **email** -- CVAT superuser email
+
+.. note:: You should specify the superuser password in CVAT-node using following command: "docker exec -it cvat bash -ic 'python3 ~/manage.py createsuperuser'".
+
+Following example shows request to create CVAT service.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d
+	'{
+		"DisplayName": "my-cluster",
+		"Services": [
+			{
+				"Name": "cvat-service",
+				"Type": "cvat",
+				"Config":{
+                    "username": "admin",
+                    "email": "admin@admin.com"
+                }
+			}
+		],
+		"Image": "ubuntu20.04",
+		"NHosts": 0
+	}'
+
+Full and actual information about supported CVAT configurations and versions you can get via following url:
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/configs/cvat
 
 
 Files Management
@@ -469,10 +604,106 @@ Full and actual information about supported Elasticsearch configurations and ver
 .. parsed-literal::
 	curl http://michman_addr:michman_port/configs/elastic
 
-Comming soon
--------------
+Container technologies
+-----------------------
 
-In 2021 we are planning to add following services:
+**Kubernetes**
 
-* `Kubernetes`_ -- container-orchestration system for automating computer application deployment, scaling, and management.
-* `Slurm`_ -- job scheduler for Linux and Unix-like kernels.
+`Kubernetes`_ is an open-source system for automating deployment, scaling, and management of containerized applications.
+
+For now following versions are supported: * v1.19.0 *, * v1.19.1 *, * v1.19.2 *, * v1.19.3 *, * v1.19.4 *, * v1.19.5 *, * v1.19.6 *, * v1.19.7 *, * v1.19.8 *, * v1.19.9 *, * v1.19.10 *, * v1.20.0 *, * v1.20.1 *, * v1.20.2 *, * v1.20.3 *, * v1. 20.4 *, * v1.20.5 *, * v1.20.6 *, * v1.20.7 *.
+
+Config parameters for **Kubernetes** service type are:
+* **network_plugin** -- CNI plugin responsible for configuring overlay network.
+
+  Available options:
+    - calico
+    - flannel
+    - weave
+  Default: calico
+
+* **container_runtime** -- container runtime environment in which all the
+  containers are deployed.
+
+  Available options:
+    - docker
+    - containerd
+    - cri-o
+  Default: docker
+
+  If container runtime implements CRI, `crictl`_
+  is installed.
+
+* **enable_dashboard** indicates if Kubernetes dashboard UI will be installed.
+
+  By default, dashboard is not exposed to the outer world, as it can be done in many different `ways`_.
+
+* **enable_netchecker** indicates if the `netchecker`_ service will be deployed.
+
+  To get the most recent and cluster-wide network connectivity report, run
+  from any of the cluster nodes:
+
+  .. parsed-literal::
+      curl http://<netchecker_service_ip>:31081/api/v1/connectivity_check
+
+* **enable_helm** indicates if `helm`_ package manager will
+  be installed.
+
+* **enable_ingress_nginx** indicates if nginx ingress controller will be
+  deployed.
+
+  Check with:
+
+  .. parsed-literal::
+      kubectl get all -n ingress-nginx
+
+* **enable_cinder_csi** indicates if Cinder CSI plugin will be installed. This
+  allows one to request persistent storage for pods right from the kubernetes.
+
+* **enable_keystone_auth** indicates if Keystone Webhook authentication and
+  authorization is available.
+
+  To access kubernetes cluster via `kubectl` you need
+  * Download latest `client-keystone-auth` from `GitHub`_
+  * Configure your user in `KUBECONFIG` to use this client to get a token from Kubernetes
+
+    .. parsed-literal::
+            - name: your-user
+              user:
+                exec:
+                  command: path-to-client-keystone-auth
+                  apiVersion: client.authentication.k8s.io/v1beta1
+
+  More details in `k8s-keystone-auth`_ documentation.
+
+Following example shows request to create 3-nodes cluster with Kubernetes service.
+
+.. parsed-literal::
+	curl http://michman_addr:michman_port/projects/{ProjectID}/clusters -XPOST -d
+	'{
+       "DisplayName": "k8s",
+       "Image": "ubuntu18.04",
+       "NHosts": 2,
+       "Services": [
+         {
+           "Name": "k8s",
+           "Type": "kubernetes",
+           "Version": "v1.20.7",
+           "Config": {
+             "network_plugin": "flannel",
+             "container_runtime": "docker",
+             "enable_dashboard": "true",
+             "enable_helm": "true",
+             "enable_ingress_nginx": "true",
+             "enable_cinder_csi": "true",
+             "enable_keystone_auth": "true",
+             "keystone_admin_roles": "[\"member\"]"
+           }
+         }
+       ]
+     }'
+
+Full and actual information about supported Kubernetes configurations and versions you can get via following url:
+
+.. parsed-literal::
+    curl http://michman_addr:michman_port/configs/kubernetes

@@ -15,14 +15,21 @@ At now it provides capabilities for deployment a part of Apache Big Data Stack r
 	* Apache Cassandra
 	* ClickHouse
 	* CouchDB
+	* CVAT
 	* ElasticSearch with OpenDistro tools
 	* Jupyter
 	* Jupyterhub
+	* Kubernetes
+	* MariaDB
 	* Nextcloud
 	* NFS-Server
 	* PostgreSQL
 	* Redis
 
 Clusters are created and managed via REST API (see swagger docs) with collaborative group-based access to computational resources.
+
+**Publication:**
+
+**Michman: an Orchestrator to deploy distributed services in cloud environments** -- https://ieeexplore.ieee.org/document/9394140
 
 This project follows up spark-openstack project (ISP RAS).
