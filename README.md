@@ -21,6 +21,8 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 More detailed description of supported services can be found at 
 [docs/services.md](./docs/services.md).
 
+Full documentation is available [here](https://michman.ispras.ru).
+
 Clusters are created and managed via REST API (see swagger docs) with collaborative group-based access to computational resources.
 
 This project follows up spark-openstack project (ISP RAS).
