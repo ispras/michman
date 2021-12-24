@@ -51,17 +51,17 @@ SchedulerType= sched/backfill
 
 #Identifies the type of resource selection algorithm to be used.
 #select/cons_res - the resources (cores and memory) within a node are individually allocated as consumable resources.
-SelectType= select/cons_res
+#SelectType= select/cons_res
 
 #Parameters for SelectType
-SelectTypeParameters= CR_CPU_Memory
+#SelectTypeParameters= CR_CPU_Memory
 
 #Maximum real memory size available per allocated CPU in megabytes. Used to avoid over-subscribing memory and causing paging.
-MaxMemPerCPU=900
+#MaxMemPerCPU=900
 
 #Default real memory size available per allocated CPU in megabytes. Parameter iss used, when SelectType = select/cons_res or select/cons_tres 
 #and consumable resources include memory and CPUs/cores
-DefMemPerCPU=900
+#DefMemPerCPU=900
 
 #Pathname of a file into which the slurmctld daemon's logs are written.
 SlurmctldLogFile= {{SLURM_PATH_TO_LOG_FILE}}/slurmctld.log
@@ -94,7 +94,7 @@ TaskPluginParam= {{Task_Plugin_Param}}
 #Nodes 
 #CPUs - number of logical processors on the node.
 #RealMemory - size of real memory on the node in megabytes. Parameter is going to be set, if memory is consumable resource.
-    NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}] CPUs=8 RealMemory=7951
+    NodeName = {{ cluster_name }}-slave-[1-{{n_slaves}}] #CPUs=8 RealMemory=7951
 
  #Partition
    {% set amount_of_slaves = namespace( value=1)  %}
