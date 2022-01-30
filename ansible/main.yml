@@ -27,10 +27,6 @@
     - include_role:
             name: mem_mb
 
-- name: Import Kubespray deployment playbook
-  import_playbook: "{{ 'kubespray-wrapper.yml' if deploy_kubernetes is defined and deploy_kubernetes else 'service-mock.yml' }}"
-  when: deploy_kubernetes is defined and deploy_kubernetes
-
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
   tasks:
@@ -38,6 +34,14 @@
       include_role:
         name: basic
       when: create_cluster is defined and create_cluster
+
+- name: Import Kubespray deployment playbook
+  import_playbook: "{{ 'kubespray-wrapper.yml' if deploy_kubernetes is defined and deploy_kubernetes else 'service-mock.yml' }}"
+  when: deploy_kubernetes is defined and deploy_kubernetes
+
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  become: yes
+  tasks:
     - name: install Spark
       include_role:
         name: spark_common
