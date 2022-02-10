@@ -122,3 +122,15 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Save admin kubeconfig for the cluster
+      become: yes
+      copy:
+        src: "files/kube/admin.conf"
+        dest: "files/kube/{{ cluster_name }}.conf"
+        mode: 0644
+        remote_src: yes

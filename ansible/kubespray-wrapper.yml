@@ -12,12 +12,6 @@
         parents:
           - kubespray
 
-    - name: Add all master and slave hosts to Kubernetes etcd
-      group_by:
-        key: etcd
-        parents:
-          - kubespray
-
 - hosts: "{{ cluster_name }}_master"
   gather_facts: no
   tasks:
@@ -26,6 +20,12 @@
         key: kube_control_plane
         parents:
           - k8s_cluster
+
+    - name: Add all master hosts to Kubernetes etcd
+      group_by:
+        key: etcd
+        parents:
+          - kubespray
 
 - hosts: "{{ cluster_name }}_slaves"
   gather_facts: no
