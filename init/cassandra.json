@@ -3,6 +3,12 @@
    "Description":"Cassandra database service",
    "DefaultVersion":"3.11.4",
    "Class": "master-slave",
+   "HealthCheck":[
+      {
+         "CheckType": "NotSupported",
+         "Configs": []
+      }
+   ],
    "Versions":[
       {
          "Version":"3.11.4",

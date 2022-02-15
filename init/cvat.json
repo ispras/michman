@@ -4,6 +4,12 @@
   "DefaultVersion": "1.7.0",
   "Class": "stand-alone",
   "AccessPort": 8080,
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "1.7.0",

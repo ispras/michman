@@ -1,0 +1,29 @@
+---
+
+- name: Create consul/bin directory
+  become: yes
+  file:
+    path: "{{ consul_bin_dir }}"
+    state: directory
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+        
+- name: Create consul/logs directory
+  become: yes
+  file:
+    path: "{{ consul_log_dir }}"
+    state: directory
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+    
+- name: Create consul/data directory
+  become: yes
+  file:
+    path: "{{ consul_data_dir }}"
+    state: directory
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+
+- name: Create consul/config directory
+  become: yes
+  file:
+    path: "{{ consul_config_dir }}"
+    state: directory
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)

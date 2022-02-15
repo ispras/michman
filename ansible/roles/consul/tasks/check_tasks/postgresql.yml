@@ -1,0 +1,10 @@
+---
+
+- name: Postgresql config template 
+  become: yes
+  template: 
+    src: "{{ postgresql_health_config_tmp_path }}"
+    dest: "{{ consul_config_dir }}/postgresql.json"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_postgresql is defined and deploy_postgresql

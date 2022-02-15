@@ -4,6 +4,12 @@
   "DefaultVersion": "6.0.1",
   "Class": "stand-alone",
   "AccessPort": 8888,
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "6.0.1",

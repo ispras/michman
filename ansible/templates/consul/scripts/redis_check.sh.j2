@@ -1,0 +1,13 @@
+#!/bin/sh
+
+PASSWORD="{{ redis_db_password }}"
+
+echo "running client ping test"
+
+RESULT=`redis-cli -h 127.0.0.1 -p 6379 -a ${PASSWORD} ping`
+
+if [ "$RESULT" = "PONG" ]; then
+    exit 0
+fi
+
+exit 2

@@ -1,0 +1,10 @@
+---
+
+- name: Spark config template 
+  become: yes
+  template: 
+    src: "{{ spark_health_config_tmp_path }}"
+    dest: "{{ consul_config_dir }}/spark.json"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_spark is defined and deploy_spark

@@ -3,6 +3,40 @@
   "Description":"PostgreSQL database service",
   "DefaultVersion":"10",
   "Class": "storage",
+  "HealthCheck":[
+    {
+      "CheckType": "TCP",
+      "Configs": [
+        {
+          "ParameterName": "postgresqlHealthInterval",
+          "Description": "Specifies the frequency at which to run this check",
+          "Type": "string",
+          "DefaultValue": "5s",
+          "Required": true,
+          "AnsibleVarName": "postgresql_health_interval",
+          "IsList": false
+        },
+        {
+          "ParameterName": "postgresqlHealthTimeout",
+          "Description": "Specifies a timeout for outgoing connections",
+          "Type": "string",
+          "DefaultValue": "10s",
+          "Required": true,
+          "AnsibleVarName": "postgresql_health_timeout",
+          "IsList": false
+        },
+        {
+          "ParameterName": "postgresqlHealthConfigTemplatePath",
+          "Description": "Path to postgresql config template",
+          "Type": "string",
+          "DefaultValue": "templates/consul/configs/postgresql.json.j2",
+          "Required": true,
+          "AnsibleVarName": "postgresql_health_config_tmp_path",
+          "IsList": false
+        }
+      ]
+    }
+  ],
   "Versions":[
     {
       "Version":"9.6",

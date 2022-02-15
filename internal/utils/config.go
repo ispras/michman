@@ -10,14 +10,15 @@ import (
 
 type Config struct {
 	// Openstack
-	Key            string `yaml:"os_key_name"`
-	VirtualNetwork string `yaml:"virtual_network"`
-	OsImage        string `yaml:"os_image"`
-	FloatingIP     string `yaml:"floating_ip_pool"`
-	MasterFlavor   string `yaml:"master_flavor"`
-	SlavesFlavor   string `yaml:"slaves_flavor"`
-	StorageFlavor  string `yaml:"storage_flavor"`
-	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein', 'ussuri' and 'liberty' versions
+	Key            		string `yaml:"os_key_name"`
+	VirtualNetwork 		string `yaml:"virtual_network"`
+	OsImage        		string `yaml:"os_image"`
+	FloatingIP     		string `yaml:"floating_ip_pool"`
+	MasterFlavor   		string `yaml:"master_flavor"`
+	SlavesFlavor   		string `yaml:"slaves_flavor"`
+	StorageFlavor  		string `yaml:"storage_flavor"`
+	MonitoringFlavor  	string `yaml:"monitoring_flavor"`
+	OsVersion      		string `yaml:"os_version"` //Now are supported only 'stein', 'ussuri' and 'liberty' versions
 
 	// Vault
 	Token       string `yaml:"token"`

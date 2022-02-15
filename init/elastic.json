@@ -3,6 +3,12 @@
   "Description": "ElastiSearch service",
   "DefaultVersion": "7.1.1",
   "Class": "master-slave",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "7.1.1",

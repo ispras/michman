@@ -1,0 +1,10 @@
+[Unit]
+Description=Consul server run
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sudo {{ consul_bin_dir }}/consul_run.sh
+ExecReload=/usr/bin/consul reload
+
+[Install]
+WantedBy=multi-user.target

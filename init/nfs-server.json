@@ -3,6 +3,12 @@
   "Description": "NFS server",
   "DefaultVersion": "default",
   "Class": "storage",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "default",

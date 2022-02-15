@@ -4,6 +4,12 @@
   "DefaultVersion": "21.0.1",
   "Class": "storage",
   "AccessPort": 80,
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "docker",

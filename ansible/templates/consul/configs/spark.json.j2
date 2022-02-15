@@ -1,0 +1,22 @@
+{
+  "service": {
+    "name": "spark-service",
+    "tags": [
+      "spark"
+    ]
+  },
+  "checks":
+  [
+    {
+        "id": "spark-check-id",
+        "name": "{{ ansible_hostname }}-check",
+        {% if ansible_hostname == cluster_name | lower + '-master' %}
+        "tcp": "{{ hostvars[ansible_hostname].openstack.private_v4 }}:8080",
+        {% else %}
+        "tcp": "{{ hostvars[ansible_hostname].openstack.private_v4 }}:8081",
+        {% endif %}
+        "interval": "{{ spark_health_interval }}",
+        "timeout": "{{ spark_health_timeout }}"
+    }
+  ]
+}

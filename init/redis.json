@@ -17,5 +17,49 @@
         }
       ]
     }
+  ],
+  "DefaultVersion": "latest",
+  "HealthCheck":[
+    {
+      "CheckType": "Script",
+      "Configs": [
+        {
+          "ParameterName": "redisHealthInterval",
+          "Description": "Specifies the frequency at which to run this check",
+          "Type": "string",
+          "DefaultValue": "5s",
+          "Required": true,
+          "AnsibleVarName": "redis_health_interval",
+          "IsList": false
+        },
+        {
+          "ParameterName": "redisHealthTimeout",
+          "Description": "Specifies a timeout for outgoing connections",
+          "Type": "string",
+          "DefaultValue": "10s",
+          "Required": true,
+          "AnsibleVarName": "redis_health_timeout",
+          "IsList": false
+        },
+        {
+          "ParameterName": "redisHealthScriptTemplatePath",
+          "Description": "Path to redis script check template",
+          "Type": "string",
+          "DefaultValue": "templates/consul/scripts/redis_check.sh.j2",
+          "Required": true,
+          "AnsibleVarName": "redis_health_script_tmp_path",
+          "IsList": false
+        },
+        {
+          "ParameterName": "redisHealthConfigTemplatePath",
+          "Description": "Path to redis config template",
+          "Type": "string",
+          "DefaultValue": "templates/consul/configs/redis.json.j2",
+          "Required": true,
+          "AnsibleVarName": "redis_health_config_tmp_path",
+          "IsList": false
+        }
+      ]
+    }
   ]
 }

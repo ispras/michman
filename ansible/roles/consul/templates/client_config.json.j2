@@ -1,0 +1,12 @@
+{
+    "bootstrap": false,
+    "server": false,
+    "data_dir": "{{ consul_data_dir }}",
+    "retry_join": [{{ '\"' + host_join_ips | join('\", \"') + '\"' }}],
+    "retry_interval": "1s",
+    "enable_local_script_checks": true,
+    "client_addr": "0.0.0.0",
+    "telemetry": {
+	    "disable_compat_1.9": true
+    }
+}

@@ -3,6 +3,12 @@
   "Description": "Jupyterhub service",
   "DefaultVersion": "1.0.0",
   "Class": "stand-alone",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "1.0.0",

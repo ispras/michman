@@ -214,6 +214,16 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 				extraVars["create_master_slave"] = true
 			}
 
+			//for consul health checks
+			if st.HealthCheck[0].CheckType != "NotSupported" {
+				for _, hc := range st.HealthCheck[0].Configs {
+					if value, ok := curS.Config[hc.ParameterName]; ok {
+						extraVars[hc.AnsibleVarName] = convertParamValue(value, hc.Type, hc.IsList)
+					} else if hc.Required {
+						extraVars[hc.AnsibleVarName] = convertParamValue(hc.DefaultValue, hc.Type, hc.IsList)
+					}
+				}
+			}
 		} else {
 			extraVars[setDeployService(st.Type)] = false
 		}
@@ -229,11 +239,13 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 
 	extraVars["n_slaves"] = cluster.NHosts
 	extraVars["cluster_name"] = cluster.Name
+	extraVars["create_monitoring"] = cluster.Monitoring
 
 	extraVars["mountnfs"] = false
 	extraVars["master_flavor"] = osConfig.MasterFlavor
 	extraVars["slaves_flavor"] = osConfig.SlavesFlavor
 	extraVars["storage_flavor"] = osConfig.StorageFlavor
+	extraVars["monitoring_flavor"] = osConfig.MonitoringFlavor
 	extraVars["boot_from_volume"] = false
 
 	image, err := aL.couchbaseCommunicator.ReadImage(cluster.Image)
@@ -306,6 +318,10 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 
 	if cluster.Keys != nil && len(cluster.Keys) > 0 {
 		extraVars["public_keys"] = cluster.Keys
+	}
+
+	if extraVars["create_monitoring"] == true{
+		extraVars["deploy_consul"] = true
 	}
 
 	return extraVars, nil
@@ -651,6 +667,23 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			storageIp = findIP(outb.String())
 		}
+		monitoringIp := ""
+		//check if cluster has monitoring
+		if newExtraVars["create_monitoring"] == true {
+			v = map[string]string{
+				"cluster_name":  cluster.Name,
+				"extended_role": "monitoring",
+			}
+			ipExtraVars, err = json.Marshal(v)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+			log.Print("Running ansible for getting monitoring IP...")
+			var outb bytes.Buffer
+			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
+			monitoringIp = findIP(outb.String())
+		}
 
 		//filling services URLs:
 		sTypes, err := aL.couchbaseCommunicator.ListServicesTypes()
@@ -681,9 +714,17 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			}
 		}
 
+		if monitoringIp != "" {
+			log.Print("Monitoring IP is: ", monitoringIp)
+		}
+
 		if masterIp != "" {
 			log.Print("Master IP is: ", masterIp)
 			cluster.MasterIP = masterIp
+		}
+
+		if storageIp != "" {
+			log.Print("Storage IP is: ", storageIp)
 		}
 
 		log.Print("Saving master IP and URLs for services...")
@@ -698,7 +739,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		log.Print("Launch: OK")
 		return utils.AnsibleOk
 	} else {
-		log.Print("Ansible has failed, check logs for mor information.")
+		log.Print("Ansible has failed, check logs for more information.")
 		return utils.AnsibleFail
 	}
 }

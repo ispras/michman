@@ -1,0 +1,18 @@
+{
+  "service": {
+    "name": "redis-service",
+    "tags": [
+      "redis"
+    ]
+  },
+  "checks":
+  [
+    {
+      "id": "redis-check-id",
+      "name": "{{ ansible_hostname }}-check",
+      "args": ["{{ consul_bin_dir }}/redis_check.sh"],
+      "interval": "{{ redis_health_interval }}",
+      "timeout": "{{ redis_health_timeout }}"
+    }
+  ]
+}

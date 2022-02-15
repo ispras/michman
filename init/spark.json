@@ -14,6 +14,40 @@
         "Description": "hdfs GUI"
       }
     ],
+    "HealthCheck":[
+      {
+        "CheckType": "TCP",
+        "Configs": [
+          {
+            "ParameterName": "sparkHealthInterval",
+            "Description": "Specifies the frequency at which to run this check",
+            "Type": "string",
+            "DefaultValue": "5s",
+            "Required": true,
+            "AnsibleVarName": "spark_health_interval",
+            "IsList": false
+          },
+          {
+            "ParameterName": "sparkHealthTimeout",
+            "Description": "Specifies a timeout for outgoing connections",
+            "Type": "string",
+            "DefaultValue": "10s",
+            "Required": true,
+            "AnsibleVarName": "spark_health_timeout",
+            "IsList": false
+          },
+          {
+            "ParameterName": "sparkHealthConfigTemplatePath",
+            "Description": "Path to spark config template",
+            "Type": "string",
+            "DefaultValue": "templates/consul/configs/spark.json.j2",
+            "Required": true,
+            "AnsibleVarName": "spark_health_config_tmp_path",
+            "IsList": false
+          }
+        ]
+      }
+    ],
     "Versions": [
       {
         "Version": "1.0.0",

@@ -4,6 +4,12 @@
   "DefaultVersion":"latest",
   "Class": "storage",
   "AccessPort": 5984,
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions":[
     {
       "Version":"latest",

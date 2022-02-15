@@ -1,0 +1,71 @@
+---
+
+- name: Consul.service file
+  become: yes
+  template: 
+    src: consul.service.j2
+    dest: "/etc/systemd/system/consul.service"
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+    
+- name: Consul_run.sh file
+  become: yes
+  template: 
+    src: consul_run.sh.j2
+    dest: "{{ consul_bin_dir }}/consul_run.sh"
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+      
+- name: Chmod consul_run.sh
+  become: yes
+  shell: "chmod ugo+x {{ consul_bin_dir }}/consul_run.sh"
+  when: (create_monitoring is defined and create_monitoring) or (ansible_hostname == cluster_name | lower + consul_kv_host)
+
+- name: List of server ips for storage
+  vars: 
+    host_join_ips: []
+  set_fact:
+    host_join_ips: "{{ host_join_ips + [hostvars[cluster_name + item].openstack.private_v4] }}"
+  with_items: 
+    - '-monitoring'  
+    - '-master'
+  when:  
+    - create_monitoring is defined and create_monitoring
+    - hostvars[cluster_name + item] is defined and ansible_hostname == cluster_name | lower + '-storage'
+
+- name: List of server ips for master
+  vars: 
+    host_join_ips: []
+  set_fact:
+    host_join_ips: "{{ host_join_ips + [hostvars[cluster_name + item].openstack.private_v4] }}"
+  with_items: 
+    - '-monitoring'  
+    - '-storage'
+  when:  
+    - create_monitoring is defined and create_monitoring
+    - hostvars[cluster_name + item] is defined and ansible_hostname == cluster_name | lower + '-master'
+
+- name: List of server ips for slaves
+  vars: 
+    host_join_ips: []
+  set_fact:
+    host_join_ips: "{{ host_join_ips + [hostvars[cluster_name + item].openstack.private_v4] }}"
+  with_items: 
+    - '-monitoring'  
+    - '-storage'
+    - '-master'
+  when:  
+    - create_monitoring is defined and create_monitoring
+    - hostvars[cluster_name + item] is defined and ansible_hostname is match(cluster_name | lower + '-slave-*')
+
+- name: Monitoring config.json file
+  become: yes
+  template: 
+    src: "{{ consul_monitoring_mode }}_config.json.j2"
+    dest: "{{ consul_config_dir }}/config.json"
+  when: create_monitoring is defined and create_monitoring
+
+- name: Not monitoring config.json file
+  become: yes
+  template: 
+    src: "no_monitoring_config.json.j2"
+    dest: "{{ consul_config_dir }}/config.json"
+  when: (create_monitoring is not defined or not create_monitoring) and (ansible_hostname == cluster_name | lower + consul_kv_host)

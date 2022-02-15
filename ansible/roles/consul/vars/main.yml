@@ -1,0 +1,10 @@
+consul_version                      : 1.10.1
+
+consul_home_dir                     : "/opt/consul"
+consul_log_dir                      : "{{ consul_home_dir }}/logs"
+consul_log_file                     : "{{ consul_log_dir }}/consul_output.log"
+consul_bin_dir                      : "{{ consul_home_dir }}/bin"
+consul_data_dir                     : "{{ consul_home_dir }}/data"
+consul_config_dir                   : "{{ consul_home_dir }}/config"
+
+host_join_ips: []

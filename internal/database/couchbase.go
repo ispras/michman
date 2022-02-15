@@ -332,7 +332,7 @@ func (db CouchDatabase) WriteServiceType(sType *proto.ServiceType) error {
 }
 
 func (db CouchDatabase) ListServicesTypes() ([]proto.ServiceType, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Type, Description, DefaultVersion, Class, AccessPort, Ports, Versions FROM " + serviceTypeBucketName)
+	query := gocb.NewN1qlQuery("SELECT ID, Type, Description, DefaultVersion, Class, AccessPort, HealthCheck, Ports, Versions FROM " + serviceTypeBucketName)
 	rows, err := db.serviceTypesBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err

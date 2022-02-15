@@ -32,6 +32,7 @@ message Cluster {
     string Description = 11;
     string Image = 12;
     repeated string Keys = 13;
+    bool Monitoring = 14;
 }
 
 message Service {
@@ -69,6 +70,22 @@ message TaskStatus {
     string Status = 1;
 }
 
+message HealthConfigs {
+    string ParameterName = 1; 
+    string Description = 2;  
+    string Type = 3;                    //string, bool, float or int
+    string DefaultValue = 4;
+
+    bool Required = 5;                  //add this param to ansible extra vars or no
+    string AnsibleVarName = 6;
+    bool IsList = 7;
+}
+
+message ServiceHealthCheck {
+    string CheckType = 1;               // Types: Script, HTTP, TCP, TTL, Docker, gRPC 
+    repeated HealthConfigs Configs = 2; 
+}
+
 message ServiceType {
     string ID = 1;
     string Type = 2;
@@ -78,6 +95,7 @@ message ServiceType {
     string Class = 6;
     int32 AccessPort = 7;
     repeated ServicePort Ports = 8;
+    repeated ServiceHealthCheck HealthCheck = 9;
 }
 
 message ServiceVersion {

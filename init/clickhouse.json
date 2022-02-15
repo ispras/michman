@@ -3,6 +3,12 @@
   "Description":"Clickhouse database service",
   "DefaultVersion":"latest",
   "Class": "storage",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions":[
     {
       "Version":"latest",

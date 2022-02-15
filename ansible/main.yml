@@ -13,22 +13,28 @@
 
 - hosts: all
   gather_facts: no
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
   tasks:
     - name: wait for hosts to become reachable
       wait_for_connection:
 
 - hosts: all
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
   tasks:
     - include_role:
         name: deploy_ssh
       when: create_cluster is defined and create_cluster
     - include_role:
-            name: cpus
+        name: cpus
     - include_role:
-            name: mem_mb
+        name: mem_mb
 
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
   tasks:
     - name: install base
       include_role:
@@ -38,6 +44,21 @@
 - name: Import Kubespray deployment playbook
   import_playbook: "{{ 'kubespray-wrapper.yml' if deploy_kubernetes is defined and deploy_kubernetes else 'service-mock.yml' }}"
   when: deploy_kubernetes is defined and deploy_kubernetes
+
+- hosts: all
+  become: yes
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - name: Consul
+      include_role:
+        name: consul
+      when: deploy_consul is defined and deploy_consul
+    
+    - name: Sleep for 30 seconds and continue with play
+      wait_for:
+        timeout: 15
+      when: deploy_consul is defined and deploy_consul
 
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
@@ -189,3 +210,14 @@
     - include_role:
         name: cvat
       when: deploy_cvat is defined and deploy_cvat
+
+- hosts: all
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - name: Run check.yml instead of 'main'
+      become: yes
+      import_role:
+        name: consul
+        tasks_from: check
+      when: create_monitoring is defined and create_monitoring

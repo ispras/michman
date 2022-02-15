@@ -1,0 +1,34 @@
+---
+
+- name: Set mode for monitoring node
+  set_fact: 
+    consul_monitoring_mode: "monitor"
+  when: ansible_hostname == cluster_name | lower + '-monitoring'
+
+- name: Set mode for master node
+  set_fact: 
+    consul_monitoring_mode: "server"
+  when: ansible_hostname == cluster_name | lower + '-master'
+
+- name: Set mode for storage node
+  set_fact: 
+    consul_monitoring_mode: "server"
+  when: ansible_hostname == cluster_name | lower + '-storage'
+
+- name: Set mode for slave node
+  set_fact: 
+    consul_monitoring_mode: "client"
+  when: ansible_hostname is match(cluster_name | lower + '-slave-*')
+
+- name: Include installation task
+  import_tasks: install.yml
+
+- name: Include environment task
+  import_tasks: environment.yml
+    
+- name: Include templates task
+  import_tasks: templates.yml
+      
+- name: Include systemctl task
+  import_tasks: systemctl.yml
+

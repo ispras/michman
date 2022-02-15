@@ -1,0 +1,23 @@
+---
+
+- name: Slurm script template 
+  become: yes
+  template: 
+    src: "{{ slurm_health_script_tmp_path }}"
+    dest: "{{ consul_bin_dir }}/slurm_check.sh"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_slurm is defined and deploy_slurm
+
+- name: chmod consul_run.sh
+  become: yes
+  shell: "chmod ugo+x {{ consul_bin_dir }}/slurm_check.sh"
+
+- name: Slurm config template 
+  become: yes
+  template: 
+    src: "{{ slurm_health_config_tmp_path }}"
+    dest: "{{ consul_config_dir }}/slurm.json"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_slurm is defined and deploy_slurm

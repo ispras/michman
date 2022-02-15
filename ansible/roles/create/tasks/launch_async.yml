@@ -59,6 +59,24 @@
     register: storage_waitress
     when: create_storage is defined and create_storage == true
 
+  - name: Create monitoring instance
+    os_server:
+      state: present
+      name: "{{ cluster_name }}-monitoring"
+      image: "{{ os_image }}"
+      flavor: "{{ monitoring_flavor }}"
+      key_name: "{{ os_key_name }}"
+      network: "{{ virtual_network }}"
+      boot_from_volume: "{{ boot_from_volume }}"
+      security_groups: "{{ cluster_name }}"
+      auto_ip: False
+      meta: "hostname={{ cluster_name }}-monitoring,group={{ cluster_name }}_monitoring"
+    retries: 3
+    async: 300
+    poll: 0
+    register: monitoring_waitress
+    when: create_monitoring is defined and create_monitoring == true
+
   - name: 'Checking master instance started'
     async_status: jid={{ master_waitress.ansible_job_id }}
     register: mstr
@@ -83,6 +101,14 @@
     retries: 60
     delay: 5
     when: create_storage is defined and create_storage == true
+
+  - name: 'Checking monitoring node started'
+    async_status: jid={{ monitoring_waitress.ansible_job_id }}
+    register: monitoring_start
+    until: monitoring_start.finished
+    retries: 60
+    delay: 5
+    when: create_monitoring is defined and create_monitoring == true
 
   - name: 'Acquiring floating IPs for master instance'
     os_floating_ip:
@@ -132,6 +158,21 @@
     register: storage_ip_waitress
     when: floating_ip_pool != 'None' and create_storage is defined and create_storage == true
 
+  - name: 'Acquiring floating IPs for monitoring instance'
+    os_floating_ip:
+      state: present
+      reuse: yes
+      server: "{{ cluster_name }}-monitoring"
+      network: "{{ floating_ip_pool }}"
+      wait: True
+      timeout: 60
+    retries: 3
+    delay: 1
+    async: 60
+    poll: 1
+    register: monitoring_ip_waitress
+    when: floating_ip_pool != 'None' and create_monitoring is defined and create_monitoring == true
+
   - name: 'Waiting for master IP'
     async_status: jid={{ master_ip_waitress.ansible_job_id }}
     register: mstr
@@ -158,3 +199,11 @@
     retries: 60
     delay: 1
     when: floating_ip_pool != 'None' and create_storage is defined and create_storage == true
+
+  - name: 'Waiting for monitoring node IP'
+    async_status: jid={{ monitoring_ip_waitress.ansible_job_id }}
+    register: monitoring_ip
+    until: monitoring_ip.finished
+    retries: 60
+    delay: 1
+    when: floating_ip_pool != 'None' and create_monitoring is defined and create_monitoring == true

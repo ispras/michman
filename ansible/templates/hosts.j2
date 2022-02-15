@@ -1,9 +1,5 @@
 127.0.0.1 localhost
 
-{% for host in groups[cluster_name +'_master']+groups[cluster_name +'_slaves'] %}
-{{ hostvars[host].openstack.private_v4 }}  {{ hostvars[host].openstack.name }} {{ hostvars[host].openstack.name }}.
-{% endfor %}
-
 # The following lines are desirable for IPv6 capable hosts
 ::1 ip6-localhost ip6-loopback
 fe00::0 ip6-localnet
@@ -11,3 +7,6 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
+{% for host in play_hosts %}
+{{ hostvars[host].openstack.private_v4 }}  {{ hostvars[host].openstack.name | lower }}
+{% endfor %}

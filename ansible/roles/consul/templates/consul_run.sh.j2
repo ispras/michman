@@ -1,0 +1,10 @@
+#!/bin/sh
+
+CONSUL_LOG_FILE="{{ consul_log_file }}"
+CONSUL_CONFIG_DIR="{{ consul_config_dir }}"
+
+echo "$(date) **** Consul agent start ****" >> "${CONSUL_LOG_FILE}"
+exec consul agent -config-dir "${CONSUL_CONFIG_DIR}"  >> "${CONSUL_LOG_FILE}" 2>&1
+RC="$?"
+echo "$(date) **** Consul-agent ended with ${RC} ****" >> "${CONSUL_LOG_FILE}"
+exit "${RC}"

@@ -115,3 +115,6 @@ ENV/
 **/keys/*
 config.yaml
 logs/*.log
+
+.DS_Store
+munge.key

@@ -179,7 +179,7 @@ func main() {
 	router.POST("/configs/:serviceType/versions/:versionId/configs", hS.ConfigsCreateConfigParam)
 
 	// swagger UI route
-  router.ServeFiles("/api/*filepath", http.Dir("./api/rest"))
+	router.ServeFiles("/api/*filepath", http.Dir("./api/rest"))
 
 	// logs routes
 	router.Handle("GET", "/logs/launcher", hS.ServeAnsibleServiceLog)

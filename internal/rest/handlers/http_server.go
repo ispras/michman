@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
-	"github.com/ispras/michman/internal/auth"
 	"log"
 )
 

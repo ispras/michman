@@ -1,0 +1,35 @@
+---
+
+- name: Include slurm templates
+  include_tasks: check_tasks/slurm.yml
+  when: 
+    - deploy_slurm is defined and deploy_slurm
+    - ansible_hostname == cluster_name | lower + '-master' or
+      ansible_hostname is match(cluster_name | lower + '-slave-*')
+
+- name: Include spark templates
+  include_tasks: check_tasks/spark.yml
+  when: 
+    - deploy_spark is defined and deploy_spark
+    - ansible_hostname == cluster_name | lower + '-master' or
+      ansible_hostname is match(cluster_name | lower + '-slave-*')
+
+- name: Include postgresql templates
+  include_tasks: check_tasks/postgresql.yml
+  when: 
+    - deploy_postgresql is defined and deploy_postgresql
+    - ansible_hostname == cluster_name | lower + '-storage'
+
+- name: Include redis templates
+  include_tasks: check_tasks/redis.yml
+  when: 
+    - deploy_redis is defined and deploy_redis
+    - ansible_hostname == cluster_name | lower + '-storage'
+
+# end
+- name: Reload service httpd, in all cases
+  systemd:
+    name: consul.service
+    state: reloaded
+  
+ 

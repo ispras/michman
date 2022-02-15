@@ -3,6 +3,49 @@
   "Description": "Slurm service. There are 2 versions of Slurm service, which depends on image of OS. If image is ubuntu18.04, the version is slurm-wlm 17.11.2, ubuntu21.04 - slurm-wlm 20.11.4. Also there are four versions of deploying Slurm: with accounting system and NFS (Slurm-db-nfs), with accounting system and without NFS (Slurm-db), with NFS and without accounting system (Slurm-nfs), without NFS and accounting (Slurm).",
   "DefaultVersion": "Slurm",
   "Class": "master-slave",
+  "HealthCheck":[
+    {
+      "CheckType": "Script",
+      "Configs": [
+        {
+          "ParameterName": "slurmHealthInterval",
+          "Description": "Specifies the frequency at which to run this check",
+          "Type": "string",
+          "DefaultValue": "5s",
+          "Required": true,
+          "AnsibleVarName": "slurm_health_interval",
+          "IsList": false
+        },
+        {
+          "ParameterName": "slurmHealthTimeout",
+          "Description": "Specifies a timeout for outgoing connections",
+          "Type": "string",
+          "DefaultValue": "10s",
+          "Required": true,
+          "AnsibleVarName": "slurm_health_timeout",
+          "IsList": false
+        },
+        {
+          "ParameterName": "slurmHealthScriptTemplatePath",
+          "Description": "Path to slurm script check template",
+          "Type": "string",
+          "DefaultValue": "templates/consul/scripts/slurm_check.sh.j2",
+          "Required": true,
+          "AnsibleVarName": "slurm_health_script_tmp_path",
+          "IsList": false
+        },
+        {
+          "ParameterName": "slurmHealthConfigTemplatePath",
+          "Description": "Path to slurm config template",
+          "Type": "string",
+          "DefaultValue": "templates/consul/configs/slurm.json.j2",
+          "Required": true,
+          "AnsibleVarName": "slurm_health_config_tmp_path",
+          "IsList": false
+        }
+      ]
+    }
+  ],
   "Versions": [
     {
       "Version": "Slurm-db-nfs",

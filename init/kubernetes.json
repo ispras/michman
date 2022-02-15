@@ -3,6 +3,12 @@
   "Description": "Kubernetes service",
   "DefaultVersion": "v1.20.7",
   "Class": "master-slave",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
   "Versions": [
     {
       "Version": "v1.19.0",

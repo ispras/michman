@@ -1,0 +1,23 @@
+---
+
+- name: Redis script template 
+  become: yes
+  template: 
+    src: "{{ redis_health_script_tmp_path }}"
+    dest: "{{ consul_bin_dir }}/redis_check.sh"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_redis is defined and deploy_redis
+
+- name: chmod consul_run.sh
+  become: yes
+  shell: "chmod ugo+x {{ consul_bin_dir }}/redis_check.sh"
+
+- name: Redis config template 
+  become: yes
+  template: 
+    src: "{{ redis_health_config_tmp_path }}"
+    dest: "{{ consul_config_dir }}/redis.json"
+  when: 
+    - create_monitoring is defined and create_monitoring
+    - deploy_redis is defined and deploy_redis
