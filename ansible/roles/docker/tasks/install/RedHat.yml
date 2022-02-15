@@ -35,15 +35,11 @@
     state: latest
     executable: pip3
     extra_args: --upgrade
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
 
 - name: Install Docker SDK for Python
   pip:
     name: docker
     state: latest
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
 
 - name: Start Docker service
   service:

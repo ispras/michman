@@ -22,16 +22,12 @@
     name: docker-compose
     state: latest
     executable: pip3
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
 
 - name: Install albumentations library
   pip:
     name: albumentations
     state: latest
     executable: pip3
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
 
 - name: Copy overrided compose file
   template:
@@ -42,8 +38,6 @@
 - name: Build and run docker-compose
   docker_compose:
     project_src: /home/{{ ansible_user }}/cvat
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
   environment:
     CVAT_HOST: "{{ active_master_public_ip }}"
 
