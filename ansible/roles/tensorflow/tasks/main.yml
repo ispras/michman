@@ -1,0 +1,33 @@
+---
+
+- include: prepare.yml
+#  become: yes
+
+- name: Copy tensorflow config file
+  template:
+    src: tf_config.json.j2
+    dest: "{{ tensorflow_config_path }}/tf_config.json"
+
+- name: Install pip packeges
+  pip:
+    name: "{{ item }}"
+    state: latest
+    virtualenv: "{{ tensorflow_venv_path }}"
+    virtualenv_python: python3.7
+  loop: "{{ tensorflow_pip_packages }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.7
+#  become: yes
+
+- name: Copy trainer project
+  copy:
+    src: trainer
+    dest: "{{tensorflow_project_path}}"
+
+- name: Copy distributed-tf-example project
+  copy:
+    src: distributed-tf-example
+    dest: "{{tensorflow_project_path}}"
+
+- include: run.yml
+  when: tensorflow_run_example

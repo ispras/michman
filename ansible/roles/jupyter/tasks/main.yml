@@ -10,6 +10,7 @@
     src: "{{ livy_download_url }}"
     dest: "{{ livy_base_dir }}"
     remote_src: yes
+  when: jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -17,7 +18,7 @@
 - name: setup sparkmagic_spark_kernel
   become: yes
   shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkkernel
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -26,7 +27,7 @@
 - name: setup sparkmagic_pyspark_kernel
   become: yes
   shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/pysparkkernel
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -35,7 +36,7 @@
 - name: setup sparkmagic_sparkr_kernel
   become: yes
   shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkrkernel
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -44,6 +45,7 @@
 - name: create livy config dir
   become: yes
   file: path=~/.sparkmagic state=directory
+  when: jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -52,6 +54,7 @@
 - name: copy livy kernel config
   become: yes
   template: src=livy_config.json dest=~/.sparkmagic/config.json
+  when: jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -80,7 +83,7 @@
 
 - name: download scala
   shell: wget http://www.scala-lang.org/files/archive/scala-2.10.4.deb
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -88,6 +91,7 @@
 - name: get dependencies
   package: name=libjansi-java state=present
   become: yes
+  when: jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -95,7 +99,7 @@
 - name: do magic
   become: yes
   shell: apt-get update
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -103,7 +107,7 @@
 - name: install scala
   become: yes
   shell: apt-get install -y scala
-  when: not skip_install|default(False)
+  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
   tags:
   - install
   - jupyter_install
@@ -111,7 +115,7 @@
 - include: service_livy.yml
   become: yes
   become_user: root
-  when: install_as_service
+  when: install_as_service and jupyter_version == "{{ jupyter_with_spark_version }}"
 
 - debug: msg="Livy install finished on {{ hostvars[inventory_hostname].ansible_ssh_host }}"
 

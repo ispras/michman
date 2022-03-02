@@ -2,8 +2,6 @@
 
 #FIXME: need full path to be included directly
 
-
-
 - block:
   - include_vars: "{{roles_dir|default('roles')}}/jupyter/vars/python{{ python_version }}.yml"
   
@@ -38,17 +36,24 @@
     retries: 3
     #TODO: failures are ignored
 
-  - name: downlad get-pip.py
-    get_url:
-      url="https://bootstrap.pypa.io/get-pip.py"
-      dest=/tmp/
-  - name: install pip
-    raw: "{{apt_pkg_pref}} /tmp/get-pip.py"
-    become: yes
+  - name: Install python3 and pip
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+    loop: ['python3.7','python3-pip', 'python3-setuptools']
 
-  - name: install setuptools
-    become: yes
-    shell: "wget https://bootstrap.pypa.io/ez_setup.py -O - | python"
+#  - name: downlad get-pip.py
+#    get_url:
+#      url="https://bootstrap.pypa.io/get-pip.py"
+#      dest=/tmp/
+#  - name: install pip
+#    raw: "{{apt_pkg_pref}} /tmp/get-pip.py"
+#    become: yes
+#
+#  - name: install setuptools
+#    become: yes
+#    shell: "wget https://bootstrap.pypa.io/ez_setup.py -O - | python"
 
     #looks like pyparsing==2.1.2 does not work on python 3 (AttributeError: 'tuple' object has no attribute 'filename')
     #as a result of this matplotlib does not work either

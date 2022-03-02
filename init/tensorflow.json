@@ -1,0 +1,332 @@
+{
+  "Type": "tensorflow",
+  "Description": "Tensorflow clusters for tf.distribute module",
+  "DefaultVersion": "2.5.0",
+  "Class": "master-slave",
+  "Versions": [
+    {
+      "Version": "2.5.0",
+      "Description": "Tensorflow 2.5.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    },
+    {
+      "Version": "2.4.0",
+      "Description": "Tensorflow 2.4.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    },
+    {
+      "Version": "2.3.0",
+      "Description": "Tensorflow 2.3.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    },
+    {
+      "Version": "2.2.0",
+      "Description": "Tensorflow 2.2.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    },
+    {
+      "Version": "2.1.0",
+      "Description": "Tensorflow 2.1.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    },
+    {
+      "Version": "2.0.0",
+      "Description": "Tensorflow 2.0.0 version",
+      "Configs": [
+        {
+          "ParameterName": "port",
+          "Type": "int",
+          "DefaultValue": "12345",
+          "Required": true,
+          "Description": "Port for using by main.py on each cluster-node.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "pip_packages",
+          "Type": "string",
+          "DefaultValue": "['numpy','mnist','pandas']",
+          "Required": false,
+          "Description": "List of python packages to install.",
+          "IsList": true
+        },
+        {
+          "ParameterName": "config_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to tf_config.json file.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "venv_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu/venvs/tensorflow",
+          "Required": false,
+          "Description": "Path to venv where tensorflow will be installed.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "project_path",
+          "Type": "string",
+          "DefaultValue": "/home/ubuntu",
+          "Required": false,
+          "Description": "Path to project with test program.",
+          "IsList": false
+        },
+        {
+          "ParameterName": "run_example",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": false,
+          "Description": "If this variable is set to true, cluster creation will include running of example tensorflow program.",
+          "IsList": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+    "cluster": {
+        "worker": [
+            "{{ active_master_ip }}:{{ tensorflow_port }}",
+            {% for slave in groups[cluster_name + "_slaves"] | sort %}
+            "{{ hostvars[slave].openstack.private_v4 }}:{{ tensorflow_port }}"{{ "," if not loop.last }}
+            {% endfor %}
+        ]
+    },
+    "task": {
+        "type": "worker",
+        {% set master_host = cluster_name ~ '-master' %}
+        {% set slave_index = ansible_hostname[-1] | int %}
+        "index": {% if ansible_hostname == master_host %} 0 {% else %} {{ slave_index }} {% endif %}
+    }
+}

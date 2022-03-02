@@ -1,0 +1,38 @@
+---
+#install python3
+#install venv
+- name: Install apt packeges
+  apt:
+    name: software-properties-common
+  become: yes
+
+- name: Add ppa repo
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
+  become: yes
+
+- name: Install python3 and pip
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop: ['python3.7','python3-pip', 'python3-setuptools']
+  become: yes
+
+- name: Install virtualenv
+  pip:
+    name: virtualenv
+    state: latest
+    executable: pip3
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.7
+  become: yes
+
+- name: Install tensorflow
+  pip:
+    name: tensorflow=={{ tensorflow_version }}
+    state: latest
+    virtualenv: "{{ tensorflow_venv_path }}"
+    virtualenv_python: python3.7
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.7

@@ -84,6 +84,13 @@
         name: mountnfs
       when: mountnfs is defined and mountnfs
 
+
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  tasks:
+    - include_role:
+        name: tensorflow
+      when: deploy_tensorflow is defined and deploy_tensorflow
+
 - hosts: "{{ cluster_name }}_master"
   tasks:
     - include_role:

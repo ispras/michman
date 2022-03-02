@@ -1,0 +1,7 @@
+tensorflow_venv_path: /home/{{ansible_user}}/venvs/tensorflow
+tensorflow_config_path: /home/{{ansible_user}}
+tensorflow_version: 2.5.0
+tensorflow_port: 12345
+tensorflow_pip_packages: ['numpy','mnist','pandas']
+tensorflow_project_path: /home/{{ansible_user}}
+tensorflow_run_example: false
