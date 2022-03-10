@@ -250,6 +250,12 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 						return
 					}
 
+					if len(st.HealthCheck) == 0 {
+						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBemptyHealthCheck, nil)
+						hS.Logger.Print(mess)
+						return
+					}
+
 					if s.Version == "" {
 						s.Version = st.DefaultVersion
 					}

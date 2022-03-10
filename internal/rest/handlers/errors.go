@@ -16,6 +16,7 @@ const (
 	JSONerrorMissFieldMessage              = "Required field is empty"
 	DBerror                                = 21
 	DBerrorMessage                         = "DB error"
+	DBemptyHealthCheck					   = "ServiceType.HealthCheck field is empty"
 	LibErrorUUID                           = 31
 	LibErrorUUIDMessage                    = "UUID generating error"
 	LibErrorStructToJson                   = 32
