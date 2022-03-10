@@ -634,34 +634,37 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 
 	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
 	if res && (action == utils.ActionCreate || action == utils.ActionUpdate) {
-
-		var v = map[string]string{
-			"cluster_name": cluster.Name,
-		}
-
-		ipExtraVars, err := json.Marshal(v)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
-
-		log.Print("Running ansible for getting master IP...")
-		var outb bytes.Buffer
-		runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
-		masterIp := findIP(outb.String())
-		storageIp := ""
-		//check if cluster has storage
-		if newExtraVars["create_storage"] == true {
-			v = map[string]string{
-				"cluster_name":  cluster.Name,
-				"extended_role": "storage",
+		masterIp := ""
+		if newExtraVars["create_master"] == true || newExtraVars["create_master_slave"] == true {
+			v := map[string]string{
+				"cluster_name": cluster.Name,
 			}
-			ipExtraVars, err = json.Marshal(v)
+
+			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+
+			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
+
+			log.Print("Running ansible for getting master IP...")
+			var outb bytes.Buffer
+			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
+			masterIp = findIP(outb.String())
+		}
+
+		storageIp := ""
+		//check if cluster has storage
+		if newExtraVars["create_storage"] == true {
+			v := map[string]string{
+				"cluster_name":  cluster.Name,
+				"extended_role": "storage",
+			}
+			ipExtraVars, err := json.Marshal(v)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
 			log.Print("Running ansible for getting storage IP...")
 			var outb bytes.Buffer
 			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
@@ -670,15 +673,15 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 		monitoringIp := ""
 		//check if cluster has monitoring
 		if newExtraVars["create_monitoring"] == true {
-			v = map[string]string{
+			v := map[string]string{
 				"cluster_name":  cluster.Name,
 				"extended_role": "monitoring",
 			}
-			ipExtraVars, err = json.Marshal(v)
+			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			args = []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
 			log.Print("Running ansible for getting monitoring IP...")
 			var outb bytes.Buffer
 			runAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
@@ -727,7 +730,7 @@ func (aL AnsibleLauncher) Run(cluster *protobuf.Cluster, osCreds *utils.OsCreden
 			log.Print("Storage IP is: ", storageIp)
 		}
 
-		log.Print("Saving master IP and URLs for services...")
+		log.Print("Saving IPs and URLs for services...")
 		err = aL.couchbaseCommunicator.WriteCluster(cluster)
 		if err != nil {
 			log.Fatalln(err)
