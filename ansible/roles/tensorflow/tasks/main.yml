@@ -13,10 +13,9 @@
     name: "{{ item }}"
     state: latest
     virtualenv: "{{ tensorflow_venv_path }}"
-    virtualenv_python: python3.7
+    virtualenv_python: python3
+    extra_args: --no-cache-dir
   loop: "{{ tensorflow_pip_packages }}"
-  vars:
-    ansible_python_interpreter: /usr/bin/python3.7
 #  become: yes
 
 - name: Copy trainer project

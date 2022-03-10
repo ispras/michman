@@ -1,7 +1,16 @@
 ---
 #install python3
 #install venv
-- name: Install apt packeges
+
+- name: Install python3 and pip
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop: ['python3','python3-pip', 'python3-setuptools']
+  become: yes
+
+- name: Install apt packages
   apt:
     name: software-properties-common
   become: yes
@@ -11,21 +20,11 @@
     repo: ppa:deadsnakes/ppa
   become: yes
 
-- name: Install python3 and pip
-  apt:
-    name: "{{ item }}"
-    state: latest
-    update_cache: yes
-  loop: ['python3.7','python3-pip', 'python3-setuptools']
-  become: yes
-
 - name: Install virtualenv
   pip:
     name: virtualenv
     state: latest
     executable: pip3
-  vars:
-    ansible_python_interpreter: /usr/bin/python3.7
   become: yes
 
 - name: Install tensorflow
@@ -33,6 +32,5 @@
     name: tensorflow=={{ tensorflow_version }}
     state: latest
     virtualenv: "{{ tensorflow_venv_path }}"
-    virtualenv_python: python3.7
-  vars:
-    ansible_python_interpreter: /usr/bin/python3.7
+    virtualenv_python: python3
+    extra_args: --no-cache-dir
