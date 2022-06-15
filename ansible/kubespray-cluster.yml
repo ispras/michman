@@ -123,14 +123,21 @@
     - { role: kubespray-defaults }
     - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }
 
-- hosts: localhost
-  connection: local
-  gather_facts: no
+- hosts: kube_control_plane[0]
+  gather_facts: yes
+  become: yes
   tasks:
-    - name: Save admin kubeconfig for the cluster
-      become: yes
-      copy:
-        src: "files/kube/admin.conf"
-        dest: "files/kube/{{ cluster_name }}.conf"
-        mode: 0644
-        remote_src: yes
+    - name: Change kubeconfig permission
+      file:
+        path: "/etc/kubernetes/admin.conf"
+        owner: ubuntu
+
+    - name: Change external kubeconfig permission
+      file:
+        path: "/etc/kubernetes/external-admin.conf"
+        owner: ubuntu
+
+    - name: Export kubeconfig path
+      lineinfile:
+        path: "/home/ubuntu/.bashrc"
+        line: export KUBECONFIG=/etc/kubernetes/admin.conf

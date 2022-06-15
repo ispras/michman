@@ -3,12 +3,7 @@
 etcd_data_dir: /var/lib/etcd
 
 ## Experimental kubeadm etcd deployment mode. Available only for new deployment
-etcd_kubeadm_enabled: >-
-  {%- if kubernetes_container_runtime == "crio" -%}
-  true
-  {%- else -%}
-  false
-  {%- endif -%}
+etcd_kubeadm_enabled: true
 
 ## Directory where the binaries will be installed
 bin_dir: /usr/local/bin

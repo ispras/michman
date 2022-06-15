@@ -1,7 +1,7 @@
 {
   "Type": "kubernetes",
   "Description": "Kubernetes service",
-  "DefaultVersion": "v1.20.7",
+  "DefaultVersion": "v1.21.0",
   "Class": "master-slave",
   "HealthCheck":[
     {
@@ -12,7 +12,7 @@
   "Versions": [
     {
       "Version": "v1.19.0",
-      "Description": "Kubernetes version 1.19.0",
+      "Description": "Kubernetes version v1.19.0",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -29,7 +29,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -38,12 +38,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -51,7 +60,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -59,7 +68,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -67,7 +76,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -75,7 +84,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -83,7 +92,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -91,16 +100,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.1",
-      "Description": "Kubernetes version 1.19.1",
+      "Description": "Kubernetes version v1.19.1",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -117,7 +127,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -126,12 +136,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -139,7 +158,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -147,7 +166,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -155,7 +174,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -163,7 +182,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -171,7 +190,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -179,16 +198,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.2",
-      "Description": "Kubernetes version 1.19.2",
+      "Description": "Kubernetes version v1.19.2",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -205,7 +225,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -214,12 +234,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -227,7 +256,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -235,7 +264,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -243,7 +272,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -251,7 +280,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -259,7 +288,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -267,16 +296,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.3",
-      "Description": "Kubernetes version 1.19.3",
+      "Description": "Kubernetes version v1.19.3",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -293,7 +323,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -302,12 +332,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -315,7 +354,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -323,7 +362,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -331,7 +370,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -339,7 +378,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -347,7 +386,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -355,16 +394,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.4",
-      "Description": "Kubernetes version 1.19.4",
+      "Description": "Kubernetes version v1.19.4",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -381,7 +421,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -390,12 +430,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -403,7 +452,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -411,7 +460,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -419,7 +468,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -427,7 +476,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -435,7 +484,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -443,16 +492,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.5",
-      "Description": "Kubernetes version 1.19.5",
+      "Description": "Kubernetes version v1.19.5",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -469,7 +519,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -478,12 +528,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -491,7 +550,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -499,7 +558,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -507,7 +566,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -515,7 +574,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -523,7 +582,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -531,16 +590,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.6",
-      "Description": "Kubernetes version 1.19.6",
+      "Description": "Kubernetes version v1.19.6",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -557,7 +617,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -566,12 +626,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -579,7 +648,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -587,7 +656,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -595,7 +664,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -603,7 +672,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -611,7 +680,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -619,16 +688,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.7",
-      "Description": "Kubernetes version 1.19.7",
+      "Description": "Kubernetes version v1.19.7",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -645,7 +715,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -654,12 +724,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -667,7 +746,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -675,7 +754,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -683,7 +762,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -691,7 +770,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -699,7 +778,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -707,16 +786,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.8",
-      "Description": "Kubernetes version 1.19.8",
+      "Description": "Kubernetes version v1.19.8",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -733,7 +813,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -742,12 +822,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -755,7 +844,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -763,7 +852,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -771,7 +860,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -779,7 +868,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -787,7 +876,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -795,16 +884,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.9",
-      "Description": "Kubernetes version 1.19.9",
+      "Description": "Kubernetes version v1.19.9",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -821,7 +911,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -830,12 +920,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -843,7 +942,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -851,7 +950,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -859,7 +958,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -867,7 +966,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -875,7 +974,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -883,16 +982,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.19.10",
-      "Description": "Kubernetes version 1.19.10",
+      "Description": "Kubernetes version v1.19.10",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -909,7 +1009,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -918,12 +1018,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -931,7 +1040,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -939,7 +1048,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -947,7 +1056,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -955,7 +1064,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -963,7 +1072,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -971,16 +1080,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.0",
-      "Description": "Kubernetes version 1.20.0",
+      "Description": "Kubernetes version v1.20.0",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -997,7 +1107,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1006,12 +1116,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1019,7 +1138,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1027,7 +1146,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1035,7 +1154,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1043,7 +1162,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1051,7 +1170,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1059,16 +1178,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.1",
-      "Description": "Kubernetes version 1.20.1",
+      "Description": "Kubernetes version v1.20.1",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1085,7 +1205,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1094,12 +1214,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1107,7 +1236,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1115,7 +1244,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1123,7 +1252,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1131,7 +1260,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1139,7 +1268,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1147,16 +1276,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.2",
-      "Description": "Kubernetes version 1.20.2",
+      "Description": "Kubernetes version v1.20.2",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1173,7 +1303,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1182,12 +1312,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1195,7 +1334,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1203,7 +1342,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1211,7 +1350,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1219,7 +1358,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1227,7 +1366,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1235,16 +1374,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.3",
-      "Description": "Kubernetes version 1.20.3",
+      "Description": "Kubernetes version v1.20.3",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1261,7 +1401,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1270,12 +1410,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1283,7 +1432,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1291,7 +1440,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1299,7 +1448,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1307,7 +1456,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1315,7 +1464,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1323,16 +1472,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.4",
-      "Description": "Kubernetes version 1.20.4",
+      "Description": "Kubernetes version v1.20.4",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1349,7 +1499,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1358,12 +1508,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1371,7 +1530,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1379,7 +1538,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1387,7 +1546,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1395,7 +1554,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1403,7 +1562,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1411,16 +1570,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.5",
-      "Description": "Kubernetes version 1.20.5",
+      "Description": "Kubernetes version v1.20.5",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1437,7 +1597,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1446,12 +1606,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1459,7 +1628,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1467,7 +1636,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1475,7 +1644,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1483,7 +1652,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1491,7 +1660,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1499,16 +1668,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.6",
-      "Description": "Kubernetes version 1.20.6",
+      "Description": "Kubernetes version v1.20.6",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1525,7 +1695,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1534,12 +1704,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1547,7 +1726,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1555,7 +1734,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1563,7 +1742,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1571,7 +1750,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1579,7 +1758,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1587,16 +1766,17 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
     },
     {
       "Version": "v1.20.7",
-      "Description": "Kubernetes version 1.20.7",
+      "Description": "Kubernetes version v1.20.7",
       "Configs": [
         {
           "ParameterName": "network_plugin",
@@ -1613,7 +1793,7 @@
         },
         {
           "ParameterName": "container_runtime",
-          "Description": "Container runtime used by Kubernetes",
+          "Description": "Container engine used by Kubernetes",
           "Required": true,
           "Type": "string",
           "PossibleValues": [
@@ -1622,12 +1802,21 @@
             "crio"
           ],
           "DefaultValue": "docker",
-          "AnsibleVarName": "kubernetes_container_runtime"
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
         },
         {
           "ParameterName": "enable_dashboard",
           "Description": "Deploy Kubernetes dashboard UI",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_dashboard"
@@ -1635,7 +1824,7 @@
         {
           "ParameterName": "enable_netchecker",
           "Description": "Deploy network health checker application",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_netchecker"
@@ -1643,7 +1832,7 @@
         {
           "ParameterName": "enable_helm",
           "Description": "Deploy package manager for Kubernetes",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_helm"
@@ -1651,7 +1840,7 @@
         {
           "ParameterName": "enable_ingress_nginx",
           "Description": "Deploy Kubernetes nginx ingress controller",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_ingress_nginx"
@@ -1659,7 +1848,7 @@
         {
           "ParameterName": "enable_cinder_csi",
           "Description": "Enable cinder persistent storage provisioner integration",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "false",
           "AnsibleVarName": "kubernetes_enable_cinder_csi"
@@ -1667,7 +1856,7 @@
         {
           "ParameterName": "enable_keystone_auth",
           "Description": "Enable webhook authentication and authorization via Keystone",
-          "Required": false,
+          "Required": true,
           "Type": "bool",
           "DefaultValue": "true",
           "AnsibleVarName": "kubernetes_enable_keystone_auth"
@@ -1675,9 +1864,990 @@
         {
           "ParameterName": "keystone_admin_roles",
           "Description": "Set of roles which have admin priviledges",
-          "Required": false,
+          "Required": true,
           "Type": "string",
           "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.0",
+      "Description": "Kubernetes version v1.21.0",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.1",
+      "Description": "Kubernetes version v1.21.1",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.2",
+      "Description": "Kubernetes version v1.21.2",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.3",
+      "Description": "Kubernetes version v1.21.3",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.4",
+      "Description": "Kubernetes version v1.21.4",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.5",
+      "Description": "Kubernetes version v1.21.5",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.21.6",
+      "Description": "Kubernetes version v1.21.6",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.22.0",
+      "Description": "Kubernetes version v1.22.0",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.22.1",
+      "Description": "Kubernetes version v1.22.1",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
+          "AnsibleVarName": "keystone_admin_roles"
+        }
+      ]
+    },
+    {
+      "Version": "v1.22.2",
+      "Description": "Kubernetes version v1.22.2",
+      "Configs": [
+        {
+          "ParameterName": "network_plugin",
+          "Description": "CNI plugin for Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "calico",
+            "flannel",
+            "weave"
+          ],
+          "DefaultValue": "calico",
+          "AnsibleVarName": "kubernetes_network_plugin"
+        },
+        {
+          "ParameterName": "container_runtime",
+          "Description": "Container engine used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "PossibleValues": [
+            "docker",
+            "containerd",
+            "crio"
+          ],
+          "DefaultValue": "docker",
+          "AnsibleVarName": "kubernetes_container_engine"
+        },
+        {
+          "ParameterName": "extra_container_runtimes",
+          "Description": "Container runtimes used by Kubernetes",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[]",
+          "AnsibleVarName": "kubernetes_extra_runtimes"
+        },
+        {
+          "ParameterName": "enable_dashboard",
+          "Description": "Deploy Kubernetes dashboard UI",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_dashboard"
+        },
+        {
+          "ParameterName": "enable_netchecker",
+          "Description": "Deploy network health checker application",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_netchecker"
+        },
+        {
+          "ParameterName": "enable_helm",
+          "Description": "Deploy package manager for Kubernetes",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_helm"
+        },
+        {
+          "ParameterName": "enable_ingress_nginx",
+          "Description": "Deploy Kubernetes nginx ingress controller",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_ingress_nginx"
+        },
+        {
+          "ParameterName": "enable_cinder_csi",
+          "Description": "Enable cinder persistent storage provisioner integration",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "false",
+          "AnsibleVarName": "kubernetes_enable_cinder_csi"
+        },
+        {
+          "ParameterName": "enable_keystone_auth",
+          "Description": "Enable webhook authentication and authorization via Keystone",
+          "Required": true,
+          "Type": "bool",
+          "DefaultValue": "true",
+          "AnsibleVarName": "kubernetes_enable_keystone_auth"
+        },
+        {
+          "ParameterName": "keystone_admin_roles",
+          "Description": "Set of roles which have admin priviledges",
+          "Required": true,
+          "Type": "string",
+          "IsList": true,
+          "DefaultValue": "[\"member\"]",
           "AnsibleVarName": "keystone_admin_roles"
         }
       ]
