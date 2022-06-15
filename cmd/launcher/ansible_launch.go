@@ -242,10 +242,10 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 	extraVars["create_monitoring"] = cluster.Monitoring
 
 	extraVars["mountnfs"] = false
-	extraVars["master_flavor"] = osConfig.MasterFlavor
-	extraVars["slaves_flavor"] = osConfig.SlavesFlavor
-	extraVars["storage_flavor"] = osConfig.StorageFlavor
-	extraVars["monitoring_flavor"] = osConfig.MonitoringFlavor
+	extraVars["master_flavor"] = cluster.MasterFlavor
+	extraVars["slaves_flavor"] = cluster.SlavesFlavor
+	extraVars["storage_flavor"] = cluster.StorageFlavor
+	extraVars["monitoring_flavor"] = cluster.MonitoringFlavor
 	extraVars["boot_from_volume"] = false
 
 	image, err := aL.couchbaseCommunicator.ReadImage(cluster.Image)
@@ -320,7 +320,7 @@ func makeExtraVars(aL AnsibleLauncher, cluster *protobuf.Cluster, osCreds *utils
 		extraVars["public_keys"] = cluster.Keys
 	}
 
-	if extraVars["create_monitoring"] == true{
+	if extraVars["create_monitoring"] == true {
 		extraVars["deploy_consul"] = true
 	}
 

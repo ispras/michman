@@ -16,6 +16,10 @@ message Project {
     string GroupID = 4;
     string Description = 5;
     string DefaultImage = 6;
+    string DefaultMasterFlavor = 7;
+    string DefaultSlavesFlavor = 8;
+    string DefaultStorageFlavor = 9;
+    string DefaultMonitoringFlavor = 10;
 }
 
 message Cluster {
@@ -33,6 +37,10 @@ message Cluster {
     string Image = 12;
     repeated string Keys = 13;
     bool Monitoring = 14;
+    string MasterFlavor = 15;
+    string SlavesFlavor = 16;
+    string StorageFlavor = 17;
+    string MonitoringFlavor = 18;
 }
 
 message Service {
@@ -131,6 +139,14 @@ message Image {
     string Name = 2;
     string AnsibleUser = 3;
     string CloudImageID = 4;
+}
+
+message Flavor {
+    string ID = 1;
+    string Name = 2;
+    int32 VCPUs = 3;
+    int32 RAM = 4;
+    int32 Disk = 5;
 }
 
 message ServicePort {

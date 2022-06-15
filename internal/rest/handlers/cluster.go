@@ -67,6 +67,26 @@ func ValidateCluster(hS HttpServer, cluster *proto.Cluster) (bool, error) {
 		}
 	}
 
+	dbFlavor, _ := hS.FlavorGetByIdOrName(cluster.MasterFlavor)
+	if dbFlavor.ID == "" {
+		log.Printf("ERROR: Flavor with name '%s' not found", cluster.MasterFlavor)
+		return false, nil
+	}
+	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.SlavesFlavor)
+	if dbFlavor.ID == "" {
+		log.Printf("ERROR: Flavor with name '%s' not found", cluster.SlavesFlavor)
+		return false, nil
+	}
+	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.StorageFlavor)
+	if dbFlavor.ID == "" {
+		log.Printf("ERROR: Flavor with name '%s' not found", cluster.StorageFlavor)
+		return false, nil
+	}
+	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.MonitoringFlavor)
+	if dbFlavor.ID == "" {
+		log.Printf("ERROR: Flavor with name '%s' not found", cluster.MonitoringFlavor)
+		return false, nil
+	}
 	return true, nil
 }
 
@@ -188,6 +208,20 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(mess)
 		return
+	}
+
+	// set default project flavors if not specified
+	if c.MasterFlavor == "" {
+		c.MasterFlavor = project.DefaultMasterFlavor
+	}
+	if c.StorageFlavor == "" {
+		c.StorageFlavor = project.DefaultStorageFlavor
+	}
+	if c.SlavesFlavor == "" {
+		c.SlavesFlavor = project.DefaultSlavesFlavor
+	}
+	if c.MonitoringFlavor == "" {
+		c.MonitoringFlavor = project.DefaultMonitoringFlavor
 	}
 
 	// validate struct

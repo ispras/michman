@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
 	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
@@ -203,7 +203,7 @@ func (hs HttpServer) ImagePut(w http.ResponseWriter, r *http.Request, params htt
 }
 
 func (hs HttpServer) ImageDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hs.Logger.Print("Get /image/:imageName DELETE")
+	hs.Logger.Print("Get /images/:imageName DELETE")
 
 	used := isImageUsed(hs, params.ByName("imageName"))
 	if used {

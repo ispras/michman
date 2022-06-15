@@ -16,7 +16,7 @@ const (
 	JSONerrorMissFieldMessage              = "Required field is empty"
 	DBerror                                = 21
 	DBerrorMessage                         = "DB error"
-	DBemptyHealthCheck					   = "ServiceType.HealthCheck field is empty"
+	DBemptyHealthCheck                     = "ServiceType.HealthCheck field is empty"
 	LibErrorUUID                           = 31
 	LibErrorUUIDMessage                    = "UUID generating error"
 	LibErrorStructToJson                   = 32
@@ -41,7 +41,12 @@ const (
 	AuthorizationHeaderIncorrectMessage    = "Authorization header is empty or doesn't contain access token"
 	AuthorizationFailed                    = 62
 	AuthorizationFailedMessage             = "Authentication failed"
-
+	FlavorExisted                          = 70
+	FlavorExistedMessage                   = "Flavor with this name already exists"
+	FlavorUsed                             = 71
+	FlavorUsedMessage                      = "Flavor already in use. It can't be modified or deleted"
+	FlavorUnmodField                       = 72
+	FlavoUnmodFieldMessage                 = "Some fileds can't be modified"
 )
 
 // ErrorHandler handling interface

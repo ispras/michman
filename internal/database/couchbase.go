@@ -14,6 +14,7 @@ const (
 	projectBucketName     string = "projects"
 	serviceTypeBucketName string = "service_types"
 	imageBucketName       string = "images"
+	flavorBucketName      string = "flavors"
 )
 
 type CouchDatabase struct {
@@ -24,6 +25,7 @@ type CouchDatabase struct {
 	templatesBucket    *gocb.Bucket
 	serviceTypesBucket *gocb.Bucket
 	imageBucket        *gocb.Bucket
+	flavorBucket       *gocb.Bucket
 	VaultCommunicator  utils.SecretStorage
 }
 
@@ -85,6 +87,12 @@ func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 	}
 	cb.imageBucket = bucket
 
+	bucket, err = cb.couchCluster.OpenBucket(flavorBucketName, "")
+	if err != nil {
+		return nil, err
+	}
+	cb.flavorBucket = bucket
+
 	return cb, nil
 }
 
@@ -130,7 +138,8 @@ func (db CouchDatabase) ReadProject(projectID string) (*proto.Project, error) {
 }
 
 func (db CouchDatabase) ReadProjectByName(projectName string) (*proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage FROM " + projectBucketName +
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage, " +
+		"DefaultMasterFlavor, DefaultSlavesFlavor, DefaultStorageFlavor, DefaultMonitoringFlavor FROM " + projectBucketName +
 		" WHERE Name = '" + projectName + "'")
 	result, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
@@ -149,7 +158,8 @@ func (db CouchDatabase) WriteProject(project *proto.Project) error {
 }
 
 func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage FROM " + projectBucketName)
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage, " +
+		"DefaultMasterFlavor, DefaultSlavesFlavor, DefaultStorageFlavor, DefaultMonitoringFlavor FROM " + projectBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
@@ -167,7 +177,8 @@ func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
 }
 
 func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description from " + clusterBucketName + " where ProjectID = '" + projectID + "'"
+	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description, " +
+		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName + " WHERE ProjectID = '" + projectID + "'"
 	query := gocb.NewN1qlQuery(q)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
@@ -198,8 +209,9 @@ func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
 }
 
 func (db CouchDatabase) ReadClusterByName(projectID, clusterName string) (*proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, Image, ClusterType," +
-		"Services, NHosts, MasterIP, ProjectID, Description FROM " + clusterBucketName +
+	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, Image, ClusterType, " +
+		"Services, NHosts, MasterIP, ProjectID, Description, " +
+		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName +
 		" WHERE ProjectID = '" + projectID + "' and Name = '" + clusterName + "'"
 	query := gocb.NewN1qlQuery(q)
 	result, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
@@ -236,7 +248,9 @@ func (db CouchDatabase) WriteTemplate(template *proto.Template) error {
 }
 
 func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description FROM " + clusterBucketName)
+	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, " +
+		"NHosts, EntityStatus, Image, Services, MasterIP, Description, " +
+		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
@@ -487,6 +501,71 @@ func (db CouchDatabase) ListImages() ([]proto.Image, error) {
 	for rows.Next(&row) {
 		result = append(result, row)
 		row = proto.Image{}
+	}
+	rows.Close()
+
+	return result, nil
+}
+
+func (db CouchDatabase) WriteFlavor(flavor *proto.Flavor) error {
+	_, err := db.flavorBucket.Upsert(flavor.ID, flavor, 0)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db CouchDatabase) ReadFlavor(flavorID string) (*proto.Flavor, error) {
+	var flavor proto.Flavor
+	_, err := db.flavorBucket.Get(flavorID, &flavor)
+	if err != nil {
+		return nil, err
+	}
+	return &flavor, nil
+}
+
+func (db CouchDatabase) ReadFlavorByName(flavorName string) (*proto.Flavor, error) {
+	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, VCPUs, RAM, Disk FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
+	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var flavor proto.Flavor
+	res.Next(&flavor)
+	return &flavor, nil
+}
+
+func (db CouchDatabase) UpdateFlavor(id string, flavor *proto.Flavor) error {
+	var cas gocb.Cas
+	_, err := db.flavorBucket.Replace(id, flavor, cas, 0)
+	return err
+}
+
+func (db CouchDatabase) DeleteFlavor(flavorName string) error {
+	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
+	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+	if err != nil {
+		return err
+	}
+	var flavor proto.Flavor
+	res.Next(&flavor)
+	res.Close()
+	_, err = db.flavorBucket.Remove(flavor.ID, 0)
+	return err
+}
+
+func (db CouchDatabase) ListFlavors() ([]proto.Flavor, error) {
+	query := gocb.NewN1qlQuery("SELECT ID, Name, VCPUs, RAM, Disk FROM " + flavorBucketName)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row proto.Flavor
+	var result []proto.Flavor
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = proto.Flavor{}
 	}
 	rows.Close()
 

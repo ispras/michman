@@ -202,6 +202,12 @@ func main() {
 	router.Handle("PUT", "/images/:imageName", hS.ImagePut)
 	router.Handle("DELETE", "/images/:imageName", hS.ImageDelete)
 
+	router.Handle("GET", "/flavors", hS.FlavorsGetList)
+	router.Handle("GET", "/flavors/:flavorIdOrName", hS.FlavorGet)
+	router.Handle("POST", "/flavors", hS.FlavorsPost)
+	router.Handle("PUT", "/flavors/:flavorIdOrName", hS.FlavorPut)
+	router.Handle("DELETE", "/flavors/:flavorIdOrName", hS.FlavorDelete)
+
 	//auth route
 	router.Handle("GET", "/auth", func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		//set auth facts
