@@ -43,7 +43,7 @@ const (
 	AnsiblePlaybookCmd = "ansible-playbook"
 
 	//path for ansible.cfg
-	AnsibleConfigVar = "ANSIBLE_CONFIG"
+	AnsibleConfigVar  = "ANSIBLE_CONFIG"
 	AnsibleConfigPath = "ansible/ansible.cfg"
 
 	//base path
@@ -65,8 +65,8 @@ const (
 	OsRegionName         = "OS_REGION_NAME"
 	OsTenantId           = "OS_TENANT_ID"
 	OsTenantName         = "OS_TENANT_NAME"
-	OsUsername           = "OS_USERNAME"
-	OsSwiftUsername      = "OS_SWIFT_USERNAME"
+	OsUserName           = "OS_USERNAME"
+	OsSwiftUserName      = "OS_SWIFT_USERNAME"
 	OsSwiftPassword      = "OS_SWIFT_PASSWORD"
 	OsComputeApiVersion  = "COMPUTE_API_VERSION"
 	OsNovaVersion        = "NOVA_VERSION"

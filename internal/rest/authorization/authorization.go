@@ -1,13 +1,16 @@
 package authorization
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
-	"github.com/ispras/michman/internal/utils"
 	"github.com/google/uuid"
+	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
 	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/utils"
+	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"regexp"
@@ -15,19 +18,21 @@ import (
 )
 
 const (
-	admin = "admin"
-	user = "user"
+	admin         = "admin"
+	user          = "user"
 	projectMember = "project_member"
 )
 
 type AuthorizeClient struct {
-	Logger *log.Logger
-	Db     database.Database
-	Config utils.Config
+	Logger         *log.Logger
+	Db             database.Database
+	Config         utils.Config
 	SessionManager *scs.SessionManager
+	Auth           auth.Authenticate
+	Router         *httprouter.Router
 }
 
-func isProjectPath(path string) bool  {
+func isProjectPath(path string) bool {
 	projectPath := regexp.MustCompile(`^/projects/`).MatchString
 	if projectPath(path) {
 		return true
@@ -64,7 +69,7 @@ func (auth *AuthorizeClient) getProject(idORname string) (*proto.Project, error)
 	return project, err
 }
 
-func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []string{
+func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []string {
 	groups := auth.SessionManager.GetString(r.Context(), groupKey)
 	if groups == "" {
 		return nil
@@ -152,4 +157,36 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 
 		return http.HandlerFunc(fn)
 	}
+}
+
+func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	//set auth facts
+	w, err := auth.Auth.SetAuth(auth.SessionManager, w, r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		auth.Logger.Println(err)
+		return
+	}
+
+	g := auth.SessionManager.GetString(r.Context(), utils.GroupKey)
+
+	auth.Logger.Println("Authentication success!")
+	auth.Logger.Println("User groups are: " + g)
+
+	var userGroups string
+	if g == "" {
+		userGroups = "You are not a member of any group."
+	} else {
+		userGroups = "You are a member of the following groups: " + g
+	}
+
+	enc := json.NewEncoder(w)
+	err = enc.Encode("Authentication success! " + userGroups)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		auth.Logger.Print(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

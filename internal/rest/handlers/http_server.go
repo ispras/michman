@@ -5,6 +5,7 @@ import (
 	"github.com/ispras/michman/internal/database"
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
+	"github.com/julienschmidt/httprouter"
 	"log"
 )
 
@@ -19,6 +20,7 @@ type HttpServer struct {
 	Logger     *log.Logger
 	Db         database.Database
 	ErrHandler ErrorHandler
+	Router     *httprouter.Router
 	Auth       auth.Authenticate
 	Config     utils.Config
 }
