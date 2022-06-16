@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	protobuf "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"net/http"

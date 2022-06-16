@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/ispras/michman/internal/mocks"
 	protobuf "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/rest/handlers"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -45,14 +46,14 @@ var testServiceType = protobuf.ServiceType{
 
 func TestIsValidType(t *testing.T) {
 	t.Run("Return True", func(t *testing.T) {
-		check := IsValidType("int")
+		check := handlers.IsValidType("int")
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 
 	t.Run("Return False", func(t *testing.T) {
-		check := IsValidType("wrongString")
+		check := handlers.IsValidType("wrongString")
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
@@ -69,7 +70,7 @@ func TestCheckVersionUnique(t *testing.T) {
 		var testNewVersion = protobuf.ServiceVersion{
 			Version: "testVersion_unique",
 		}
-		check := checkVersionUnique(testStVersions, testNewVersion)
+		check := handlers.checkVersionUnique(testStVersions, testNewVersion)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
@@ -78,7 +79,7 @@ func TestCheckVersionUnique(t *testing.T) {
 		var testNewVersion = protobuf.ServiceVersion{
 			Version: "testVersion_2",
 		}
-		check := checkVersionUnique(testStVersions, testNewVersion)
+		check := handlers.checkVersionUnique(testStVersions, testNewVersion)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
@@ -93,14 +94,14 @@ func TestCheckDefaultVersion(t *testing.T) {
 	}
 	t.Run("Return True", func(t *testing.T) {
 		var testDefaultVersion string = "testVersion_2"
-		check := checkDefaultVersion(testStVersions, testDefaultVersion)
+		check := handlers.checkDefaultVersion(testStVersions, testDefaultVersion)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return False", func(t *testing.T) {
 		var testDefaultVersion string = "testBadVersion"
-		check := checkDefaultVersion(testStVersions, testDefaultVersion)
+		check := handlers.checkDefaultVersion(testStVersions, testDefaultVersion)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
@@ -111,49 +112,49 @@ func TestCheckPossibleValues(t *testing.T) {
 	//return True
 	t.Run("Return True, type int, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"15", "12", "123", "456"}
-		check := checkPossibleValues(testPossibleValue, "int", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", false)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type float, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"0.0", "1.01", "-0.32"}
-		check := checkPossibleValues(testPossibleValue, "float", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", false)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type bool, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"true", "false"}
-		check := checkPossibleValues(testPossibleValue, "bool", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", false)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type int list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[12,  24, 345  ,6]", "[3,4,5,6]", "[7, 8, 9]"}
-		check := checkPossibleValues(testPossibleValue, "int", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", true)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type float list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  8.2]"}
-		check := checkPossibleValues(testPossibleValue, "float", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", true)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type bool list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[ true,   false, false]", "[false, true, true ]"}
-		check := checkPossibleValues(testPossibleValue, "bool", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", true)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
 	})
 	t.Run("Return True, type string list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[\"val11\",\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
-		check := checkPossibleValues(testPossibleValue, "string", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "string", true)
 		if check != true {
 			t.Fatalf("ERROR: return not true")
 		}
@@ -162,49 +163,49 @@ func TestCheckPossibleValues(t *testing.T) {
 	//return False
 	t.Run("Return False, type int, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"12", "23", "notInt"}
-		check := checkPossibleValues(testPossibleValue, "int", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type float, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"-0.02", "notFloat", "1.111"}
-		check := checkPossibleValues(testPossibleValue, "float", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type bool, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"true", "false", "notBool"}
-		check := checkPossibleValues(testPossibleValue, "bool", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type int list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[12,  24, 345  ,6]", "3,4,5,6", "[7, 8, 9]"}
-		check := checkPossibleValues(testPossibleValue, "int", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type float list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  notFloat]"}
-		check := checkPossibleValues(testPossibleValue, "float", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type bool list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[ true,   false, notBool]", "[false, true, true ]"}
-		check := checkPossibleValues(testPossibleValue, "bool", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return False, type string list, parameters are unique", func(t *testing.T) {
 		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[val11,\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
-		check := checkPossibleValues(testPossibleValue, "string", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "string", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
@@ -213,49 +214,49 @@ func TestCheckPossibleValues(t *testing.T) {
 	//return False, parameters aren't unique
 	t.Run("Return True, type int, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"15", "12", "123", "456", "6", "6"}
-		check := checkPossibleValues(testPossibleValue, "int", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type float, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"0.0", "1.01", "-0.32", "1.01"}
-		check := checkPossibleValues(testPossibleValue, "float", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type bool, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"true", "false", "true"}
-		check := checkPossibleValues(testPossibleValue, "bool", false)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", false)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type int list, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"[12,  24, 345  ,6]", "[3,4,5,6]", "[12,  24, 345  ,6]", "[7, 8, 9]"}
-		check := checkPossibleValues(testPossibleValue, "int", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "int", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type float list, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"[  -0.00001,  8.2]", "[0.0, 1.001,  2.31 , -2.1]", "[  -0.00001,  8.2]", "[  -0.00001,  8.2]"}
-		check := checkPossibleValues(testPossibleValue, "float", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "float", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type bool list, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"[ true,   false, false]", "[false, true, true ]", "[ true,   false, false]", "[false, true, true]"}
-		check := checkPossibleValues(testPossibleValue, "bool", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "bool", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
 	})
 	t.Run("Return True, type string list, parameters aren't unique", func(t *testing.T) {
 		testPossibleValue := []string{"[\"val1\",  \"val2\",\"val3\"]", "[\"val11\",\"val21\",\"val31\"]", "[\"val11\",\"val21\",\"val31\"]", "[ \"val12\",  \"val22\"  ,\"val32\"  ]"}
-		check := checkPossibleValues(testPossibleValue, "string", true)
+		check := handlers.checkPossibleValues(testPossibleValue, "string", true)
 		if check != false {
 			t.Fatalf("ERROR: return not false")
 		}
@@ -264,15 +265,15 @@ func TestCheckPossibleValues(t *testing.T) {
 
 func TestCheckConfigs(t *testing.T) {
 	l := log.New(os.Stdout, "TestCheckConfigs: ", log.Ldate|log.Ltime)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 	t.Run("IsValidType returns false", func(t *testing.T) {
 		var testVConfigs = []*protobuf.ServiceConfig{
 			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "int"},
 			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "wrongType"},
 			&protobuf.ServiceConfig{ParameterName: "Name3", Type: "bool"},
 		}
-		hS := HttpServer{Logger: l, ErrHandler: errHandler}
-		check, _ := hS.checkConfigs(testVConfigs)
+		hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+		check, _ := CheckConfigs(hS, testVConfigs)
 		if check != false {
 			t.Fatalf("ERROR: return is not false")
 		}
@@ -284,8 +285,8 @@ func TestCheckConfigs(t *testing.T) {
 			&protobuf.ServiceConfig{ParameterName: "", Type: "float"},
 			&protobuf.ServiceConfig{ParameterName: "", Type: "bool"},
 		}
-		hS := HttpServer{Logger: l, ErrHandler: errHandler}
-		check, _ := hS.checkConfigs(testVConfigs)
+		hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+		check, _ := CheckConfigs(hS, testVConfigs)
 		if check != false {
 			t.Fatalf("ERROR: param name is not nil")
 		}
@@ -297,8 +298,8 @@ func TestCheckConfigs(t *testing.T) {
 			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "float"},
 			&protobuf.ServiceConfig{ParameterName: "Name1", Type: "bool"},
 		}
-		hS := HttpServer{Logger: l, ErrHandler: errHandler}
-		check, _ := hS.checkConfigs(testVConfigs)
+		hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+		check, _ := CheckConfigs(hS, testVConfigs)
 		if check != false {
 			t.Fatalf("ERROR: param name is not unique")
 		}
@@ -310,8 +311,8 @@ func TestCheckConfigs(t *testing.T) {
 			&protobuf.ServiceConfig{ParameterName: "Name2", Type: "float"},
 			&protobuf.ServiceConfig{ParameterName: "Name3", Type: "bool"},
 		}
-		hS := HttpServer{Logger: l, ErrHandler: errHandler}
-		check, _ := hS.checkConfigs(testVConfigs)
+		hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+		check, _ := CheckConfigs(hS, testVConfigs)
 		if check != true {
 			t.Fatalf("ERROR: param name is unique")
 		}
@@ -323,15 +324,15 @@ func TestCheckDependency(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("ReadServiceType() error", func(t *testing.T) {
 		var testService = protobuf.ServiceDependency{
 			ServiceType: "testType",
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(nil, errors.New("ReadServiceType() returns this error"))
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: ReadServiceType() returns error")
 		}
@@ -345,8 +346,8 @@ func TestCheckDependency(t *testing.T) {
 			Type: "",
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: Type is not nil")
 		}
@@ -361,8 +362,8 @@ func TestCheckDependency(t *testing.T) {
 			Type: "testType",
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: ServiceVersions not nil")
 		}
@@ -378,8 +379,8 @@ func TestCheckDependency(t *testing.T) {
 			Type: "testType",
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: DefaultServiceVersion not nil")
 		}
@@ -401,8 +402,8 @@ func TestCheckDependency(t *testing.T) {
 			Versions: stVersions,
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: Service version in dependency doesn't exist")
 		}
@@ -424,8 +425,8 @@ func TestCheckDependency(t *testing.T) {
 			Versions: stVersions,
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: Service version in dependency exists, DefaultServiceVersion not")
 		}
@@ -447,8 +448,8 @@ func TestCheckDependency(t *testing.T) {
 			Versions: stVersions,
 		}
 		mockDatabase.EXPECT().ReadServiceType(testService.ServiceType).Return(&retStruct, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
-		check, _ := hS.checkDependency(&testService)
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		check, _ := CheckDependency(hS, &testService)
 		if check != true {
 			t.Fatalf("ERROR: Service version in dependency exists, DefaultServiceVersion exists")
 		}
@@ -460,7 +461,7 @@ func TestCheckClass(t *testing.T) {
 		var testService = protobuf.ServiceType{
 			Class: "master-slave",
 		}
-		check := checkClass(&testService)
+		check := handlers.checkClass(&testService)
 		if check != true {
 			t.Fatalf("ERROR: not true")
 		}
@@ -470,7 +471,7 @@ func TestCheckClass(t *testing.T) {
 		var testService = protobuf.ServiceType{
 			Class: "badClass",
 		}
-		check := checkClass(&testService)
+		check := handlers.checkClass(&testService)
 		if check != false {
 			t.Fatalf("ERROR: not false")
 		}
@@ -479,14 +480,14 @@ func TestCheckClass(t *testing.T) {
 
 func TestCheckPort(t *testing.T) {
 	t.Run("Return true", func(t *testing.T) {
-		check := checkPort(20)
+		check := handlers.checkPort(20)
 		if check != true {
 			t.Fatalf("ERROR: not true")
 		}
 	})
 
 	t.Run("Return false", func(t *testing.T) {
-		check := checkPort(-20)
+		check := handlers.checkPort(-20)
 		if check != false {
 			t.Fatalf("ERROR: not false")
 		}
@@ -498,7 +499,7 @@ func TestConfigsGetServices(t *testing.T) {
 
 	l := log.New(os.Stdout, "TestConfigsGetServices: ", log.Ldate|log.Ltime)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("List of services types", func(t *testing.T) {
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -515,7 +516,7 @@ func TestConfigsGetServices(t *testing.T) {
 
 		mockDatabase.EXPECT().ListServicesTypes().Return([]protobuf.ServiceType{testServiceType1, testServiceType2}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsGetServices(response, request, httprouter.Params{})
 
 		var sTypes []protobuf.ServiceType
@@ -539,9 +540,9 @@ func TestConfigsCreateService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 	t.Run("New service type with valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceType)
@@ -589,13 +590,13 @@ func TestConfigsGetService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("Existed service type", func(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/configs/"+serviceType, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&testServiceType, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ConfigsGetService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
@@ -608,7 +609,7 @@ func TestConfigsGetService(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/configs/"+serviceType, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ConfigsGetService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
@@ -623,7 +624,7 @@ func TestConfigsDeleteService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("Existed service type", func(t *testing.T) {
 		request, _ := http.NewRequest("DELETE", "/configs/"+serviceType, nil)
@@ -642,7 +643,7 @@ func TestConfigsDeleteService(t *testing.T) {
 
 		mockDatabase.EXPECT().DeleteServiceType(serviceType).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsDeleteService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		if response.Code != http.StatusOK {
@@ -657,7 +658,7 @@ func TestConfigsDeleteService(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
 		//mockDatabase.EXPECT().DeleteServiceType(serviceType).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsDeleteService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		if response.Code != http.StatusNoContent {
@@ -671,7 +672,7 @@ func TestConfigsUpdateService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	updateBody := protobuf.ServiceType{
 		Description:    "updated test",
@@ -686,7 +687,7 @@ func TestConfigsUpdateService(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&testServiceType, nil)
 		mockDatabase.EXPECT().WriteServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsUpdateService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		if response.Code != http.StatusOK {
@@ -701,7 +702,7 @@ func TestConfigsUpdateService(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
 		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsUpdateService(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		if response.Code != http.StatusNoContent {
@@ -715,9 +716,9 @@ func TestConfigsCreateVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 	t.Run("New service version with valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceVersion)
@@ -773,13 +774,13 @@ func TestConfigsGetVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("Existed service version", func(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&testServiceVersion, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ConfigsGetVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
@@ -793,7 +794,7 @@ func TestConfigsGetVersion(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/configs/"+serviceType+"/versions/"+svId, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&protobuf.ServiceVersion{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ConfigsGetVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
@@ -809,7 +810,7 @@ func TestConfigsGetVersions(t *testing.T) {
 
 	l := log.New(os.Stdout, "TestConfigsGetVersions: ", log.Ldate|log.Ltime)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("List of service versions", func(t *testing.T) {
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
@@ -833,7 +834,7 @@ func TestConfigsGetVersions(t *testing.T) {
 		}
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curSt, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsGetVersions(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType}})
 
 		var versions []protobuf.ServiceVersion
@@ -857,7 +858,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	updateBody := protobuf.ServiceVersion{
 		Description: "updated test",
@@ -885,7 +886,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&updatedST, nil)
 		mockDatabase.EXPECT().UpdateServiceType(&updatedST).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsUpdateVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -901,7 +902,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
 		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsUpdateVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -923,7 +924,7 @@ func TestConfigsUpdateVersion(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&updatedST, nil)
 		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsUpdateVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -938,7 +939,7 @@ func TestConfigsDeleteVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
 	t.Run("Existed service version", func(t *testing.T) {
 		request, _ := http.NewRequest("DELETE", "/configs/"+serviceType+"/versions/"+svId, nil)
@@ -957,7 +958,7 @@ func TestConfigsDeleteVersion(t *testing.T) {
 
 		mockDatabase.EXPECT().DeleteServiceVersion(serviceType, svId).Return(&testServiceVersion, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsDeleteVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -972,7 +973,7 @@ func TestConfigsDeleteVersion(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadServiceVersion(serviceType, svId).Return(&protobuf.ServiceVersion{}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsDeleteVersion(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -987,9 +988,9 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 	t.Run("New service config param with valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(testServiceConfig)
@@ -1053,7 +1054,7 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 		mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&protobuf.ServiceType{}, nil)
 		//mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsCreateConfigParam(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 
@@ -1079,7 +1080,7 @@ func TestConfigsCreateConfigParam(t *testing.T) {
 		//mockDatabase.EXPECT().ReadServiceType(serviceType).Return(&curST, nil)
 		////mockDatabase.EXPECT().UpdateServiceType(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ConfigsCreateConfigParam(response, request, httprouter.Params{{Key: "serviceType", Value: serviceType},
 			{Key: "versionId", Value: svId}})
 

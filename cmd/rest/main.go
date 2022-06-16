@@ -198,14 +198,14 @@ func main() {
 
 	router.Handle("GET", "/images", hS.ImagesGetList)
 	router.Handle("GET", "/images/:imageName", hS.ImageGet)
-	router.Handle("POST", "/images", hS.ImagesPost)
-	router.Handle("PUT", "/images/:imageName", hS.ImagePut)
+	router.Handle("POST", "/images", hS.ImageCreate)
+	router.Handle("PUT", "/images/:imageName", hS.ImageUpdate)
 	router.Handle("DELETE", "/images/:imageName", hS.ImageDelete)
 
 	router.Handle("GET", "/flavors", hS.FlavorsGetList)
 	router.Handle("GET", "/flavors/:flavorIdOrName", hS.FlavorGet)
-	router.Handle("POST", "/flavors", hS.FlavorsPost)
-	router.Handle("PUT", "/flavors/:flavorIdOrName", hS.FlavorPut)
+	router.Handle("POST", "/flavors", hS.FlavorCreate)
+	router.Handle("PUT", "/flavors/:flavorIdOrName", hS.FlavorUpdate)
 	router.Handle("DELETE", "/flavors/:flavorIdOrName", hS.FlavorDelete)
 
 	//auth route

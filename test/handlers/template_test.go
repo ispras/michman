@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/ispras/michman/internal/mocks"
 	protobuf "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/rest/handlers"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"log"
@@ -70,7 +71,7 @@ func TestTemplatesGetList(t *testing.T) {
 
 		mockDatabase.EXPECT().ListTemplates(testCommonProjectID).Return([]protobuf.Template{testTemplate1,
 			testTemplate2}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplatesGetList(response, request, httprouter.Params{})
 
@@ -115,7 +116,7 @@ func TestTemplatesGetList(t *testing.T) {
 
 		mockDatabase.EXPECT().ListTemplates(testProjectID).Return([]protobuf.Template{testTemplate1,
 			testTemplate2}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplatesGetList(response, request, httprouter.Params{{"projectIdOrName", testProjectID}})
 
@@ -153,7 +154,7 @@ func TestTemplatesGet(t *testing.T) {
 		testTemplate := commonTestTemplateResponse
 
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplateID).Return(&testTemplate, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateGet(response, request, httprouter.Params{{Key: "templateID", Value: testTemplateID}})
 
@@ -177,7 +178,7 @@ func TestTemplatesGet(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplateID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateGet(response, request, httprouter.Params{{Key: "templateID", Value: testTemplateID}})
 
@@ -197,7 +198,7 @@ func TestTemplatesGet(t *testing.T) {
 		testTemplate.ProjectID = testProjectID
 
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplateID).Return(&testTemplate, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateGet(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplateID}})
@@ -222,7 +223,7 @@ func TestTemplatesGet(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplateID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateGet(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplateID}})
@@ -248,7 +249,7 @@ func TestTemplatesCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-common").Return(&protobuf.Template{}, nil)
 		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{})
 
@@ -273,7 +274,7 @@ func TestTemplatesCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-common").Return(&protobuf.Template{}, nil)
 		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(errors.New("error on db side"))
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{})
 
@@ -291,7 +292,7 @@ func TestTemplatesCreate(t *testing.T) {
 			"/templates", bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-common").Return(&testTemplateResponse, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{})
 
@@ -313,7 +314,7 @@ func TestTemplatesCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProject(testTemplate.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-"+testProject.Name).Return(&protobuf.Template{}, nil)
 		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{{"projectIdOrName", testProjectID}})
 
@@ -342,7 +343,7 @@ func TestTemplatesCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProject(testTemplate.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-"+testProject.Name).Return(&protobuf.Template{}, nil)
 		mockDatabase.EXPECT().WriteTemplate(gomock.Any()).Return(errors.New("error on db side"))
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{{"projectIdOrName", testProjectID}})
 
@@ -363,7 +364,7 @@ func TestTemplatesCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplate.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplateByName(testTemplate.DisplayName+"-"+testProject.Name).Return(&testTemplateResponse, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateCreate(response, request, httprouter.Params{{"projectIdOrName", testProjectID}})
 
@@ -389,7 +390,7 @@ func TestTemplatesUpdate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&testTemplateResponse, nil)
 		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -413,7 +414,7 @@ func TestTemplatesUpdate(t *testing.T) {
 			"/templates/"+testTemplate.ID, bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&testTemplate, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -430,7 +431,7 @@ func TestTemplatesUpdate(t *testing.T) {
 			"/templates", bytes.NewReader(jsonTemplate))
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -451,7 +452,7 @@ func TestTemplatesUpdate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProject(testTemplateResponse.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&testTemplateResponse, nil)
 		mockDatabase.EXPECT().WriteTemplate(&testTemplateResponse).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})
@@ -480,7 +481,7 @@ func TestTemplatesUpdate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplateResponse.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&testTemplate, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})
@@ -502,7 +503,7 @@ func TestTemplatesUpdate(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProject(testTemplateResponse.ProjectID).Return(&testProject, nil)
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateUpdate(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})
@@ -527,7 +528,7 @@ func TestTemplatesDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&testTemplate, nil)
 		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -551,7 +552,7 @@ func TestTemplatesDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&testTemplate, nil)
 		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(errors.New("some db error"))
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -567,7 +568,7 @@ func TestTemplatesDelete(t *testing.T) {
 			"/templates/"+testTemplate.ID, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(utils.CommonProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{Key: "templateID", Value: testTemplate.ID}})
 
@@ -585,7 +586,7 @@ func TestTemplatesDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&testTemplate, nil)
 		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})
@@ -611,7 +612,7 @@ func TestTemplatesDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&testTemplate, nil)
 		mockDatabase.EXPECT().DeleteTemplate(testTemplate.ID).Return(errors.New("some db error"))
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})
@@ -630,7 +631,7 @@ func TestTemplatesDelete(t *testing.T) {
 			"/projects/"+testProjectID+"/templates/"+testTemplate.ID, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadTemplate(testProjectID, testTemplate.ID).Return(&protobuf.Template{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase}
 
 		hS.TemplateDelete(response, request, httprouter.Params{{"projectIdOrName", testProjectID},
 			{"templateID", testTemplate.ID}})

@@ -2,158 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/google/uuid"
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"net/http"
-	"regexp"
 )
-
-const (
-	NEW_CLUSTER         = -1
-	CLUSTER_DIDNT_EXIST = -2
-)
-
-type serviceExists struct {
-	exists  bool
-	service *proto.Service
-}
-
-//returns true if master-slave service exists
-func checkMSServices(hS HttpServer, cluster *proto.Cluster) (bool, error) {
-	for _, service := range cluster.Services {
-		st, err := hS.Db.ReadServiceType(service.Type)
-		if err != nil {
-			return false, err
-		}
-		if st.Class == utils.ClassMasterSlave {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func ValidateCluster(hS HttpServer, cluster *proto.Cluster) (bool, error) {
-	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
-
-	if !validName(cluster.DisplayName) {
-		log.Print("ERROR: bad name for cluster. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol.")
-		return false, nil
-	}
-
-	for _, service := range cluster.Services {
-		if res, err := ValidateService(hS, service); !res {
-			log.Print(err)
-			return false, nil
-		}
-	}
-
-	if cluster.NHosts < 0 {
-		log.Print("ERROR: NHosts parameter must be number >= 0.")
-		return false, nil
-	}
-
-	if cluster.NHosts == 0 {
-		res, err := checkMSServices(hS, cluster)
-		if err != nil {
-			return false, err
-		}
-		if res {
-			log.Print("ERROR: NHosts parameter must be number >= 1 if you want to install master-slave services.")
-			return false, nil
-		}
-	}
-
-	dbFlavor, _ := hS.FlavorGetByIdOrName(cluster.MasterFlavor)
-	if dbFlavor.ID == "" {
-		log.Printf("ERROR: Flavor with name '%s' not found", cluster.MasterFlavor)
-		return false, nil
-	}
-	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.SlavesFlavor)
-	if dbFlavor.ID == "" {
-		log.Printf("ERROR: Flavor with name '%s' not found", cluster.SlavesFlavor)
-		return false, nil
-	}
-	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.StorageFlavor)
-	if dbFlavor.ID == "" {
-		log.Printf("ERROR: Flavor with name '%s' not found", cluster.StorageFlavor)
-		return false, nil
-	}
-	dbFlavor, _ = hS.FlavorGetByIdOrName(cluster.MonitoringFlavor)
-	if dbFlavor.ID == "" {
-		log.Printf("ERROR: Flavor with name '%s' not found", cluster.MonitoringFlavor)
-		return false, nil
-	}
-	return true, nil
-}
-
-func (hS HttpServer) AddDependencies(c *proto.Cluster, curS *proto.Service) ([]*proto.Service, error) {
-	var err error = nil
-	var serviceToAdd *proto.Service = nil
-	var servicesList []*proto.Service = nil
-
-	sv, err := hS.Db.ReadServiceVersionByName(curS.Type, curS.Version)
-	if err != nil {
-		return nil, err
-	}
-
-	//check if version has dependencies
-	if sv.Dependencies != nil {
-		for _, sd := range sv.Dependencies {
-			//check if the service from dependencies has already listed in cluster and version is ok
-			flagAddS := true
-			for _, clusterS := range c.Services {
-				if clusterS.Type == sd.ServiceType {
-					if !utils.ItemExists(sd.ServiceVersions, clusterS.Version) {
-						//error: bad service version from user list
-						err = errors.New("Error: service " + clusterS.Type +
-							" has incompatible version for service " + curS.Type + ".")
-					}
-					flagAddS = false
-					break
-				}
-			}
-			if flagAddS && err == nil {
-				//add service from dependencies with default configurations
-				serviceToAdd = &proto.Service{
-					Name:    curS.Name + "-dependent", //TODO: use better service name?
-					Type:    sd.ServiceType,
-					Version: sd.DefaultServiceVersion,
-				}
-				servicesList = append(servicesList, serviceToAdd)
-			}
-		}
-	}
-
-	return servicesList, err
-}
-
-func (hS HttpServer) getCluster(projectID, idORname string) (*proto.Cluster, error) {
-	is_uuid := true
-	_, err := uuid.Parse(idORname)
-	if err != nil {
-		is_uuid = false
-	}
-
-	var cluster *proto.Cluster
-
-	if is_uuid {
-		cluster, err = hS.Db.ReadCluster(idORname)
-	} else {
-		cluster, err = hS.Db.ReadClusterByName(projectID, idORname)
-	}
-
-	return cluster, err
-}
 
 func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, "/clusters GET")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -189,7 +49,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /project/" + projectIdOrName + "/clusters POST")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -202,30 +62,30 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	var c *proto.Cluster
-	err = json.NewDecoder(r.Body).Decode(&c)
+	var clusterRes *proto.Cluster
+	err = json.NewDecoder(r.Body).Decode(&clusterRes)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
 
-	// set default project flavors if not specified
-	if c.MasterFlavor == "" {
-		c.MasterFlavor = project.DefaultMasterFlavor
+	// set default project flavors if not specifie
+	if clusterRes.MasterFlavor == "" {
+		clusterRes.MasterFlavor = project.DefaultMasterFlavor
 	}
-	if c.StorageFlavor == "" {
-		c.StorageFlavor = project.DefaultStorageFlavor
+	if clusterRes.StorageFlavor == "" {
+		clusterRes.StorageFlavor = project.DefaultStorageFlavor
 	}
-	if c.SlavesFlavor == "" {
-		c.SlavesFlavor = project.DefaultSlavesFlavor
+	if clusterRes.SlavesFlavor == "" {
+		clusterRes.SlavesFlavor = project.DefaultSlavesFlavor
 	}
-	if c.MonitoringFlavor == "" {
-		c.MonitoringFlavor = project.DefaultMonitoringFlavor
+	if clusterRes.MonitoringFlavor == "" {
+		clusterRes.MonitoringFlavor = project.DefaultMonitoringFlavor
 	}
 
 	// validate struct
-	validateRes, err := ValidateCluster(hS, c)
+	validateRes, err := ValidateCluster(hS, clusterRes)
 	if err != nil { //only db error returns
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -238,7 +98,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 
 	//check, that cluster with such name doesn't exist
-	searchedName := c.DisplayName + "-" + project.Name
+	searchedName := clusterRes.DisplayName + "-" + project.Name
 	cluster, err := hS.Db.ReadClusterByName(project.ID, searchedName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
@@ -259,7 +119,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 	// If cluster was failed
 	if clusterExists {
-		c = cluster
+		clusterRes = cluster
 	} else {
 		cUuid, err := uuid.NewRandom()
 		if err != nil {
@@ -267,16 +127,16 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			hS.Logger.Print(mess)
 			return
 		}
-		c.ID = cUuid.String()
+		clusterRes.ID = cUuid.String()
 		//add services from user request and from dependencies
-		if c.Services != nil {
+		if clusterRes.Services != nil {
 
 			retryFlag := true
 			startIdx := 0
 
 			//first for cycle is used for updating range values with appended services
 			for retryFlag {
-				for i, s := range c.Services[startIdx:] {
+				for i, s := range clusterRes.Services[startIdx:] {
 					st, err := hS.Db.ReadServiceType(s.Type)
 					if err != nil {
 						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
@@ -295,7 +155,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 					}
 
 					//add services from dependencies
-					sToAdd, err := hS.AddDependencies(c, s)
+					sToAdd, err := AddDependencies(hS, clusterRes, s)
 					if err != nil {
 						hS.Logger.Println(err)
 						mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
@@ -308,7 +168,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 					changesFlag := false
 					if sToAdd != nil {
 						for _, curS := range sToAdd {
-							c.Services = append(c.Services, curS)
+							clusterRes.Services = append(clusterRes.Services, curS)
 						}
 						changesFlag = true
 					}
@@ -326,7 +186,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		}
 
 		//cluster should be validated after addition services from dependencies
-		validateRes, err := ValidateCluster(hS, c)
+		validateRes, err := ValidateCluster(hS, clusterRes)
 		if err != nil { //only db error returns
 			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 			hS.Logger.Print(mess)
@@ -338,10 +198,10 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			return
 		}
 
-		c.ProjectID = project.ID
-		c.Name = c.DisplayName + "-" + project.Name
+		clusterRes.ProjectID = project.ID
+		clusterRes.Name = clusterRes.DisplayName + "-" + project.Name
 		//set uuids for all cluster services
-		for _, s := range c.Services {
+		for _, s := range clusterRes.Services {
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
 				mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
@@ -352,24 +212,24 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		}
 	}
 	// set default project Image if not specified
-	if c.Image == "" {
-		c.Image = project.DefaultImage
+	if clusterRes.Image == "" {
+		clusterRes.Image = project.DefaultImage
 	}
 
-	c.EntityStatus = utils.StatusInited
+	clusterRes.EntityStatus = utils.StatusInited
 	if !clusterExists {
-		err = hS.Db.WriteCluster(c)
+		err = hS.Db.WriteCluster(clusterRes)
 		if err != nil {
 			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
 	}
-	go hS.Gc.StartClusterCreation(c)
+	go hS.Gc.StartClusterCreation(clusterRes)
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(c)
+	enc.Encode(clusterRes)
 }
 
 func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -377,7 +237,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " GET")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -391,7 +251,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	}
 
 	// reading cluster info from database
-	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
+	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -420,7 +280,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, "/status", " GET")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -434,7 +294,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	}
 
 	// reading cluster info from database
-	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
+	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -466,7 +326,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " PUT")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -483,7 +343,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
 	// reading cluster info from database
-	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
+	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -598,7 +458,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 				}
 
 				//add services from dependencies
-				sToAdd, err := hS.AddDependencies(cluster, s)
+				sToAdd, err := AddDependencies(hS, cluster, s)
 				if err != nil {
 					hS.Logger.Println(err)
 					mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
@@ -655,7 +515,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -669,7 +529,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	}
 
 	// reading cluster info from database
-	cluster, err := hS.getCluster(project.ID, clusterIdOrName)
+	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)

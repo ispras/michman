@@ -3,20 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/protobuf"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"regexp"
 )
-
-func ValidateProject(project *proto.Project) bool {
-	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
-
-	if !validName(project.DisplayName) {
-		return false
-	}
-	return true
-}
 
 func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /projects GET")
@@ -40,28 +30,10 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func (hS HttpServer) getProject(idORname string) (*proto.Project, error) {
-	is_uuid := true
-	_, err := uuid.Parse(idORname)
-	if err != nil {
-		is_uuid = false
-	}
-
-	var project *proto.Project
-
-	if is_uuid {
-		project, err = hS.Db.ReadProject(idORname)
-	} else {
-		project, err = hS.Db.ReadProjectByName(idORname)
-	}
-
-	return project, err
-}
-
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /projects POST")
 
-	var p proto.Project
+	var p protobuf.Project
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
@@ -156,7 +128,7 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 
 	hS.Logger.Print("Reading project information from db...")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -184,7 +156,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, " PUT")
 
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -197,7 +169,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	var p proto.Project
+	var p protobuf.Project
 	err = json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectFieldMessage, err)
@@ -243,7 +215,7 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 
 	//reading project info from database
 	hS.Logger.Print("Reading project information from db...")
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)

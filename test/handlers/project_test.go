@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/ispras/michman/internal/rest/handlers"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -16,21 +17,22 @@ import (
 )
 
 var project = protobuf.Project{
-	Name: "test-project",
-	DisplayName: "test-project",
-	Description: "some description",
+	Name:         "test-project",
+	DisplayName:  "test-project",
+	Description:  "some description",
 	DefaultImage: "ubuntu",
 }
 
 var testImage = protobuf.Image{
-	ID: "e2246d19-1221-416e-8c49-ad6dac00000a",
-	Name: "ubuntu",
-	AnsibleUser: "ubuntu",
+	ID:           "e2246d19-1221-416e-8c49-ad6dac00000a",
+	Name:         "ubuntu",
+	AnsibleUser:  "ubuntu",
 	CloudImageID: "e2246d19-1221-416e-8c49-ad6dac00000a",
 }
+
 func TestProjectValidate(t *testing.T) {
 
-	t.Run("Bad name for project", func(t *testing.T){
+	t.Run("Bad name for project", func(t *testing.T) {
 		var projectBadName *protobuf.Project = &protobuf.Project{
 			Name:         "#test-project#",
 			DisplayName:  "#test-project#",
@@ -38,14 +40,14 @@ func TestProjectValidate(t *testing.T) {
 			DefaultImage: "ubuntu",
 		}
 
-		check := ValidateProject(projectBadName)
+		check := handlers.ValidateProject(projectBadName)
 
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
 		}
 	})
 
-	t.Run("Name for Project is Ok", func(t *testing.T){
+	t.Run("Name for Project is Ok", func(t *testing.T) {
 		var projectOkName *protobuf.Project = &protobuf.Project{
 			Name:         "test-project",
 			DisplayName:  "test-project",
@@ -53,7 +55,7 @@ func TestProjectValidate(t *testing.T) {
 			DefaultImage: "ubuntu",
 		}
 
-		check := ValidateProject(projectOkName)
+		check := handlers.ValidateProject(projectOkName)
 
 		if check != true {
 			t.Fatalf("Expected status code %v, but received: %v", true, check)
@@ -70,10 +72,10 @@ func TestProjectsGetList(t *testing.T) {
 	l := log.New(os.Stdout, "TestProjectsGetList: ", log.Ldate|log.Ltime)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 	mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 	hS.ProjectsGetList(response, request, httprouter.Params{})
 
 	if response.Code != http.StatusOK {
@@ -86,20 +88,19 @@ func TestProjectsCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 
-	hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 	t.Run("Valid JSON", func(t *testing.T) {
 		testBody, _ := json.Marshal(project)
 		request, _ := http.NewRequest("POST", "/projects", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
 		response := httptest.NewRecorder()
-		
- 
+
 		mockDatabase.EXPECT().ReadProjectByName(project.DisplayName).Return(&protobuf.Project{}, nil)
 		mockDatabase.EXPECT().ReadImage(project.DefaultImage).Return(&testImage, nil)
-		mockDatabase.EXPECT().WriteProject(gomock.Any()).Return(nil) 
+		mockDatabase.EXPECT().WriteProject(gomock.Any()).Return(nil)
 
 		hS.ProjectCreate(response, request, httprouter.Params{})
 
@@ -138,14 +139,14 @@ func TestProjectGetByName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 	projectName := "testProjectName"
 
 	t.Run("Existed project", func(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/projects/"+projectName, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: "NotEmptyName"}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ProjectGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
@@ -158,7 +159,7 @@ func TestProjectGetByName(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/projects/"+projectName, nil)
 		response := httptest.NewRecorder()
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 
 		hS.ProjectGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
@@ -173,7 +174,7 @@ func TestProjectUpdate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 	projectName := "testProjectName"
 
 	correctBudy := []byte(`{
@@ -196,7 +197,7 @@ func TestProjectUpdate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: "NotEmptyName"}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectUpdate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -212,7 +213,7 @@ func TestProjectUpdate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: "NotEmptyName"}, nil)
 		mockDatabase.EXPECT().UpdateProject(gomock.Any()).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectUpdate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -227,7 +228,7 @@ func TestProjectUpdate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: "NotEmptyName"}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectUpdate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -242,7 +243,7 @@ func TestProjectUpdate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectUpdate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusNoContent {
@@ -256,7 +257,7 @@ func TestProjectDelete(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := HttpErrorHandler{}
+	errHandler := handlers.HttpResponseHandler{}
 	projectName := "testProjectName"
 	projectID := "someID123"
 
@@ -270,7 +271,7 @@ func TestProjectDelete(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectID}, nil)
 		mockDatabase.EXPECT().ReadProjectClusters(projectID).Return(existedCluster, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectDelete(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -286,7 +287,7 @@ func TestProjectDelete(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectClusters(projectID).Return([]protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().DeleteProject(projectID).Return(nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectDelete(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -294,15 +295,13 @@ func TestProjectDelete(t *testing.T) {
 		}
 	})
 
-	
-
 	t.Run("Project didn't exist", func(t *testing.T) {
 		request, _ := http.NewRequest("DELETE", "/projects/"+projectName, nil)
 		response := httptest.NewRecorder()
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, ErrHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
 		hS.ProjectDelete(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusNoContent {

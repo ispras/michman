@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
+	cluster_logger "github.com/ispras/michman/internal/logger"
+	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"encoding/json"
-	"github.com/ispras/michman/internal/utils"
-	cluster_logger "github.com/ispras/michman/internal/logger"
 )
 
 const (
@@ -13,9 +13,9 @@ const (
 )
 
 type clusterLog struct {
-	ClusterId string `json:"cluster_id"`
-	Action string `json:"action"`
-    ClusterLogs string `json:"cluster_logs"`
+	ClusterId   string `json:"cluster_id"`
+	Action      string `json:"action"`
+	ClusterLogs string `json:"cluster_logs"`
 }
 
 func (hS HttpServer) ServeAnsibleOutput(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -39,10 +39,10 @@ func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, 
 	http.ServeFile(w, r, p)
 }
 
-func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Request, params httprouter.Params) (){
-	clusterID:= params.ByName("clusterID")
+func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	clusterID := params.ByName("clusterID")
 	projectIdOrName := params.ByName("projectIdOrName")
-	project, err := hS.getProject(projectIdOrName)
+	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -56,7 +56,7 @@ func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Requ
 	}
 
 	// reading cluster info from database
-	cluster, err := hS.getCluster(project.ID, clusterID)
+	cluster, err := ClusterGet(hS, project.ID, clusterID)
 	if err != nil {
 		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)

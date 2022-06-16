@@ -2,223 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/google/uuid"
 	protobuf "github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/utils"
 	"github.com/jinzhu/copier"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"strconv"
 )
-
-const (
-	respTypeFull    = "full"
-	respTypeSummary = "summary"
-	respTypeKey     = "view"
-)
-
-//list of supported types
-func IsValidType(t string) bool {
-	switch t {
-	case
-		"int",
-		"float",
-		"bool",
-		"string":
-		return true
-	}
-	return false
-}
-
-func checkVersionUnique(stVersions []*protobuf.ServiceVersion, newV protobuf.ServiceVersion) bool {
-	for _, curV := range stVersions {
-		if curV.Version == newV.Version {
-			return false
-		}
-	}
-	return true
-}
-
-func checkDefaultVersion(stVersions []*protobuf.ServiceVersion, defaultV string) bool {
-	for _, curV := range stVersions {
-		if curV.Version == defaultV {
-			return true
-		}
-	}
-	return false
-}
-
-func checkPossibleValues(vPossibleValues []string, vType string, IsList bool) bool {
-	//check PossibleValues type
-	if !IsList {
-		switch vType {
-		case "int":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseInt(pV, 10, 32); err != nil {
-					return false
-				}
-			}
-		case "float":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseFloat(pV, 64); err != nil {
-					return false
-				}
-			}
-		case "bool":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseBool(pV); err != nil {
-					return false
-				}
-			}
-		}
-	} else {
-		switch vType {
-		case "int":
-			var valList []int64
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "float":
-			var valList []float64
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "bool":
-			var valList []bool
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "string":
-			var valList []string
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		}
-
-		//format PossibleValue strings
-		for i, pV := range vPossibleValues {
-			vPossibleValues[i] = deleteSpaces(pV)
-		}
-	}
-
-	//check PossibleValues are unique
-	for i, curVal := range vPossibleValues[:len(vPossibleValues)-1] {
-		if curVal == "" {
-			return false
-		}
-		for _, otherVal := range vPossibleValues[i+1:] {
-			if curVal == otherVal {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-func (hS HttpServer) checkConfigs(vConfigs []*protobuf.ServiceConfig) (bool, error) {
-	for i, curC := range vConfigs {
-		//check param type
-		if !IsValidType(curC.Type) {
-			hS.Logger.Print("ERROR: parameter type must be int, float, bool, string, error in param " + curC.ParameterName)
-			return false, errors.New("ERROR: parameter type must be one of supported: int, float, bool, string")
-		}
-
-		//check param name is unique
-		curName := curC.ParameterName
-		if curName == "" {
-			hS.Logger.Print("ERROR: parameter names must be set")
-			return false, errors.New("ERROR: parameter names must be set")
-		}
-		for _, otherC := range vConfigs[i+1:] {
-			if curName == otherC.ParameterName {
-				hS.Logger.Print("ERROR: parameter names in service config must be uniques")
-				return false, errors.New("ERROR: parameter names in service config must be uniques")
-			}
-		}
-
-		//check param possible values
-		if curC.PossibleValues != nil {
-			if flag := checkPossibleValues(curC.PossibleValues, curC.Type, curC.IsList); flag != true {
-				hS.Logger.Print("ERROR: possible values are set incorrectly, check the value type or spelling")
-				return false, errors.New("ERROR: possible values are set incorrectly, check the value type or spelling")
-			}
-		}
-	}
-	return true, nil
-}
-
-func (hS HttpServer) checkDependency(d *protobuf.ServiceDependency) (bool, error) {
-	st, err := hS.Db.ReadServiceType(d.ServiceType)
-	if err != nil {
-		hS.Logger.Print(err)
-		return false, err
-	}
-
-	if st.Type == "" {
-		hS.Logger.Print("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
-		return false, errors.New("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
-	}
-
-	if d.ServiceVersions == nil {
-		hS.Logger.Print("Service versions list in dependencies can't be empty")
-		return false, errors.New("Service versions list in dependencies can't be empty")
-	}
-
-	if d.DefaultServiceVersion == "" {
-		hS.Logger.Print("Service default version in dependency can't be empty")
-		return false, errors.New("Service default version in dependency can't be empty")
-	}
-
-	//check correctness of versions list
-	flagDefaultV := false
-	for _, dSv := range d.ServiceVersions {
-		flag := false
-		for _, sv := range st.Versions {
-			if dSv == sv.Version {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			hS.Logger.Print("Service version in dependency doesn't exist")
-			return false, errors.New("Service version in dependency doesn't exist")
-		}
-		if dSv == d.DefaultServiceVersion {
-			flagDefaultV = true
-		}
-	}
-
-	if !flagDefaultV {
-		return false, errors.New("Service default version in dependencies doesn't exist")
-	}
-
-	return true, nil
-}
-
-func checkClass(st *protobuf.ServiceType) bool {
-	if st.Class == utils.ClassMasterSlave || st.Class == utils.ClassStandAlone || st.Class == utils.ClassStorage {
-		return true
-	}
-	return false
-}
-
-func checkPort(port int32) bool {
-	//TODO: add another checks for port?
-	if port > 0 {
-		return true
-	}
-	return false
-}
 
 func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	hS.Logger.Print("Get /configs POST")
@@ -254,7 +43,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 	}
 
 	//check service class
-	if res := checkClass(&st); !res {
+	if res := CheckClass(&st); !res {
 		hS.Logger.Print("ERROR: class for service type is not supported")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -262,7 +51,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 
 	//check service access port
 	if st.AccessPort != 0 { //0 if port not provided
-		if res := checkPort(st.AccessPort); !res {
+		if res := CheckPort(st.AccessPort); !res {
 			hS.Logger.Print("ERROR: access port for service type must be > 0")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -272,7 +61,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 	//check all ports
 	if st.Ports != nil {
 		for _, p := range st.Ports {
-			if res := checkPort(p.Port); !res {
+			if res := CheckPort(p.Port); !res {
 				hS.Logger.Print("ERROR: port must be > 0")
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -281,14 +70,14 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 	}
 
 	//check deafault version
-	if res := checkDefaultVersion(st.Versions[:], st.DefaultVersion); !res {
+	if res := CheckDefaultVersion(st.Versions[:], st.DefaultVersion); !res {
 		hS.Logger.Print("ERROR: default service version doesn't exists in this service type")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	for i, sv := range st.Versions {
-		if !checkVersionUnique(st.Versions[i+1:], *sv) {
+		if !CheckVersionUnique(st.Versions[i+1:], *sv) {
 			hS.Logger.Print("ERROR: service version exists in this service type")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -296,7 +85,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 
 		//check service version config
 		if sv.Configs != nil {
-			res, err := hS.checkConfigs(sv.Configs)
+			res, err := CheckConfigs(hS, sv.Configs)
 			if !res {
 				hS.Logger.Print(err)
 				w.WriteHeader(http.StatusBadRequest)
@@ -309,7 +98,7 @@ func (hS HttpServer) ConfigsCreateService(w http.ResponseWriter, r *http.Request
 
 		//check service version dependencies
 		for _, sd := range sv.Dependencies {
-			if res, err := hS.checkDependency(sd); !res {
+			if res, err := CheckDependency(hS, sd); !res {
 				hS.Logger.Print(err)
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -468,7 +257,7 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 
 	//update service type default version
 	if newSt.DefaultVersion != "" {
-		if res := checkDefaultVersion(st.Versions[:], newSt.DefaultVersion); !res {
+		if res := CheckDefaultVersion(st.Versions[:], newSt.DefaultVersion); !res {
 			hS.Logger.Print("ERROR: new default service version doesn't exists in this service type")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -478,7 +267,7 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 
 	//uodate service type class
 	if newSt.Class != "" {
-		if res := checkClass(&newSt); !res {
+		if res := CheckClass(&newSt); !res {
 			hS.Logger.Print("ERROR: class for service type is not supported")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -488,7 +277,7 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 
 	//update service access port
 	if newSt.AccessPort != 0 { //0 if port not provided
-		if res := checkPort(newSt.AccessPort); !res {
+		if res := CheckPort(newSt.AccessPort); !res {
 			hS.Logger.Print("ERROR: access port for service type must be > 0")
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -498,7 +287,7 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 
 	if newSt.Ports != nil {
 		for _, p := range newSt.Ports {
-			if res := checkPort(p.Port); !res {
+			if res := CheckPort(p.Port); !res {
 				hS.Logger.Print("ERROR: port must be > 0")
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -595,6 +384,36 @@ func (hS HttpServer) ConfigsDeleteService(w http.ResponseWriter, r *http.Request
 	}
 }
 
+func (hS HttpServer) ConfigsGetVersions(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	sTypeName := params.ByName("serviceType")
+	hS.Logger.Print("Get /configs/", sTypeName, "/versions GET")
+
+	//reading service type info from database
+	hS.Logger.Print("Reading service types information from db...")
+	st, err := hS.Db.ReadServiceType(sTypeName)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if st.Type == "" {
+		hS.Logger.Print("Service type not found")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	err = enc.Encode(st.Versions)
+	if err != nil {
+		hS.Logger.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
 func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	stName := params.ByName("serviceType")
 	hS.Logger.Print("Get /configs/", stName, "/versions POST")
@@ -624,7 +443,7 @@ func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request
 	}
 
 	//check that version is unique
-	if st.Versions != nil && !checkVersionUnique(st.Versions, newStVersion) {
+	if st.Versions != nil && !CheckVersionUnique(st.Versions, newStVersion) {
 		hS.Logger.Print("ERROR: service version exists in this service type")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -632,7 +451,7 @@ func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request
 
 	//check service version config
 	if newStVersion.Configs != nil {
-		res, err := hS.checkConfigs(newStVersion.Configs)
+		res, err := CheckConfigs(hS, newStVersion.Configs)
 		if !res {
 			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -646,7 +465,7 @@ func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request
 	//check service version dependencies
 	if newStVersion.Dependencies != nil {
 		for _, sd := range newStVersion.Dependencies {
-			if res, err := hS.checkDependency(sd); !res {
+			if res, err := CheckDependency(hS, sd); !res {
 				hS.Logger.Print(err)
 				w.WriteHeader(http.StatusBadRequest)
 				return
@@ -675,36 +494,6 @@ func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	err = enc.Encode(newStVersion)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-}
-
-func (hS HttpServer) ConfigsGetVersions(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	sTypeName := params.ByName("serviceType")
-	hS.Logger.Print("Get /configs/", sTypeName, "/versions GET")
-
-	//reading service type info from database
-	hS.Logger.Print("Reading service types information from db...")
-	st, err := hS.Db.ReadServiceType(sTypeName)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if st.Type == "" {
-		hS.Logger.Print("Service type not found")
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	enc := json.NewEncoder(w)
-	err = enc.Encode(st.Versions)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -808,7 +597,7 @@ func (hS HttpServer) ConfigsUpdateVersion(w http.ResponseWriter, r *http.Request
 	//update version configs
 	if newStVersion.Configs != nil {
 		//check service version config
-		res, err := hS.checkConfigs(newStVersion.Configs)
+		res, err := CheckConfigs(hS, newStVersion.Configs)
 		if !res {
 			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -955,7 +744,7 @@ func (hS HttpServer) ConfigsCreateConfigParam(w http.ResponseWriter, r *http.Req
 	//check if configs array with new config param is ok
 	if tmpC != nil {
 		//check service version config
-		res, err := hS.checkConfigs(tmpC)
+		res, err := CheckConfigs(hS, tmpC)
 		if !res {
 			hS.Logger.Print(err)
 			w.WriteHeader(http.StatusBadRequest)
