@@ -1,0 +1,85 @@
+---
+- name: configure kuber
+  block:
+    - name: change kubeconfig file permission
+      file:
+        path: /etc/kubernetes/admin.conf
+        owner: ubuntu
+        group: ubuntu
+
+    - name: configure environment
+      raw: "export KUBECONFIG=/etc/kubernetes/admin.conf"
+  become: yes
+  become_user: root
+
+- name: apply namespaces
+  shell: kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
+  become: yes
+  become_user: root
+
+- name: create authorisation without user password
+  when: openfaas_password|length == 0
+  block:
+    - name: create password
+      shell: head -c 12 /dev/urandom | shasum | cut -d' ' -f1
+      register: password
+
+    - name: save password to file
+      copy:
+        content: "{{ passsword.stdout }}"
+        dest: /home/ubuntu/OPF_password
+
+    - name: create secrets
+      shell: kubectl -n openfaas create secret generic basic-auth --from-literal=basic-auth-user={{ openfaas_login }} --from-literal=basic-auth-password={{ password.stdout }}
+
+    - set_fact:
+        password_of: "{{ password.stdout }}"
+  become: yes
+  become_user: root
+
+- name: create authorisation with user password
+  when: openfaas_password|length != 0
+  block:
+    - name: save password to file
+      copy:
+        content: "{{ openfaas_password }}"
+        dest: /home/ubuntu/OPF_password
+
+    - name: create secrets
+      shell: kubectl -n openfaas create secret generic basic-auth --from-literal=basic-auth-user={{ openfaas_login }} --from-literal=basic-auth-password={{ openfaas_password }}
+
+    - set_fact:
+        password_of: "{{ openfaas_password }}"
+  become: yes
+  become_user: root
+
+- name: deploy openfaas helm
+  block:
+    - name: add openfaas helm repo
+      shell: helm repo add openfaas https://openfaas.github.io/faas-netes/
+
+    - name: call helm update
+      shell: helm repo update
+
+    - name:  install openfaas chart
+      shell: helm upgrade openfaas --install openfaas/openfaas --version {{ chart_version }} --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
+        --set kubernetesDNSDomain={{ cluster_name }} --set serviceType={{ openfaas_sevice_type }} --set operator.create={{ openfaas_operator_create }} --set openfaasImagePullPolicy={{ openfaas_image_pull_policy }} \
+        --set faasnetes.readTimeout={{ openfaas_netes_read_timeout }} --set faasnetes.writeTimeout={{ openfaas_netes_write_timeout }} --set faasnetes.imagePullPolicy={{ openfaas_netes_image_pull_policy }} \
+        --set gateway.replicas={{ openfaas_gateway_replicas }} --set gateway.readTimeout={{ openfaas_gateway_read_timeout }} --set gateway.writeTimeout={{ openfaas_gateway_write_timeout }} \
+        --set gateway.upstreamTimeout={{ openfaas_gateway_upstream_timeout }} --set gateway.logsProviderURL={{ openfaas_gateway_logs_url }} --set queueWorker.replicas={{ openfaas_queueworker_replicas }} \
+        --set queueWorker.ackWait={{ openfaas_queueworker_wait }} --set faasIdler.inactivityDuration={{ openfaas_idler_duration }} --set faasIdler.reconcileInterval={{ openfaas_idler_interval }}
+      when: openfaas_gateway_logs_url|length != 0
+
+    - name: install openfaas chart
+      shell: helm upgrade openfaas --install openfaas/openfaas --version {{ chart_version }} --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
+        --set kubernetesDNSDomain={{ cluster_name }} --set serviceType={{ openfaas_sevice_type }} --set operator.create={{ openfaas_operator_create }} --set openfaasImagePullPolicy={{ openfaas_image_pull_policy }} \
+        --set faasnetes.readTimeout={{ openfaas_netes_read_timeout }} --set faasnetes.writeTimeout={{ openfaas_netes_write_timeout }} --set faasnetes.imagePullPolicy={{ openfaas_netes_image_pull_policy }} \
+        --set gateway.replicas={{ openfaas_gateway_replicas }} --set gateway.readTimeout={{ openfaas_gateway_read_timeout }} --set gateway.writeTimeout={{ openfaas_gateway_write_timeout }} \
+        --set gateway.upstreamTimeout={{ openfaas_gateway_upstream_timeout }} --set queueWorker.replicas={{ openfaas_queueworker_replicas }} \
+        --set queueWorker.ackWait={{ openfaas_queueworker_wait }} --set faasIdler.inactivityDuration={{ openfaas_idler_duration }} --set faasIdler.reconcileInterval={{ openfaas_idler_interval }}
+      when: openfaas_gateway_logs_url|length == 0
+
+    - name: get the faas-cli
+      shell: curl -SLsf https://cli.openfaas.com | sudo sh
+  become: yes
+  become_user: root

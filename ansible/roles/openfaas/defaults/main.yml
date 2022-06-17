@@ -1,0 +1,18 @@
+---
+openfaas_login: 'admin'
+openfaas_password: ""
+openfaas_sevice_type: NodePort
+openfaas_operator_create: false
+openfaas_image_pull_policy: "Always"
+openfaas_netes_read_timeout: "60s"
+openfaas_netes_write_timeout: "60s"
+openfaas_netes_image_pull_policy: "Always"
+openfaas_gateway_replicas: 1
+openfaas_gateway_read_timeout: "65s"
+openfaas_gateway_write_timeout: "65s"
+openfaas_gateway_upstream_timeout: "60s"
+openfaas_gateway_logs_url: ""
+openfaas_queueworker_replicas: 1
+openfaas_queueworker_wait: "60s"
+openfaas_idler_duration: "15m"
+openfaas_idler_interval: "1m"

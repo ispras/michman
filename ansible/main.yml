@@ -106,6 +106,9 @@
       vars:
         python_version: 3
       when: deploy_jupyterhub is defined and deploy_jupyterhub
+    - include_role:
+        name: openfaas
+      when: deploy_openfaas is defined and deploy_openfaas
 
 #When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"

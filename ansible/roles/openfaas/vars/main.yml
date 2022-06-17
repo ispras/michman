@@ -1,0 +1,2 @@
+---
+chart_version: "{{ openfaas_version }}"

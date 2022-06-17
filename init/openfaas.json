@@ -1,0 +1,202 @@
+{
+  "Type": "openfaas",
+  "Description": "OpenFaas serverless functions service. Minimal requirement: number of VCPUs must be 4, RAM must be 8Gb, Disk volume must be 50Gb",
+  "DefaultVersion":"10.0.22",
+  "Class": "stand-alone",
+  "HealthCheck": [
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
+  "Versions":[
+    {
+      "Version":"10.0.22",
+      "Description":"OpenFaas is installed only in the latest version",
+      "Configs":[
+        {
+          "ParameterName": "login",
+          "Type": "string",
+          "DefaultValue": "admin",
+          "Required": true,
+          "Description": "Default login for OpenFaas UI, you can change it",
+          "AnsibleVarName": "openfaas_login"
+        },
+        {
+          "ParameterName": "password",
+          "Type": "string",
+          "DefaultValue": "",
+          "Required": true,
+          "Description": "Default password is generated randomly, you can set your own",
+          "AnsibleVarName": "openfaas_password"
+        },
+        {
+          "ParameterName": "service_type",
+          "Type": "string",
+          "PossibleValues": [
+            "NodePort",
+            "LoadBalancer"
+          ],
+          "DefaultValue": "NodePort",
+          "Required": true,
+          "Description": "Type of external service to use NodePort/LoadBalancer",
+          "AnsibleVarName": "openfaas_sevice_type"
+        },
+        {
+          "ParameterName": "operator_create",
+          "Type": "bool",
+          "PossibleValues": [
+            "true",
+            "false"
+          ],
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Use the OpenFaaS operator CRD controller, default uses faas-netes as the Kubernetes controller",
+          "AnsibleVarName": "openfaas_operator_create"
+        },
+        {
+          "ParameterName": "image_pull_policy",
+          "Type": "string",
+          "PossibleValues": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "DefaultValue": "Always",
+          "Required": true,
+          "Description": "Image pull policy for openfaas components, can change to IfNotPresent in offline env",
+          "AnsibleVarName": "openfaas_image_pull_policy"
+        },
+        {
+          "ParameterName": "netes_read_timeout",
+          "Type": "string",
+          "DefaultValue": "60s",
+          "Required": true,
+          "Description": "Queue worker read timeout",
+          "AnsibleVarName": "openfaas_netes_read_timeout"
+        },
+        {
+          "ParameterName": "netes_write_timeout",
+          "Type": "string",
+          "DefaultValue": "60s",
+          "Required": true,
+          "Description": "Queue worker write timeout",
+          "AnsibleVarName": "openfaas_netes_write_timeout"
+        },
+        {
+          "ParameterName": "netes_image_pull_policy",
+          "Type": "string",
+          "PossibleValues": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "DefaultValue": "Always",
+          "Required": true,
+          "Description": "Image pull policy for deployed functions",
+          "AnsibleVarName": "openfaas_netes_image_pull_policy"
+        },
+        {
+          "ParameterName": "gateway_replicas",
+          "Type": "int",
+          "DefaultValue": "1",
+          "Required": true,
+          "Description": "Replicas of the gateway, pick more than 1 for HA",
+          "AnsibleVarName": "openfaas_gateway_replicas"
+        },
+        {
+          "ParameterName": "gateway_read_timeout",
+          "Type": "string",
+          "DefaultValue": "65s",
+          "Required": true,
+          "Description": "Queue worker read timeout",
+          "AnsibleVarName": "openfaas_gateway_read_timeout"
+        },
+        {
+          "ParameterName": "gateway_write_timeout",
+          "Type": "string",
+          "DefaultValue": "65s",
+          "Required": true,
+          "Description": "Queue worker write timeout",
+          "AnsibleVarName": "openfaas_gateway_write_timeout"
+        },
+        {
+          "ParameterName": "gateway_upstream_timeout",
+          "Type": "string",
+          "DefaultValue": "60s",
+          "Required": true,
+          "Description": "Maximum duration of upstream function call, should be lower than readTimeout/writeTimeout",
+          "AnsibleVarName": "openfaas_gateway_upstream_timeout"
+        },
+        {
+          "ParameterName": "gateway_logs_url",
+          "Type": "string",
+          "DefaultValue": "",
+          "Required": true,
+          "Description": "Set a custom logs provider url",
+          "AnsibleVarName": "openfaas_gateway_logs_url"
+        },
+        {
+          "ParameterName": "queueworker_replicas",
+          "Type": "int",
+          "DefaultValue": "1",
+          "Required": true,
+          "Description": "Replicas of the queue-worker, pick more than 1 for HA",
+          "AnsibleVarName": "openfaas_queueworker_replicas"
+        },
+        {
+          "ParameterName": "queueworker_wait",
+          "Type": "string",
+          "DefaultValue": "60s",
+          "Required": true,
+          "Description": "Max duration of any async task/request",
+          "AnsibleVarName": "openfaas_queueworker_wait"
+        },
+        {
+          "ParameterName": "idler_duration",
+          "Type": "string",
+          "DefaultValue": "15m",
+          "Required": true,
+          "Description": "Duration after which faas-idler will scale function down to 0",
+          "AnsibleVarName": "openfaas_idler_duration"
+        },
+        {
+          "ParameterName": "idler_interval",
+          "Type": "string",
+          "DefaultValue": "1m",
+          "Required": true,
+          "Description": "The time between each of reconciliation",
+          "AnsibleVarName": "openfaas_idler_interval"
+        }
+      ],
+      "Dependencies":[
+        {
+          "ServiceType":"kubernetes",
+          "ServiceVersions":[
+            "v1.20.7",
+            "v1.20.6",
+            "v1.20.5",
+            "v1.20.4",
+            "v1.20.3",
+            "v1.20.2",
+            "v1.20.1",
+            "v1.20.0",
+            "v1.19.10",
+            "v1.19.9",
+            "v1.19.8",
+            "v1.19.7",
+            "v1.19.6",
+            "v1.19.5",
+            "v1.19.4",
+            "v1.19.3",
+            "v1.19.2",
+            "v1.19.1",
+            "v1.19.0"
+          ],
+          "DefaultServiceVersion":"v1.20.7",
+          "Description":"Dependency openfaas->kubernetes, 'helm_enabled' config must be set in 'true'"
+        }
+      ]
+    }
+  ]
+}
