@@ -10,8 +10,8 @@
   no_log: True
 
 - name: The following instances will be destroyed now
-  debug: var=alive_servers
-
+  debug: 
+    var: alive_servers
 
 - name: destroy cluster instances
   os_server:
@@ -22,7 +22,7 @@
   async: 1000
   poll: 0
   register: destruction_waitress
-  when: alive_servers is defined
+  when: alive_servers is defined and (alive_servers | length > 0)
 
 
 - name: 'Checking cluster is dead'
@@ -31,7 +31,7 @@
   until: slv.finished
   retries: 240
   with_items: "{{ destruction_waitress.results }}"
-  when: destruction_waitress is defined
+  when: alive_servers is defined and (alive_servers | length > 0)
 
 - name: destroy security group
   include: destroy_security_group.yml
