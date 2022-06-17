@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/ispras/michman/internal/utils"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 )
@@ -18,7 +18,7 @@ type Authenticate interface {
 	RetrieveToken(r *http.Request) (string, error)
 }
 
-func InitAuth(httpLogger *log.Logger, authMode string) Authenticate {
+func InitAuth(httpLogger *logrus.Logger, authMode string) Authenticate {
 	switch authMode {
 	case utils.OAuth2Mode:
 		hydraAuth, err := NewHydraAuthenticate()

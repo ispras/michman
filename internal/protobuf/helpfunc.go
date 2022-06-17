@@ -1,10 +1,10 @@
 package protobuf
 
 import (
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
-func (c Cluster) PrintClusterData(Logger *log.Logger) {
+func (c Cluster) PrintClusterData(Logger *logrus.Logger) {
 	Logger.Printf("Cluster with name: %s, ID: %s,\n", c.Name, c.ID)
 	Logger.Printf("status: %s, type: %s and services:\n", c.EntityStatus, c.ClusterType)
 
@@ -15,6 +15,6 @@ func (c Cluster) PrintClusterData(Logger *log.Logger) {
 	Logger.Print("\n")
 }
 
-func (s Service) PrintServiceData(Logger *log.Logger) {
+func (s Service) PrintServiceData(Logger *logrus.Logger) {
 	Logger.Printf("----Service with name: %s, state: %s\n", s.Name, s.ServiceState)
 }

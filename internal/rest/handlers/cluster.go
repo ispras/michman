@@ -15,7 +15,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -29,7 +29,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	//reading cluster info from database
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -38,7 +38,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	enc := json.NewEncoder(w)
 	err = enc.Encode(clusters)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -51,7 +51,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -65,7 +65,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	var clusterRes *proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&clusterRes)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -87,12 +87,12 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	// validate struct
 	validateRes, err := ValidateCluster(hS, clusterRes)
 	if err != nil { //only db error returns
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
 		return
 	}
 	if !validateRes {
-		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -101,7 +101,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	searchedName := clusterRes.DisplayName + "-" + project.Name
 	cluster, err := hS.Db.ReadClusterByName(project.ID, searchedName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -111,7 +111,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	if cluster.Name != "" {
 		clusterExists = true
 		if cluster.EntityStatus != utils.StatusFailed {
-			mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterExisted, UserErrorClusterExistedMessage, nil)
+			mess, _ := hS.RespHandler.Handle(w, UserErrorClusterExisted, UserErrorClusterExistedMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
@@ -123,7 +123,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	} else {
 		cUuid, err := uuid.NewRandom()
 		if err != nil {
-			mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+			mess, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
@@ -139,13 +139,13 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 				for i, s := range clusterRes.Services[startIdx:] {
 					st, err := hS.Db.ReadServiceType(s.Type)
 					if err != nil {
-						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+						mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 						hS.Logger.Print(mess)
 						return
 					}
 
 					if len(st.HealthCheck) == 0 {
-						mess, _ := hS.ErrHandler.Handle(w, DBerror, DBemptyHealthCheck, nil)
+						mess, _ := hS.RespHandler.Handle(w, DBerror, DBemptyHealthCheck, nil)
 						hS.Logger.Print(mess)
 						return
 					}
@@ -158,7 +158,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 					sToAdd, err := AddDependencies(hS, clusterRes, s)
 					if err != nil {
 						hS.Logger.Println(err)
-						mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
+						mess, _ := hS.RespHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
 						hS.Logger.Print(mess)
 						//w.WriteHeader(http.StatusBadRequest)
 						return
@@ -188,12 +188,12 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		//cluster should be validated after addition services from dependencies
 		validateRes, err := ValidateCluster(hS, clusterRes)
 		if err != nil { //only db error returns
-			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+			mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 			hS.Logger.Print(mess)
 			return
 		}
 		if !validateRes {
-			mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
+			mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
@@ -204,7 +204,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		for _, s := range clusterRes.Services {
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
-				mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+				mess, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
 				hS.Logger.Print(mess)
 				return
 			}
@@ -220,7 +220,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	if !clusterExists {
 		err = hS.Db.WriteCluster(clusterRes)
 		if err != nil {
-			mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+			mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
@@ -239,7 +239,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -253,7 +253,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	// reading cluster info from database
 	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -268,7 +268,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	enc := json.NewEncoder(w)
 	err = enc.Encode(cluster)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -282,7 +282,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -296,7 +296,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	// reading cluster info from database
 	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -328,7 +328,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -345,7 +345,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// reading cluster info from database
 	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -357,7 +357,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -366,14 +366,14 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	var newC proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&newC)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
 
 	if newC.ID != "" || newC.Name != "" || newC.DisplayName != "" || newC.EntityStatus != "" ||
 		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" || newC.Image != "" {
-		mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -381,7 +381,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	//check correctness of new services
 	for _, s := range newC.Services {
 		if res, _ := ValidateService(hS, s); !res {
-			mess, _ := hS.ErrHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
+			mess, _ := hS.RespHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, nil)
 			hS.Logger.Print(mess)
 			return
 		}
@@ -389,7 +389,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 
 	sTypes, err := hS.Db.ListServicesTypes()
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -419,7 +419,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		if serviceTypesOld[s.Type].exists == false {
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
-				mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+				mess, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
 				hS.Logger.Print(mess)
 				return
 			}
@@ -448,7 +448,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 			for i, s := range cluster.Services[startIdx:] {
 				st, err := hS.Db.ReadServiceType(s.Type)
 				if err != nil {
-					mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+					mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 					hS.Logger.Print(mess)
 					return
 				}
@@ -461,7 +461,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 				sToAdd, err := AddDependencies(hS, cluster, s)
 				if err != nil {
 					hS.Logger.Println(err)
-					mess, _ := hS.ErrHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
+					mess, _ := hS.RespHandler.Handle(w, UserErrorBadServiceVersion, UserErrorBadServiceVersionMessage, nil)
 					hS.Logger.Print(mess)
 					return
 				}
@@ -472,7 +472,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 					for _, curS := range sToAdd {
 						sUuid, err := uuid.NewRandom()
 						if err != nil {
-							mess, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
+							mess, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, nil)
 							hS.Logger.Print(mess)
 							return
 						}
@@ -517,7 +517,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -531,7 +531,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	// reading cluster info from database
 	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -543,7 +543,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	}
 
 	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		mess, _ := hS.ErrHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, UserErrorClusterStatus, UserErrorClusterStatusMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}

@@ -2,17 +2,19 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
+	"github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/rest/authorization"
 	grpc_client "github.com/ispras/michman/internal/rest/grpc"
 	"github.com/ispras/michman/internal/rest/handlers"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -46,11 +48,40 @@ func main() {
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
-	httpLogger := log.New(mw, "HTTP_SERVER: ", log.Ldate|log.Ltime)
-	grpcLogger := log.New(os.Stdout, "GRPC_CLIENT: ", log.Ldate|log.Ltime)
-	authorizeLogger := log.New(os.Stdout, "AUTHORIZE_CLIENT: ", log.Ldate|log.Ltime)
+	httpLogger := &logrus.Logger{
+		Out:   mw,
+		Level: logrus.InfoLevel,
+		Formatter: &logger.Formatter{
+			TimestampFormat: time.Stamp,
+			NoFieldsColors:  true,
+			ShowFullLevel:   true,
+			LoggerName:      "HTTP_SERVER",
+		},
+	}
 
-	httpLogger.Printf("Build version: %v\n", handlers.VersionID)
+	grpcLogger := &logrus.Logger{
+		Out:   mw,
+		Level: logrus.InfoLevel,
+		Formatter: &logger.Formatter{
+			TimestampFormat: time.Stamp,
+			NoFieldsColors:  true,
+			ShowFullLevel:   true,
+			LoggerName:      "GRPC_CLIENT",
+		},
+	}
+
+	authorizeLogger := &logrus.Logger{
+		Out:   mw,
+		Level: logrus.InfoLevel,
+		Formatter: &logger.Formatter{
+			TimestampFormat: time.Stamp,
+			NoFieldsColors:  true,
+			ShowFullLevel:   true,
+			LoggerName:      "AUTHORIZE_CLIENT",
+		},
+	}
+
+	httpLogger.Println(fmt.Sprintf("Build version: %v", handlers.VersionID))
 
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
@@ -96,13 +127,13 @@ func main() {
 	usedAuth = auth.InitAuth(httpLogger, config.AuthorizationModel)
 
 	router := httprouter.New()
-	errHandler := handlers.HttpErrorHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 
 	authorizeClient := authorization.AuthorizeClient{Logger: authorizeLogger, Db: db,
 		Config: config, SessionManager: sessionManager, Auth: usedAuth, Router: router}
 
 	hS := handlers.HttpServer{Gc: gc, Logger: httpLogger, Db: db,
-		ErrHandler: errHandler, Router: router, Auth: usedAuth, Config: config}
+		RespHandler: RespHandler, Router: router, Auth: usedAuth, Config: config}
 
 	authorizeClient.CreateRoutes()
 	hS.CreateRoutes()

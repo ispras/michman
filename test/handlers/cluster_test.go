@@ -40,14 +40,14 @@ func TestClustersGet(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := handlers.HttpResponseHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 
 	projectTestID := "someID123"
 
 	mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 	mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return([]protobuf.Cluster{}, nil)
 
-	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 	hS.ClustersGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 	if response.Code != http.StatusOK {
@@ -62,7 +62,7 @@ func TestAddDependencies(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
@@ -80,7 +80,7 @@ func TestAddDependencies(t *testing.T) {
 		var V *protobuf.ServiceVersion = &protobuf.ServiceVersion{Version: "DefaultVersion"}
 		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		servicesList, _ := AddDependencies(hS, testClusterOk, testServiceCluster)
 		if servicesList != nil {
@@ -93,7 +93,7 @@ func TestAddDependencies(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
@@ -116,7 +116,7 @@ func TestAddDependencies(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		servicesList, _ := AddDependencies(hS, testClusterOk, testServiceCluster)
 		if servicesList == nil {
@@ -129,7 +129,7 @@ func TestAddDependencies(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
@@ -152,7 +152,7 @@ func TestAddDependencies(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadServiceVersionByName(testServiceCluster.Type, testServiceCluster.Version).Return(V, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		_, err := AddDependencies(hS, testClusterOk, testServiceCluster)
 		if err == nil {
@@ -169,7 +169,7 @@ func TestGetCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
 		projectID := "some_ID_123"
 		IDorName := "testClusterName"
@@ -178,7 +178,7 @@ func TestGetCluster(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadClusterByName(projectID, IDorName).Return(&existedCluster, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		c, _ := hS.getCluster(projectID, IDorName)
 
 		if c.Name == "" {
@@ -190,7 +190,7 @@ func TestGetCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
 		projectID := "some_ID_123"
 		IDorName := "e2246d19-1221-416e-8c49-ad6dac00000a"
@@ -199,7 +199,7 @@ func TestGetCluster(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadCluster(IDorName).Return(&existedCluster, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		c, _ := hS.getCluster(projectID, IDorName)
 
 		if c.Name == "" {
@@ -217,7 +217,7 @@ func TestClusterCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := handlers.HttpResponseHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 
 	//testCluster := []byte(`{
 	//	"DisplayName":"` + testClusterName + `",
@@ -250,7 +250,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusNoContent {
@@ -265,7 +265,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -317,7 +317,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().WriteCluster(gomock.Any()).Return(nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -347,7 +347,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 		mockClient.EXPECT().StartClusterCreation(gomock.Any())
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusOK {
@@ -376,7 +376,7 @@ func TestClusterCreate(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: projectID, Name: projectName}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectID, testClusterName+"-"+projectName).Return(&existedCluster, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -391,7 +391,7 @@ func TestClusterCreate(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{ID: "test-TEST-UUID-123", Name: projectName}, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClusterCreate(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -408,9 +408,9 @@ func TestValidateCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		var testClusterOk = protobuf.Cluster{
 			DisplayName: "test",
@@ -438,9 +438,9 @@ func TestValidateCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		var testClusterBadName = protobuf.Cluster{
 			DisplayName: "#test#",
@@ -460,9 +460,9 @@ func TestValidateCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		var testClusterQuantityofHosts = protobuf.Cluster{
 			DisplayName: "test",
@@ -483,9 +483,9 @@ func TestValidateCluster(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		var testService1 = protobuf.Service{
 			DisplayName: "test",
@@ -513,7 +513,7 @@ func TestClustersGetByName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := handlers.HttpResponseHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 
 	t.Run("Project didn't exist", func(t *testing.T) {
 		request, _ := http.NewRequest("GET", "/projects/"+projectName+"/clusters"+clusterName, nil)
@@ -521,7 +521,7 @@ func TestClustersGetByName(t *testing.T) {
 
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterName", Value: clusterName}})
 
@@ -540,7 +540,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 
@@ -559,7 +559,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{Name: projectName, ID: projectTestID}, nil)
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 

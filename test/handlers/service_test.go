@@ -43,8 +43,8 @@ func TestValidateService(t *testing.T) {
 		var testServiceTypeError = protobuf.Service{
 			Type: "",
 		}
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Logger: l, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testServiceTypeError)
 		if check != false {
 			t.Fatalf("ERROR: service type can't be nil.")
@@ -60,8 +60,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, errors.New("ERROR: ListServicesTypes() returns not nil"))
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, err := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: %v", err)
@@ -77,8 +77,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("Service type is not supported")
@@ -102,8 +102,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, err := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: %v", err)
@@ -127,8 +127,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, err := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: %v", err)
@@ -175,8 +175,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: service config param name is not supported.")
@@ -221,8 +221,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect bool list int config.")
@@ -267,8 +267,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect int config.")
@@ -315,8 +315,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect int config")
@@ -363,8 +363,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect float config")
@@ -411,8 +411,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect bool config")
@@ -459,8 +459,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect int list config")
@@ -507,8 +507,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect bool list config")
@@ -555,8 +555,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect float list config")
@@ -601,8 +601,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: incorrect string list config")
@@ -659,8 +659,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != true {
 			t.Fatalf("ERROR: unexpected error")
@@ -709,8 +709,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != true {
 			t.Fatalf("ERROR: unexpected error")
@@ -757,8 +757,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: service config param value is not supported")
@@ -809,8 +809,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != true {
 			t.Fatalf("ERROR: service config param value is not supported")
@@ -859,8 +859,8 @@ func TestValidateService(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		mockDatabase.EXPECT().ListServicesTypes().Return(testServiceExpect, nil)
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check, _ := handlers.ValidateService(hS, &testService)
 		if check != false {
 			t.Fatalf("ERROR: service config param value is not supported")

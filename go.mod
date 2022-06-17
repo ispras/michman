@@ -13,6 +13,7 @@ require (
 	github.com/jinzhu/copier v0.3.2
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1
 	google.golang.org/grpc v1.39.0
 	gopkg.in/couchbase/gocb.v1 v1.6.7

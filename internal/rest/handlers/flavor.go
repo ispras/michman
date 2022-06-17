@@ -14,34 +14,34 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	var flavor protobuf.Flavor
 	err := json.NewDecoder(r.Body).Decode(&flavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
 	valid, err := ValidateFlavor(hS, &flavor)
 	if !valid || err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
 
 	dbFlavor, _ := FlavorGetByIdOrName(hS, flavor.Name)
 	if dbFlavor.ID != "" {
-		msg, _ := hS.ErrHandler.Handle(w, FlavorExisted, FlavorExistedMessage, nil)
+		msg, _ := hS.RespHandler.Handle(w, FlavorExisted, FlavorExistedMessage, nil)
 		hS.Logger.Print(msg)
 		return
 	}
 
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
 	flavor.ID = iUuid.String()
 	err = hS.Db.WriteFlavor(&flavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -49,7 +49,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	enc := json.NewEncoder(w)
 	err = enc.Encode(flavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -60,7 +60,7 @@ func (hS HttpServer) FlavorsGetList(w http.ResponseWriter, r *http.Request, _ ht
 
 	flavors, err := hS.Db.ListFlavors()
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -68,7 +68,7 @@ func (hS HttpServer) FlavorsGetList(w http.ResponseWriter, r *http.Request, _ ht
 	enc := json.NewEncoder(w)
 	err = enc.Encode(flavors)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -81,7 +81,7 @@ func (hS HttpServer) FlavorGet(w http.ResponseWriter, r *http.Request, params ht
 
 	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -94,7 +94,7 @@ func (hS HttpServer) FlavorGet(w http.ResponseWriter, r *http.Request, params ht
 	enc := json.NewEncoder(w)
 	err = enc.Encode(flavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -105,7 +105,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	flavorIdOrName := params.ByName("flavorIdOrName")
 	oldFlavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -118,20 +118,20 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	var newFlavor protobuf.Flavor
 	err = json.NewDecoder(r.Body).Decode(&newFlavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
 
 	used, _ := IsFlavorUsed(hS, oldFlavor.Name)
 	if used {
-		msg, _ := hS.ErrHandler.Handle(w, FlavorUsed, FlavorUsedMessage, nil)
+		msg, _ := hS.RespHandler.Handle(w, FlavorUsed, FlavorUsedMessage, nil)
 		hS.Logger.Print(msg)
 		return
 	}
 
 	if newFlavor.ID != "" {
-		msg, _ := hS.ErrHandler.Handle(w, FlavorUnmodField, FlavoUnmodFieldMessage, nil)
+		msg, _ := hS.RespHandler.Handle(w, FlavorUnmodField, FlavorUnmodFieldMessage, nil)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -140,7 +140,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	if newFlavor.Name != "" && newFlavor.Name != oldFlavor.Name {
 		dbFlavor, _ := FlavorGetByIdOrName(hS, newFlavor.Name)
 		if dbFlavor.ID != "" {
-			msg, _ := hS.ErrHandler.Handle(w, FlavorExisted, FlavorExistedMessage, nil)
+			msg, _ := hS.RespHandler.Handle(w, FlavorExisted, FlavorExistedMessage, nil)
 			hS.Logger.Print(msg)
 			return
 		}
@@ -159,7 +159,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	err = hS.Db.UpdateFlavor(oldFlavor.ID, resFlavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -168,7 +168,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	enc := json.NewEncoder(w)
 	err = enc.Encode(resFlavor)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -182,7 +182,7 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, r *http.Request, params
 
 	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}
@@ -195,14 +195,14 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, r *http.Request, params
 
 	used, _ := IsFlavorUsed(hS, flavor.Name)
 	if used {
-		msg, _ := hS.ErrHandler.Handle(w, FlavorUsed, FlavorUsedMessage, nil)
+		msg, _ := hS.RespHandler.Handle(w, FlavorUsed, FlavorUsedMessage, nil)
 		hS.Logger.Print(msg)
 		return
 	}
 
 	err = hS.Db.DeleteFlavor(flavor.Name)
 	if err != nil {
-		msg, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, err)
+		msg, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(msg)
 		return
 	}

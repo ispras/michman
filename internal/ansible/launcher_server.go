@@ -3,11 +3,11 @@ package ansible
 import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/utils"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 type LauncherServer struct {
-	Logger            *log.Logger
+	Logger            *logrus.Logger
 	Db                database.Database
 	VaultCommunicator utils.SecretStorage
 	Config            utils.Config

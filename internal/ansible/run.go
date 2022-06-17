@@ -6,11 +6,10 @@ import (
 	clusterlogger "github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
-func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *log.Logger, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string {
-	logger.SetPrefix("LAUNCHER: ")
+func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) string {
 	// creating ansible-playbook commands according to cluster object
 
 	//constructing ansible-playbook command

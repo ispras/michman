@@ -44,7 +44,7 @@ func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Requ
 	projectIdOrName := params.ByName("projectIdOrName")
 	project, err := ProjectGet(hS, projectIdOrName)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}
@@ -58,7 +58,7 @@ func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Requ
 	// reading cluster info from database
 	cluster, err := ClusterGet(hS, project.ID, clusterID)
 	if err != nil {
-		mess, _ := hS.ErrHandler.Handle(w, DBerror, DBerrorMessage, nil)
+		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
 		return
 	}

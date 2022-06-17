@@ -25,10 +25,10 @@ func TestImagesGetList(t *testing.T) { //ok
 	l := log.New(os.Stdout, "TestImagesGetList: ", log.Ldate|log.Ltime)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := handlers.HttpResponseHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 	mockDatabase.EXPECT().ListImages().Return([]protobuf.Image{}, nil)
 
-	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 	hS.ImagesGetList(response, request, httprouter.Params{})
 
 	if response.Code != http.StatusOK {
@@ -41,7 +41,7 @@ func TestImageGet(t *testing.T) { //ok
 	mockCtrl := gomock.NewController(t)
 	mockClient := mocks.NewMockGrpcClient(mockCtrl)
 	mockDatabase := mocks.NewMockDatabase(mockCtrl)
-	errHandler := handlers.HttpResponseHandler{}
+	RespHandler := handlers.HttpResponseHandler{}
 	ImageName := "testImageName"
 
 	request, _ := http.NewRequest("GET", "/images/"+ImageName, nil)
@@ -49,7 +49,7 @@ func TestImageGet(t *testing.T) { //ok
 	response := httptest.NewRecorder()
 
 	mockDatabase.EXPECT().ReadImage(gomock.Any()).Return(&protobuf.Image{}, nil)
-	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 	hS.ImageGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: ImageName}})
 
@@ -66,7 +66,7 @@ func TestImageDelete(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
@@ -74,7 +74,7 @@ func TestImageDelete(t *testing.T) {
 		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
 		mockDatabase.EXPECT().DeleteImage(gomock.Any()).Return(nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ImageDelete(response, request, httprouter.Params{{Key: "imageName", Value: imageName}})
 
 		if response.Code != http.StatusOK {
@@ -87,7 +87,7 @@ func TestImageDelete(t *testing.T) {
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 		request, _ := http.NewRequest("DELETE", "/images/"+imageName, nil)
 		response := httptest.NewRecorder()
 
@@ -100,7 +100,7 @@ func TestImageDelete(t *testing.T) {
 		mockDatabase.EXPECT().ListClusters().Return(existedCluster, nil)
 		mockDatabase.EXPECT().ListProjects().Return(existedProject, nil)
 
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		hS.ImageDelete(response, request, httprouter.Params{{Key: "imageName", Value: imageName}})
 
 		if response.Code != http.StatusBadRequest {
@@ -132,8 +132,8 @@ func TestImagePost(t *testing.T) { //переделать
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		testBody, _ := json.Marshal(image2)
 		request, _ := http.NewRequest("POST", "/images", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
@@ -153,8 +153,8 @@ func TestImagePost(t *testing.T) { //переделать
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		testBody, _ := json.Marshal(image1)
 		request, _ := http.NewRequest("POST", "/images", bytes.NewReader(testBody))
 		request.Header.Set("Content-Type", "application/json")
@@ -185,8 +185,8 @@ func TestImagePost(t *testing.T) { //переделать
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		testBody := []byte(`this is invalid json`)
 		request, _ := http.NewRequest("POST", "/images", bytes.NewBuffer(testBody))
 		request.Header.Set("Content-Type", "application/json")
@@ -232,8 +232,8 @@ func TestValidateImage(t *testing.T) { //ok
 		CloudImageID: "",
 	}
 	l := log.New(os.Stdout, "TestValidateImage: ", log.Ldate|log.Ltime)
-	errHandler := handlers.HttpResponseHandler{}
-	hS := handlers.HttpServer{Logger: l, RespHandler: errHandler}
+	RespHandler := handlers.HttpResponseHandler{}
+	hS := handlers.HttpServer{Logger: l, RespHandler: RespHandler}
 
 	t.Run("Valid Image", func(t *testing.T) {
 		check, _ := handlers.validateImage(hS, &imageVal1)
@@ -275,10 +275,10 @@ func TestIsImageUsed(t *testing.T) { //ok
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 		var existedCluster = []protobuf.Cluster{protobuf.Cluster{Image: imageName}}
 		mockDatabase.EXPECT().ListClusters().Return(existedCluster, nil)
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check := handlers.isImageUsed(hS, imageName)
 		if check != true {
 			t.Fatalf("Expected status code %v, but received: %v", true, check)
@@ -290,11 +290,11 @@ func TestIsImageUsed(t *testing.T) { //ok
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 		var existedProject = []protobuf.Project{protobuf.Project{DefaultImage: imageName}}
 		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().ListProjects().Return(existedProject, nil)
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check := handlers.isImageUsed(hS, imageName)
 		if check != true {
 			t.Fatalf("Expected status code %v, but received: %v", true, check)
@@ -306,10 +306,10 @@ func TestIsImageUsed(t *testing.T) { //ok
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
-		errHandler := handlers.HttpResponseHandler{}
+		RespHandler := handlers.HttpResponseHandler{}
 		mockDatabase.EXPECT().ListClusters().Return([]protobuf.Cluster{}, nil)
 		mockDatabase.EXPECT().ListProjects().Return([]protobuf.Project{}, nil)
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 		check := handlers.isImageUsed(hS, imageName)
 		if check != false {
 			t.Fatalf("Expected status code %v, but received: %v", false, check)
@@ -339,8 +339,8 @@ func TestImagePut(t *testing.T) { // доделать
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		testBody, _ := json.Marshal(imagePut)
 
@@ -366,8 +366,8 @@ func TestImagePut(t *testing.T) { // доделать
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		testBody, _ := json.Marshal(imagePut)
 
@@ -393,8 +393,8 @@ func TestImagePut(t *testing.T) { // доделать
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 		imageName := "testImageName"
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		testBody, _ := json.Marshal(imagePut)
 
@@ -425,8 +425,8 @@ func TestImagePut(t *testing.T) { // доделать
 		mockClient := mocks.NewMockGrpcClient(mockCtrl)
 		mockDatabase := mocks.NewMockDatabase(mockCtrl)
 
-		errHandler := handlers.HttpResponseHandler{}
-		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: errHandler}
+		RespHandler := handlers.HttpResponseHandler{}
+		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
 
 		testBody := []byte(`this is invalid json`)
 

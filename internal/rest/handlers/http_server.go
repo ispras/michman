@@ -6,7 +6,7 @@ import (
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 type GrpcClient interface {
@@ -16,11 +16,11 @@ type GrpcClient interface {
 }
 
 type HttpServer struct {
-	Gc         GrpcClient
-	Logger     *log.Logger
-	Db         database.Database
-	ErrHandler ErrorHandler
-	Router     *httprouter.Router
-	Auth       auth.Authenticate
-	Config     utils.Config
+	Gc          GrpcClient
+	Logger      *logrus.Logger
+	Db          database.Database
+	RespHandler ResponseHandler
+	Router      *httprouter.Router
+	Auth        auth.Authenticate
+	Config      utils.Config
 }

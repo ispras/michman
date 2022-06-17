@@ -5,6 +5,7 @@ import (
 	"github.com/ispras/michman/internal/database"
 	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"log"
 	"time"
@@ -18,11 +19,11 @@ const (
 
 type GrpcClient struct {
 	ansibleServiceClient protobuf.AnsibleRunnerClient
-	logger *log.Logger
-	Db     database.Database
+	logger               *logrus.Logger
+	Db                   database.Database
 }
 
-func (gc *GrpcClient) SetLogger(l *log.Logger) {
+func (gc *GrpcClient) SetLogger(l *logrus.Logger) {
 	gc.logger = l
 }
 

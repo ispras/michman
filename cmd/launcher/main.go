@@ -4,13 +4,15 @@ import (
 	"flag"
 	"github.com/ispras/michman/internal/ansible"
 	"github.com/ispras/michman/internal/database"
+	"github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"io"
-	"log"
 	"net"
 	"os"
+	"time"
 )
 
 func main() {
@@ -31,7 +33,16 @@ func main() {
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
-	LauncherLogger := log.New(mw, "LAUNCHER: ", log.Ldate|log.Ltime)
+	LauncherLogger := &logrus.Logger{
+		Out:   mw,
+		Level: logrus.InfoLevel,
+		Formatter: &logger.Formatter{
+			TimestampFormat: time.Stamp,
+			NoFieldsColors:  true,
+			ShowFullLevel:   true,
+			LoggerName:      "LAUNCHER",
+		},
+	}
 
 	vaultCommunicator := utils.VaultCommunicator{}
 	err = vaultCommunicator.Init()

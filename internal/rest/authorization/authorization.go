@@ -11,6 +11,7 @@ import (
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
 	"regexp"
@@ -24,7 +25,7 @@ const (
 )
 
 type AuthorizeClient struct {
-	Logger         *log.Logger
+	Logger         *logrus.Logger
 	Db             database.Database
 	Config         utils.Config
 	SessionManager *scs.SessionManager
