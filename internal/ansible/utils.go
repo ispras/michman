@@ -36,11 +36,11 @@ func (aL LauncherServer) GetElasticConnectorJar() string {
 	if _, err := os.Stat(elasticPath); err != nil {
 		if os.IsNotExist(err) {
 			// file does not exist
-			aL.Logger.Println("Downloading ElasticSearch Hadoop integration")
+			aL.Logger.Info("Downloading ElasticSearch Hadoop integration")
 			utils.DownloadFile(elasticHadoopUrl, elasticHadoopFilename)
 
 			if _, err := utils.Unzip(elasticHadoopFilename, elasticDir); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 			}
 		}
 	}
@@ -60,24 +60,24 @@ func (aL LauncherServer) GetCassandraConnectorJar(sparkVersion string) string {
 	if _, err := os.Stat(sparkCassandraConnectorFile); err != nil {
 		if os.IsNotExist(err) {
 			// file does not exist
-			aL.Logger.Println("Downloading Spark Cassandra Connector for Spark version ", sparkVersion)
+			aL.Logger.Info("Downloading Spark Cassandra Connector for Spark version ", sparkVersion)
 			utils.DownloadFile(sparkCassandraConnectorFile, sparkCassandraConnectorUrl)
 		}
 	}
 	return sparkCassandraConnectorFile
 }
 
-func (aL LauncherServer) AddJar(path string) map[string]string {
+func (aL LauncherServer) AddJar(path string) (map[string]string, error) {
 	var absPath string
 	if v, err := filepath.Abs(path); err != nil {
-		aL.Logger.Fatalln(err)
+		return nil, err
 	} else {
 		absPath = v
 	}
 	var newElem = map[string]string{
 		"name": filepath.Base(path), "path": absPath,
 	}
-	return newElem
+	return newElem, nil
 }
 
 func SetDeployService(stype string) string {
@@ -93,21 +93,21 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 		switch vType {
 		case "int":
 			if v, err := strconv.ParseInt(value, 10, 32); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return nil
 			} else {
 				return v
 			}
 		case "float":
 			if v, err := strconv.ParseFloat(value, 64); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return nil
 			} else {
 				return v
 			}
 		case "bool":
 			if v, err := strconv.ParseBool(value); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return nil
 			} else {
 				return v
@@ -120,7 +120,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 		case "int":
 			var valList []int64
 			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return err
 			} else {
 				return valList
@@ -128,7 +128,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 		case "float":
 			var valList []float64
 			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return err
 			} else {
 				return valList
@@ -136,7 +136,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 		case "bool":
 			var valList []bool
 			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return err
 			} else {
 				return valList
@@ -144,7 +144,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 		case "string":
 			var valList []string
 			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Println(err)
+				aL.Logger.Warn(err)
 				return err
 			} else {
 				return valList
@@ -284,13 +284,21 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	extraVars["spark_extra_jars"] = []map[string]string{}
 	if extraVars[SetDeployService("cassandra")] == true {
 		cassandraJar := aL.GetCassandraConnectorJar(extraVars["spark_version"].(string))
-		extraJars = append(extraJars, aL.AddJar(cassandraJar))
+		alAddJar, err := aL.AddJar(cassandraJar)
+		if err != nil {
+			return nil, err
+		}
+		extraJars = append(extraJars, alAddJar)
 	}
 
 	//TODO: change this
 	if extraVars[SetDeployService("elastic")] == true {
 		elasticJar := aL.GetElasticConnectorJar()
-		extraJars = append(extraJars, aL.AddJar(elasticJar))
+		alAddJar, err := aL.AddJar(elasticJar)
+		if err != nil {
+			return nil, err
+		}
+		extraJars = append(extraJars, alAddJar)
 	}
 
 	if extraJars != nil {
@@ -354,35 +362,38 @@ func (aL LauncherServer) RunAnsible(cmd string, args []string, stdout io.Writer,
 
 	err := os.Setenv(utils.AnsibleConfigVar, utils.AnsibleConfigPath)
 	if err != nil {
-		aL.Logger.Fatalln(err)
+		aL.Logger.Warn(err)
+		return false, err
 	}
 
 	if err := prepCmd.Start(); err != nil {
+		aL.Logger.Warn(err)
 		return false, err
 	}
 
 	if err := prepCmd.Wait(); err != nil {
-		aL.Logger.Println("Error: ", err)
+		aL.Logger.Warn(err)
 		return false, err
 	}
 	return true, nil
 }
 
+// SetOsVar TODO It's necessary to do correct error handling
 func (aL LauncherServer) SetOsVar(utilVal string, secretValues *vaultapi.Secret) string {
 	osCred := secretValues.Data[utilVal].(string)
 	err := os.Setenv(utilVal, osCred)
 	if err != nil {
-		aL.Logger.Fatalln(err)
+		aL.Logger.Fatal(err)
 	}
 	return osCred
 }
 
 // main.go:
-func (aL LauncherServer) MakeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) *utils.OsCredentials {
+func (aL LauncherServer) MakeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) (*utils.OsCredentials, error) {
 	secretValues, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
-		aL.Logger.Fatalln(err)
-		return nil
+		aL.Logger.Warn(err)
+		return nil, err
 	}
 	var osCreds utils.OsCredentials
 	switch version {
@@ -452,20 +463,19 @@ func (aL LauncherServer) MakeOsCreds(keyName string, vaultClient *vaultapi.Clien
 			osCreds.OsSwiftPassword = ""
 		}
 	}
-	return &osCreds
+	return &osCreds, nil
 }
 
-func (aL LauncherServer) MakeDockerCreds(keyName string, vaultClient *vaultapi.Client) *utils.DockerCredentials {
+func (aL LauncherServer) MakeDockerCreds(keyName string, vaultClient *vaultapi.Client) (*utils.DockerCredentials, error) {
 	secrets, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
-		aL.Logger.Fatalln(err)
-		return nil
+		return nil, err
 	}
 	var res utils.DockerCredentials
 	res.Url = secrets.Data[utils.DockerLoginUlr].(string)
 	res.User = secrets.Data[utils.DockerLoginUser].(string)
 	res.Password = secrets.Data[utils.DockerLoginPassword].(string)
-	return &res
+	return &res, nil
 }
 
 func (aL LauncherServer) CheckSshKey(keyName string, vaultClient *vaultapi.Client) error {
@@ -473,32 +483,28 @@ func (aL LauncherServer) CheckSshKey(keyName string, vaultClient *vaultapi.Clien
 	if _, err := os.Stat(sshPath); os.IsNotExist(err) {
 		secretValues, err := vaultClient.Logical().Read(keyName)
 		if err != nil {
-			aL.Logger.Fatalln(err)
 			return err
 		}
 		sshKey := secretValues.Data[utils.VaultSshKey].(string)
 		f, err := os.Create(sshPath)
 		if err != nil {
-			aL.Logger.Fatalln(err)
 			return err
 		}
 		err = os.Chmod(sshPath, 0777)
 		if err != nil {
-			aL.Logger.Fatalln(err)
+			return err
 		}
 		_, err = f.WriteString(sshKey)
 		if err != nil {
-			aL.Logger.Fatalln(err)
 			return err
 		}
 		err = f.Close()
 		if err != nil {
-			aL.Logger.Fatalln(err)
 			return err
 		}
 		err = os.Chmod(sshPath, 0400)
 		if err != nil {
-			aL.Logger.Fatalln(err)
+			return err
 		}
 	}
 	return nil

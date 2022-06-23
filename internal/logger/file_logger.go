@@ -1,10 +1,11 @@
 package logger
 
 import (
+	"errors"
+	"fmt"
 	"github.com/ispras/michman/internal/utils"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -43,7 +44,6 @@ func (fl FileLogger) PrepClusterLogsWriter() (io.Writer, error) {
 func (fl FileLogger) FinClusterLogsWriter() error {
 	err := fl.logFile.Close()
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	return nil
@@ -56,8 +56,7 @@ func (fl FileLogger) ReadClusterLogs() (string, error) {
 	}
 	err = fl.logFile.Close()
 	if err != nil {
-		log.Println("Error in closing cluster logs file:")
-		log.Println(err)
+		return "", errors.New(fmt.Sprintf("Error in closing cluster logs file: %s", err))
 	}
 	return string(clusterLogs), nil
 }

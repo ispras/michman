@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -69,7 +70,6 @@ func SetConfigPath(configPath string) {
 func (Cfg *Config) MakeCfg() error {
 	path, err := os.Getwd()
 	if err != nil {
-		log.Fatalln(err)
 		return err
 	}
 
@@ -88,29 +88,29 @@ func (Cfg *Config) MakeCfg() error {
 
 	if Cfg.UseAuth && Cfg.AuthorizationModel != NoneAuthMode && Cfg.AuthorizationModel != OAuth2Mode &&
 		Cfg.AuthorizationModel != KeystoneMode {
-		log.Fatalln("For config parameter 'authorization_model' are supported only 'none', 'oauth2' or 'keystone' values")
+		return errors.New("For config parameter 'authorization_model' are supported only 'none', 'oauth2' or 'keystone' values")
 	}
 
 	//check hydra address for oauth2 mode
 	if Cfg.UseAuth && Cfg.AuthorizationModel == OAuth2Mode {
 		if Cfg.HydraAdmin == "" || Cfg.HydraClient == "" {
-			log.Fatalln("For oauth2 authorization mode config parameters 'hydra_admin' and 'hydra_client' couldn't be empty")
+			return errors.New("For oauth2 authorization mode config parameters 'hydra_admin' and 'hydra_client' couldn't be empty")
 		}
 	}
 
 	//check keystone address for keystone mode
 	if Cfg.UseAuth && Cfg.AuthorizationModel == KeystoneMode && Cfg.KeystoneAddr == "" {
-		log.Fatalln("For keystone authorization mode config parameters 'keystone_addr' couldn't be empty")
+		return errors.New("For keystone authorization mode config parameters 'keystone_addr' couldn't be empty")
 	}
 
 	//check logs output values
 	if Cfg.LogsOutput != LogsFileOutput && Cfg.LogsOutput != LogsLogstashOutput {
-		log.Fatalln("For config parameter 'logs_output` are supported only 'file' or 'logstash' values")
+		return errors.New("For config parameter 'logs_output` are supported only 'file' or 'logstash' values")
 	}
 
 	//check file path not empty if logs output is 'file'
 	if Cfg.LogsOutput == LogsFileOutput && Cfg.LogsFilePath == "" {
-		log.Fatalln("'logs_file_path' couldn't be empty")
+		return errors.New("'logs_file_path' couldn't be empty")
 	}
 
 	//check if directory for logs exists and create it if not
@@ -118,14 +118,14 @@ func (Cfg *Config) MakeCfg() error {
 		if _, err := os.Stat(Cfg.LogsFilePath); os.IsNotExist(err) {
 			err := os.Mkdir(Cfg.LogsFilePath, os.ModePerm)
 			if err != nil {
-				log.Fatalln(err)
+				return err
 			}
 		}
 	}
 
 	//check logstash addr not empty
 	if Cfg.LogsOutput == LogsLogstashOutput && (Cfg.LogstashAddr == "" || Cfg.ElasticAddr == "") {
-		log.Fatalln("For logstash logs output config parameters 'logstash_addr' and 'elastic_addr' couldn't be empty")
+		return errors.New("For logstash logs output config parameters 'logstash_addr' and 'elastic_addr' couldn't be empty")
 	}
 	return nil
 }

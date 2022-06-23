@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/internal/auth"
@@ -53,8 +52,9 @@ func main() {
 		Level: logrus.InfoLevel,
 		Formatter: &logger.Formatter{
 			TimestampFormat: time.Stamp,
+			NoColors:        true,
 			NoFieldsColors:  true,
-			ShowFullLevel:   true,
+			ShowFullLevel:   false,
 			LoggerName:      "HTTP_SERVER",
 		},
 	}
@@ -64,8 +64,9 @@ func main() {
 		Level: logrus.InfoLevel,
 		Formatter: &logger.Formatter{
 			TimestampFormat: time.Stamp,
+			NoColors:        true,
 			NoFieldsColors:  true,
-			ShowFullLevel:   true,
+			ShowFullLevel:   false,
 			LoggerName:      "GRPC_CLIENT",
 		},
 	}
@@ -75,13 +76,14 @@ func main() {
 		Level: logrus.InfoLevel,
 		Formatter: &logger.Formatter{
 			TimestampFormat: time.Stamp,
+			NoColors:        true,
 			NoFieldsColors:  true,
-			ShowFullLevel:   true,
+			ShowFullLevel:   false,
 			LoggerName:      "AUTHORIZE_CLIENT",
 		},
 	}
 
-	httpLogger.Println(fmt.Sprintf("Build version: %v", handlers.VersionID))
+	httpLogger.Infof("Build version: %v", handlers.VersionID)
 
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
@@ -105,13 +107,15 @@ func main() {
 	//initialize db connection
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		httpLogger.Println("Can't create couchbase communicator")
-		os.Exit(1)
+		httpLogger.Fatal("Can't create couchbase communicator")
 	}
 
 	gc := grpc_client.GrpcClient{Db: db}
 	gc.SetLogger(grpcLogger)
-	gc.SetConnection(*launcherAddr)
+	err = gc.SetConnection(*launcherAddr)
+	if err != nil {
+		grpcLogger.Fatal(err)
+	}
 
 	//setup session manager
 	sessionManager := scs.New()
@@ -124,7 +128,10 @@ func main() {
 	}
 
 	var usedAuth auth.Authenticate
-	usedAuth = auth.InitAuth(httpLogger, config.AuthorizationModel)
+	usedAuth, err = auth.InitAuth(httpLogger, config.AuthorizationModel)
+	if err != nil {
+		httpLogger.Fatal(err)
+	}
 
 	router := httprouter.New()
 	RespHandler := handlers.HttpResponseHandler{}
@@ -138,7 +145,7 @@ func main() {
 	authorizeClient.CreateRoutes()
 	hS.CreateRoutes()
 
-	httpLogger.Println("Server starts to work")
+	httpLogger.Info("Server starts to work")
 	//serve with session and authorization if authentication is used
 	if config.UseAuth {
 		httpLogger.Fatal(http.ListenAndServe(":"+*restPort,

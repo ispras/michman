@@ -1,39 +1,44 @@
 package ansible
 
 import (
+	"errors"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 )
 
 func (aL *LauncherServer) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRunner_DeleteServer) error {
-	aL.Logger.Print("Getting delete cluster request...")
-	aL.Logger.Print("Cluster info:")
+	aL.Logger.Info("Getting delete cluster request...")
 	in.PrintClusterData(aL.Logger)
 
-	aL.Logger.Print("Getting vault secrets...")
+	aL.Logger.Info("Getting vault secrets...")
 
-	vaultClient, vaultCfg := aL.VaultCommunicator.ConnectVault()
-	if vaultClient == nil {
-		aL.Logger.Fatalln("Error: can't connect to vault secrets storage")
-		return nil
+	vaultClient, vaultCfg, err := aL.VaultCommunicator.ConnectVault()
+	if vaultClient == nil || err != nil {
+		aL.Logger.Warn("Error: can't connect to vault secrets storage")
+		return errors.New("Can't connect to vault secrets storage")
 	}
 
 	keyName := vaultCfg.OsKey
 
-	osCreds := aL.MakeOsCreds(keyName, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil {
-		return nil
+	osCreds, err := aL.MakeOsCreds(keyName, vaultClient, aL.Config.OsVersion)
+	if osCreds == nil || err != nil {
+		aL.Logger.Warn(err)
+		return err
 	}
 
-	err := aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
+	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
-		aL.Logger.Fatalln(err)
-		return nil
+		aL.Logger.Warn(err)
+		return err
 	}
 
 	var dockRegCreds *utils.DockerCredentials
 	if aL.Config.SelfignedRegistry || aL.Config.GitlabRegistry {
-		dockRegCreds = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		dockRegCreds, err = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		if err != nil {
+			aL.Logger.Warn(err)
+			return err
+		}
 	}
 
 	ansibleStatus := aL.Run(in, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionDelete)
@@ -46,32 +51,36 @@ func (aL *LauncherServer) Delete(in *protobuf.Cluster, stream protobuf.AnsibleRu
 }
 
 func (aL *LauncherServer) Update(in *protobuf.Cluster, stream protobuf.AnsibleRunner_UpdateServer) error {
-	aL.Logger.Print("Getting update cluster request...")
-	aL.Logger.Print("Cluster info:")
+	aL.Logger.Info("Getting update cluster request...")
 	in.PrintClusterData(aL.Logger)
 
-	aL.Logger.Print("Getting vault secrets...")
+	aL.Logger.Info("Getting vault secrets...")
 
-	vaultClient, vaultCfg := aL.VaultCommunicator.ConnectVault()
-	if vaultClient == nil {
-		aL.Logger.Fatalln("Error: can't connect to vault secrets storage")
-		return nil
+	vaultClient, vaultCfg, err := aL.VaultCommunicator.ConnectVault()
+	if vaultClient == nil || err != nil {
+		aL.Logger.Warn("Error: can't connect to vault secrets storage")
+		return errors.New("Can't connect to vault secrets storage")
 	}
 
-	osCreds := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil {
-		return nil
+	osCreds, err := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
+	if osCreds == nil || err != nil {
+		aL.Logger.Warn(err)
+		return err
 	}
 
-	err := aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
+	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
-		aL.Logger.Fatalln(err)
-		return nil
+		aL.Logger.Warn(err)
+		return err
 	}
 
 	var dockRegCreds *utils.DockerCredentials
 	if aL.Config.SelfignedRegistry || aL.Config.GitlabRegistry {
-		dockRegCreds = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		dockRegCreds, err = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		if err != nil {
+			aL.Logger.Warn(err)
+			return err
+		}
 	}
 
 	ansibleStatus := aL.Run(in, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionUpdate)
@@ -83,30 +92,34 @@ func (aL *LauncherServer) Update(in *protobuf.Cluster, stream protobuf.AnsibleRu
 }
 
 func (aL *LauncherServer) Create(in *protobuf.Cluster, stream protobuf.AnsibleRunner_CreateServer) error {
-	aL.Logger.Print("Getting create cluster request...")
-	aL.Logger.Print("Cluster info:")
+	aL.Logger.Info("Getting create cluster request...")
 	in.PrintClusterData(aL.Logger)
 
-	aL.Logger.Print("Getting vault secrets...")
-	vaultClient, vaultCfg := aL.VaultCommunicator.ConnectVault()
-	if vaultClient == nil {
-		aL.Logger.Fatalln("Error: can't connect to vault secrets storage")
-		return nil
+	aL.Logger.Info("Getting vault secrets...")
+	vaultClient, vaultCfg, err := aL.VaultCommunicator.ConnectVault()
+	if vaultClient == nil || err != nil {
+		aL.Logger.Warn("Error: can't connect to vault secrets storage")
+		return errors.New("Can't connect to vault secrets storage")
 	}
 
-	osCreds := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil {
-		return nil
+	osCreds, err := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
+	if osCreds == nil || err != nil {
+		aL.Logger.Warn(err)
+		return err
 	}
 
-	err := aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
+	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
-		aL.Logger.Fatalln(err)
-		return nil
+		aL.Logger.Warn(err)
+		return err
 	}
 	var dockRegCreds *utils.DockerCredentials
 	if aL.Config.SelfignedRegistry || aL.Config.GitlabRegistry {
-		dockRegCreds = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		dockRegCreds, err = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		if err != nil {
+			aL.Logger.Warn(err)
+			return err
+		}
 	}
 
 	ansibleStatus := aL.Run(in, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionCreate)

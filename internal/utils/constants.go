@@ -34,6 +34,7 @@ const (
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"
 	AnsibleFail string = "FAIL"
+	RunFail     string = "RUN_FAIL"
 
 	//supported actions for ansible
 	AnsibleLaunch  = "launch"
@@ -136,6 +137,11 @@ const (
 	ActionCreate = "create"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
+
+	ColorReset  = "\033[0m"
+	ColorRed    = "\033[31m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
 )
 
 var (

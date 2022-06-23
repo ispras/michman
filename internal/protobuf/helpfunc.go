@@ -5,16 +5,17 @@ import (
 )
 
 func (c Cluster) PrintClusterData(Logger *logrus.Logger) {
-	Logger.Printf("Cluster with name: %s, ID: %s,\n", c.Name, c.ID)
-	Logger.Printf("status: %s, type: %s and services:\n", c.EntityStatus, c.ClusterType)
+	Logger.Info("Cluster info:")
+	Logger.Infof("----Cluster name: %s", c.Name)
+	Logger.Infof("----Cluster ID: %s", c.ID)
+	Logger.Infof("----Cluster status: %s", c.EntityStatus)
+	Logger.Info("Services:")
 
 	for i := 0; i < len(c.Services); i++ {
 		c.Services[i].PrintServiceData(Logger)
 	}
-
-	Logger.Print("\n")
 }
 
 func (s Service) PrintServiceData(Logger *logrus.Logger) {
-	Logger.Printf("----Service with name: %s, state: %s\n", s.Name, s.ServiceState)
+	Logger.Infof("----Service name: %s, type: %s", s.Name, s.Type)
 }

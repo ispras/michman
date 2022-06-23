@@ -15,33 +15,38 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 	//constructing ansible-playbook command
 	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, osCreds, osConfig, action)
 	if err != nil {
-		logger.Println(err)
+		logger.Warn(err)
+		return utils.RunFail
 	}
 
 	newAnsibleArgs, err := json.Marshal(newExtraVars)
 	if err != nil {
-		logger.Println(err)
+		logger.Warn(err)
+		return utils.RunFail
 	}
 
 	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(newAnsibleArgs)}
 	//saving cluster to database
-	logger.Print("Writing new cluster to db...")
+	logger.Info("Writing new cluster to db...")
 	err = aL.Db.WriteCluster(cluster)
 	if err != nil {
-		logger.Println(err)
+		logger.Warn(err)
+		return utils.RunFail
 	}
 	// initialize output log
 	cLogger, err := clusterlogger.MakeNewClusterLogger(*osConfig, cluster.ID, action)
 	if err != nil {
-		logger.Fatalln(err)
+		logger.Warn(err)
+		return utils.RunFail
 	}
 	buf, err := cLogger.PrepClusterLogsWriter()
-	logger.Print("Running ansible...")
+	logger.Info("Running ansible...")
 	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, buf, buf)
 	//write cluster logs
 	err = cLogger.FinClusterLogsWriter()
 	if err != nil {
-		logger.Fatalln(err)
+		logger.Warn(err)
+		return utils.RunFail
 	}
 
 	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
@@ -54,12 +59,13 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 
 			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
-				logger.Fatalln(err)
+				logger.Warn(err)
+				return utils.RunFail
 			}
 
 			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
 
-			logger.Print("Running ansible for getting master IP...")
+			logger.Info("Running ansible for getting master IP...")
 			var outb bytes.Buffer
 			aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			masterIp = FindIP(outb.String())
@@ -74,10 +80,11 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 			}
 			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
-				logger.Fatalln(err)
+				logger.Warn(err)
+				return utils.RunFail
 			}
 			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-			logger.Print("Running ansible for getting storage IP...")
+			logger.Info("Running ansible for getting storage IP...")
 			var outb bytes.Buffer
 			aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			storageIp = FindIP(outb.String())
@@ -91,10 +98,11 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 			}
 			ipExtraVars, err := json.Marshal(v)
 			if err != nil {
-				logger.Fatalln(err)
+				logger.Warn(err)
+				return utils.RunFail
 			}
 			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-			logger.Print("Running ansible for getting monitoring IP...")
+			logger.Info("Running ansible for getting monitoring IP...")
 			var outb bytes.Buffer
 			aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			monitoringIp = FindIP(outb.String())
@@ -103,7 +111,8 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 		//filling services URLs:
 		sTypes, err := aL.Db.ListServicesTypes()
 		if err != nil {
-			logger.Fatalln(err)
+			logger.Warn(err)
+			return utils.RunFail
 		}
 
 		for i, service := range cluster.Services {
@@ -130,31 +139,32 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 		}
 
 		if monitoringIp != "" {
-			logger.Print("Monitoring IP is: ", monitoringIp)
+			logger.Info("Monitoring IP is: ", monitoringIp)
 		}
 
 		if masterIp != "" {
-			logger.Print("Master IP is: ", masterIp)
+			logger.Info("Master IP is: ", masterIp)
 			cluster.MasterIP = masterIp
 		}
 
 		if storageIp != "" {
-			logger.Print("Storage IP is: ", storageIp)
+			logger.Info("Storage IP is: ", storageIp)
 		}
 
-		logger.Print("Saving IPs and URLs for services...")
+		logger.Info("Saving IPs and URLs for services...")
 		err = aL.Db.WriteCluster(cluster)
 		if err != nil {
-			logger.Fatalln(err)
+			logger.Warn(err)
+			return utils.RunFail
 		}
 
 	}
 
 	if res {
-		logger.Print("Launch: OK")
+		logger.Info("Launch: OK")
 		return utils.AnsibleOk
 	} else {
-		logger.Print("Ansible has failed, check logs for more information.")
+		logger.Info("Ansible has failed, check logs for more information.")
 		return utils.AnsibleFail
 	}
 }

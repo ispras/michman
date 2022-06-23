@@ -38,8 +38,9 @@ func main() {
 		Level: logrus.InfoLevel,
 		Formatter: &logger.Formatter{
 			TimestampFormat: time.Stamp,
+			NoColors:        true,
 			NoFieldsColors:  true,
-			ShowFullLevel:   true,
+			ShowFullLevel:   false,
 			LoggerName:      "LAUNCHER",
 		},
 	}
@@ -47,11 +48,11 @@ func main() {
 	vaultCommunicator := utils.VaultCommunicator{}
 	err = vaultCommunicator.Init()
 	if err != nil {
-		panic(err)
+		LauncherLogger.Fatal(err)
 	}
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		panic("Can't create database connection. Exit...")
+		LauncherLogger.Fatal("Can't create database connection. Exit...")
 	}
 	lis, err := net.Listen("tcp", ":"+*launcherPort)
 	if err != nil {
@@ -64,7 +65,7 @@ func main() {
 
 	protobuf.RegisterAnsibleRunnerServer(gas, &aService)
 
-	aService.Logger.Print("Ansible runner start work...\n")
+	aService.Logger.Info("Ansible runner start work...")
 	if err := gas.Serve(lis); err != nil {
 		aService.Logger.Fatalf("failed to serve: %v", err)
 	}

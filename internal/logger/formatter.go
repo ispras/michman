@@ -15,7 +15,7 @@ type Formatter struct {
 	// FieldsOrder - default: fields sorted alphabetically
 	FieldsOrder []string
 
-	// TimestampFormat - default: "2022/02/14 15:36:09"
+	// TimestampFormat - default: time.Stamp = "Mon dd hh:mm:ss"
 	TimestampFormat string
 
 	// HideKeys - show [fieldValue] instead of [fieldKey:fieldValue]

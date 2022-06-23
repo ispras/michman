@@ -4,7 +4,6 @@ import (
 	vaultapi "github.com/hashicorp/vault/api"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -55,7 +54,7 @@ type HydraCredentials struct {
 }
 
 type SecretStorage interface {
-	ConnectVault() (*vaultapi.Client, *Config)
+	ConnectVault() (*vaultapi.Client, *Config, error)
 }
 
 type VaultCommunicator struct {
@@ -65,7 +64,7 @@ type VaultCommunicator struct {
 func (vc *VaultCommunicator) Init() error {
 	path, err := os.Getwd()
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	var vaultConfigPath string
@@ -77,19 +76,19 @@ func (vc *VaultCommunicator) Init() error {
 
 	vaultBs, err := ioutil.ReadFile(vaultConfigPath)
 	if err := yaml.Unmarshal(vaultBs, &vc.config); err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	return nil
 }
 
-func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *Config) {
+func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *Config, error) {
 	client, err := vaultapi.NewClient(&vaultapi.Config{
 		Address: vc.config.VaultAddr,
 	})
 	if err != nil {
-		log.Fatalln(err)
+		return nil, nil, err
 	}
 
 	client.SetToken(vc.config.Token)
-	return client, &vc.config
+	return client, &vc.config, nil
 }

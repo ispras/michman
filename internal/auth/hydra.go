@@ -69,8 +69,8 @@ func NewHydraAuthenticate() (Authenticate, error) {
 	hydra.hydraAdminUrl = hydra.config.HydraAdmin
 	hydra.hydraClientUrl = hydra.config.HydraClient
 
-	client, vaultCfg := hydra.vaultCommunicator.ConnectVault()
-	if client == nil {
+	client, vaultCfg, err := hydra.vaultCommunicator.ConnectVault()
+	if client == nil || err != nil {
 		return nil, errors.New("Error: can't connect to vault secrets storage")
 	}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -94,7 +93,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 					//get project which user wants to access
 					projectIdOrName, err := getProjectIdOrName(r.URL.Path)
 					if err != nil {
-						auth.Logger.Print(err)
+						auth.Logger.Warn(err)
 						w.WriteHeader(http.StatusInternalServerError)
 						w.Write([]byte("ERROR"))
 						return
@@ -102,7 +101,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 
 					project, err := auth.getProject(projectIdOrName)
 					if err != nil {
-						auth.Logger.Print(err)
+						auth.Logger.Warn(err)
 						w.WriteHeader(http.StatusInternalServerError)
 						w.Write([]byte("ERROR"))
 						return
@@ -141,7 +140,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			// casbin enforcer
 			res, err := e.EnforceSafe(role, r.URL.Path, r.Method)
 			if err != nil {
-				log.Print("ERROR: ", err.Error())
+				auth.Logger.Warn("ERROR: ", err.Error())
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte("ERROR"))
 				return
@@ -149,7 +148,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			if res {
 				next.ServeHTTP(w, r)
 			} else {
-				log.Print("ERROR: ", "unauthorized")
+				auth.Logger.Warn("ERROR: ", "unauthorized")
 				w.WriteHeader(http.StatusForbidden)
 				w.Write([]byte("FORBIDDEN"))
 				return
@@ -165,14 +164,14 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, par
 	w, err := auth.Auth.SetAuth(auth.SessionManager, w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		auth.Logger.Println(err)
+		auth.Logger.Warn(err)
 		return
 	}
 
 	g := auth.SessionManager.GetString(r.Context(), utils.GroupKey)
 
-	auth.Logger.Println("Authentication success!")
-	auth.Logger.Println("User groups are: " + g)
+	auth.Logger.Info("Authentication success!")
+	auth.Logger.Info("User groups are: " + g)
 
 	var userGroups string
 	if g == "" {
@@ -185,7 +184,7 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, par
 	err = enc.Encode("Authentication success! " + userGroups)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		auth.Logger.Print(err)
+		auth.Logger.Warn(err)
 		return
 	}
 

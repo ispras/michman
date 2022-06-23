@@ -32,8 +32,8 @@ type CouchDatabase struct {
 func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 	cb := new(CouchDatabase)
 	cb.VaultCommunicator = vaultCom
-	client, vaultCfg := cb.VaultCommunicator.ConnectVault()
-	if client == nil {
+	client, vaultCfg, err := cb.VaultCommunicator.ConnectVault()
+	if client == nil || err != nil {
 		return nil, errors.New("Error: can't connect to vault secrets storage")
 	}
 
@@ -98,8 +98,8 @@ func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
 
 func (db *CouchDatabase) getCouchCluster() error {
 	if db.auth == nil {
-		client, vaultCfg := db.VaultCommunicator.ConnectVault()
-		if client == nil {
+		client, vaultCfg, err := db.VaultCommunicator.ConnectVault()
+		if client == nil || err != nil {
 			return errors.New("Error: can't connect to vault secrets storage")
 		}
 
