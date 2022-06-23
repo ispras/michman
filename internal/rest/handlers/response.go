@@ -3,14 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/ispras/michman/internal/database"
+	"github.com/ispras/michman/internal/utils"
 	"net/http"
 	"strconv"
 )
 
 const (
-	ResponseOkCode                         = 0
-	ResponseNoContentCode                  = 1
+	ResponseOkCode                         = 1
+	ResponseCreatedCode                    = 2
 	JSONerrorIncorrect                     = 11
 	JSONerrorIncorrectMessage              = "Incorrect JSON"
 	JSONerrorIncorrectField                = 12
@@ -19,11 +20,14 @@ const (
 	JSONerrorMissFieldMessage              = "Required field is empty"
 	DBerror                                = 21
 	DBerrorMessage                         = "DB error"
+	DBemptyField                           = "Major field is empty"
 	DBemptyHealthCheck                     = "ServiceType.HealthCheck field is empty"
 	LibErrorUUID                           = 31
 	LibErrorUUIDMessage                    = "UUID generating error"
 	LibErrorStructToJson                   = 32
 	LibErrorStructToJsonMessage            = "Struct to JSON converting error"
+	LibErrorStructToJsonResponse           = 32
+	LibErrorStructToJsonResponseMessage    = "Struct to JSON converting error in Response Handler"
 	UserErrorProjectUnmodField             = 41
 	UserErrorProjectUnmodFieldMessage      = "This fields of project or cluster can't be modified"
 	UserErrorProjectWithClustersDel        = 42
@@ -61,14 +65,15 @@ const (
 // ResponseHandler handling interface
 type ResponseHandler interface {
 	Handle(w http.ResponseWriter, code int, message string, err error) (string, error)
-	ResponseBadRequest(logger *logrus.Logger, w http.ResponseWriter, code int, message string, resp_err error)
-	ResponseOK(logger *logrus.Logger, w http.ResponseWriter, msgStruct interface{}, requestName string)
-	ResponseNoContent(logger *logrus.Logger, w http.ResponseWriter, msg string)
 }
 
 type DetailStruct struct {
 	Message string
 	Data    interface{}
+}
+
+type IDs struct {
+	ID string
 }
 
 type ResponseStruct struct {
@@ -95,6 +100,7 @@ func (httpEH HttpResponseHandler) Handle(w http.ResponseWriter, code int, messag
 		Title: message,
 		Detail: DetailStruct{
 			Message: receivedError,
+			Data:    "No data",
 		},
 	}
 	enc := json.NewEncoder(w)
@@ -104,38 +110,15 @@ func (httpEH HttpResponseHandler) Handle(w http.ResponseWriter, code int, messag
 	return errMessage, errr
 }
 
-func (httpEH HttpResponseHandler) ResponseBadRequest(logger *logrus.Logger, w http.ResponseWriter, code int, title string, respErr error) {
-	respStruct := ResponseStruct{
-		Type:   strconv.Itoa(code),
-		Status: http.StatusBadRequest,
-		Title:  title,
-		Detail: DetailStruct{
-			Message: "No error message",
-		},
-	}
-
-	if respErr != nil {
-		respStruct.Detail.Message = respErr.Error()
-	}
-
-	w.WriteHeader(respStruct.Status)
-	enc := json.NewEncoder(w)
-	err := enc.Encode(respStruct)
-	if err != nil {
-		httpEH.ResponseBadRequest(logger, w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	logger.Println(respStruct)
-}
-
-func (httpEH HttpResponseHandler) ResponseOK(logger *logrus.Logger, w http.ResponseWriter, msgStruct interface{}, requestName string) {
+// ResponseOK (The 200 (OK) status code indicates that the request has succeeded)
+func ResponseOK(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 	respStruct := ResponseStruct{
 		Type:   strconv.Itoa(ResponseOkCode),
 		Status: http.StatusOK,
-		Title:  requestName,
+		Title:  "Request: " + requestName,
 		Detail: DetailStruct{
-			Message: "No Details",
+			Message: "Request successful",
+			Data:    "No data",
 		},
 	}
 
@@ -147,20 +130,78 @@ func (httpEH HttpResponseHandler) ResponseOK(logger *logrus.Logger, w http.Respo
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		httpEH.ResponseBadRequest(logger, w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		ResponseBadRequest(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	logger.Info(respStruct)
 }
 
-func (httpEH HttpResponseHandler) ResponseNoContent(logger *logrus.Logger, w http.ResponseWriter, message string) {
+// ResponseCreated (The 201 (Created) status code indicates that the request has been fulfilled
+// and has resulted in one or more new resources being created.)
+func ResponseCreated(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 	respStruct := ResponseStruct{
-		Type:   strconv.Itoa(ResponseNoContentCode),
-		Status: http.StatusNoContent,
-		Title:  message,
+		Type:   strconv.Itoa(ResponseCreatedCode),
+		Status: http.StatusCreated,
+		Title:  "Request: " + requestName,
 		Detail: DetailStruct{
-			Message: "No Content",
+			Message: "Request successful",
+			Data:    "No data",
+		},
+	}
+
+	if msgStruct != nil {
+		respStruct.Detail.Data = msgStruct
+	}
+
+	w.WriteHeader(respStruct.Status)
+	enc := json.NewEncoder(w)
+	err := enc.Encode(respStruct)
+	if err != nil {
+		ResponseBadRequest(w, ErrJsonEncode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
+// ResponseNoContent (The 204 (No Content) status code indicates that the server has successfully fulfilled the request
+// and that there is no additional content to send in the response content.)
+func ResponseNoContent(w http.ResponseWriter) {
+	status := http.StatusNoContent
+
+	w.WriteHeader(status)
+
+	w.Header().Set("Content-Type", "application/json")
+}
+
+// ResponseNotModified (The 304 (Not Modified) status code indicates that a conditional GET or HEAD request has been received
+// and would have resulted in a 200 (OK) response if it were not for the fact that the condition evaluated to false.)
+func ResponseNotModified(w http.ResponseWriter) {
+	status := http.StatusNotModified
+	w.WriteHeader(status)
+
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func findErrorType(err error) int {
+	if HandlerErrorsMap[err] != 0 {
+		return HandlerErrorsMap[err]
+	}
+	if database.DbErrorsMap[err] != 0 {
+		return database.DbErrorsMap[err]
+	}
+	return utils.UnknownError
+}
+
+// ResponseBadRequest The 400 (Bad Request) status code indicates that the server cannot
+// or will not process the request due to something that is perceived to be a client error
+func ResponseBadRequest(w http.ResponseWriter, respErr error) {
+	respStruct := ResponseStruct{
+		Type:   strconv.Itoa(findErrorType(respErr)),
+		Status: http.StatusBadRequest,
+		Title:  respErr.Error(),
+		Detail: DetailStruct{
+			Message: "Bad request",
+			Data:    "No data",
 		},
 	}
 
@@ -168,9 +209,54 @@ func (httpEH HttpResponseHandler) ResponseNoContent(logger *logrus.Logger, w htt
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		httpEH.ResponseBadRequest(logger, w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
+		ResponseBadRequest(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	logger.Info(respStruct)
+}
+
+// ResponseNotFound (The 404 (Not Found) status code indicates that the origin server
+// did not find a current representation for the target resource or is not willing to disclose that one exists)
+func ResponseNotFound(w http.ResponseWriter, respErr error) {
+	respStruct := ResponseStruct{
+		Type:   strconv.Itoa(findErrorType(respErr)),
+		Status: http.StatusNotFound,
+		Title:  respErr.Error(),
+		Detail: DetailStruct{
+			Message: "Object not found",
+			Data:    "No data",
+		},
+	}
+
+	w.WriteHeader(respStruct.Status)
+	enc := json.NewEncoder(w)
+	err := enc.Encode(respStruct)
+	if err != nil {
+		ResponseBadRequest(w, ErrJsonEncode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
+// ResponseInternalError (The 500 (Internal Server Error) status code indicates that
+// the server encountered an unexpected condition that prevented it from fulfilling the request)
+func ResponseInternalError(w http.ResponseWriter, respErr error) {
+	respStruct := ResponseStruct{
+		Type:   strconv.Itoa(findErrorType(respErr)),
+		Status: http.StatusInternalServerError,
+		Title:  respErr.Error(),
+		Detail: DetailStruct{
+			Message: "Object not found",
+			Data:    "No data",
+		},
+	}
+
+	w.WriteHeader(respStruct.Status)
+	enc := json.NewEncoder(w)
+	err := enc.Encode(respStruct)
+	if err != nil {
+		ResponseBadRequest(w, ErrJsonEncode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
 }

@@ -44,7 +44,7 @@ func FlavorGetByIdOrName(hS HttpServer, idOrName string) (*protobuf.Flavor, erro
 
 	var flavor *protobuf.Flavor
 	if isUuid {
-		flavor, err = hS.Db.ReadFlavor(idOrName)
+		flavor, err = hS.Db.ReadFlavorById(idOrName)
 	} else {
 		flavor, err = hS.Db.ReadFlavorByName(idOrName)
 	}
@@ -284,39 +284,39 @@ func IsFlavorUsed(hS HttpServer, flavorName string) (bool, error) {
 }
 
 func ValidateFlavor(hS HttpServer, flavor *protobuf.Flavor) (bool, error) {
-	hS.Logger.Print("Validating flavor...")
+	hS.Logger.Info("Validating flavor...")
 	if flavor.ID != "" {
-		return false, errors.New("flavor ID is generated field")
+		return false, ErrFlavorIdNotEmpty
 	}
 	if flavor.Name == "" {
-		return false, errors.New("flavor Name can't be empty")
+		return false, ErrFlavorEmptyName
 	}
 
-	switch v := interface{}(flavor.VCPUs).(type) {
+	switch interface{}(flavor.VCPUs).(type) {
 	case int32:
 		if flavor.VCPUs <= 0 {
-			return false, errors.New("flavor VCPUs can't be less than or equal to zero")
+			return false, ErrFlavorParamVal("VCPUs")
 		}
 	default:
-		return false, errors.New(fmt.Sprintf("flavor VCPUs can't be %T type!\n", v))
+		return false, ErrFlavorParamType("VCPUs")
 	}
 
-	switch v := interface{}(flavor.RAM).(type) {
+	switch interface{}(flavor.RAM).(type) {
 	case int32:
 		if flavor.RAM <= 0 {
-			return false, errors.New("flavor RAM can't be less than or equal to zero")
+			return false, ErrFlavorParamVal("RAM")
 		}
 	default:
-		return false, errors.New(fmt.Sprintf("flavor RAM can't be %T type!\n", v))
+		return false, ErrFlavorParamType("RAM")
 	}
 
-	switch v := interface{}(flavor.Disk).(type) {
+	switch interface{}(flavor.Disk).(type) {
 	case int32:
 		if flavor.Disk <= 0 {
-			return false, errors.New("flavor Disk can't be less than or equal to zero")
+			return false, ErrFlavorParamVal("Disk")
 		}
 	default:
-		return false, errors.New(fmt.Sprintf("flavor Disk can't be %T type!\n", v))
+		return false, ErrFlavorParamType("RAM")
 	}
 	return true, nil
 }

@@ -41,7 +41,7 @@ type Database interface {
 	UpdateImage(name string, image *proto.Image) error
 	ListImages() ([]proto.Image, error)
 
-	ReadFlavor(flavorID string) (*proto.Flavor, error)
+	ReadFlavorById(flavorID string) (*proto.Flavor, error)
 	ReadFlavorByName(flavorName string) (*proto.Flavor, error)
 	WriteFlavor(flavor *proto.Flavor) error
 	DeleteFlavor(flavorName string) error

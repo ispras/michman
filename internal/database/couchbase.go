@@ -507,19 +507,21 @@ func (db CouchDatabase) ListImages() ([]proto.Image, error) {
 	return result, nil
 }
 
+// flavors
+
 func (db CouchDatabase) WriteFlavor(flavor *proto.Flavor) error {
 	_, err := db.flavorBucket.Upsert(flavor.ID, flavor, 0)
 	if err != nil {
-		return err
+		return ErrWriteObjectByKey
 	}
 	return nil
 }
 
-func (db CouchDatabase) ReadFlavor(flavorID string) (*proto.Flavor, error) {
+func (db CouchDatabase) ReadFlavorById(flavorID string) (*proto.Flavor, error) {
 	var flavor proto.Flavor
 	_, err := db.flavorBucket.Get(flavorID, &flavor)
 	if err != nil {
-		return nil, err
+		return nil, ErrReadObjectByKey
 	}
 	return &flavor, nil
 }
@@ -528,7 +530,7 @@ func (db CouchDatabase) ReadFlavorByName(flavorName string) (*proto.Flavor, erro
 	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, VCPUs, RAM, Disk FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
 	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
 	var flavor proto.Flavor
 	res.Next(&flavor)
@@ -538,27 +540,36 @@ func (db CouchDatabase) ReadFlavorByName(flavorName string) (*proto.Flavor, erro
 func (db CouchDatabase) UpdateFlavor(id string, flavor *proto.Flavor) error {
 	var cas gocb.Cas
 	_, err := db.flavorBucket.Replace(id, flavor, cas, 0)
-	return err
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return nil
 }
 
 func (db CouchDatabase) DeleteFlavor(flavorName string) error {
 	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
 	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
 	if err != nil {
-		return err
+		return ErrQueryExecution
 	}
 	var flavor proto.Flavor
 	res.Next(&flavor)
-	res.Close()
+	err = res.Close()
+	if err != nil {
+		return ErrCloseQuerySession
+	}
 	_, err = db.flavorBucket.Remove(flavor.ID, 0)
-	return err
+	if err != nil {
+		return ErrDeleteObjectByKey
+	}
+	return nil
 }
 
 func (db CouchDatabase) ListFlavors() ([]proto.Flavor, error) {
 	query := gocb.NewN1qlQuery("SELECT ID, Name, VCPUs, RAM, Disk FROM " + flavorBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
 	var row proto.Flavor
 	var result []proto.Flavor
@@ -567,7 +578,10 @@ func (db CouchDatabase) ListFlavors() ([]proto.Flavor, error) {
 		result = append(result, row)
 		row = proto.Flavor{}
 	}
-	rows.Close()
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
 
 	return result, nil
 }
