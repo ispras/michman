@@ -15,46 +15,41 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	var flavor protobuf.Flavor
 	err := json.NewDecoder(r.Body).Decode(&flavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ":", ErrJsonIncorrect.Error())
-		ResponseInternalError(w, ErrJsonIncorrect)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	valid, err := ValidateFlavor(hS, &flavor)
+	err = ValidateFlavor(hS, &flavor)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
 		ResponseBadRequest(w, err)
-		return
-	}
-	if !valid {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrFlavorValidation.Error())
-		ResponseBadRequest(w, ErrFlavorValidation)
 		return
 	}
 
 	dbFlavor, err := FlavorGetByIdOrName(hS, flavor.Name)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if dbFlavor.ID != "" {
-		hS.Logger.Warn("Request ", request, " has succeeded with status ", http.StatusNotModified, ". Object already exists.")
-		ResponseNotModified(w)
+		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrFlavorExisted.Error())
+		ResponseBadRequest(w, ErrFlavorExisted)
 		return
 	}
 
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrUuidLibError.Error())
-		ResponseBadRequest(w, ErrUuidLibError)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
+		ResponseInternalError(w, ErrUuidLibError)
 		return
 	}
 	flavor.ID = iUuid.String()
 	err = hS.Db.WriteFlavor(&flavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusCreated)
@@ -67,8 +62,8 @@ func (hS HttpServer) FlavorsGetList(w http.ResponseWriter, _ *http.Request, _ ht
 
 	flavors, err := hS.Db.ListFlavors()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
@@ -83,8 +78,8 @@ func (hS HttpServer) FlavorGet(w http.ResponseWriter, _ *http.Request, params ht
 
 	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if flavor.Name == "" {
@@ -104,8 +99,8 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	oldFlavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if oldFlavor.Name == "" {
@@ -117,19 +112,19 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	var newFlavor protobuf.Flavor
 	err = json.NewDecoder(r.Body).Decode(&newFlavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrJsonIncorrect.Error())
-		ResponseInternalError(w, ErrJsonIncorrect)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
 	used, err := IsFlavorUsed(hS, oldFlavor.Name)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrJsonIncorrect.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if used {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrFlavorUsed.Error())
+		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrFlavorUsed.Error())
 		ResponseBadRequest(w, ErrFlavorUsed)
 		return
 	}
@@ -142,15 +137,15 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	resFlavor := oldFlavor
 	if newFlavor.Name != "" && newFlavor.Name != oldFlavor.Name {
-		dbFlavor, _ := FlavorGetByIdOrName(hS, newFlavor.Name)
+		dbFlavor, err := FlavorGetByIdOrName(hS, newFlavor.Name)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-			ResponseBadRequest(w, err)
+			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+			ResponseInternalError(w, err)
 			return
 		}
 		if dbFlavor.ID != "" {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotModified)
-			ResponseNotModified(w)
+			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrFlavorExisted.Error())
+			ResponseBadRequest(w, ErrFlavorExisted)
 			return
 		}
 		resFlavor.Name = newFlavor.Name
@@ -174,8 +169,8 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	err = hS.Db.UpdateFlavor(oldFlavor.ID, resFlavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
@@ -190,20 +185,20 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, _ *http.Request, params
 
 	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if flavor.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.NotFound, ": ", ErrFlavorNotFound.Error())
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrFlavorNotFound.Error())
 		ResponseNotFound(w, ErrFlavorNotFound)
 		return
 	}
 
 	used, err := IsFlavorUsed(hS, flavor.Name)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	if used {
@@ -214,8 +209,8 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, _ *http.Request, params
 
 	err = hS.Db.DeleteFlavor(flavor.Name)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		ResponseBadRequest(w, err)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)

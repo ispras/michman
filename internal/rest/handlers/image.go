@@ -69,15 +69,15 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 	if dbImg.ID != "" {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusNotModified, ": ", ErrImageExisted.Error())
-		ResponseNotModified(w)
+		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageExisted.Error())
+		ResponseBadRequest(w, ErrImageExisted)
 		return
 	}
 
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrUuidLibError.Error())
-		ResponseBadRequest(w, ErrUuidLibError)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
+		ResponseInternalError(w, ErrUuidLibError)
 		return
 	}
 	image.ID = iUuid.String()
@@ -116,16 +116,18 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
+
 	used, err := IsImageUsed(hS, oldImg.Name)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
 	}
 	if used {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusNotModified, ": ", ErrImageUsed.Error())
-		ResponseNotModified(w)
+		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageUsed.Error())
+		ResponseBadRequest(w, ErrImageUsed)
 		return
 	}
+
 	if newImg.ID != "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrImageUnmodFields.Error())
 		ResponseBadRequest(w, ErrImageUnmodFields)
@@ -133,7 +135,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	}
 
 	resImg := oldImg
-	if newImg.Name != "" {
+	if newImg.Name != "" && oldImg.Name != newImg.Name {
 		dbImg, err := hS.Db.ReadImage(newImg.Name)
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -141,8 +143,8 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 			return
 		}
 		if dbImg.ID != "" {
-			hS.Logger.Warn("Request ", request, " completed with status ", http.StatusNotModified, ": ", ErrImageExisted.Error())
-			ResponseNotModified(w)
+			hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageExisted.Error())
+			ResponseBadRequest(w, ErrImageExisted)
 			return
 		}
 		resImg.Name = newImg.Name
@@ -188,8 +190,8 @@ func (hS HttpServer) ImageDelete(w http.ResponseWriter, r *http.Request, params 
 		return
 	}
 	if used {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusNotModified, ": ", ErrImageUsed.Error())
-		ResponseNotModified(w)
+		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageUsed.Error())
+		ResponseBadRequest(w, ErrImageUsed)
 		return
 	}
 

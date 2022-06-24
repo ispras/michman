@@ -261,42 +261,42 @@ func IsFlavorUsed(hS HttpServer, flavorName string) (bool, error) {
 	return false, nil
 }
 
-func ValidateFlavor(hS HttpServer, flavor *protobuf.Flavor) (bool, error) {
+func ValidateFlavor(hS HttpServer, flavor *protobuf.Flavor) error {
 	hS.Logger.Info("Validating flavor...")
 	if flavor.ID != "" {
-		return false, ErrFlavorIdNotEmpty
+		return ErrFlavorIdNotEmpty
 	}
 	if flavor.Name == "" {
-		return false, ErrFlavorEmptyName
+		return ErrFlavorEmptyName
 	}
 
 	switch interface{}(flavor.VCPUs).(type) {
 	case int32:
 		if flavor.VCPUs <= 0 {
-			return false, ErrFlavorParamVal("VCPUs")
+			return ErrFlavorParamVal("VCPUs")
 		}
 	default:
-		return false, ErrFlavorParamType("VCPUs")
+		return ErrFlavorParamType("VCPUs")
 	}
 
 	switch interface{}(flavor.RAM).(type) {
 	case int32:
 		if flavor.RAM <= 0 {
-			return false, ErrFlavorParamVal("RAM")
+			return ErrFlavorParamVal("RAM")
 		}
 	default:
-		return false, ErrFlavorParamType("RAM")
+		return ErrFlavorParamType("RAM")
 	}
 
 	switch interface{}(flavor.Disk).(type) {
 	case int32:
 		if flavor.Disk <= 0 {
-			return false, ErrFlavorParamVal("Disk")
+			return ErrFlavorParamVal("Disk")
 		}
 	default:
-		return false, ErrFlavorParamType("RAM")
+		return ErrFlavorParamType("RAM")
 	}
-	return true, nil
+	return nil
 }
 
 func ValidateCluster(hS HttpServer, cluster *protobuf.Cluster) (bool, error) {
