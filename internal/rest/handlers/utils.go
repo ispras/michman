@@ -434,54 +434,44 @@ func CheckMSServices(hS HttpServer, cluster *protobuf.Cluster) (bool, error) {
 	return false, nil
 }
 
-func ValidateImage(hs HttpServer, image *protobuf.Image) (bool, error) {
-	hs.Logger.Print("Validating image...")
+func ValidateImage(hs HttpServer, image *protobuf.Image) error {
+	hs.Logger.Info("Validating image...")
 	if image.ID != "" {
-		msg := "ERROR: image ID is generated field."
-		hs.Logger.Print(msg)
-		return false, errors.New(msg)
+		return ErrImageIdNotEmpty
 	}
 	if image.Name == "" {
-		msg := "ERROR: image Name can't be empty."
-		hs.Logger.Print(msg)
-		return false, errors.New(msg)
+		return ErrImageValidationParam("Name")
 	}
 	if image.AnsibleUser == "" {
-		msg := "ERROR: image AnsibleUser can't be empty."
-		hs.Logger.Print(msg)
-		return false, errors.New(msg)
+		return ErrImageValidationParam("AnsibleUser")
 	}
 	if image.CloudImageID == "" {
-		msg := "ERROR: image ImageID can't be empty."
-		hs.Logger.Print(msg)
-		return false, errors.New(msg)
+		return ErrImageValidationParam("ImageID")
 	}
-	return true, nil
+	return nil
 }
 
-func IsImageUsed(hs HttpServer, name string) bool {
-	hs.Logger.Print("Checking is image used...")
+func IsImageUsed(hs HttpServer, name string) (bool, error) {
+	hs.Logger.Info("Checking is image used...")
 	clusters, err := hs.Db.ListClusters()
 	if err != nil {
-		hs.Logger.Print(err)
-		return false
+		return false, err
 	}
 	for _, c := range clusters {
 		if c.Image == name {
-			return true
+			return true, nil
 		}
 	}
 	projects, err := hs.Db.ListProjects()
 	if err != nil {
-		hs.Logger.Print(err)
-		return false
+		return false, err
 	}
 	for _, p := range projects {
 		if p.DefaultImage == name {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func ValidateProject(project *protobuf.Project) bool {

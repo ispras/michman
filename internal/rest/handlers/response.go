@@ -130,7 +130,7 @@ func ResponseOK(w http.ResponseWriter, msgStruct interface{}, requestName string
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		ResponseBadRequest(w, ErrJsonEncode)
+		ResponseInternalError(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -157,7 +157,7 @@ func ResponseCreated(w http.ResponseWriter, msgStruct interface{}, requestName s
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		ResponseBadRequest(w, ErrJsonEncode)
+		ResponseInternalError(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -209,7 +209,7 @@ func ResponseBadRequest(w http.ResponseWriter, respErr error) {
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		ResponseBadRequest(w, ErrJsonEncode)
+		ResponseInternalError(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -232,7 +232,7 @@ func ResponseNotFound(w http.ResponseWriter, respErr error) {
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		ResponseBadRequest(w, ErrJsonEncode)
+		ResponseInternalError(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -255,7 +255,7 @@ func ResponseInternalError(w http.ResponseWriter, respErr error) {
 	enc := json.NewEncoder(w)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		ResponseBadRequest(w, ErrJsonEncode)
+		ResponseInternalError(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
