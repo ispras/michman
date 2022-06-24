@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"regexp"
@@ -36,13 +35,9 @@ func IsValidType(t string) bool {
 }
 
 func FlavorGetByIdOrName(hS HttpServer, idOrName string) (*protobuf.Flavor, error) {
-	isUuid := true
-	_, err := uuid.Parse(idOrName)
-	if err != nil {
-		isUuid = false
-	}
-
+	isUuid := utils.IsUuid(idOrName)
 	var flavor *protobuf.Flavor
+	var err error
 	if isUuid {
 		flavor, err = hS.Db.ReadFlavorById(idOrName)
 	} else {
@@ -241,26 +236,9 @@ func CheckPort(port int32) bool {
 	return false
 }
 
-func ClusterGet(hS HttpServer, projectID, idORname string) (*protobuf.Cluster, error) {
-	isUuid := true
-	_, err := uuid.Parse(idORname)
-	if err != nil {
-		isUuid = false
-	}
-
-	var cluster *protobuf.Cluster
-	if isUuid {
-		cluster, err = hS.Db.ReadCluster(idORname)
-	} else {
-		cluster, err = hS.Db.ReadClusterByName(projectID, idORname)
-	}
-
-	return cluster, err
-}
-
 func IsFlavorUsed(hS HttpServer, flavorName string) (bool, error) {
 	hS.Logger.Print("Checking is flavor used...")
-	clusters, err := hS.Db.ListClusters()
+	clusters, err := hS.Db.ReadClustersList()
 	if err != nil {
 		return false, err
 	}
@@ -270,7 +248,7 @@ func IsFlavorUsed(hS HttpServer, flavorName string) (bool, error) {
 			return true, nil
 		}
 	}
-	projects, err := hS.Db.ListProjects()
+	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
 		return false, err
 	}
@@ -453,7 +431,7 @@ func ValidateImage(hs HttpServer, image *protobuf.Image) error {
 
 func IsImageUsed(hs HttpServer, name string) (bool, error) {
 	hs.Logger.Info("Checking is image used...")
-	clusters, err := hs.Db.ListClusters()
+	clusters, err := hs.Db.ReadClustersList()
 	if err != nil {
 		return false, err
 	}
@@ -462,7 +440,7 @@ func IsImageUsed(hs HttpServer, name string) (bool, error) {
 			return true, nil
 		}
 	}
-	projects, err := hs.Db.ListProjects()
+	projects, err := hs.Db.ReadProjectsList()
 	if err != nil {
 		return false, err
 	}
@@ -481,24 +459,6 @@ func ValidateProject(project *protobuf.Project) bool {
 		return false
 	}
 	return true
-}
-
-func ProjectGet(hS HttpServer, idORname string) (*protobuf.Project, error) {
-	is_uuid := true
-	_, err := uuid.Parse(idORname)
-	if err != nil {
-		is_uuid = false
-	}
-
-	var project *protobuf.Project
-
-	if is_uuid {
-		project, err = hS.Db.ReadProject(idORname)
-	} else {
-		project, err = hS.Db.ReadProjectByName(idORname)
-	}
-
-	return project, err
 }
 
 func DeleteSpaces(valStr string) string {

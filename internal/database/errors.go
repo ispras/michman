@@ -8,7 +8,6 @@ import (
 var DbErrorsMap = make(map[error]int)
 
 const (
-	// flavors:
 	errWriteObjectByKey  = "error occurred while writing object by key in database"
 	errReadObjectByKey   = "error occurred while getting object by key from database"
 	errQueryExecution    = "error occurred while performing a query"

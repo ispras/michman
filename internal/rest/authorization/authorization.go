@@ -5,10 +5,8 @@ import (
 	"errors"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
-	"github.com/google/uuid"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
-	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -51,24 +49,6 @@ func getProjectIdOrName(urlPath string) (string, error) {
 	return urlKeys[2], nil
 }
 
-func (auth *AuthorizeClient) getProject(idORname string) (*proto.Project, error) {
-	is_uuid := true
-	_, err := uuid.Parse(idORname)
-	if err != nil {
-		is_uuid = false
-	}
-
-	var project *proto.Project
-
-	if is_uuid {
-		project, err = auth.Db.ReadProject(idORname)
-	} else {
-		project, err = auth.Db.ReadProjectByName(idORname)
-	}
-
-	return project, err
-}
-
 func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []string {
 	groups := auth.SessionManager.GetString(r.Context(), groupKey)
 	if groups == "" {
@@ -99,7 +79,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 						return
 					}
 
-					project, err := auth.getProject(projectIdOrName)
+					project, err := auth.Db.ReadProject(projectIdOrName)
 					if err != nil {
 						auth.Logger.Warn(err)
 						w.WriteHeader(http.StatusInternalServerError)

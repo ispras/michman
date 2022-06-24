@@ -3,6 +3,7 @@ package utils
 import (
 	"archive/zip"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"os"
@@ -111,4 +112,13 @@ func ItemExists(slice interface{}, item interface{}) bool {
 	}
 
 	return false
+}
+
+func IsUuid(idOrNotId string) bool {
+	isUuid := true
+	_, err := uuid.Parse(idOrNotId)
+	if err != nil {
+		isUuid = false
+	}
+	return isUuid
 }

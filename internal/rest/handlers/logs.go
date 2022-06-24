@@ -42,7 +42,7 @@ func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, 
 func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	clusterID := params.ByName("clusterID")
 	projectIdOrName := params.ByName("projectIdOrName")
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -56,7 +56,7 @@ func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Requ
 	}
 
 	// reading cluster info from database
-	cluster, err := ClusterGet(hS, project.ID, clusterID)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterID)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)

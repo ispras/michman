@@ -5,20 +5,18 @@ import (
 )
 
 type Database interface {
-	ReadCluster(clusterID string) (*proto.Cluster, error)
-	ReadClusterByName(projectID, clusterName string) (*proto.Cluster, error)
+	ReadCluster(projectIdOrName string, clusterIdOrName string) (*proto.Cluster, error)
 	WriteCluster(cluster *proto.Cluster) error
-	DeleteCluster(clusterID string) error
-	UpdateCluster(*proto.Cluster) error
-	ListClusters() ([]proto.Cluster, error)
+	DeleteCluster(projectIdOrName, clusterIdOrName string) error
+	UpdateCluster(cluster *proto.Cluster) error
+	ReadClustersList() ([]proto.Cluster, error)
 
-	ListProjects() ([]proto.Project, error)
-	ReadProject(projectID string) (*proto.Project, error)
-	ReadProjectByName(projectName string) (*proto.Project, error)
-	ReadProjectClusters(projectID string) ([]proto.Cluster, error)
+	ReadProject(projectIdOrName string) (*proto.Project, error)
+	ReadProjectsList() ([]proto.Project, error)
+	ReadProjectClusters(projectIdOrName string) ([]proto.Cluster, error)
 	WriteProject(project *proto.Project) error
-	UpdateProject(*proto.Project) error
-	DeleteProject(projectID string) error
+	UpdateProject(project *proto.Project) error
+	DeleteProject(projectIdOrName string) error
 
 	ReadTemplate(projectID, id string) (*proto.Template, error)
 	ReadTemplateByName(templateName string) (*proto.Template, error)

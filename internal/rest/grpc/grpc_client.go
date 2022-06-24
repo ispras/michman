@@ -75,7 +75,7 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	}
 
 	gc.logger.Infof("Sending to db-service new status for %s cluster", c.Name)
-	newC, err := gc.Db.ReadCluster(c.ID)
+	newC, err := gc.Db.ReadCluster(c.ProjectID, c.ID)
 	if err != nil {
 		gc.logger.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	}
 
 	gc.logger.Infof("Sending to db-service delete request for %s cluster", c.Name)
-	err = gc.Db.DeleteCluster(c.ID)
+	err = gc.Db.DeleteCluster(c.ProjectID, c.ID)
 	if err != nil {
 		gc.logger.Warn(err)
 	}
@@ -162,7 +162,7 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		return
 	}
-	newC, err := gc.Db.ReadCluster(c.ID)
+	newC, err := gc.Db.ReadCluster(c.ProjectID, c.ID)
 	if err != nil {
 		gc.logger.Fatal(err)
 	}

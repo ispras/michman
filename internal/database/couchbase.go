@@ -3,7 +3,7 @@ package database
 import (
 	"errors"
 	"fmt"
-	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"gopkg.in/couchbase/gocb.v1"
 )
@@ -127,119 +127,252 @@ func (db *CouchDatabase) getCouchCluster() error {
 	return nil
 }
 
-func (db CouchDatabase) ReadProject(projectID string) (*proto.Project, error) {
-	var project proto.Project
+// project:
+
+func readProjectById(db CouchDatabase, projectID string) (*protobuf.Project, error) {
+	var project protobuf.Project
 	_, err := db.projectsBucket.Get(projectID, &project)
 	if err != nil {
-		return nil, err
+		return nil, ErrReadObjectByKey
 	}
-
 	return &project, nil
 }
 
-func (db CouchDatabase) ReadProjectByName(projectName string) (*proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage, " +
-		"DefaultMasterFlavor, DefaultSlavesFlavor, DefaultStorageFlavor, DefaultMonitoringFlavor FROM " + projectBucketName +
-		" WHERE Name = '" + projectName + "'")
-	result, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-
-	var p proto.Project
-	result.Next(&p)
-	result.Close()
-	return &p, nil
-}
-
-func (db CouchDatabase) WriteProject(project *proto.Project) error {
-	_, err := db.projectsBucket.Upsert(project.ID, project, 0)
-	return err
-}
-
-func (db CouchDatabase) ListProjects() ([]proto.Project, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, GroupID, Description, DefaultImage, " +
-		"DefaultMasterFlavor, DefaultSlavesFlavor, DefaultStorageFlavor, DefaultMonitoringFlavor FROM " + projectBucketName)
-	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-	var row proto.Project
-	var result []proto.Project
-
-	for rows.Next(&row) {
-		result = append(result, row)
-		row = proto.Project{}
-	}
-	rows.Close()
-
-	return result, nil
-}
-
-func (db CouchDatabase) ReadProjectClusters(projectID string) ([]proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, ClusterType, NHosts, EntityStatus, Image, Services, MasterIP, Description, " +
-		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName + " WHERE ProjectID = '" + projectID + "'"
+func readProjectByName(db CouchDatabase, projectName string) (*protobuf.Project, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE Name = '%s'", projectBucketName, projectName)
 	query := gocb.NewN1qlQuery(q)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
-	var row proto.Cluster
-	var result []proto.Cluster
-	for rows.Next(&row) {
-		result = append(result, row)
-		row = proto.Cluster{}
-	}
-	rows.Close()
-	return result, nil
-}
-
-func (db CouchDatabase) WriteCluster(cluster *proto.Cluster) error {
-	_, err := db.clustersBucket.Upsert(cluster.ID, cluster, 0)
-	return err
-}
-
-func (db CouchDatabase) ReadCluster(clusterID string) (*proto.Cluster, error) {
-	var cluster proto.Cluster
-	_, err := db.clustersBucket.Get(clusterID, &cluster)
+	var project protobuf.Project
+	rows.Next(&project)
+	err = rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, ErrCloseQuerySession
 	}
-	return &cluster, nil
+	return &project, nil
 }
 
-func (db CouchDatabase) ReadClusterByName(projectID, clusterName string) (*proto.Cluster, error) {
-	q := "SELECT ID, Name, DisplayName, HostURL, EntityStatus, Image, ClusterType, " +
-		"Services, NHosts, MasterIP, ProjectID, Description, " +
-		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName +
-		" WHERE ProjectID = '" + projectID + "' and Name = '" + clusterName + "'"
-	query := gocb.NewN1qlQuery(q)
-	result, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+func deleteProjectById(db CouchDatabase, projectID string) error {
+	_, err := db.projectsBucket.Remove(projectID, 0)
 	if err != nil {
-		return nil, err
-	}
-	var c proto.Cluster
-	result.Next(&c)
-	result.Close()
-	return &c, nil
-}
-
-func (db CouchDatabase) UpdateCluster(cluster *proto.Cluster) error {
-	var cas gocb.Cas
-	_, err := db.clustersBucket.Replace(cluster.ID, cluster, cas, 0)
-	return err
-}
-
-func (db CouchDatabase) DeleteCluster(clusterID string) error {
-	_, err := db.clustersBucket.Remove(clusterID, 0)
-	println(clusterID)
-	if err != nil {
-		return err
+		return ErrDeleteObjectByKey
 	}
 	return nil
 }
 
-func (db CouchDatabase) WriteTemplate(template *proto.Template) error {
+func deleteProjectByName(db CouchDatabase, projectName string) error {
+	project, err := readProjectByName(db, projectName)
+	if err != nil {
+		return err
+	}
+	err = deleteProjectById(db, project.ID)
+	return err
+}
+
+func (db CouchDatabase) ReadProject(projectIdOrName string) (*protobuf.Project, error) {
+	isUuid := utils.IsUuid(projectIdOrName)
+	var project *protobuf.Project
+	var err error
+	if isUuid {
+		project, err = readProjectById(db, projectIdOrName)
+	} else {
+		project, err = readProjectByName(db, projectIdOrName)
+	}
+	return project, err
+}
+
+func (db CouchDatabase) ReadProjectsList() ([]protobuf.Project, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b", projectBucketName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var row protobuf.Project
+	var result []protobuf.Project
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = protobuf.Project{}
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+
+	return result, nil
+}
+
+func (db CouchDatabase) ReadProjectClusters(projectIdOrName string) ([]protobuf.Cluster, error) {
+	isUuid := utils.IsUuid(projectIdOrName)
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE Name = '%s'", clusterBucketName, projectIdOrName)
+	if isUuid {
+		q = fmt.Sprintf("SELECT b.* FROM %s b WHERE ProjectID = '%s'", clusterBucketName, projectIdOrName)
+	}
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var row protobuf.Cluster
+	var result []protobuf.Cluster
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = protobuf.Cluster{}
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+	return result, nil
+}
+
+func (db CouchDatabase) WriteProject(project *protobuf.Project) error {
+	_, err := db.projectsBucket.Upsert(project.ID, project, 0)
+	if err != nil {
+		return ErrWriteObjectByKey
+	}
+	return nil
+}
+
+func (db CouchDatabase) UpdateProject(project *protobuf.Project) error {
+	var cas gocb.Cas
+	_, err := db.projectsBucket.Replace(project.ID, project, cas, 0)
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return err
+}
+
+func (db CouchDatabase) DeleteProject(projectIdOrName string) error {
+	isUuid := utils.IsUuid(projectIdOrName)
+	var err error
+	if isUuid {
+		err = deleteProjectById(db, projectIdOrName)
+	} else {
+		err = deleteProjectByName(db, projectIdOrName)
+	}
+	return err
+}
+
+// cluster:
+
+func readClusterById(db CouchDatabase, clusterID string) (*protobuf.Cluster, error) {
+	var cluster protobuf.Cluster
+	_, err := db.clustersBucket.Get(clusterID, &cluster)
+	if err != nil {
+		return nil, ErrReadObjectByKey
+	}
+	return &cluster, nil
+}
+
+func readClusterByName(db CouchDatabase, projectID string, clusterName string) (*protobuf.Cluster, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE ProjectID = '%s' and Name = '%s'", clusterBucketName, projectID, clusterName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var cluster protobuf.Cluster
+	rows.Next(&cluster)
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+	return &cluster, nil
+}
+
+func deleteClusterById(db CouchDatabase, clusterID string) error {
+	_, err := db.clustersBucket.Remove(clusterID, 0)
+	if err != nil {
+		return ErrDeleteObjectByKey
+	}
+	return nil
+}
+
+func deleteClusterByName(db CouchDatabase, projectIdOrName string, clusterName string) error {
+	project, err := db.ReadProject(projectIdOrName)
+	if err != nil {
+		return err
+	}
+	cluster, err := readClusterByName(db, project.ID, clusterName)
+	if err != nil {
+		return err
+	}
+	err = deleteClusterById(db, cluster.ID)
+	return err
+}
+
+func (db CouchDatabase) ReadCluster(projectIdOrName string, clusterIdOrName string) (*protobuf.Cluster, error) {
+	project, err := db.ReadProject(projectIdOrName)
+	if err != nil {
+		return nil, err
+	}
+	isUuid := utils.IsUuid(clusterIdOrName)
+	var cluster *protobuf.Cluster
+	if isUuid {
+		cluster, err = readClusterById(db, clusterIdOrName)
+	} else {
+		cluster, err = readClusterByName(db, project.ID, clusterIdOrName)
+	}
+	return cluster, err
+}
+
+func (db CouchDatabase) ReadClustersList() ([]protobuf.Cluster, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b", clusterBucketName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var row protobuf.Cluster
+	var result []protobuf.Cluster
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = protobuf.Cluster{}
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+	return result, nil
+}
+
+func (db CouchDatabase) WriteCluster(cluster *protobuf.Cluster) error {
+	_, err := db.clustersBucket.Upsert(cluster.ID, cluster, 0)
+	if err != nil {
+		return ErrWriteObjectByKey
+	}
+	return err
+}
+
+func (db CouchDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
+	var cas gocb.Cas
+	_, err := db.clustersBucket.Replace(cluster.ID, cluster, cas, 0)
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return err
+}
+
+func (db CouchDatabase) DeleteCluster(projectIdOrName, clusterIdOrName string) error {
+	isUuid := utils.IsUuid(clusterIdOrName)
+	var err error
+	if isUuid {
+		err = deleteClusterById(db, clusterIdOrName)
+	} else {
+		err = deleteClusterByName(db, projectIdOrName, clusterIdOrName)
+	}
+	return err
+}
+
+// template:
+
+func (db CouchDatabase) WriteTemplate(template *protobuf.Template) error {
 	_, err := db.templatesBucket.Upsert(template.ID, template, 0)
 	if err != nil {
 		return err
@@ -247,39 +380,19 @@ func (db CouchDatabase) WriteTemplate(template *proto.Template) error {
 	return nil
 }
 
-func (db CouchDatabase) ListClusters() ([]proto.Cluster, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, DisplayName, HostURL, ClusterType, " +
-		"NHosts, EntityStatus, Image, Services, MasterIP, Description, " +
-		"MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor FROM " + clusterBucketName)
-	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-	var row proto.Cluster
-	var result []proto.Cluster
-
-	for rows.Next(&row) {
-		result = append(result, row)
-		row = proto.Cluster{}
-	}
-	rows.Close()
-
-	return result, nil
-}
-
-func (db CouchDatabase) ReadTemplate(projectID, id string) (*proto.Template, error) {
-	var template proto.Template
+func (db CouchDatabase) ReadTemplate(projectID, id string) (*protobuf.Template, error) {
+	var template protobuf.Template
 	_, err := db.templatesBucket.Get(id, &template)
 	if err != nil {
-		return &proto.Template{}, nil
+		return &protobuf.Template{}, nil
 	}
 	if projectID != template.ProjectID {
-		return &proto.Template{}, nil
+		return &protobuf.Template{}, nil
 	}
 	return &template, nil
 }
 
-func (db CouchDatabase) ReadTemplateByName(templateName string) (*proto.Template, error) {
+func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Template, error) {
 	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
 		" NHosts, Description FROM %v WHERE Name = '%v'",
 		templateBucketName, templateName))
@@ -287,16 +400,16 @@ func (db CouchDatabase) ReadTemplateByName(templateName string) (*proto.Template
 	if err != nil {
 		return nil, err
 	}
-	var template proto.Template
+	var template protobuf.Template
 
 	if hasResult := rows.Next(template); !hasResult {
-		template = proto.Template{}
+		template = protobuf.Template{}
 	}
 	rows.Close()
 	return &template, nil
 }
 
-func (db CouchDatabase) ListTemplates(projectID string) ([]proto.Template, error) {
+func (db CouchDatabase) ListTemplates(projectID string) ([]protobuf.Template, error) {
 	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
 		" NHosts, Description FROM %v WHERE ProjectID = '%v'",
 		templateBucketName, projectID))
@@ -304,8 +417,8 @@ func (db CouchDatabase) ListTemplates(projectID string) ([]proto.Template, error
 	if err != nil {
 		return nil, err
 	}
-	var row proto.Template
-	var result []proto.Template
+	var row protobuf.Template
+	var result []protobuf.Template
 
 	for rows.Next(&row) {
 		result = append(result, row)
@@ -322,41 +435,29 @@ func (db CouchDatabase) DeleteTemplate(id string) error {
 	return nil
 }
 
-func (db CouchDatabase) UpdateProject(project *proto.Project) error {
-	var cas gocb.Cas
-	cas, err := db.projectsBucket.Replace(project.ID, project, cas, 0)
-
-	return err
-}
-
-func (db CouchDatabase) DeleteProject(name string) error {
-	db.projectsBucket.Remove(name, 0)
-	return nil
-}
-
-func (db CouchDatabase) ReadServiceType(sTypeName string) (*proto.ServiceType, error) {
-	var sType proto.ServiceType
+func (db CouchDatabase) ReadServiceType(sTypeName string) (*protobuf.ServiceType, error) {
+	var sType protobuf.ServiceType
 	db.serviceTypesBucket.Get(sTypeName, &sType)
 	return &sType, nil
 }
 
-func (db CouchDatabase) WriteServiceType(sType *proto.ServiceType) error {
+func (db CouchDatabase) WriteServiceType(sType *protobuf.ServiceType) error {
 	_, err := db.serviceTypesBucket.Upsert(sType.Type, sType, 0)
 	return err
 }
 
-func (db CouchDatabase) ListServicesTypes() ([]proto.ServiceType, error) {
+func (db CouchDatabase) ListServicesTypes() ([]protobuf.ServiceType, error) {
 	query := gocb.NewN1qlQuery("SELECT ID, Type, Description, DefaultVersion, Class, AccessPort, HealthCheck, Ports, Versions FROM " + serviceTypeBucketName)
 	rows, err := db.serviceTypesBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	var row proto.ServiceType
-	var result []proto.ServiceType
+	var row protobuf.ServiceType
+	var result []protobuf.ServiceType
 
 	for rows.Next(&row) {
 		result = append(result, row)
-		row = proto.ServiceType{}
+		row = protobuf.ServiceType{}
 	}
 	return result, nil
 }
@@ -366,11 +467,11 @@ func (db CouchDatabase) DeleteServiceType(name string) error {
 	return err
 }
 
-func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*proto.ServiceVersion, error) {
-	var st proto.ServiceType
+func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*protobuf.ServiceVersion, error) {
+	var st protobuf.ServiceType
 	db.serviceTypesBucket.Get(sType, &st)
 
-	var result *proto.ServiceVersion
+	var result *protobuf.ServiceVersion
 
 	if st.Type == "" {
 		return nil, errors.New("Error: service with this type doesn't exist")
@@ -391,8 +492,8 @@ func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*proto.Ser
 	return nil, errors.New("Error: service version with this ID doesn't exist")
 }
 
-func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error) {
-	var st proto.ServiceType
+func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*protobuf.ServiceVersion, error) {
+	var st protobuf.ServiceType
 	db.serviceTypesBucket.Get(sType, &st)
 
 	if st.Type == "" {
@@ -401,7 +502,7 @@ func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.S
 
 	flag := false
 	var idToDelete int
-	var result *proto.ServiceVersion
+	var result *protobuf.ServiceVersion
 	for i, v := range st.Versions {
 		if v.ID == vId {
 			idToDelete = i
@@ -420,17 +521,17 @@ func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*proto.S
 	return result, err
 }
 
-func (db CouchDatabase) UpdateServiceType(st *proto.ServiceType) error {
+func (db CouchDatabase) UpdateServiceType(st *protobuf.ServiceType) error {
 	var cas gocb.Cas
 	_, err := db.serviceTypesBucket.Replace(st.Type, st, cas, 0)
 	return err
 }
 
-func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (*proto.ServiceVersion, error) {
-	var st proto.ServiceType
+func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (*protobuf.ServiceVersion, error) {
+	var st protobuf.ServiceType
 	db.serviceTypesBucket.Get(sType, &st)
 
-	var result *proto.ServiceVersion
+	var result *protobuf.ServiceVersion
 
 	if st.Type == "" {
 		return nil, errors.New("Error: service with this type doesn't exist")
@@ -451,18 +552,18 @@ func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (
 	return nil, errors.New("Error: service version with this ID doesn't exist")
 }
 
-func (db CouchDatabase) ReadImage(imageName string) (*proto.Image, error) {
+func (db CouchDatabase) ReadImage(imageName string) (*protobuf.Image, error) {
 	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, AnsibleUser, CloudImageID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
 	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	var img proto.Image
+	var img protobuf.Image
 	res.Next(&img)
 	return &img, nil
 }
 
-func (db CouchDatabase) WriteImage(image *proto.Image) error {
+func (db CouchDatabase) WriteImage(image *protobuf.Image) error {
 	_, err := db.imageBucket.Upsert(image.ID, image, 0)
 	if err != nil {
 		return err
@@ -470,7 +571,7 @@ func (db CouchDatabase) WriteImage(image *proto.Image) error {
 	return nil
 }
 
-func (db CouchDatabase) UpdateImage(id string, image *proto.Image) error {
+func (db CouchDatabase) UpdateImage(id string, image *protobuf.Image) error {
 	var cas gocb.Cas
 	_, err := db.imageBucket.Replace(id, image, cas, 0)
 	return err
@@ -482,25 +583,25 @@ func (db CouchDatabase) DeleteImage(imageName string) error {
 	if err != nil {
 		return err
 	}
-	var img proto.Image
+	var img protobuf.Image
 	res.Next(&img)
 	res.Close()
 	_, err = db.imageBucket.Remove(img.ID, 0)
 	return err
 }
 
-func (db CouchDatabase) ListImages() ([]proto.Image, error) {
+func (db CouchDatabase) ListImages() ([]protobuf.Image, error) {
 	query := gocb.NewN1qlQuery("SELECT ID, Name, AnsibleUser, CloudImageID FROM " + imageBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
 	}
-	var row proto.Image
-	var result []proto.Image
+	var row protobuf.Image
+	var result []protobuf.Image
 
 	for rows.Next(&row) {
 		result = append(result, row)
-		row = proto.Image{}
+		row = protobuf.Image{}
 	}
 	rows.Close()
 
@@ -509,7 +610,7 @@ func (db CouchDatabase) ListImages() ([]proto.Image, error) {
 
 // flavors
 
-func (db CouchDatabase) WriteFlavor(flavor *proto.Flavor) error {
+func (db CouchDatabase) WriteFlavor(flavor *protobuf.Flavor) error {
 	_, err := db.flavorBucket.Upsert(flavor.ID, flavor, 0)
 	if err != nil {
 		return ErrWriteObjectByKey
@@ -517,8 +618,8 @@ func (db CouchDatabase) WriteFlavor(flavor *proto.Flavor) error {
 	return nil
 }
 
-func (db CouchDatabase) ReadFlavorById(flavorID string) (*proto.Flavor, error) {
-	var flavor proto.Flavor
+func (db CouchDatabase) ReadFlavorById(flavorID string) (*protobuf.Flavor, error) {
+	var flavor protobuf.Flavor
 	_, err := db.flavorBucket.Get(flavorID, &flavor)
 	if err != nil {
 		return nil, ErrReadObjectByKey
@@ -526,18 +627,18 @@ func (db CouchDatabase) ReadFlavorById(flavorID string) (*proto.Flavor, error) {
 	return &flavor, nil
 }
 
-func (db CouchDatabase) ReadFlavorByName(flavorName string) (*proto.Flavor, error) {
+func (db CouchDatabase) ReadFlavorByName(flavorName string) (*protobuf.Flavor, error) {
 	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, VCPUs, RAM, Disk FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
 	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
-	var flavor proto.Flavor
+	var flavor protobuf.Flavor
 	res.Next(&flavor)
 	return &flavor, nil
 }
 
-func (db CouchDatabase) UpdateFlavor(id string, flavor *proto.Flavor) error {
+func (db CouchDatabase) UpdateFlavor(id string, flavor *protobuf.Flavor) error {
 	var cas gocb.Cas
 	_, err := db.flavorBucket.Replace(id, flavor, cas, 0)
 	if err != nil {
@@ -552,7 +653,7 @@ func (db CouchDatabase) DeleteFlavor(flavorName string) error {
 	if err != nil {
 		return ErrQueryExecution
 	}
-	var flavor proto.Flavor
+	var flavor protobuf.Flavor
 	res.Next(&flavor)
 	err = res.Close()
 	if err != nil {
@@ -565,18 +666,18 @@ func (db CouchDatabase) DeleteFlavor(flavorName string) error {
 	return nil
 }
 
-func (db CouchDatabase) ListFlavors() ([]proto.Flavor, error) {
+func (db CouchDatabase) ListFlavors() ([]protobuf.Flavor, error) {
 	query := gocb.NewN1qlQuery("SELECT ID, Name, VCPUs, RAM, Disk FROM " + flavorBucketName)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
-	var row proto.Flavor
-	var result []proto.Flavor
+	var row protobuf.Flavor
+	var result []protobuf.Flavor
 
 	for rows.Next(&row) {
 		result = append(result, row)
-		row = proto.Flavor{}
+		row = protobuf.Flavor{}
 	}
 	err = rows.Close()
 	if err != nil {

@@ -12,7 +12,7 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	hS.Logger.Print("Get /projects GET")
 
 	hS.Logger.Print("Reading projects information from db...")
-	projects, err := hS.Db.ListProjects()
+	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -54,7 +54,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	}
 	p.Name = p.DisplayName
 	//check, that project with such name doesn't exist
-	dbRes, err := hS.Db.ReadProjectByName(p.Name)
+	dbRes, err := hS.Db.ReadProject(p.Name)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -128,7 +128,7 @@ func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, pa
 
 	hS.Logger.Print("Reading project information from db...")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -156,7 +156,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, " PUT")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -215,7 +215,7 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 
 	//reading project info from database
 	hS.Logger.Print("Reading project information from db...")
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)

@@ -13,7 +13,7 @@ func (hS HttpServer) ClustersGet(w http.ResponseWriter, r *http.Request, params 
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /projects/", projectIdOrName, "/clusters GET")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -49,7 +49,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	projectIdOrName := params.ByName("projectIdOrName")
 	hS.Logger.Print("Get /project/" + projectIdOrName + "/clusters POST")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
 		hS.Logger.Print(mess)
@@ -99,7 +99,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 
 	//check, that cluster with such name doesn't exist
 	searchedName := clusterRes.DisplayName + "-" + project.Name
-	cluster, err := hS.Db.ReadClusterByName(project.ID, searchedName)
+	cluster, err := hS.Db.ReadCluster(project.ID, searchedName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -237,7 +237,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " GET")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -251,7 +251,7 @@ func (hS HttpServer) ClustersGetByName(w http.ResponseWriter, r *http.Request, p
 	}
 
 	// reading cluster info from database
-	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -280,7 +280,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, "/status", " GET")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -294,7 +294,7 @@ func (hS HttpServer) ClustersStatusGetByName(w http.ResponseWriter, r *http.Requ
 	}
 
 	// reading cluster info from database
-	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -326,7 +326,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	hS.Logger.Print("Get /projects/"+projectIdOrName+"/clusters/", clusterIdOrName, " PUT")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -343,7 +343,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Print("Sending request to db-service to check that cluster exists...")
 
 	// reading cluster info from database
-	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -515,7 +515,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
 
-	project, err := ProjectGet(hS, projectIdOrName)
+	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
@@ -529,7 +529,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 	}
 
 	// reading cluster info from database
-	cluster, err := ClusterGet(hS, project.ID, clusterIdOrName)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)
