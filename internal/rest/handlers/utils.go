@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
+	"net/http"
 	"regexp"
 	"strconv"
 )
@@ -439,15 +440,6 @@ func IsImageUsed(hs HttpServer, name string) (bool, error) {
 	return false, nil
 }
 
-func ValidateProject(project *protobuf.Project) bool {
-	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
-
-	if !validName(project.DisplayName) {
-		return false
-	}
-	return true
-}
-
 func DeleteSpaces(valStr string) string {
 	resStr := ""
 	for _, ch := range valStr {
@@ -582,4 +574,107 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func ValidateProjectCreate(hs HttpServer, project *protobuf.Project) (error, int) {
+	hs.Logger.Info("Validating project...")
+	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
+	if project.Name == "" {
+		return ErrProjectFieldEmpty("DisplayName"), http.StatusBadRequest
+	}
+	if !validName(project.Name) {
+		return ErrProjectValidation, http.StatusBadRequest
+	}
+	if project.DefaultImage == "" {
+		return ErrProjectFieldEmpty("DefaultImage"), http.StatusBadRequest
+	}
+	if project.DefaultMasterFlavor == "" {
+		return ErrProjectFieldEmpty("DefaultMasterFlavor"), http.StatusBadRequest
+	}
+	if project.DefaultSlavesFlavor == "" {
+		return ErrProjectFieldEmpty("DefaultSlavesFlavor"), http.StatusBadRequest
+	}
+	if project.DefaultStorageFlavor == "" {
+		return ErrProjectFieldEmpty("DefaultStorageFlavor"), http.StatusBadRequest
+	}
+	if project.DefaultMonitoringFlavor == "" {
+		return ErrProjectFieldEmpty("DefaultMonitoringFlavor"), http.StatusBadRequest
+	}
+
+	dbRes, err := hs.Db.ReadProject(project.Name)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if dbRes.Name != "" {
+		return ErrProjectExisted, http.StatusBadRequest
+	}
+
+	err, status := ValidateProjectFieldsDb(hs, project)
+	if err != nil {
+		return err, status
+	}
+
+	return nil, 0
+}
+
+func ValidateProjectUpdate(hs HttpServer, project *protobuf.Project) (error, int) {
+	hs.Logger.Info("Validating updated values of the project fields...")
+	if project.ID != "" || project.Name != "" || project.GroupID != "" {
+		return ErrProjectUnmodFields, http.StatusBadRequest
+	}
+	err, status := ValidateProjectFieldsDb(hs, project)
+	if err != nil {
+		return err, status
+	}
+
+	return nil, 0
+}
+
+func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, int) {
+	if project.DefaultImage != "" {
+		dbImg, err := hs.Db.ReadImage(project.DefaultImage)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if dbImg.Name == "" {
+			return ErrProjectImageNotFound, http.StatusBadRequest
+		}
+	}
+	if project.DefaultMasterFlavor != "" {
+		flavor, err := hs.Db.ReadFlavor(project.DefaultMasterFlavor)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if flavor.Name == "" {
+			return ErrProjectFlavorNotFound("DefaultMasterFlavor"), http.StatusBadRequest
+		}
+	}
+	if project.DefaultSlavesFlavor != "" {
+		flavor, err := hs.Db.ReadFlavor(project.DefaultSlavesFlavor)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if flavor.Name == "" {
+			return ErrProjectFlavorNotFound("DefaultSlavesFlavor"), http.StatusBadRequest
+		}
+	}
+	if project.DefaultStorageFlavor != "" {
+		flavor, err := hs.Db.ReadFlavor(project.DefaultStorageFlavor)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if flavor.Name == "" {
+			return ErrProjectFlavorNotFound("DefaultStorageFlavor"), http.StatusBadRequest
+		}
+	}
+	if project.DefaultMonitoringFlavor != "" {
+		flavor, err := hs.Db.ReadFlavor(project.DefaultMonitoringFlavor)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if flavor.Name == "" {
+			return ErrProjectFlavorNotFound("DefaultMonitoringFlavor"), http.StatusBadRequest
+		}
+	}
+	return nil, 0
 }

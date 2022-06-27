@@ -9,252 +9,194 @@ import (
 )
 
 func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	hS.Logger.Print("Get /projects GET")
+	request := "/projects GET"
+	hS.Logger.Info("Get " + request)
 
-	hS.Logger.Print("Reading projects information from db...")
 	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(w)
-	err = enc.Encode(projects)
-	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
-		hS.Logger.Print(mess)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	ResponseOK(w, projects, request)
 }
 
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	hS.Logger.Print("Get /projects POST")
+	request := "/projects POST"
+	hS.Logger.Print("Get " + request)
 
-	var p protobuf.Project
-	err := json.NewDecoder(r.Body).Decode(&p)
+	var project protobuf.Project
+	err := json.NewDecoder(r.Body).Decode(&project)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	if p.DisplayName == "" {
-		mess, _ := hS.RespHandler.Handle(w, JSONerrorMissField, JSONerrorMissFieldMessage, nil)
-		hS.Logger.Print(mess)
-		return
-	}
-
-	if !ValidateProject(&p) {
-		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrectField, JSONerrorIncorrectFieldMessage, nil)
-		hS.Logger.Print(mess)
-		return
-	}
-	p.Name = p.DisplayName
-	//check, that project with such name doesn't exist
-	dbRes, err := hS.Db.ReadProject(p.Name)
+	err, status := ValidateProjectCreate(hS, &project)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
-		return
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			ResponseBadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			ResponseInternalError(w, err)
+			return
+		}
 	}
 
-	if dbRes.Name != "" {
-		hS.Logger.Print("Project with this name exists")
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err := enc.Encode("Project with this name exists")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		return
-	}
-
-	if p.DefaultImage == "" {
-		hS.Logger.Print("Default Image not specified")
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err := enc.Encode("Default Image not specified")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		return
-	}
-	dbImg, err := hS.Db.ReadImage(p.DefaultImage)
-	if dbImg == nil {
-		hS.Logger.Print("Specified Default Image not found")
-		w.WriteHeader(http.StatusBadRequest)
-		enc := json.NewEncoder(w)
-		w.Header().Set("Content-Type", "application/json")
-		err := enc.Encode("Specified Default Image not found")
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		return
-	}
-
-	// generating UUID for new project
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, LibErrorUUID, LibErrorUUIDMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
+		ResponseInternalError(w, ErrUuidLibError)
 		return
 	}
-	p.ID = pUuid.String()
+	project.ID = pUuid.String()
 
-	err = hS.Db.WriteProject(&p)
+	err = hS.Db.WriteProject(&project)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	enc := json.NewEncoder(w)
-	enc.Encode(p)
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusCreated)
+	ResponseCreated(w, project, request)
 }
 
 func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-
-	hS.Logger.Print("Get /projects/", projectIdOrName, " GET")
-
-	hS.Logger.Print("Reading project information from db...")
+	request := "/projects/" + projectIdOrName + " GET"
+	hS.Logger.Info("Get " + request)
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
-		w.WriteHeader(http.StatusNoContent)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
+		ResponseNotFound(w, ErrProjectNotFound)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(w)
-	err = enc.Encode(project)
-	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	ResponseOK(w, project, request)
 }
 
 func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	hS.Logger.Print("Get /projects/", projectIdOrName, " PUT")
+	request := "/projects/" + projectIdOrName + " PUT"
+	hS.Logger.Info("Get " + request)
 
-	project, err := hS.Db.ReadProject(projectIdOrName)
+	oldProj, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
+		return
+	}
+	if oldProj.Name == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
+		ResponseNotFound(w, ErrProjectNotFound)
 		return
 	}
 
-	if project.Name == "" {
-		hS.Logger.Printf("Project with name or id '%s' not found", projectIdOrName)
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
+	resProj := oldProj
 
-	var p protobuf.Project
-	err = json.NewDecoder(r.Body).Decode(&p)
+	var newProj protobuf.Project
+	err = json.NewDecoder(r.Body).Decode(&newProj)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, JSONerrorIncorrect, JSONerrorIncorrectFieldMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	if p.Name != "" || p.ID != "" || p.GroupID != "" || p.DisplayName != "" {
-		mess, _ := hS.RespHandler.Handle(w, UserErrorProjectUnmodField, UserErrorProjectUnmodFieldMessage, err)
-		hS.Logger.Print(mess)
-		return
-	}
-
-	if p.Description != "" {
-		project.Description = p.Description
-	}
-
-	if p.DefaultImage != "" {
-		project.DefaultImage = p.DefaultImage
-	}
-
-	err = hS.Db.UpdateProject(project)
+	err, status := ValidateProjectUpdate(hS, &newProj)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			ResponseBadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			ResponseInternalError(w, err)
+			return
+		}
+	}
+
+	if newProj.Description != "" {
+		resProj.Description = newProj.Description
+	}
+	if newProj.DisplayName != "" {
+		resProj.DisplayName = newProj.DisplayName
+	}
+	if newProj.DefaultImage != "" {
+		resProj.DefaultImage = newProj.DefaultImage
+	}
+	if newProj.DefaultMasterFlavor != "" {
+		resProj.DefaultMasterFlavor = newProj.DefaultMasterFlavor
+	}
+	if newProj.DefaultSlavesFlavor != "" {
+		resProj.DefaultSlavesFlavor = newProj.DefaultSlavesFlavor
+	}
+	if newProj.DefaultStorageFlavor != "" {
+		resProj.DefaultStorageFlavor = newProj.DefaultStorageFlavor
+	}
+	if newProj.DefaultMonitoringFlavor != "" {
+		resProj.DefaultMonitoringFlavor = newProj.DefaultMonitoringFlavor
+	}
+
+	err = hS.Db.UpdateProject(resProj)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(w)
-	err = enc.Encode(project)
-	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, err)
-		hS.Logger.Print(mess)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	ResponseOK(w, resProj, request)
 }
 
 func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	hS.Logger.Print("Get /projects/", projectIdOrName, " DELETE")
+	request := "/projects/" + projectIdOrName + " DELETE"
+	hS.Logger.Info("Get " + request)
 
-	//reading project info from database
-	hS.Logger.Print("Reading project information from db...")
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
-		w.WriteHeader(http.StatusNoContent)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
+		ResponseNotFound(w, ErrProjectNotFound)
 		return
 	}
 
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, err)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-
 	if len(clusters) > 0 {
-		mess, _ := hS.RespHandler.Handle(w, UserErrorProjectWithClustersDel, UserErrorProjectWithClustersDelMessage, nil)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed  with status ", http.StatusBadRequest, ": ", ErrProjectHasClusters.Error())
+		ResponseBadRequest(w, ErrProjectHasClusters)
 		return
 	}
 
 	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(w)
-	err = enc.Encode(project)
-	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, LibErrorStructToJson, LibErrorStructToJsonMessage, nil)
-		hS.Logger.Print(mess)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)
+	ResponseNoContent(w)
 }

@@ -81,6 +81,7 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 	image.ID = iUuid.String()
+
 	err = hS.Db.WriteImage(&image)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -155,6 +156,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	if newImg.CloudImageID != "" {
 		resImg.CloudImageID = newImg.CloudImageID
 	}
+
 	err = hS.Db.UpdateImage(resImg)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
