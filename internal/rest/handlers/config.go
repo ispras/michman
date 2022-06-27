@@ -145,7 +145,7 @@ func (hS HttpServer) ConfigsGetServices(w http.ResponseWriter, r *http.Request, 
 	//reading service types info from database
 	hS.Logger.Print("Reading information about services types from db...")
 
-	sTypes, err := hS.Db.ListServicesTypes()
+	sTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -350,7 +350,7 @@ func (hS HttpServer) ConfigsDeleteService(w http.ResponseWriter, r *http.Request
 	}
 
 	//check that service type doesn't exist in dependencies
-	sts, err := hS.Db.ListServicesTypes()
+	sts, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -508,7 +508,7 @@ func (hS HttpServer) ConfigsGetVersion(w http.ResponseWriter, r *http.Request, p
 
 	//reading service type info from database
 	hS.Logger.Print("Reading service version information from db...")
-	version, err := hS.Db.ReadServiceVersion(sTypeName, vId)
+	version, err := hS.Db.ReadServiceTypeVersion(sTypeName, vId)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -638,7 +638,7 @@ func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request
 	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " DELETE")
 
 	var result *protobuf.ServiceVersion
-	result, err := hS.Db.ReadServiceVersion(sTypeName, vId)
+	result, err := hS.Db.ReadServiceTypeVersion(sTypeName, vId)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -652,7 +652,7 @@ func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request
 	}
 
 	//check that this service version doesn't present in dependencies
-	sts, err := hS.Db.ListServicesTypes()
+	sts, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -672,7 +672,7 @@ func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	_, err = hS.Db.DeleteServiceVersion(sTypeName, vId)
+	err = hS.Db.DeleteServiceTypeVersion(sTypeName, vId)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)

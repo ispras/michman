@@ -167,6 +167,11 @@ func deleteProjectByName(db CouchDatabase, projectName string) error {
 	if err != nil {
 		return err
 	}
+
+	if project.ID == "" {
+		return ErrObjectParamNotExist(projectName)
+	}
+
 	err = deleteProjectById(db, project.ID)
 	return err
 }
@@ -298,6 +303,11 @@ func deleteClusterByName(db CouchDatabase, projectIdOrName string, clusterName s
 	if err != nil {
 		return err
 	}
+
+	if project.ID == "" {
+		return ErrObjectParamNotExist(projectIdOrName)
+	}
+
 	cluster, err := readClusterByName(db, project.ID, clusterName)
 	if err != nil {
 		return err
@@ -311,6 +321,11 @@ func (db CouchDatabase) ReadCluster(projectIdOrName string, clusterIdOrName stri
 	if err != nil {
 		return nil, err
 	}
+
+	if project.ID == "" {
+		return nil, ErrObjectParamNotExist(projectIdOrName)
+	}
+
 	isUuid := utils.IsUuid(clusterIdOrName)
 	var cluster *protobuf.Cluster
 	if isUuid {
@@ -347,7 +362,7 @@ func (db CouchDatabase) WriteCluster(cluster *protobuf.Cluster) error {
 	if err != nil {
 		return ErrWriteObjectByKey
 	}
-	return err
+	return nil
 }
 
 func (db CouchDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
@@ -356,7 +371,7 @@ func (db CouchDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 	if err != nil {
 		return ErrUpdateObjectByKey
 	}
-	return err
+	return nil
 }
 
 func (db CouchDatabase) DeleteCluster(projectIdOrName, clusterIdOrName string) error {
@@ -370,84 +385,70 @@ func (db CouchDatabase) DeleteCluster(projectIdOrName, clusterIdOrName string) e
 	return err
 }
 
-// template:
+// service type:
 
-func (db CouchDatabase) WriteTemplate(template *protobuf.Template) error {
-	_, err := db.templatesBucket.Upsert(template.ID, template, 0)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db CouchDatabase) ReadTemplate(projectID, id string) (*protobuf.Template, error) {
-	var template protobuf.Template
-	_, err := db.templatesBucket.Get(id, &template)
-	if err != nil {
-		return &protobuf.Template{}, nil
-	}
-	if projectID != template.ProjectID {
-		return &protobuf.Template{}, nil
-	}
-	return &template, nil
-}
-
-func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Template, error) {
-	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
-		" NHosts, Description FROM %v WHERE Name = '%v'",
-		templateBucketName, templateName))
-	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-	var template protobuf.Template
-
-	if hasResult := rows.Next(template); !hasResult {
-		template = protobuf.Template{}
-	}
-	rows.Close()
-	return &template, nil
-}
-
-func (db CouchDatabase) ListTemplates(projectID string) ([]protobuf.Template, error) {
-	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
-		" NHosts, Description FROM %v WHERE ProjectID = '%v'",
-		templateBucketName, projectID))
-	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-	var row protobuf.Template
-	var result []protobuf.Template
-
-	for rows.Next(&row) {
-		result = append(result, row)
-	}
-	rows.Close()
-	return result, nil
-}
-
-func (db CouchDatabase) DeleteTemplate(id string) error {
-	_, err := db.templatesBucket.Remove(id, 0)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db CouchDatabase) ReadServiceType(sTypeName string) (*protobuf.ServiceType, error) {
+func readServiceTypeById(db CouchDatabase, serviceTypeID string) (*protobuf.ServiceType, error) {
 	var sType protobuf.ServiceType
-	db.serviceTypesBucket.Get(sTypeName, &sType)
+	_, err := db.serviceTypesBucket.Get(serviceTypeID, &sType)
+	if err != nil {
+		return nil, ErrReadObjectByKey
+	}
 	return &sType, nil
 }
 
-func (db CouchDatabase) WriteServiceType(sType *protobuf.ServiceType) error {
-	_, err := db.serviceTypesBucket.Upsert(sType.Type, sType, 0)
+func readServiceTypeByName(db CouchDatabase, serviceTypeName string) (*protobuf.ServiceType, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE Type = '%s'", serviceTypeBucketName, serviceTypeName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var sType protobuf.ServiceType
+	rows.Next(&sType)
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+	return &sType, nil
+}
+
+func deleteServiceTypeById(db CouchDatabase, serviceTypeID string) error {
+	_, err := db.serviceTypesBucket.Remove(serviceTypeID, 0)
+	if err != nil {
+		return ErrDeleteObjectByKey
+	}
+	return nil
+}
+
+func deleteServiceTypeByName(db CouchDatabase, serviceTypeName string) error {
+	sType, err := readServiceTypeByName(db, serviceTypeName)
+	if err != nil {
+		return err
+	}
+
+	if sType.ID == "" {
+		return ErrObjectParamNotExist(serviceTypeName)
+	}
+
+	err = deleteServiceTypeById(db, sType.ID)
 	return err
 }
 
-func (db CouchDatabase) ListServicesTypes() ([]protobuf.ServiceType, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Type, Description, DefaultVersion, Class, AccessPort, HealthCheck, Ports, Versions FROM " + serviceTypeBucketName)
+func (db CouchDatabase) ReadServiceType(serviceTypeIdOrName string) (*protobuf.ServiceType, error) {
+	isUuid := utils.IsUuid(serviceTypeIdOrName)
+	var sType *protobuf.ServiceType
+	var err error
+	if isUuid {
+		sType, err = readServiceTypeById(db, serviceTypeIdOrName)
+	} else {
+		sType, err = readServiceTypeByName(db, serviceTypeIdOrName)
+	}
+	return sType, err
+}
+
+func (db CouchDatabase) ReadServicesTypesList() ([]protobuf.ServiceType, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b", serviceTypeBucketName)
+	query := gocb.NewN1qlQuery(q)
 	rows, err := db.serviceTypesBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, err
@@ -459,98 +460,141 @@ func (db CouchDatabase) ListServicesTypes() ([]protobuf.ServiceType, error) {
 		result = append(result, row)
 		row = protobuf.ServiceType{}
 	}
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
 	return result, nil
 }
 
-func (db CouchDatabase) DeleteServiceType(name string) error {
-	_, err := db.serviceTypesBucket.Remove(name, 0)
+func (db CouchDatabase) WriteServiceType(sType *protobuf.ServiceType) error {
+	_, err := db.serviceTypesBucket.Upsert(sType.ID, sType, 0)
+	if err != nil {
+		return ErrWriteObjectByKey
+	}
 	return err
 }
 
-func (db CouchDatabase) ReadServiceVersion(sType string, vId string) (*protobuf.ServiceVersion, error) {
-	var st protobuf.ServiceType
-	db.serviceTypesBucket.Get(sType, &st)
-
-	var result *protobuf.ServiceVersion
-
-	if st.Type == "" {
-		return nil, errors.New("Error: service with this type doesn't exist")
-	}
-
-	flag := false
-	for _, v := range st.Versions {
-		if v.ID == vId {
-			result = v
-			flag = true
-			break
-		}
-	}
-
-	if flag {
-		return result, nil
-	}
-	return nil, errors.New("Error: service version with this ID doesn't exist")
-}
-
-func (db CouchDatabase) DeleteServiceVersion(sType string, vId string) (*protobuf.ServiceVersion, error) {
-	var st protobuf.ServiceType
-	db.serviceTypesBucket.Get(sType, &st)
-
-	if st.Type == "" {
-		return nil, errors.New("Error: service with this type doesn't exist")
-	}
-
-	flag := false
-	var idToDelete int
-	var result *protobuf.ServiceVersion
-	for i, v := range st.Versions {
-		if v.ID == vId {
-			idToDelete = i
-			result = v
-			flag = true
-			break
-		}
-	}
-
-	if !flag {
-		return nil, errors.New("Error: service version with this ID doesn't exist")
-	}
-
-	st.Versions = st.Versions[:idToDelete+copy(st.Versions[idToDelete:], st.Versions[idToDelete+1:])]
-	_, err := db.serviceTypesBucket.Upsert(st.Type, sType, 0)
-	return result, err
-}
-
-func (db CouchDatabase) UpdateServiceType(st *protobuf.ServiceType) error {
+func (db CouchDatabase) UpdateServiceType(sType *protobuf.ServiceType) error {
 	var cas gocb.Cas
-	_, err := db.serviceTypesBucket.Replace(st.Type, st, cas, 0)
+	_, err := db.serviceTypesBucket.Replace(sType.ID, sType, cas, 0)
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return nil
+}
+
+func (db CouchDatabase) DeleteServiceType(serviceTypeIdOrName string) error {
+	isUuid := utils.IsUuid(serviceTypeIdOrName)
+	var err error
+	if isUuid {
+		err = deleteServiceTypeById(db, serviceTypeIdOrName)
+	} else {
+		err = deleteServiceTypeByName(db, serviceTypeIdOrName)
+	}
 	return err
 }
 
-func (db CouchDatabase) ReadServiceVersionByName(sType string, version string) (*protobuf.ServiceVersion, error) {
-	var st protobuf.ServiceType
-	db.serviceTypesBucket.Get(sType, &st)
+// service type version:
 
-	var result *protobuf.ServiceVersion
-
-	if st.Type == "" {
-		return nil, errors.New("Error: service with this type doesn't exist")
-	}
-
-	flag := false
-	for _, v := range st.Versions {
-		if v.Version == version {
-			result = v
-			flag = true
-			break
+func readServiceTypeVersionById(sType *protobuf.ServiceType, versionId string) (*protobuf.ServiceVersion, error) {
+	for _, curVersion := range sType.Versions {
+		if curVersion.ID == versionId {
+			return curVersion, nil
 		}
 	}
 
-	if flag {
-		return result, nil
-	}
-	return nil, errors.New("Error: service version with this ID doesn't exist")
+	return nil, ErrObjectParamNotExist(versionId)
 }
+
+func readServiceTypeVersionByName(sType *protobuf.ServiceType, versionName string) (*protobuf.ServiceVersion, error) {
+	for _, curVersion := range sType.Versions {
+		if curVersion.Version == versionName {
+			return curVersion, nil
+		}
+	}
+	return nil, ErrObjectParamNotExist(versionName)
+}
+
+func deleteServiceTypeVersionById(sType *protobuf.ServiceType, versionId string) (int, error) {
+	idToDelete := -1
+	for i, curVersion := range sType.Versions {
+		if curVersion.ID == versionId {
+			idToDelete = i
+			break
+		}
+	}
+	if idToDelete == -1 {
+		return -1, ErrObjectParamNotExist(versionId)
+	}
+	return idToDelete, nil
+}
+
+func deleteServiceTypeVersionByName(sType *protobuf.ServiceType, versionName string) (int, error) {
+	idToDelete := -1
+	for i, curVersion := range sType.Versions {
+		if curVersion.Version == versionName {
+			idToDelete = i
+			break
+		}
+	}
+	if idToDelete == -1 {
+		return -1, ErrObjectParamNotExist(versionName)
+	}
+	return idToDelete, nil
+}
+
+func (db CouchDatabase) ReadServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) (*protobuf.ServiceVersion, error) {
+	sType, err := db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		return nil, err
+	}
+
+	if sType.ID == "" {
+		return nil, ErrObjectParamNotExist(serviceTypeIdOrName)
+	}
+
+	var sTypeVersion *protobuf.ServiceVersion
+
+	isUuid := utils.IsUuid(versionIdOrName)
+	if isUuid {
+		sTypeVersion, err = readServiceTypeVersionById(sType, versionIdOrName)
+	} else {
+		sTypeVersion, err = readServiceTypeVersionByName(sType, versionIdOrName)
+	}
+	return sTypeVersion, err
+}
+
+func (db CouchDatabase) DeleteServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) error {
+	sType, err := db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		return err
+	}
+
+	if sType.ID == "" {
+		return ErrObjectParamNotExist(serviceTypeIdOrName)
+	}
+
+	idToDelete := -1
+	isUuid := utils.IsUuid(versionIdOrName)
+	if isUuid {
+		idToDelete, err = deleteServiceTypeVersionById(sType, versionIdOrName)
+	} else {
+		idToDelete, err = deleteServiceTypeVersionByName(sType, versionIdOrName)
+	}
+
+	versionsLen := len(sType.Versions)
+	sType.Versions[idToDelete] = sType.Versions[versionsLen-1]
+	sType.Versions = sType.Versions[:versionsLen-1]
+
+	err = db.UpdateServiceType(sType)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// image:
 
 func (db CouchDatabase) ReadImage(imageName string) (*protobuf.Image, error) {
 	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, AnsibleUser, CloudImageID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
@@ -685,4 +729,69 @@ func (db CouchDatabase) ListFlavors() ([]protobuf.Flavor, error) {
 	}
 
 	return result, nil
+}
+
+// template:
+
+func (db CouchDatabase) WriteTemplate(template *protobuf.Template) error {
+	_, err := db.templatesBucket.Upsert(template.ID, template, 0)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db CouchDatabase) ReadTemplate(projectID, id string) (*protobuf.Template, error) {
+	var template protobuf.Template
+	_, err := db.templatesBucket.Get(id, &template)
+	if err != nil {
+		return &protobuf.Template{}, nil
+	}
+	if projectID != template.ProjectID {
+		return &protobuf.Template{}, nil
+	}
+	return &template, nil
+}
+
+func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Template, error) {
+	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
+		" NHosts, Description FROM %v WHERE Name = '%v'",
+		templateBucketName, templateName))
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var template protobuf.Template
+
+	if hasResult := rows.Next(template); !hasResult {
+		template = protobuf.Template{}
+	}
+	rows.Close()
+	return &template, nil
+}
+
+func (db CouchDatabase) ListTemplates(projectID string) ([]protobuf.Template, error) {
+	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
+		" NHosts, Description FROM %v WHERE ProjectID = '%v'",
+		templateBucketName, projectID))
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, err
+	}
+	var row protobuf.Template
+	var result []protobuf.Template
+
+	for rows.Next(&row) {
+		result = append(result, row)
+	}
+	rows.Close()
+	return result, nil
+}
+
+func (db CouchDatabase) DeleteTemplate(id string) error {
+	_, err := db.templatesBucket.Remove(id, 0)
+	if err != nil {
+		return err
+	}
+	return nil
 }

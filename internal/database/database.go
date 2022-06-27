@@ -1,48 +1,48 @@
 package database
 
 import (
-	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/protobuf"
 )
 
 type Database interface {
-	ReadCluster(projectIdOrName string, clusterIdOrName string) (*proto.Cluster, error)
-	WriteCluster(cluster *proto.Cluster) error
+	ReadCluster(projectIdOrName string, clusterIdOrName string) (*protobuf.Cluster, error)
+	WriteCluster(cluster *protobuf.Cluster) error
 	DeleteCluster(projectIdOrName, clusterIdOrName string) error
-	UpdateCluster(cluster *proto.Cluster) error
-	ReadClustersList() ([]proto.Cluster, error)
+	UpdateCluster(cluster *protobuf.Cluster) error
+	ReadClustersList() ([]protobuf.Cluster, error)
 
-	ReadProject(projectIdOrName string) (*proto.Project, error)
-	ReadProjectsList() ([]proto.Project, error)
-	ReadProjectClusters(projectIdOrName string) ([]proto.Cluster, error)
-	WriteProject(project *proto.Project) error
-	UpdateProject(project *proto.Project) error
+	ReadProject(projectIdOrName string) (*protobuf.Project, error)
+	ReadProjectsList() ([]protobuf.Project, error)
+	ReadProjectClusters(projectIdOrName string) ([]protobuf.Cluster, error)
+	WriteProject(project *protobuf.Project) error
+	UpdateProject(project *protobuf.Project) error
 	DeleteProject(projectIdOrName string) error
 
-	ReadTemplate(projectID, id string) (*proto.Template, error)
-	ReadTemplateByName(templateName string) (*proto.Template, error)
-	WriteTemplate(template *proto.Template) error
+	ReadTemplate(projectID, id string) (*protobuf.Template, error)
+	ReadTemplateByName(templateName string) (*protobuf.Template, error)
+	WriteTemplate(template *protobuf.Template) error
 	DeleteTemplate(id string) error
-	ListTemplates(projectID string) ([]proto.Template, error)
+	ListTemplates(projectID string) ([]protobuf.Template, error)
 
-	WriteServiceType(sType *proto.ServiceType) error
-	UpdateServiceType(st *proto.ServiceType) error
-	ReadServiceType(sType string) (*proto.ServiceType, error)
-	ListServicesTypes() ([]proto.ServiceType, error)
-	DeleteServiceType(name string) error
-	ReadServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
-	ReadServiceVersionByName(sType string, version string) (*proto.ServiceVersion, error)
-	DeleteServiceVersion(sType string, vId string) (*proto.ServiceVersion, error)
+	ReadServiceType(serviceTypeIdOrName string) (*protobuf.ServiceType, error)
+	ReadServicesTypesList() ([]protobuf.ServiceType, error)
+	WriteServiceType(sType *protobuf.ServiceType) error
+	UpdateServiceType(sType *protobuf.ServiceType) error
+	DeleteServiceType(serviceTypeIdOrName string) error
 
-	ReadImage(imageName string) (*proto.Image, error)
-	WriteImage(image *proto.Image) error
+	ReadServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) (*protobuf.ServiceVersion, error)
+	DeleteServiceTypeVersion(serviceTypeIdOrName string, versionId string) error
+
+	ReadImage(imageName string) (*protobuf.Image, error)
+	WriteImage(image *protobuf.Image) error
 	DeleteImage(imageName string) error
-	UpdateImage(name string, image *proto.Image) error
-	ListImages() ([]proto.Image, error)
+	UpdateImage(name string, image *protobuf.Image) error
+	ListImages() ([]protobuf.Image, error)
 
-	ReadFlavorById(flavorID string) (*proto.Flavor, error)
-	ReadFlavorByName(flavorName string) (*proto.Flavor, error)
-	WriteFlavor(flavor *proto.Flavor) error
+	ReadFlavorById(flavorID string) (*protobuf.Flavor, error)
+	ReadFlavorByName(flavorName string) (*protobuf.Flavor, error)
+	WriteFlavor(flavor *protobuf.Flavor) error
 	DeleteFlavor(flavorName string) error
-	UpdateFlavor(name string, Flavor *proto.Flavor) error
-	ListFlavors() ([]proto.Flavor, error)
+	UpdateFlavor(name string, Flavor *protobuf.Flavor) error
+	ListFlavors() ([]protobuf.Flavor, error)
 }

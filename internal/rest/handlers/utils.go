@@ -362,7 +362,7 @@ func AddDependencies(hS HttpServer, c *protobuf.Cluster, curS *protobuf.Service)
 	var serviceToAdd *protobuf.Service = nil
 	var servicesList []*protobuf.Service = nil
 
-	sv, err := hS.Db.ReadServiceVersionByName(curS.Type, curS.Version)
+	sv, err := hS.Db.ReadServiceTypeVersion(curS.Type, curS.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +488,7 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 		return false, errors.New("service type can't be nil")
 	}
 
-	sTypes, err := hS.Db.ListServicesTypes()
+	sTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
 		return false, err
 	}

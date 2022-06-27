@@ -387,7 +387,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		}
 	}
 
-	sTypes, err := hS.Db.ListServicesTypes()
+	sTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
 		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
 		hS.Logger.Print(mess)

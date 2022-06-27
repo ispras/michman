@@ -109,7 +109,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, o
 		}
 
 		//filling services URLs:
-		sTypes, err := aL.Db.ListServicesTypes()
+		sTypes, err := aL.Db.ReadServicesTypesList()
 		if err != nil {
 			logger.Warn(err)
 			return utils.RunFail

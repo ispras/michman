@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"github.com/ispras/michman/internal/utils"
 )
 
@@ -15,6 +16,12 @@ const (
 	errCloseQuerySession = "error occurred while closing query session"
 	errDeleteObjectByKey = "error occurred while removing object from database"
 )
+
+func ErrObjectParamNotExist(param string) error {
+	ErrParamType := fmt.Errorf("object with this name or id (%s) does not exist", param)
+	DbErrorsMap[ErrParamType] = utils.DatabaseError
+	return ErrParamType
+}
 
 var (
 	ErrWriteObjectByKey  = errors.New(errWriteObjectByKey)

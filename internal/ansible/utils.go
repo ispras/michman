@@ -156,7 +156,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 }
 
 func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) (InterfaceMap, error) {
-	sTypes, err := db.ListServicesTypes()
+	sTypes, err := db.ReadServicesTypesList()
 	if err != nil {
 		return nil, err
 	}
