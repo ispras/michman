@@ -707,15 +707,7 @@ func (db CouchDatabase) DeleteImage(imageIdOrName string) error {
 
 // flavors
 
-func (db CouchDatabase) WriteFlavor(flavor *protobuf.Flavor) error {
-	_, err := db.flavorBucket.Upsert(flavor.ID, flavor, 0)
-	if err != nil {
-		return ErrWriteObjectByKey
-	}
-	return nil
-}
-
-func (db CouchDatabase) ReadFlavorById(flavorID string) (*protobuf.Flavor, error) {
+func readFlavorById(db CouchDatabase, flavorID string) (*protobuf.Flavor, error) {
 	var flavor protobuf.Flavor
 	_, err := db.flavorBucket.Get(flavorID, &flavor)
 	if err != nil {
@@ -724,47 +716,59 @@ func (db CouchDatabase) ReadFlavorById(flavorID string) (*protobuf.Flavor, error
 	return &flavor, nil
 }
 
-func (db CouchDatabase) ReadFlavorByName(flavorName string) (*protobuf.Flavor, error) {
-	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, VCPUs, RAM, Disk FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
-	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+func readFlavorByName(db CouchDatabase, flavorName string) (*protobuf.Flavor, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE Name = '%s'", flavorBucketName, flavorName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
 	var flavor protobuf.Flavor
-	res.Next(&flavor)
+	rows.Next(&flavor)
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
 	return &flavor, nil
 }
 
-func (db CouchDatabase) UpdateFlavor(id string, flavor *protobuf.Flavor) error {
-	var cas gocb.Cas
-	_, err := db.flavorBucket.Replace(id, flavor, cas, 0)
-	if err != nil {
-		return ErrUpdateObjectByKey
-	}
-	return nil
-}
-
-func (db CouchDatabase) DeleteFlavor(flavorName string) error {
-	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID FROM %v WHERE Name = '%v'", flavorBucketName, flavorName))
-	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
-	if err != nil {
-		return ErrQueryExecution
-	}
-	var flavor protobuf.Flavor
-	res.Next(&flavor)
-	err = res.Close()
-	if err != nil {
-		return ErrCloseQuerySession
-	}
-	_, err = db.flavorBucket.Remove(flavor.ID, 0)
+func deleteFlavorById(db CouchDatabase, flavorID string) error {
+	_, err := db.flavorBucket.Remove(flavorID, 0)
 	if err != nil {
 		return ErrDeleteObjectByKey
 	}
 	return nil
 }
 
-func (db CouchDatabase) ListFlavors() ([]protobuf.Flavor, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, VCPUs, RAM, Disk FROM " + flavorBucketName)
+func deleteFlavorByName(db CouchDatabase, flavorName string) error {
+	flavor, err := readFlavorByName(db, flavorName)
+	if err != nil {
+		return err
+	}
+
+	if flavor.ID == "" {
+		return ErrObjectParamNotExist(flavorName)
+	}
+
+	err = deleteFlavorById(db, flavor.ID)
+	return err
+}
+
+func (db CouchDatabase) ReadFlavor(flavorIdOrName string) (*protobuf.Flavor, error) {
+	isUuid := utils.IsUuid(flavorIdOrName)
+	var flavor *protobuf.Flavor
+	var err error
+	if isUuid {
+		flavor, err = readFlavorById(db, flavorIdOrName)
+	} else {
+		flavor, err = readFlavorByName(db, flavorIdOrName)
+	}
+	return flavor, err
+}
+
+func (db CouchDatabase) ReadFlavorsList() ([]protobuf.Flavor, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b", flavorBucketName)
+	query := gocb.NewN1qlQuery(q)
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
 		return nil, ErrQueryExecution
@@ -780,8 +784,35 @@ func (db CouchDatabase) ListFlavors() ([]protobuf.Flavor, error) {
 	if err != nil {
 		return nil, ErrCloseQuerySession
 	}
-
 	return result, nil
+}
+
+func (db CouchDatabase) WriteFlavor(flavor *protobuf.Flavor) error {
+	_, err := db.flavorBucket.Upsert(flavor.ID, flavor, 0)
+	if err != nil {
+		return ErrWriteObjectByKey
+	}
+	return nil
+}
+
+func (db CouchDatabase) UpdateFlavor(id string, flavor *protobuf.Flavor) error {
+	var cas gocb.Cas
+	_, err := db.flavorBucket.Replace(id, flavor, cas, 0)
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return nil
+}
+
+func (db CouchDatabase) DeleteFlavor(flavorIdOrName string) error {
+	isUuid := utils.IsUuid(flavorIdOrName)
+	var err error
+	if isUuid {
+		err = deleteFlavorById(db, flavorIdOrName)
+	} else {
+		err = deleteFlavorByName(db, flavorIdOrName)
+	}
+	return err
 }
 
 // template:

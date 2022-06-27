@@ -34,19 +34,6 @@ func IsValidType(t string) bool {
 	return false
 }
 
-func FlavorGetByIdOrName(hS HttpServer, idOrName string) (*protobuf.Flavor, error) {
-	isUuid := utils.IsUuid(idOrName)
-	var flavor *protobuf.Flavor
-	var err error
-	if isUuid {
-		flavor, err = hS.Db.ReadFlavorById(idOrName)
-	} else {
-		flavor, err = hS.Db.ReadFlavorByName(idOrName)
-	}
-
-	return flavor, err
-}
-
 func CheckVersionUnique(stVersions []*protobuf.ServiceVersion, newV protobuf.ServiceVersion) bool {
 	for _, curV := range stVersions {
 		if curV.Version == newV.Version {
@@ -326,28 +313,28 @@ func ValidateCluster(hS HttpServer, cluster *protobuf.Cluster) (bool, error) {
 		}
 	}
 
-	dbFlavor, err := FlavorGetByIdOrName(hS, cluster.MasterFlavor)
+	dbFlavor, err := hS.Db.ReadFlavor(cluster.MasterFlavor)
 	if err != nil {
 		return false, err
 	}
 	if dbFlavor.ID == "" {
 		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.MasterFlavor))
 	}
-	dbFlavor, err = FlavorGetByIdOrName(hS, cluster.SlavesFlavor)
+	dbFlavor, err = hS.Db.ReadFlavor(cluster.SlavesFlavor)
 	if err != nil {
 		return false, err
 	}
 	if dbFlavor.ID == "" {
 		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.SlavesFlavor))
 	}
-	dbFlavor, err = FlavorGetByIdOrName(hS, cluster.StorageFlavor)
+	dbFlavor, err = hS.Db.ReadFlavor(cluster.StorageFlavor)
 	if err != nil {
 		return false, err
 	}
 	if dbFlavor.ID == "" {
 		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.StorageFlavor))
 	}
-	dbFlavor, err = FlavorGetByIdOrName(hS, cluster.MonitoringFlavor)
+	dbFlavor, err = hS.Db.ReadFlavor(cluster.MonitoringFlavor)
 	if err != nil {
 		return false, err
 	}

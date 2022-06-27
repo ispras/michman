@@ -27,7 +27,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 
-	dbFlavor, err := FlavorGetByIdOrName(hS, flavor.Name)
+	dbFlavor, err := hS.Db.ReadFlavor(flavor.Name)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
@@ -60,7 +60,7 @@ func (hS HttpServer) FlavorsGetList(w http.ResponseWriter, _ *http.Request, _ ht
 	request := "/flavors GET"
 	hS.Logger.Info("Get " + request)
 
-	flavors, err := hS.Db.ListFlavors()
+	flavors, err := hS.Db.ReadFlavorsList()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
@@ -76,7 +76,7 @@ func (hS HttpServer) FlavorGet(w http.ResponseWriter, _ *http.Request, params ht
 
 	request := "/flavors/" + flavorIdOrName + " GET"
 
-	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
+	flavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
@@ -97,7 +97,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	request := "/flavors/" + flavorIdOrName + " PUT"
 
-	oldFlavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
+	oldFlavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
@@ -137,7 +137,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	resFlavor := oldFlavor
 	if newFlavor.Name != "" && newFlavor.Name != oldFlavor.Name {
-		dbFlavor, err := FlavorGetByIdOrName(hS, newFlavor.Name)
+		dbFlavor, err := hS.Db.ReadFlavor(newFlavor.Name)
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 			ResponseInternalError(w, err)
@@ -182,8 +182,7 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, _ *http.Request, params
 	hS.Logger.Info("Get /flavors/", flavorIdOrName, "DELETE")
 
 	request := "/flavors/" + flavorIdOrName + " DELETE"
-
-	flavor, err := FlavorGetByIdOrName(hS, flavorIdOrName)
+	flavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
