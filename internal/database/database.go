@@ -33,11 +33,11 @@ type Database interface {
 	ReadServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) (*protobuf.ServiceVersion, error)
 	DeleteServiceTypeVersion(serviceTypeIdOrName string, versionId string) error
 
-	ReadImage(imageName string) (*protobuf.Image, error)
+	ReadImage(imageIdOrName string) (*protobuf.Image, error)
 	WriteImage(image *protobuf.Image) error
-	DeleteImage(imageName string) error
-	UpdateImage(name string, image *protobuf.Image) error
-	ListImages() ([]protobuf.Image, error)
+	DeleteImage(imageIdOrName string) error
+	UpdateImage(image *protobuf.Image) error
+	ReadImagesList() ([]protobuf.Image, error)
 
 	ReadFlavorById(flavorID string) (*protobuf.Flavor, error)
 	ReadFlavorByName(flavorName string) (*protobuf.Flavor, error)

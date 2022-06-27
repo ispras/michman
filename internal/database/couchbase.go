@@ -249,7 +249,7 @@ func (db CouchDatabase) UpdateProject(project *protobuf.Project) error {
 	if err != nil {
 		return ErrUpdateObjectByKey
 	}
-	return err
+	return nil
 }
 
 func (db CouchDatabase) DeleteProject(projectIdOrName string) error {
@@ -596,15 +596,85 @@ func (db CouchDatabase) DeleteServiceTypeVersion(serviceTypeIdOrName string, ver
 
 // image:
 
-func (db CouchDatabase) ReadImage(imageName string) (*protobuf.Image, error) {
-	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, Name, AnsibleUser, CloudImageID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
-	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
+func readImageById(db CouchDatabase, imageID string) (*protobuf.Image, error) {
+	var image protobuf.Image
+	_, err := db.imageBucket.Get(imageID, &image)
 	if err != nil {
-		return nil, err
+		return nil, ErrReadObjectByKey
 	}
-	var img protobuf.Image
-	res.Next(&img)
-	return &img, nil
+	return &image, nil
+}
+
+func readImageByName(db CouchDatabase, imageName string) (*protobuf.Image, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE Name = '%s'", imageBucketName, imageName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var image protobuf.Image
+	rows.Next(&image)
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+	return &image, nil
+}
+
+func deleteImageById(db CouchDatabase, imageID string) error {
+	_, err := db.imageBucket.Remove(imageID, 0)
+	if err != nil {
+		return ErrDeleteObjectByKey
+	}
+	return nil
+}
+
+func deleteImageByName(db CouchDatabase, imageName string) error {
+	image, err := readImageByName(db, imageName)
+	if err != nil {
+		return err
+	}
+
+	if image.ID == "" {
+		return ErrObjectParamNotExist(imageName)
+	}
+
+	err = deleteImageById(db, image.ID)
+	return err
+}
+
+func (db CouchDatabase) ReadImage(imageIdOrName string) (*protobuf.Image, error) {
+	isUuid := utils.IsUuid(imageIdOrName)
+	var image *protobuf.Image
+	var err error
+	if isUuid {
+		image, err = readImageById(db, imageIdOrName)
+	} else {
+		image, err = readImageByName(db, imageIdOrName)
+	}
+	return image, err
+}
+
+func (db CouchDatabase) ReadImagesList() ([]protobuf.Image, error) {
+	q := fmt.Sprintf("SELECT b.* FROM %s b", imageBucketName)
+	query := gocb.NewN1qlQuery(q)
+	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
+	if err != nil {
+		return nil, ErrQueryExecution
+	}
+	var row protobuf.Image
+	var result []protobuf.Image
+
+	for rows.Next(&row) {
+		result = append(result, row)
+		row = protobuf.Image{}
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, ErrCloseQuerySession
+	}
+
+	return result, nil
 }
 
 func (db CouchDatabase) WriteImage(image *protobuf.Image) error {
@@ -615,41 +685,24 @@ func (db CouchDatabase) WriteImage(image *protobuf.Image) error {
 	return nil
 }
 
-func (db CouchDatabase) UpdateImage(id string, image *protobuf.Image) error {
+func (db CouchDatabase) UpdateImage(image *protobuf.Image) error {
 	var cas gocb.Cas
-	_, err := db.imageBucket.Replace(id, image, cas, 0)
-	return err
+	_, err := db.imageBucket.Replace(image.ID, image, cas, 0)
+	if err != nil {
+		return ErrUpdateObjectByKey
+	}
+	return nil
 }
 
-func (db CouchDatabase) DeleteImage(imageName string) error {
-	q := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID FROM %v WHERE Name = '%v'", imageBucketName, imageName))
-	res, err := db.couchCluster.ExecuteN1qlQuery(q, []interface{}{})
-	if err != nil {
-		return err
+func (db CouchDatabase) DeleteImage(imageIdOrName string) error {
+	isUuid := utils.IsUuid(imageIdOrName)
+	var err error
+	if isUuid {
+		err = deleteImageById(db, imageIdOrName)
+	} else {
+		err = deleteImageByName(db, imageIdOrName)
 	}
-	var img protobuf.Image
-	res.Next(&img)
-	res.Close()
-	_, err = db.imageBucket.Remove(img.ID, 0)
 	return err
-}
-
-func (db CouchDatabase) ListImages() ([]protobuf.Image, error) {
-	query := gocb.NewN1qlQuery("SELECT ID, Name, AnsibleUser, CloudImageID FROM " + imageBucketName)
-	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
-	if err != nil {
-		return nil, err
-	}
-	var row protobuf.Image
-	var result []protobuf.Image
-
-	for rows.Next(&row) {
-		result = append(result, row)
-		row = protobuf.Image{}
-	}
-	rows.Close()
-
-	return result, nil
 }
 
 // flavors

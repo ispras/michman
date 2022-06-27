@@ -12,7 +12,7 @@ func (hS HttpServer) ImagesGetList(w http.ResponseWriter, r *http.Request, _ htt
 	request := "/images GET"
 	hS.Logger.Info("Get " + request)
 
-	images, err := hS.Db.ListImages()
+	images, err := hS.Db.ReadImagesList()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
@@ -155,7 +155,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	if newImg.CloudImageID != "" {
 		resImg.CloudImageID = newImg.CloudImageID
 	}
-	err = hS.Db.UpdateImage(oldImg.ID, resImg)
+	err = hS.Db.UpdateImage(resImg)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		ResponseInternalError(w, err)
