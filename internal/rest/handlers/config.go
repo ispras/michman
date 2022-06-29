@@ -9,6 +9,8 @@ import (
 	"net/http"
 )
 
+// service types:
+
 func (hS HttpServer) ConfigsCreateServiceType(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	request := "/configs POST"
 	hS.Logger.Info("Get " + request)
@@ -82,7 +84,7 @@ func (hS HttpServer) ConfigsCreateServiceType(w http.ResponseWriter, r *http.Req
 	ResponseOK(w, sType, request)
 }
 
-func (hS HttpServer) ConfigsServiceTypesGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (hS HttpServer) ConfigsServiceTypesGetList(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	request := "/configs GET"
 	hS.Logger.Info("Get " + request)
 
@@ -146,89 +148,69 @@ func (hS HttpServer) ConfigsServiceTypeGet(w http.ResponseWriter, r *http.Reques
 
 }
 
-//updates only information about service type
-//versions and config params could be updated in ConfigsUpdateVersion
-func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	sTypeName := params.ByName("serviceTypeIdOrName")
-	hS.Logger.Print("Get /configs/", sTypeName, " PUT")
+// ConfigsUpdateServiceType updates only information about service type
+// versions and config params could be updated in ConfigsUpdateVersion
+func (hS HttpServer) ConfigsUpdateServiceType(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	request := "/configs/" + serviceTypeIdOrName + " PUT"
+	hS.Logger.Info("Get " + request)
 
-	//reading service type info from database
-	hS.Logger.Print("Reading service types information from db...")
-	st, err := hS.Db.ReadServiceType(sTypeName)
+	oldServiceType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	if st.Type == "" {
-		hS.Logger.Print("Service type not found")
-		w.WriteHeader(http.StatusNoContent)
+	if oldServiceType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrServiceTypeNotFound.Error())
+		ResponseNotFound(w, ErrServiceTypeNotFound)
 		return
 	}
 
-	var newSt protobuf.ServiceType
-	err = json.NewDecoder(r.Body).Decode(&newSt)
+	var newServiceType protobuf.ServiceType
+	err = json.NewDecoder(r.Body).Decode(&newServiceType)
 	if err != nil {
-		hS.Logger.Print("ERROR:")
-		hS.Logger.Print(err)
-		hS.Logger.Print(r.Body)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		ResponseBadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	//update service type description
-	if newSt.Description != "" {
-		st.Description = newSt.Description
-	}
-
-	//update service type default version
-	if newSt.DefaultVersion != "" {
-		err = CheckDefaultVersion(st.Versions[:], newSt.DefaultVersion)
-		if err != nil {
-			hS.Logger.Print("ERROR: new default service version doesn't exists in this service type")
-			w.WriteHeader(http.StatusBadRequest)
+	err, status := ValidateServiceTypeUpdate(hS, oldServiceType, &newServiceType)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			ResponseBadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			ResponseInternalError(w, err)
 			return
 		}
-		st.DefaultVersion = newSt.DefaultVersion
 	}
 
-	//uodate service type class
-	if newSt.Class != "" {
-		err = CheckClass(&newSt)
-		if err != nil {
-			hS.Logger.Print("ERROR: class for service type is not supported")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		st.Class = newSt.Class
+	if newServiceType.Description != "" {
+		oldServiceType.Description = newServiceType.Description
 	}
 
-	//update service access port
-	if newSt.AccessPort != 0 { //0 if port not provided
-		err = CheckPort(newSt.AccessPort)
-		if err != nil {
-			hS.Logger.Print("ERROR: access port for service type must be > 0")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		st.AccessPort = newSt.AccessPort
+	if newServiceType.DefaultVersion != "" {
+		oldServiceType.DefaultVersion = newServiceType.DefaultVersion
 	}
 
-	if newSt.Ports != nil {
-		for _, p := range newSt.Ports {
-			err = CheckPort(p.Port)
-			if err != nil {
-				hS.Logger.Print("ERROR: port must be > 0")
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		}
-		if st.Ports != nil {
-			newPLen := len(newSt.Ports)
-			for _, oldP := range st.Ports {
+	if newServiceType.Class != "" {
+		oldServiceType.Class = newServiceType.Class
+	}
+
+	if newServiceType.AccessPort != 0 { //0 if port not provided
+		oldServiceType.AccessPort = newServiceType.AccessPort
+	}
+
+	if newServiceType.Ports != nil {
+		if oldServiceType.Ports != nil {
+			newPLen := len(newServiceType.Ports)
+			for _, oldP := range oldServiceType.Ports {
 				f := false
-				for _, newP := range newSt.Ports[:newPLen] {
+				for _, newP := range newServiceType.Ports[:newPLen] {
 					if oldP.Port == newP.Port {
 						f = true
 						break
@@ -236,86 +218,75 @@ func (hS HttpServer) ConfigsUpdateService(w http.ResponseWriter, r *http.Request
 				}
 				//add old port if it hasn't been updated
 				if !f {
-					newSt.Ports = append(newSt.Ports, oldP)
+					newServiceType.Ports = append(newServiceType.Ports, oldP)
 				}
 			}
 		}
-
+		oldServiceType.Ports = newServiceType.Ports
 	}
 
-	//saving new service type
-	err = hS.Db.WriteServiceType(st)
+	err = hS.Db.UpdateServiceType(oldServiceType)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	enc := json.NewEncoder(w)
-	err = enc.Encode(st)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	ResponseOK(w, oldServiceType, request)
 }
 
-func (hS HttpServer) ConfigsDeleteService(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	sTypeName := params.ByName("serviceTypeIdOrName")
-	hS.Logger.Print("Get /configs/", sTypeName, " GET")
+func (hS HttpServer) ConfigsDeleteServiceType(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	request := "/configs/" + serviceTypeIdOrName + " GET"
+	hS.Logger.Info("Get " + request)
 
-	//reading service type info from database
-	hS.Logger.Print("Reading service types information from db...")
-	st, err := hS.Db.ReadServiceType(sTypeName)
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
-	if st.Type == "" {
-		hS.Logger.Print("Service type not found")
-		w.WriteHeader(http.StatusNoContent)
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrServiceTypeNotFound.Error())
+		ResponseNotFound(w, ErrServiceTypeNotFound)
 		return
 	}
 
 	//check that service type doesn't exist in dependencies
-	sts, err := hS.Db.ReadServicesTypesList()
+	serviceTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-	for _, st := range sts {
-		for _, sv := range st.Versions {
-			for _, sd := range sv.Dependencies {
-				if sd.ServiceType == sTypeName {
-					hS.Logger.Print("Error: this service type presents in dependencies for service " + st.Type + ".")
-					w.WriteHeader(http.StatusBadRequest)
+	for _, curServiceType := range serviceTypes {
+		for _, serviceVersion := range curServiceType.Versions {
+			for _, serviceVersionDependency := range serviceVersion.Dependencies {
+				if serviceVersionDependency.ServiceType == serviceTypeIdOrName {
+					hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrConfigServiceTypeDependenceExists.Error())
+					ResponseBadRequest(w, ErrConfigServiceTypeDependenceExists)
 					return
 				}
 			}
 		}
 	}
 
-	err = hS.Db.DeleteServiceType(sTypeName)
+	err = hS.Db.DeleteServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	enc := json.NewEncoder(w)
-	err = enc.Encode(st)
-	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)
+	ResponseNoContent(w)
 }
 
-func (hS HttpServer) ConfigsGetVersions(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// service type versions:
+
+func (hS HttpServer) ConfigsGetVersions(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceTypeIdOrName")
 	hS.Logger.Print("Get /configs/", sTypeName, "/versions GET")
 
@@ -434,7 +405,7 @@ func (hS HttpServer) ConfigsCreateVersion(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (hS HttpServer) ConfigsGetVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (hS HttpServer) ConfigsGetVersion(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceTypeIdOrName")
 	vId := params.ByName("versionId")
 	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " GET")
@@ -565,7 +536,7 @@ func (hS HttpServer) ConfigsUpdateVersion(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (hS HttpServer) ConfigsDeleteVersion(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	sTypeName := params.ByName("serviceTypeIdOrName")
 	vId := params.ByName("versionId")
 	hS.Logger.Print("Get /configs/", sTypeName, "/versions/", vId, " DELETE")

@@ -788,3 +788,45 @@ func CheckDependencies(hS HttpServer, serviceDependencies []*protobuf.ServiceDep
 	}
 	return nil, 0
 }
+
+func ValidateServiceTypeUpdate(hS HttpServer, oldServiceType *protobuf.ServiceType, newServiceType *protobuf.ServiceType) (error, int) {
+	hS.Logger.Info("Validating updated values of the service types fields...")
+	if newServiceType.ID != "" || newServiceType.Type != "" {
+		return ErrServiceTypeUnmodFields, http.StatusBadRequest
+	}
+	if newServiceType.Versions != nil {
+		return ErrServiceTypeUnmodVersionsFields, http.StatusBadRequest
+	}
+
+	if newServiceType.DefaultVersion != "" {
+		err := CheckDefaultVersion(oldServiceType.Versions, newServiceType.DefaultVersion)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+
+	if newServiceType.Class != "" {
+		err := CheckClass(newServiceType)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+
+	if newServiceType.AccessPort != 0 { //0 if port not provided
+		err := CheckPort(newServiceType.AccessPort)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+
+	if newServiceType.Ports != nil {
+		for _, port := range newServiceType.Ports {
+			err := CheckPort(port.Port)
+			if err != nil {
+				return err, http.StatusBadRequest
+			}
+		}
+	}
+
+	return nil, 0
+}

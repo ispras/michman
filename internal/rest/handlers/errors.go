@@ -50,6 +50,8 @@ const (
 	//logs
 	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
 	//service type:
+	errServiceTypeUnmodFields                        = "some service types fields can't be modified (ID, Type)"
+	errServiceTypeUnmodVersionsFields                = "service types versions field can't be modified in this response. Use specified one"
 	errServiceTypeNotFound                           = "service type with this id or name not found"
 	errServiceTypeExisted                            = "service type with this name already exists"
 	errServiceTypeClass                              = "class for service type is not supported"
@@ -61,6 +63,7 @@ const (
 	errConfigServiceDependencyVersionNotFound        = "service version in dependency doesn't exist"
 	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
 	errGetQueryParams                                = "bad view param. Supported query variables for view parameter are 'full' and 'summary', 'summary' is default"
+	errConfigServiceTypeDependenceExists             = "service type presents in dependencies for another service"
 )
 
 var (
@@ -93,7 +96,9 @@ var (
 	ErrClusterNotFound = errors.New(errClusterNotFound)
 
 	ErrLogsBadActionParam = errors.New(errBadActionParam)
-	
+
+	ErrServiceTypeUnmodFields                        = errors.New(errServiceTypeUnmodFields)
+	ErrServiceTypeUnmodVersionsFields                = errors.New(errServiceTypeUnmodVersionsFields)
 	ErrServiceTypeNotFound                           = errors.New(errServiceTypeNotFound)
 	ErrServiceTypeExisted                            = errors.New(errServiceTypeExisted)
 	ErrServiceTypeClass                              = errors.New(errServiceTypeClass)
@@ -105,6 +110,7 @@ var (
 	ErrConfigServiceDependencyVersionNotFound        = errors.New(errConfigServiceDependencyVersionNotFound)
 	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
 	ErrGetQueryParams                                = errors.New(errGetQueryParams)
+	ErrConfigServiceTypeDependenceExists             = errors.New(errConfigServiceTypeDependenceExists)
 )
 
 func ErrValidTypeParam(param string) error {
@@ -211,7 +217,7 @@ func init() {
 	HandlerErrorsMap[ErrProjectValidation] = utils.ValidationError
 	HandlerErrorsMap[ErrProjectExisted] = utils.ObjectExists
 	HandlerErrorsMap[ErrProjectImageNotFound] = utils.ValidationError
-	
+
 	HandlerErrorsMap[ErrClusterNotFound] = utils.DatabaseError
 
 	HandlerErrorsMap[ErrLogsBadActionParam] = utils.LogsError
@@ -226,8 +232,10 @@ func init() {
 	HandlerErrorsMap[ErrConfigDependencyServiceDefaultVersionEmpty] = utils.ValidationError
 	HandlerErrorsMap[ErrConfigServiceDependencyVersionNotFound] = utils.ValidationError
 	HandlerErrorsMap[ErrConfigServiceDependencyDefaultVersionNotFound] = utils.ValidationError
-
+	HandlerErrorsMap[ErrServiceTypeUnmodFields] = utils.ValidationError
 	HandlerErrorsMap[ErrGetQueryParams] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeUnmodVersionsFields] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed
 }
 
 func main() {}

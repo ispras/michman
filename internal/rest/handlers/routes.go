@@ -29,8 +29,8 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.POST("/configs", hS.ConfigsCreateServiceType)
 	hS.Router.GET("/configs", hS.ConfigsServiceTypesGetList)
 	hS.Router.GET("/configs/:serviceTypeIdOrName", hS.ConfigsServiceTypeGet)
-	hS.Router.PUT("/configs/:serviceTypeIdOrName", hS.ConfigsUpdateService)
-	hS.Router.DELETE("/configs/:serviceTypeIdOrName", hS.ConfigsDeleteService)
+	hS.Router.PUT("/configs/:serviceTypeIdOrName", hS.ConfigsUpdateServiceType)
+	hS.Router.DELETE("/configs/:serviceTypeIdOrName", hS.ConfigsDeleteServiceType)
 
 	// service type versions:
 	hS.Router.GET("/configs/:serviceTypeIdOrName/versions", hS.ConfigsGetVersions)
