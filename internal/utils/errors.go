@@ -9,5 +9,6 @@ const (
 	ObjectUsed       = 500
 	ObjectExists     = 600
 	ObjectUnmodified = 700
+	LogsError        = 800
 	UnknownError     = 1
 )

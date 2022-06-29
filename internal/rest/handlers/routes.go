@@ -74,7 +74,7 @@ func (hS *HttpServer) CreateRoutes() {
 	// logs routes :
 	hS.Router.Handle("GET", "/logs/launcher", hS.ServeAnsibleServiceLog)
 	hS.Router.Handle("GET", "/logs/http_server", hS.ServeHttpServerLog)
-	hS.Router.Handle("GET", "/logs/projects/:projectIdOrName/clusters/:clusterID", hS.ServeHttpServerLogstash)
+	hS.Router.Handle("GET", "/logs/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ServeClusterLog)
 
 	// service version:
 	hS.Router.Handle("GET", "/version", hS.GetVersion)

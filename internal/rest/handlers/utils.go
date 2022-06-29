@@ -7,6 +7,7 @@ import (
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 )
@@ -677,4 +678,19 @@ func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, i
 		}
 	}
 	return nil, 0
+}
+
+func CheckFileExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	return false, err
+}
+
+func MakeLogFilePath(filename string, LogsFilePath string) string {
+	if LogsFilePath[0] == '/' {
+		return LogsFilePath + "/" + filename
+	}
+	return "./" + LogsFilePath + "/" + filename
 }

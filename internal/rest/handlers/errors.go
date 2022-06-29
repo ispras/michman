@@ -43,6 +43,12 @@ const (
 	errProjectValidation    = "project validation error"
 	errProjectExisted       = "project with this name already exists"
 	errProjectImageNotFound = "specified DefaultImage not found"
+
+	//cluster:
+	errClusterNotFound = "cluster with this id or name not found"
+
+	//logs
+	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
 )
 
 var (
@@ -71,6 +77,10 @@ var (
 	ErrProjectValidation    = errors.New(errProjectValidation)
 	ErrProjectExisted       = errors.New(errProjectExisted)
 	ErrProjectImageNotFound = errors.New(errProjectImageNotFound)
+
+	ErrClusterNotFound = errors.New(errClusterNotFound)
+
+	ErrLogsBadActionParam = errors.New(errBadActionParam)
 )
 
 func ErrFlavorParamVal(param string) error {
@@ -129,6 +139,10 @@ func init() {
 	HandlerErrorsMap[ErrProjectValidation] = utils.ValidationError
 	HandlerErrorsMap[ErrProjectExisted] = utils.ObjectExists
 	HandlerErrorsMap[ErrProjectImageNotFound] = utils.ValidationError
+
+	HandlerErrorsMap[ErrClusterNotFound] = utils.DatabaseError
+
+	HandlerErrorsMap[ErrLogsBadActionParam] = utils.LogsError
 }
 
 func main() {}

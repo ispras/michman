@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	cluster_logger "github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
@@ -13,76 +12,83 @@ const (
 )
 
 type clusterLog struct {
-	ClusterId   string `json:"cluster_id"`
-	Action      string `json:"action"`
-	ClusterLogs string `json:"cluster_logs"`
-}
-
-func (hS HttpServer) ServeAnsibleOutput(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print(r.URL.Path)
-	hS.Logger.Print("Request to serve logs/ansible_output.log")
-	p := "./logs/ansible_output.log"
-	http.ServeFile(w, r, p)
+	ClusterIdOrName string `json:"cluster_id"`
+	Action          string `json:"action"`
+	ClusterLogs     string `json:"cluster_logs"`
 }
 
 func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print(r.URL.Path)
-	hS.Logger.Print("Request to serve logs/launcher.log")
-	p := "./logs/launcher.log"
-	http.ServeFile(w, r, p)
-}
+	request := "logs/launcher GET"
+	hS.Logger.Info("Get " + request)
 
-func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	hS.Logger.Print(r.URL.Path)
-	hS.Logger.Print("Request to serve logs/http_server.log")
-	p := "./logs/http_server.log"
-	http.ServeFile(w, r, p)
-}
+	path := MakeLogFilePath(utils.LauncherLogFileName, hS.Config.LogsFilePath)
 
-func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	clusterID := params.ByName("clusterID")
-	projectIdOrName := params.ByName("projectIdOrName")
-	project, err := hS.Db.ReadProject(projectIdOrName)
-	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
-		hS.Logger.Print(mess)
+	if exist, err := CheckFileExists(path); !exist || err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	http.ServeFile(w, r, path)
+}
+
+func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	request := "logs/http_server GET"
+	hS.Logger.Info("Get " + request)
+
+	path := MakeLogFilePath(utils.HttpLogFileName, hS.Config.LogsFilePath)
+
+	if exist, err := CheckFileExists(path); !exist || err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	http.ServeFile(w, r, path)
+}
+
+func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	clusterIdOrName := params.ByName("clusterIdOrName")
+	projectIdOrName := params.ByName("projectIdOrName")
+	request := "logs/project/" + projectIdOrName + "/clusters/" + clusterIdOrName + " GET"
+	hS.Logger.Info("Get " + request)
+
+	project, err := hS.Db.ReadProject(projectIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
+		return
+	}
 	if project.Name == "" {
-		hS.Logger.Printf("Project with name '%s' not found", projectIdOrName)
-		w.WriteHeader(http.StatusNoContent)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrProjectNotFound.Error())
+		ResponseBadRequest(w, ErrProjectNotFound)
 		return
 	}
 
 	// reading cluster info from database
-	cluster, err := hS.Db.ReadCluster(project.ID, clusterID)
+	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		mess, _ := hS.RespHandler.Handle(w, DBerror, DBerrorMessage, nil)
-		hS.Logger.Print(mess)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
-
 	if cluster.Name == "" {
-		hS.Logger.Printf("Cluster with name or ID '%s' not found", clusterID)
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte(utils.StatusMissing))
-		if err != nil {
-			hS.Logger.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrClusterNotFound.Error())
+		ResponseBadRequest(w, ErrClusterNotFound)
 		return
 	}
 
 	queryValues := r.URL.Query()
 	action := utils.ActionCreate
 
-	if a := queryValues.Get(respActionKey); a != "" {
-		if a == utils.ActionCreate || a == utils.ActionDelete || a == utils.ActionUpdate {
-			action = a
+	if tmpAction := queryValues.Get(respActionKey); tmpAction != "" {
+		if tmpAction == utils.ActionCreate || tmpAction == utils.ActionDelete || tmpAction == utils.ActionUpdate {
+			action = tmpAction
 		} else {
-			hS.Logger.Print("Error: bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete', 'create' is default.")
-			w.WriteHeader(http.StatusBadRequest)
+			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrLogsBadActionParam.Error())
+			ResponseBadRequest(w, ErrLogsBadActionParam)
 			return
 		}
 	}
@@ -90,17 +96,17 @@ func (hS HttpServer) ServeHttpServerLogstash(w http.ResponseWriter, r *http.Requ
 	//initialize cluster logger
 	cLogger, err := cluster_logger.MakeNewClusterLogger(hS.Config, cluster.ID, action)
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 		return
 	}
 
 	clusterLogs, err := cLogger.ReadClusterLogs()
 	if err != nil {
-		hS.Logger.Print(err)
-		w.WriteHeader(http.StatusBadRequest)
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		ResponseInternalError(w, err)
 	}
-	resp := clusterLog{ClusterId: clusterID, Action: action, ClusterLogs: clusterLogs}
-	enc := json.NewEncoder(w)
-	err = enc.Encode(resp)
+	resp := clusterLog{ClusterIdOrName: clusterIdOrName, Action: action, ClusterLogs: clusterLogs}
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	ResponseOK(w, resp, request)
 }

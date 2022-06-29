@@ -138,6 +138,10 @@ const (
 	ActionUpdate = "update"
 	ActionDelete = "delete"
 
+	//log file names
+	HttpLogFileName     = "http_server.log"
+	LauncherLogFileName = "launcher.log"
+
 	ColorReset  = "\033[0m"
 	ColorRed    = "\033[31m"
 	ColorGreen  = "\033[32m"
