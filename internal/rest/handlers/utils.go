@@ -579,8 +579,6 @@ func CheckPossibleValuesUnique(possibleValues []string) error {
 }
 
 func ValidateServiceTypeCreate(hS HttpServer, sType *protobuf.ServiceType) (error, int) {
-	hS.Logger.Info("Validating service type...")
-
 	// check service class
 	err := CheckClass(sType)
 	if err != nil {
@@ -789,13 +787,12 @@ func CheckDependencies(hS HttpServer, serviceDependencies []*protobuf.ServiceDep
 	return nil, 0
 }
 
-func ValidateServiceTypeUpdate(hS HttpServer, oldServiceType *protobuf.ServiceType, newServiceType *protobuf.ServiceType) (error, int) {
-	hS.Logger.Info("Validating updated values of the service types fields...")
+func ValidateServiceTypeUpdate(oldServiceType *protobuf.ServiceType, newServiceType *protobuf.ServiceType) (error, int) {
 	if newServiceType.ID != "" || newServiceType.Type != "" {
 		return ErrServiceTypeUnmodFields, http.StatusBadRequest
 	}
 	if newServiceType.Versions != nil {
-		return ErrServiceTypeUnmodVersionsFields, http.StatusBadRequest
+		return ErrServiceTypeUnmodVersionsField, http.StatusBadRequest
 	}
 
 	if newServiceType.DefaultVersion != "" {
@@ -827,6 +824,94 @@ func ValidateServiceTypeUpdate(hS HttpServer, oldServiceType *protobuf.ServiceTy
 			}
 		}
 	}
+	return nil, 0
+}
 
+func ValidateServiceTypeVersionCreate(hS HttpServer, versions []*protobuf.ServiceVersion, newServiceTypeVersion protobuf.ServiceVersion) (error, int) {
+	if newServiceTypeVersion.ID != "" {
+		return ErrServiceTypeVersionUnmodFields, http.StatusBadRequest
+	}
+
+	if newServiceTypeVersion.Version == "" {
+		return ErrServiceTypeVersionEmptyVersionField, http.StatusBadRequest
+	}
+
+	//check that version is unique
+	if versions != nil {
+		err := CheckVersionUnique(versions, newServiceTypeVersion)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+
+	//check service version config
+	if newServiceTypeVersion.Configs != nil {
+		err, status := CheckConfigs(newServiceTypeVersion.Configs)
+		if err != nil {
+			return err, status
+		}
+	}
+
+	//check service version dependencies
+	if newServiceTypeVersion.Dependencies != nil {
+		err, status := CheckDependencies(hS, newServiceTypeVersion.Dependencies)
+		if err != nil {
+			return err, status
+		}
+	}
+	return nil, 0
+}
+
+func ValidateServiceTypeVersionUpdate(newServiceTypeVersion protobuf.ServiceVersion) (error, int) {
+	if newServiceTypeVersion.ID != "" || newServiceTypeVersion.Version != "" {
+		return ErrServiceTypeVersionUnmodFields, http.StatusBadRequest
+	}
+
+	if newServiceTypeVersion.Configs != nil || newServiceTypeVersion.Dependencies != nil {
+		return ErrServiceTypeUnmodVersionFields, http.StatusBadRequest
+	}
+	return nil, 0
+}
+
+func ValidateServiceTypeVersionDelete(hS HttpServer, serviceType *protobuf.ServiceType, serviceTypeVersion *protobuf.ServiceVersion) (error, int) {
+	//check that this service version doesn't present in dependencies
+	serviceTypes, err := hS.Db.ReadServicesTypesList()
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	for _, curServiceType := range serviceTypes {
+		for _, serviceVersion := range curServiceType.Versions {
+			for _, serviceVersionDependency := range serviceVersion.Dependencies {
+				if serviceVersionDependency.ServiceType == serviceType.Type {
+					for _, serviceVersionDependencyVersion := range serviceVersionDependency.ServiceVersions {
+						if serviceVersionDependencyVersion == serviceTypeVersion.Version {
+							return ErrConfigServiceTypeDependenceVersionExists(serviceVersionDependencyVersion, curServiceType.Type), http.StatusBadRequest
+						}
+					}
+				}
+			}
+		}
+	}
+	if serviceType.DefaultVersion == serviceTypeVersion.Version {
+		return ErrServiceTypeDeleteVersionDefault, http.StatusBadRequest
+	}
+	return nil, 0
+}
+
+func ValidateServiceTypeDelete(hS HttpServer, serviceType string) (error, int) {
+	//check that service type doesn't exist in dependencies
+	serviceTypes, err := hS.Db.ReadServicesTypesList()
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	for _, curServiceType := range serviceTypes {
+		for _, serviceVersion := range curServiceType.Versions {
+			for _, serviceVersionDependency := range serviceVersion.Dependencies {
+				if serviceVersionDependency.ServiceType == serviceType {
+					return ErrConfigServiceTypeDependenceExists, http.StatusBadRequest
+				}
+			}
+		}
+	}
 	return nil, 0
 }

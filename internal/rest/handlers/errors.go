@@ -51,7 +51,7 @@ const (
 	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
 	//service type:
 	errServiceTypeUnmodFields                        = "some service types fields can't be modified (ID, Type)"
-	errServiceTypeUnmodVersionsFields                = "service types versions field can't be modified in this response. Use specified one"
+	errServiceTypeUnmodVersionsField                 = "service types versions field can't be modified in this response. Use specified one"
 	errServiceTypeNotFound                           = "service type with this id or name not found"
 	errServiceTypeExisted                            = "service type with this name already exists"
 	errServiceTypeClass                              = "class for service type is not supported"
@@ -64,6 +64,13 @@ const (
 	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
 	errGetQueryParams                                = "bad view param. Supported query variables for view parameter are 'full' and 'summary', 'summary' is default"
 	errConfigServiceTypeDependenceExists             = "service type presents in dependencies for another service"
+
+	errServiceTypeVersionUnmodFields       = "some service type version fields can't be modified (ID, Version)"
+	errServiceTypeVersionEmptyVersionField = "version field must be set"
+	errServiceTypeVersionNotFound          = "service type version with this id or name not found"
+	errServiceTypeVersionExisted           = "service type version with this name already exists"
+	errServiceTypeUnmodVersionFields       = "service types version fields (config, dependencies) can't be modified in this response. Use specified one"
+	errServiceTypeDeleteVersionDefault     = "service type version set in default version"
 )
 
 var (
@@ -98,7 +105,7 @@ var (
 	ErrLogsBadActionParam = errors.New(errBadActionParam)
 
 	ErrServiceTypeUnmodFields                        = errors.New(errServiceTypeUnmodFields)
-	ErrServiceTypeUnmodVersionsFields                = errors.New(errServiceTypeUnmodVersionsFields)
+	ErrServiceTypeUnmodVersionsField                 = errors.New(errServiceTypeUnmodVersionsField)
 	ErrServiceTypeNotFound                           = errors.New(errServiceTypeNotFound)
 	ErrServiceTypeExisted                            = errors.New(errServiceTypeExisted)
 	ErrServiceTypeClass                              = errors.New(errServiceTypeClass)
@@ -111,6 +118,13 @@ var (
 	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
 	ErrGetQueryParams                                = errors.New(errGetQueryParams)
 	ErrConfigServiceTypeDependenceExists             = errors.New(errConfigServiceTypeDependenceExists)
+	ErrServiceTypeVersionUnmodFields                 = errors.New(errServiceTypeVersionUnmodFields)
+
+	ErrServiceTypeVersionExisted           = errors.New(errServiceTypeVersionExisted)
+	ErrServiceTypeVersionNotFound          = errors.New(errServiceTypeVersionNotFound)
+	ErrServiceTypeVersionEmptyVersionField = errors.New(errServiceTypeVersionEmptyVersionField)
+	ErrServiceTypeUnmodVersionFields       = errors.New(errServiceTypeUnmodVersionFields)
+	ErrServiceTypeDeleteVersionDefault     = errors.New(errServiceTypeDeleteVersionDefault)
 )
 
 func ErrValidTypeParam(param string) error {
@@ -191,6 +205,12 @@ func ErrServiceDependenciesNotExists(param string) error {
 	return ErrParamType
 }
 
+func ErrConfigServiceTypeDependenceVersionExists(param1 string, param2 string) error {
+	ErrParamType := fmt.Errorf("service type version %s presents in dependencies versions in %s service", param1, param2)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
 func init() {
 	HandlerErrorsMap[ErrJsonIncorrect] = utils.JsonError
 	HandlerErrorsMap[ErrJsonEncode] = utils.JsonError
@@ -234,8 +254,16 @@ func init() {
 	HandlerErrorsMap[ErrConfigServiceDependencyDefaultVersionNotFound] = utils.ValidationError
 	HandlerErrorsMap[ErrServiceTypeUnmodFields] = utils.ValidationError
 	HandlerErrorsMap[ErrGetQueryParams] = utils.ValidationError
-	HandlerErrorsMap[ErrServiceTypeUnmodVersionsFields] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeUnmodVersionsField] = utils.ValidationError
 	HandlerErrorsMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed
+
+	HandlerErrorsMap[ErrServiceTypeVersionUnmodFields] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeVersionEmptyVersionField] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeVersionNotFound] = utils.DatabaseError
+	HandlerErrorsMap[ErrServiceTypeVersionExisted] = utils.DatabaseError
+	HandlerErrorsMap[ErrServiceTypeUnmodVersionFields] = utils.DatabaseError
+
+	HandlerErrorsMap[ErrServiceTypeDeleteVersionDefault] = utils.ValidationError
 }
 
 func main() {}

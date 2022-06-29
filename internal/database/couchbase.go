@@ -594,6 +594,36 @@ func (db CouchDatabase) DeleteServiceTypeVersion(serviceTypeIdOrName string, ver
 	return nil
 }
 
+func (db CouchDatabase) UpdateServiceTypeVersion(serviceTypeIdOrName string, version *protobuf.ServiceVersion) error {
+	sType, err := db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		return err
+	}
+
+	if sType.ID == "" {
+		return ErrObjectParamNotExist(serviceTypeIdOrName)
+	}
+
+	idToUpdate := -1
+	for i, curVersion := range sType.Versions {
+		if curVersion.ID == version.ID {
+			idToUpdate = i
+			break
+		}
+	}
+	if idToUpdate == -1 {
+		return ErrObjectParamNotExist(version.Version)
+	}
+
+	sType.Versions[idToUpdate] = version
+
+	err = db.UpdateServiceType(sType)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // image:
 
 func readImageById(db CouchDatabase, imageID string) (*protobuf.Image, error) {
