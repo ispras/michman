@@ -49,6 +49,18 @@ const (
 
 	//logs
 	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
+	//service type:
+	errServiceTypeNotFound                           = "service type with this id or name not found"
+	errServiceTypeExisted                            = "service type with this name already exists"
+	errServiceTypeClass                              = "class for service type is not supported"
+	errServiceTypeAccessPort                         = "port is incorrect"
+	errServiceTypeDefaultVersion                     = "default version not found in versions list"
+	errConfigPossibleValueEmpty                      = "config possible value is empty"
+	errConfigDependencyServiceVersionEmpty           = "service versions list in dependencies can't be empty"
+	errConfigDependencyServiceDefaultVersionEmpty    = "service default version in dependency can't be empty"
+	errConfigServiceDependencyVersionNotFound        = "service version in dependency doesn't exist"
+	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
+	errGetQueryParams                                = "bad view param. Supported query variables for view parameter are 'full' and 'summary', 'summary' is default"
 )
 
 var (
@@ -81,7 +93,25 @@ var (
 	ErrClusterNotFound = errors.New(errClusterNotFound)
 
 	ErrLogsBadActionParam = errors.New(errBadActionParam)
+	
+	ErrServiceTypeNotFound                           = errors.New(errServiceTypeNotFound)
+	ErrServiceTypeExisted                            = errors.New(errServiceTypeExisted)
+	ErrServiceTypeClass                              = errors.New(errServiceTypeClass)
+	ErrServiceTypePort                               = errors.New(errServiceTypeAccessPort)
+	ErrServiceTypeDefaultVersion                     = errors.New(errServiceTypeDefaultVersion)
+	ErrConfigPossibleValueEmpty                      = errors.New(errConfigPossibleValueEmpty)
+	ErrConfigDependencyServiceVersionEmpty           = errors.New(errConfigDependencyServiceVersionEmpty)
+	ErrConfigDependencyServiceDefaultVersionEmpty    = errors.New(errConfigDependencyServiceDefaultVersionEmpty)
+	ErrConfigServiceDependencyVersionNotFound        = errors.New(errConfigServiceDependencyVersionNotFound)
+	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
+	ErrGetQueryParams                                = errors.New(errGetQueryParams)
 )
+
+func ErrValidTypeParam(param string) error {
+	ErrParamType := fmt.Errorf("parameter type must be int, float, bool, string. Got: %s", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
 
 func ErrFlavorParamVal(param string) error {
 	ErrParamVal := fmt.Errorf("flavor %s can't be less than or equal to zero", param)
@@ -119,6 +149,42 @@ func ErrProjectFlavorNotFound(param string) error {
 	return ErrParamType
 }
 
+func ErrServiceTypeVersionUnique(param string) error {
+	ErrParamType := fmt.Errorf("version %s is not unique", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceTypeVersionConfigUnique(param string) error {
+	ErrParamType := fmt.Errorf("config with parameter name %s is not unique", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceTypeVersionConfigPossibleValuesUnique(param string) error {
+	ErrParamType := fmt.Errorf("config possible value %s is not unique", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceTypeVersionConfigParamEmpty(param string) error {
+	ErrParamType := fmt.Errorf("config parameter %s must be set", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceTypeVersionConfigPossibleValues(param string) error {
+	ErrParamType := fmt.Errorf("config possible value %s set incorrectly", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceDependenciesNotExists(param string) error {
+	ErrParamType := fmt.Errorf("service with type %s from dependencies doesn't exist", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
 func init() {
 	HandlerErrorsMap[ErrJsonIncorrect] = utils.JsonError
 	HandlerErrorsMap[ErrJsonEncode] = utils.JsonError
@@ -145,10 +211,23 @@ func init() {
 	HandlerErrorsMap[ErrProjectValidation] = utils.ValidationError
 	HandlerErrorsMap[ErrProjectExisted] = utils.ObjectExists
 	HandlerErrorsMap[ErrProjectImageNotFound] = utils.ValidationError
-
+	
 	HandlerErrorsMap[ErrClusterNotFound] = utils.DatabaseError
 
 	HandlerErrorsMap[ErrLogsBadActionParam] = utils.LogsError
+
+	HandlerErrorsMap[ErrServiceTypeNotFound] = utils.DatabaseError
+	HandlerErrorsMap[ErrServiceTypeExisted] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeClass] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypePort] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeDefaultVersion] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigPossibleValueEmpty] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigDependencyServiceVersionEmpty] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigDependencyServiceDefaultVersionEmpty] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigServiceDependencyVersionNotFound] = utils.ValidationError
+	HandlerErrorsMap[ErrConfigServiceDependencyDefaultVersionNotFound] = utils.ValidationError
+
+	HandlerErrorsMap[ErrGetQueryParams] = utils.ValidationError
 }
 
 func main() {}

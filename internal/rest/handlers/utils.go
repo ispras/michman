@@ -18,211 +18,22 @@ type serviceExists struct {
 }
 
 const (
-	respTypeFull    = "full"
-	respTypeSummary = "summary"
-	respTypeKey     = "view"
+	QueryViewTypeFull    = "full"
+	QueryViewTypeSummary = "summary"
+	QueryViewKey         = "view"
 )
 
-// IsValidType list of supported types
-func IsValidType(t string) bool {
-	switch t {
+// CheckType list of supported types
+func CheckType(_type string) error {
+	switch _type {
 	case
 		"int",
 		"float",
 		"bool",
 		"string":
-		return true
+		return nil
 	}
-	return false
-}
-
-func CheckVersionUnique(stVersions []*protobuf.ServiceVersion, newV protobuf.ServiceVersion) bool {
-	for _, curV := range stVersions {
-		if curV.Version == newV.Version {
-			return false
-		}
-	}
-	return true
-}
-
-func CheckDefaultVersion(stVersions []*protobuf.ServiceVersion, defaultV string) bool {
-	for _, curV := range stVersions {
-		if curV.Version == defaultV {
-			return true
-		}
-	}
-	return false
-}
-
-func CheckPossibleValues(vPossibleValues []string, vType string, IsList bool) bool {
-	//check PossibleValues type
-	if !IsList {
-		switch vType {
-		case "int":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseInt(pV, 10, 32); err != nil {
-					return false
-				}
-			}
-		case "float":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseFloat(pV, 64); err != nil {
-					return false
-				}
-			}
-		case "bool":
-			for _, pV := range vPossibleValues {
-				if _, err := strconv.ParseBool(pV); err != nil {
-					return false
-				}
-			}
-		}
-	} else {
-		switch vType {
-		case "int":
-			var valList []int64
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "float":
-			var valList []float64
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "bool":
-			var valList []bool
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		case "string":
-			var valList []string
-			for _, pV := range vPossibleValues {
-				if err := json.Unmarshal([]byte(pV), &valList); err != nil {
-					return false
-				}
-			}
-		}
-
-		//format PossibleValue strings
-		for i, pV := range vPossibleValues {
-			vPossibleValues[i] = DeleteSpaces(pV)
-		}
-	}
-
-	//check PossibleValues are unique
-	for i, curVal := range vPossibleValues[:len(vPossibleValues)-1] {
-		if curVal == "" {
-			return false
-		}
-		for _, otherVal := range vPossibleValues[i+1:] {
-			if curVal == otherVal {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-func CheckConfigs(hS HttpServer, vConfigs []*protobuf.ServiceConfig) (bool, error) {
-	for i, curC := range vConfigs {
-		//check param type
-		if !IsValidType(curC.Type) {
-			hS.Logger.Print("ERROR: parameter type must be int, float, bool, string, error in param " + curC.ParameterName)
-			return false, errors.New("ERROR: parameter type must be one of supported: int, float, bool, string")
-		}
-
-		//check param name is unique
-		curName := curC.ParameterName
-		if curName == "" {
-			hS.Logger.Print("ERROR: parameter names must be set")
-			return false, errors.New("ERROR: parameter names must be set")
-		}
-		for _, otherC := range vConfigs[i+1:] {
-			if curName == otherC.ParameterName {
-				hS.Logger.Print("ERROR: parameter names in service config must be uniques")
-				return false, errors.New("ERROR: parameter names in service config must be uniques")
-			}
-		}
-
-		//check param possible values
-		if curC.PossibleValues != nil {
-			if flag := CheckPossibleValues(curC.PossibleValues, curC.Type, curC.IsList); flag != true {
-				hS.Logger.Print("ERROR: possible values are set incorrectly, check the value type or spelling")
-				return false, errors.New("ERROR: possible values are set incorrectly, check the value type or spelling")
-			}
-		}
-	}
-	return true, nil
-}
-
-func CheckDependency(hS HttpServer, d *protobuf.ServiceDependency) (bool, error) {
-	st, err := hS.Db.ReadServiceType(d.ServiceType)
-	if err != nil {
-		hS.Logger.Print(err)
-		return false, err
-	}
-
-	if st.Type == "" {
-		hS.Logger.Print("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
-		return false, errors.New("Service " + d.ServiceType + " from dependencies with this type doesn't exist")
-	}
-
-	if d.ServiceVersions == nil {
-		hS.Logger.Print("Service versions list in dependencies can't be empty")
-		return false, errors.New("Service versions list in dependencies can't be empty")
-	}
-
-	if d.DefaultServiceVersion == "" {
-		hS.Logger.Print("Service default version in dependency can't be empty")
-		return false, errors.New("Service default version in dependency can't be empty")
-	}
-
-	//check correctness of versions list
-	flagDefaultV := false
-	for _, dSv := range d.ServiceVersions {
-		flag := false
-		for _, sv := range st.Versions {
-			if dSv == sv.Version {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			hS.Logger.Print("Service version in dependency doesn't exist")
-			return false, errors.New("Service version in dependency doesn't exist")
-		}
-		if dSv == d.DefaultServiceVersion {
-			flagDefaultV = true
-		}
-	}
-
-	if !flagDefaultV {
-		return false, errors.New("Service default version in dependencies doesn't exist")
-	}
-
-	return true, nil
-}
-
-func CheckClass(st *protobuf.ServiceType) bool {
-	if st.Class == utils.ClassMasterSlave || st.Class == utils.ClassStandAlone || st.Class == utils.ClassStorage {
-		return true
-	}
-	return false
-}
-
-func CheckPort(port int32) bool {
-	//TODO: add another checks for port?
-	if port > 0 {
-		return true
-	}
-	return false
+	return ErrValidTypeParam(_type)
 }
 
 func IsFlavorUsed(hS HttpServer, flavorName string) (bool, error) {
@@ -707,6 +518,273 @@ func CheckValidName(name string, pattern string) (error, int) {
 	validName := regexp.MustCompile(pattern).MatchString
 	if !validName(name) {
 		return ErrProjectValidation, http.StatusBadRequest
+	}
+	return nil, 0
+}
+
+func CheckClass(st *protobuf.ServiceType) error {
+	if st.Class == utils.ClassMasterSlave || st.Class == utils.ClassStandAlone || st.Class == utils.ClassStorage {
+		return nil
+	}
+	return ErrServiceTypeClass
+}
+
+func CheckPort(port int32) error {
+	//TODO: add another checks for port?
+	if port > 0 {
+		return nil
+	}
+	return ErrServiceTypePort
+}
+
+func CheckDefaultVersion(sTypeVersions []*protobuf.ServiceVersion, defaultVersion string) error {
+	for _, curVersion := range sTypeVersions {
+		if curVersion.Version == defaultVersion {
+			return nil
+		}
+	}
+	return ErrServiceTypeDefaultVersion
+}
+
+func CheckVersionUnique(sTypeVersions []*protobuf.ServiceVersion, newVersion protobuf.ServiceVersion) error {
+	for _, curVersion := range sTypeVersions {
+		if curVersion.Version == newVersion.Version {
+			return ErrServiceTypeVersionUnique(curVersion.Version)
+		}
+	}
+	return nil
+}
+
+func CheckConfigsUnique(sTypeVersionConfigs []*protobuf.ServiceConfig, newConfig protobuf.ServiceConfig) error {
+	for _, curConfig := range sTypeVersionConfigs {
+		if curConfig.ParameterName == newConfig.ParameterName {
+			return ErrServiceTypeVersionConfigUnique(curConfig.ParameterName)
+		}
+	}
+	return nil
+}
+
+func CheckPossibleValuesUnique(possibleValues []string) error {
+	for i, curVal := range possibleValues[:len(possibleValues)-1] {
+		if curVal == "" {
+			return ErrConfigPossibleValueEmpty
+		}
+		for _, otherVal := range possibleValues[i+1:] {
+			if curVal == otherVal {
+				return ErrServiceTypeVersionConfigPossibleValuesUnique(curVal)
+			}
+		}
+	}
+	return nil
+}
+
+func ValidateServiceTypeCreate(hS HttpServer, sType *protobuf.ServiceType) (error, int) {
+	hS.Logger.Info("Validating service type...")
+
+	// check service class
+	err := CheckClass(sType)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	// check service access port
+	if sType.AccessPort != 0 { //0 if port not provided
+		err = CheckPort(sType.AccessPort)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+
+	// check all ports
+	if sType.Ports != nil {
+		for _, p := range sType.Ports {
+			err = CheckPort(p.Port)
+			if err != nil {
+				return err, http.StatusBadRequest
+			}
+		}
+	}
+
+	err, status := ValidateServiceTypeVersions(hS, sType.Versions)
+	if err != nil {
+		return err, status
+	}
+
+	//check default version
+	err = CheckDefaultVersion(sType.Versions, sType.DefaultVersion)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	return nil, 0
+}
+
+func ValidateServiceTypeVersions(hS HttpServer, sTypeVersions []*protobuf.ServiceVersion) (error, int) {
+	for i, serviceVersion := range sTypeVersions {
+		// check service version is unique
+		err := CheckVersionUnique(sTypeVersions[i+1:], *serviceVersion)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+
+		//check service version config
+		if serviceVersion.Configs != nil {
+			err, status := CheckConfigs(serviceVersion.Configs)
+			if err != nil {
+				return err, status
+			}
+		}
+
+		//check service version dependencies
+		err, status := CheckDependencies(hS, serviceVersion.Dependencies)
+		if err != nil {
+			return err, status
+		}
+	}
+	return nil, 0
+}
+
+func CheckPossibleValues(possibleValues []string, vType string, IsList bool) error {
+	//check PossibleValues type
+	if !IsList {
+		switch vType {
+		case "int":
+			for _, value := range possibleValues {
+				if _, err := strconv.ParseInt(value, 10, 32); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		case "float":
+			for _, value := range possibleValues {
+				if _, err := strconv.ParseFloat(value, 64); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		case "bool":
+			for _, value := range possibleValues {
+				if _, err := strconv.ParseBool(value); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		}
+	} else {
+		switch vType {
+		case "int":
+			var valList []int64
+			for _, value := range possibleValues {
+				if err := json.Unmarshal([]byte(value), &valList); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		case "float":
+			var valList []float64
+			for _, value := range possibleValues {
+				if err := json.Unmarshal([]byte(value), &valList); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		case "bool":
+			var valList []bool
+			for _, value := range possibleValues {
+				if err := json.Unmarshal([]byte(value), &valList); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		case "string":
+			var valList []string
+			for _, value := range possibleValues {
+				if err := json.Unmarshal([]byte(value), &valList); err != nil {
+					return ErrServiceTypeVersionConfigPossibleValues(value)
+				}
+			}
+		}
+
+		//format PossibleValue strings
+		for i, pV := range possibleValues {
+			possibleValues[i] = DeleteSpaces(pV)
+		}
+	}
+
+	//check PossibleValues are unique
+	err := CheckPossibleValuesUnique(possibleValues)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CheckConfigs(versionConfigs []*protobuf.ServiceConfig) (error, int) {
+	for i, curConfig := range versionConfigs {
+		// check param type
+		err := CheckType(curConfig.Type)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+
+		// check param name is unique
+		if curConfig.ParameterName == "" {
+			return ErrServiceTypeVersionConfigParamEmpty("ParameterName"), http.StatusBadRequest
+		}
+
+		// check config is unique by parameter name
+		err = CheckConfigsUnique(versionConfigs[i+1:], *curConfig)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+
+		//check param possible values
+		if curConfig.PossibleValues != nil {
+			err = CheckPossibleValues(curConfig.PossibleValues, curConfig.Type, curConfig.IsList)
+			if err != nil {
+				return err, http.StatusBadRequest
+			}
+		}
+	}
+	return nil, 0
+}
+
+func CheckDependencies(hS HttpServer, serviceDependencies []*protobuf.ServiceDependency) (error, int) {
+	for _, serviceDependency := range serviceDependencies {
+		sType, err := hS.Db.ReadServiceType(serviceDependency.ServiceType)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+
+		if sType.Type == "" {
+			return ErrServiceDependenciesNotExists(serviceDependency.ServiceType), http.StatusBadRequest
+		}
+
+		if serviceDependency.ServiceVersions == nil {
+			return ErrConfigDependencyServiceVersionEmpty, http.StatusBadRequest
+		}
+
+		if serviceDependency.DefaultServiceVersion == "" {
+			return ErrConfigDependencyServiceDefaultVersionEmpty, http.StatusBadRequest
+		}
+
+		//check correctness of versions list
+		flagDefaultVersion := false
+		for _, dependencyServiceVersion := range serviceDependency.ServiceVersions {
+			flag := false
+
+			for _, sv := range sType.Versions {
+				if dependencyServiceVersion == sv.Version {
+					flag = true
+					break
+				}
+			}
+
+			if !flag {
+				return ErrConfigServiceDependencyVersionNotFound, http.StatusBadRequest
+			}
+			if dependencyServiceVersion == serviceDependency.DefaultServiceVersion {
+				flagDefaultVersion = true
+			}
+		}
+
+		if !flagDefaultVersion {
+			return ErrConfigServiceDependencyDefaultVersionNotFound, http.StatusBadRequest
+		}
 	}
 	return nil, 0
 }
