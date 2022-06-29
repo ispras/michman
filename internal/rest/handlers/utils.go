@@ -579,12 +579,20 @@ func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
 
 func ValidateProjectCreate(hs HttpServer, project *protobuf.Project) (error, int) {
 	hs.Logger.Info("Validating project...")
-	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
-	if project.Name == "" {
+	if project.DisplayName == "" {
 		return ErrProjectFieldEmpty("DisplayName"), http.StatusBadRequest
 	}
-	if !validName(project.Name) {
-		return ErrProjectValidation, http.StatusBadRequest
+	if project.ID != "" {
+		return ErrProjectFieldIsGenerated("ID"), http.StatusBadRequest
+	}
+	if project.Name != "" {
+		return ErrProjectFieldIsGenerated("Name"), http.StatusBadRequest
+	}
+	if project.GroupID != "" {
+		return ErrProjectFieldIsGenerated("GroupID"), http.StatusBadRequest
+	}
+	if err, status := CheckValidName(project.DisplayName, utils.ProjectNamePattern); err != nil {
+		return err, status
 	}
 	if project.DefaultImage == "" {
 		return ErrProjectFieldEmpty("DefaultImage"), http.StatusBadRequest
@@ -693,4 +701,12 @@ func MakeLogFilePath(filename string, LogsFilePath string) string {
 		return LogsFilePath + "/" + filename
 	}
 	return "./" + LogsFilePath + "/" + filename
+}
+
+func CheckValidName(name string, pattern string) (error, int) {
+	validName := regexp.MustCompile(pattern).MatchString
+	if !validName(name) {
+		return ErrProjectValidation, http.StatusBadRequest
+	}
+	return nil, 0
 }

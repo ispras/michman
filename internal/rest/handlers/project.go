@@ -25,7 +25,7 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	request := "/projects POST"
-	hS.Logger.Print("Get " + request)
+	hS.Logger.Info("Get " + request)
 
 	var project protobuf.Project
 	err := json.NewDecoder(r.Body).Decode(&project)
@@ -48,6 +48,8 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		}
 	}
 
+	project.Name = project.DisplayName
+
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
@@ -67,7 +69,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	ResponseCreated(w, project, request)
 }
 
-func (hS HttpServer) ProjectGetByName(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (hS HttpServer) ProjectGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	request := "/projects/" + projectIdOrName + " GET"
 	hS.Logger.Info("Get " + request)

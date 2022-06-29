@@ -142,6 +142,10 @@ const (
 	HttpLogFileName     = "http_server.log"
 	LauncherLogFileName = "launcher.log"
 
+	//Pattern strings
+	ClusterNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
+	ProjectNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
+
 	ColorReset  = "\033[0m"
 	ColorRed    = "\033[31m"
 	ColorGreen  = "\033[32m"

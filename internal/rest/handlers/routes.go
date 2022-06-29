@@ -13,7 +13,7 @@ func (hS *HttpServer) CreateRoutes() {
 	// projects:
 	hS.Router.GET("/projects", hS.ProjectsGetList)
 	hS.Router.POST("/projects", hS.ProjectCreate)
-	hS.Router.GET("/projects/:projectIdOrName", hS.ProjectGetByName)
+	hS.Router.GET("/projects/:projectIdOrName", hS.ProjectGet)
 	hS.Router.PUT("/projects/:projectIdOrName", hS.ProjectUpdate)
 	hS.Router.DELETE("/projects/:projectIdOrName", hS.ProjectDelete)
 

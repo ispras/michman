@@ -40,7 +40,7 @@ const (
 	errProjectNotFound      = "project with this id or name not found"
 	errProjectHasClusters   = "project has clusters. Delete them first"
 	errProjectUnmodFields   = "some project fields can't be modified (ID, Name, GroupID)"
-	errProjectValidation    = "project validation error"
+	errProjectValidation    = "project validation error (bad Name)"
 	errProjectExisted       = "project with this name already exists"
 	errProjectImageNotFound = "specified DefaultImage not found"
 
@@ -103,6 +103,12 @@ func ErrImageValidationParam(param string) error {
 
 func ErrProjectFieldEmpty(param string) error {
 	ErrParamType := fmt.Errorf("required project field '%s' is empty", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrProjectFieldIsGenerated(param string) error {
+	ErrParamType := fmt.Errorf("project %s is generated field. It can't be filled in by user", param)
 	HandlerErrorsMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
 }
