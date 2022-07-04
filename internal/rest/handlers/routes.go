@@ -18,10 +18,10 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.DELETE("/projects/:projectIdOrName", hS.ProjectDelete)
 
 	// clusters:
-	hS.Router.GET("/projects/:projectIdOrName/clusters", hS.ClustersGet)
+	hS.Router.GET("/projects/:projectIdOrName/clusters", hS.ClustersGetList)
 	hS.Router.POST("/projects/:projectIdOrName/clusters", hS.ClusterCreate)
-	hS.Router.GET("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersGetByName)
-	hS.Router.GET("/projects/:projectIdOrName/clusters/:clusterIdOrName/status", hS.ClustersStatusGetByName)
+	hS.Router.GET("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClusterGet)
+	hS.Router.GET("/projects/:projectIdOrName/clusters/:clusterIdOrName/status", hS.ClusterStatusGet)
 	hS.Router.PUT("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersUpdate)
 	hS.Router.DELETE("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersDelete)
 

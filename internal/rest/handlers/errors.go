@@ -40,15 +40,25 @@ const (
 	errProjectNotFound      = "project with this id or name not found"
 	errProjectHasClusters   = "project has clusters. Delete them first"
 	errProjectUnmodFields   = "some project fields can't be modified (ID, Name, GroupID)"
-	errProjectValidation    = "project validation error (bad Name)"
+	errProjectValidation    = "project validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
 	errProjectExisted       = "project with this name already exists"
 	errProjectImageNotFound = "specified DefaultImage not found"
 
 	//cluster:
-	errClusterNotFound = "cluster with this id or name not found"
+	errClusterNotFound                    = "cluster with this id or name not found"
+	errClusterUnmodFields                 = "some cluster fields can't be modified"
+	errClusterStatus                      = "cluster status must be 'ACTIVE' or 'FAILED' for UPDATE or DELETE"
+	errClusterExisted                     = "cluster with this name already exists"
+	errClusterBadName                     = "cluster validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
+	errClusterNhostsZero                  = "NHosts parameter must be number >= 0"
+	errClustersNhostsMasterSlave          = "NHosts parameter must be number >= 1 if you want to install master-slave services"
+	errClusterServiceTypeEmpty            = "service type field can't be empty"
+	errClusterServicesIncompatibleVersion = "Incompatible versions between services"
+	errClusterImageNotFound               = "specified Image not found"
 
 	//logs
 	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
+
 	//service type:
 	errServiceTypeUnmodFields                        = "some service types fields can't be modified (ID, Type)"
 	errServiceTypeUnmodVersionsField                 = "service types versions field can't be modified in this response. Use specified one"
@@ -100,7 +110,16 @@ var (
 	ErrProjectExisted       = errors.New(errProjectExisted)
 	ErrProjectImageNotFound = errors.New(errProjectImageNotFound)
 
-	ErrClusterNotFound = errors.New(errClusterNotFound)
+	ErrClusterNotFound                    = errors.New(errClusterNotFound)
+	ErrClusterUnmodFields                 = errors.New(errClusterUnmodFields)
+	ErrClusterStatus                      = errors.New(errClusterStatus)
+	ErrClusterExisted                     = errors.New(errClusterExisted)
+	ErrClusterBadName                     = errors.New(errClusterBadName)
+	ErrClusterNhostsZero                  = errors.New(errClusterNhostsZero)
+	ErrClustersNhostsMasterSlave          = errors.New(errClustersNhostsMasterSlave)
+	ErrClusterServiceTypeEmpty            = errors.New(errClusterServiceTypeEmpty)
+	ErrClusterServicesIncompatibleVersion = errors.New(errClusterServicesIncompatibleVersion)
+	ErrClusterImageNotFound               = errors.New(errClusterImageNotFound)
 
 	ErrLogsBadActionParam = errors.New(errBadActionParam)
 
@@ -163,7 +182,7 @@ func ErrProjectFieldIsGenerated(param string) error {
 	return ErrParamType
 }
 
-func ErrProjectFlavorNotFound(param string) error {
+func ErrFlavorFieldValueNotFound(param string) error {
 	ErrParamType := fmt.Errorf("specified %s not found", param)
 	HandlerErrorsMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
@@ -211,6 +230,54 @@ func ErrConfigServiceTypeDependenceVersionExists(param1 string, param2 string) e
 	return ErrParamType
 }
 
+func ErrClusterServiceVersionsEmpty(param string) error {
+	ErrParamType := fmt.Errorf("'%s' service version and default version are not specified", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceTypeNotSupported(param string) error {
+	ErrParamType := fmt.Errorf("service '%s' is not supported", param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceVersionNotSupported(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service version '%s' is not supported", service, param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceConfigNotSupported(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param name '%s' is not supported", service, param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceConfigIncorrectType(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param '%s' has incorrect value type", service, param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceConfigNotPossibleValue(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param '%s' value is not supported", service, param)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceHealthCheck(service string) error {
+	ErrParamType := fmt.Errorf("'%s' HealthCheck field is empty", service)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterDependenceServicesIncompatibleVersion(service string, currentService string) error {
+	ErrParamType := fmt.Errorf("service '%s' has incompatible version for service '%s'", service, currentService)
+	HandlerErrorsMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
 func init() {
 	HandlerErrorsMap[ErrJsonIncorrect] = utils.JsonError
 	HandlerErrorsMap[ErrJsonEncode] = utils.JsonError
@@ -239,6 +306,15 @@ func init() {
 	HandlerErrorsMap[ErrProjectImageNotFound] = utils.ValidationError
 
 	HandlerErrorsMap[ErrClusterNotFound] = utils.DatabaseError
+	HandlerErrorsMap[ErrClusterUnmodFields] = utils.ObjectUnmodified
+	HandlerErrorsMap[ErrClusterStatus] = utils.DatabaseError
+	HandlerErrorsMap[ErrClusterExisted] = utils.ObjectExists
+	HandlerErrorsMap[ErrClusterBadName] = utils.ValidationError
+	HandlerErrorsMap[ErrClusterNhostsZero] = utils.ValidationError
+	HandlerErrorsMap[ErrClustersNhostsMasterSlave] = utils.ValidationError
+	HandlerErrorsMap[ErrClusterServiceTypeEmpty] = utils.ValidationError
+	HandlerErrorsMap[ErrClusterServicesIncompatibleVersion] = utils.ValidationError
+	HandlerErrorsMap[ErrClusterImageNotFound] = utils.ValidationError
 
 	HandlerErrorsMap[ErrLogsBadActionParam] = utils.LogsError
 
@@ -265,5 +341,3 @@ func init() {
 
 	HandlerErrorsMap[ErrServiceTypeDeleteVersionDefault] = utils.ValidationError
 }
-
-func main() {}

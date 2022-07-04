@@ -48,7 +48,7 @@ func TestClustersGet(t *testing.T) {
 	mockDatabase.EXPECT().ReadProjectClusters(projectTestID).Return([]protobuf.Cluster{}, nil)
 
 	hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
-	hS.ClustersGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
+	hS.ClustersGetList(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName}})
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("Expected status code %v, but received: %v", "200", response.Code)
@@ -522,7 +522,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadProjectByName(projectName).Return(&protobuf.Project{}, nil)
 
 		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
+		hS.ClusterGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterName", Value: clusterName}})
 
 		if response.Code != http.StatusNoContent {
@@ -541,7 +541,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
 		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
+		hS.ClusterGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 
 		if response.Code != http.StatusOK {
@@ -560,7 +560,7 @@ func TestClustersGetByName(t *testing.T) {
 		mockDatabase.EXPECT().ReadClusterByName(projectTestID, clusterName).Return(&testProjectClusters, nil)
 
 		hS := handlers.HttpServer{Gc: mockClient, Logger: l, Db: mockDatabase, RespHandler: RespHandler}
-		hS.ClustersGetByName(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
+		hS.ClusterGet(response, request, httprouter.Params{{Key: "projectIdOrName", Value: projectName},
 			{Key: "clusterIdOrName", Value: clusterName}})
 
 		if response.Code != http.StatusNoContent {

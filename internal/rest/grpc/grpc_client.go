@@ -140,7 +140,7 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 	if err != nil {
 		gc.logger.Warn(err)
 		c.EntityStatus = utils.StatusFailed
-		err = gc.Db.WriteCluster(c)
+		err = gc.Db.UpdateCluster(c)
 		if err != nil {
 			gc.logger.Warn(err)
 		}
@@ -156,7 +156,7 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		// request to db-service about errors with ansible service
 		c.EntityStatus = utils.StatusFailed
-		err = gc.Db.WriteCluster(c)
+		err = gc.Db.UpdateCluster(c)
 		if err != nil {
 			gc.logger.Warn(err)
 		}
@@ -171,7 +171,7 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 	}
 	gc.logger.Infof("Sending to db-service new status for %s cluster", c.Name)
 	newC.EntityStatus = utils.StatusActive
-	err = gc.Db.WriteCluster(newC)
+	err = gc.Db.UpdateCluster(newC)
 	if err != nil {
 		gc.logger.Warn(err)
 	}

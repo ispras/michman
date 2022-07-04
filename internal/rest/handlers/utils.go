@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"net/http"
@@ -99,106 +97,105 @@ func ValidateFlavor(hS HttpServer, flavor *protobuf.Flavor) error {
 	return nil
 }
 
-func ValidateCluster(hS HttpServer, cluster *protobuf.Cluster) (bool, error) {
-	validName := regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]+$`).MatchString
-
-	if !validName(cluster.DisplayName) {
-		return false, errors.New("bad name for cluster. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol")
+func ValidateCluster(hS HttpServer, cluster *protobuf.Cluster) (error, int) {
+	hS.Logger.Info("Validating cluster...")
+	if err, status := CheckValidName(cluster.DisplayName, utils.ClusterNamePattern, ErrClusterBadName); err != nil {
+		return err, status
 	}
 
 	for _, service := range cluster.Services {
-		if res, err := ValidateService(hS, service); !res {
-			return false, err
+		if err, status := ValidateService(hS, service); err != nil {
+			return err, status
 		}
 	}
 
 	if cluster.NHosts < 0 {
-		return false, errors.New("NHosts parameter must be number >= 0")
+		return ErrClusterNhostsZero, http.StatusBadRequest
 	}
 
 	if cluster.NHosts == 0 {
 		res, err := CheckMSServices(hS, cluster)
 		if err != nil {
-			return false, err
+			return err, http.StatusInternalServerError
 		}
 		if res {
-			return false, errors.New("NHosts parameter must be number >= 1 if you want to install master-slave services.")
+			return ErrClustersNhostsMasterSlave, http.StatusBadRequest
 		}
 	}
 
+	dbImg, err := hS.Db.ReadImage(cluster.Image)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if dbImg.Name == "" {
+		return ErrClusterImageNotFound, http.StatusBadRequest
+	}
 	dbFlavor, err := hS.Db.ReadFlavor(cluster.MasterFlavor)
 	if err != nil {
-		return false, err
+		return err, http.StatusInternalServerError
 	}
 	if dbFlavor.ID == "" {
-		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.MasterFlavor))
+		return ErrFlavorFieldValueNotFound("MasterFlavor"), http.StatusBadRequest
 	}
 	dbFlavor, err = hS.Db.ReadFlavor(cluster.SlavesFlavor)
 	if err != nil {
-		return false, err
+		return err, http.StatusInternalServerError
 	}
 	if dbFlavor.ID == "" {
-		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.SlavesFlavor))
+		return ErrFlavorFieldValueNotFound("SlavesFlavor"), http.StatusBadRequest
 	}
 	dbFlavor, err = hS.Db.ReadFlavor(cluster.StorageFlavor)
 	if err != nil {
-		return false, err
+		return err, http.StatusInternalServerError
 	}
 	if dbFlavor.ID == "" {
-		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.StorageFlavor))
+		return ErrFlavorFieldValueNotFound("StorageFlavor"), http.StatusBadRequest
 	}
 	dbFlavor, err = hS.Db.ReadFlavor(cluster.MonitoringFlavor)
 	if err != nil {
-		return false, err
+		return err, http.StatusInternalServerError
 	}
 	if dbFlavor.ID == "" {
-		return false, errors.New(fmt.Sprintf("Flavor with name '%s' not found", cluster.MonitoringFlavor))
+		return ErrFlavorFieldValueNotFound("MonitoringFlavor"), http.StatusBadRequest
 	}
-	return true, nil
+	return nil, 0
 }
 
-func AddDependencies(hS HttpServer, c *protobuf.Cluster, curS *protobuf.Service) ([]*protobuf.Service, error) {
-	var err error = nil
+func AddDependencies(hS HttpServer, cluster *protobuf.Cluster, curS *protobuf.Service) ([]*protobuf.Service, error, int) {
 	var serviceToAdd *protobuf.Service = nil
 	var servicesList []*protobuf.Service = nil
 
 	sv, err := hS.Db.ReadServiceTypeVersion(curS.Type, curS.Version)
 	if err != nil {
-		return nil, err
+		return nil, err, http.StatusInternalServerError
 	}
 
 	//check if version has dependencies
 	if sv.Dependencies != nil {
 		for _, sd := range sv.Dependencies {
 			//check if the service from dependencies has already listed in cluster and version is ok
-			flagAddS := true
-			for _, clusterS := range c.Services {
+			for _, clusterS := range cluster.Services {
 				if clusterS.Type == sd.ServiceType {
 					if !utils.ItemExists(sd.ServiceVersions, clusterS.Version) {
-						//error: bad service version from user list
-						err = errors.New("service " + clusterS.Type +
-							" has incompatible version for service " + curS.Type + ".")
+						return nil, ErrClusterDependenceServicesIncompatibleVersion(clusterS.Type, curS.Type), http.StatusBadRequest
 					}
-					flagAddS = false
-					break
 				}
 			}
-			if flagAddS && err == nil {
-				//add service from dependencies with default configurations
-				serviceToAdd = &protobuf.Service{
-					Name:    curS.Name + "-dependent", //TODO: use better service name?
-					Type:    sd.ServiceType,
-					Version: sd.DefaultServiceVersion,
-				}
-				servicesList = append(servicesList, serviceToAdd)
+
+			//add service from dependencies with default configurations
+			serviceToAdd = &protobuf.Service{
+				Name:    curS.Name + "-dependent", //TODO: use better service name?
+				Type:    sd.ServiceType,
+				Version: sd.DefaultServiceVersion,
 			}
+			servicesList = append(servicesList, serviceToAdd)
 		}
 	}
 
-	return servicesList, err
+	return servicesList, nil, http.StatusOK
 }
 
-//returns true if master-slave service exists
+// CheckMSServices returns true if master-slave service exists
 func CheckMSServices(hS HttpServer, cluster *protobuf.Cluster) (bool, error) {
 	for _, service := range cluster.Services {
 		st, err := hS.Db.ReadServiceType(service.Type)
@@ -272,120 +269,40 @@ func CheckValuesAllowed(val string, posVal []string) bool {
 	return false
 }
 
-func ValidateService(hS HttpServer, service *protobuf.Service) (bool, error) {
-	hS.Logger.Print("Validating service type and config params...")
+func ValidateService(hS HttpServer, service *protobuf.Service) (error, int) {
+	hS.Logger.Info("Validating service type and config params...")
 
 	if service.Type == "" {
-		return false, errors.New("service type can't be nil")
+		return ErrClusterServiceTypeEmpty, http.StatusBadRequest
 	}
 
 	sTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
-		return false, err
+		return err, http.StatusInternalServerError
 	}
 
-	//check that service type is supported
-	stOk := false
-	var stIdx int
-	for i, st := range sTypes {
-		if st.Type == service.Type {
-			stOk = true
-			stIdx = i
-			break
-		}
-	}
-
-	if !stOk {
-		return false, errors.New("service type " + service.Type + " is not supported")
+	stIdx, err := GetServiceTypeIdx(service, sTypes)
+	if err != nil {
+		return err, http.StatusBadRequest
 	}
 
 	//check service version
 	if service.Version == "" && sTypes[stIdx].DefaultVersion != "" {
 		service.Version = sTypes[stIdx].DefaultVersion
 	} else if service.Version == "" && sTypes[stIdx].DefaultVersion == "" {
-		return false, errors.New("service version and default version for service type " + service.Type + " are nil")
+		return ErrClusterServiceVersionsEmpty(service.Type), http.StatusBadRequest
 	}
 
-	//get idx of service version
-	var svIdx int
-	svOk := false
-	for i, sv := range sTypes[stIdx].Versions {
-		if sv.Version == service.Version {
-			svIdx = i
-			svOk = true
-			break
-		}
+	svIdx, err := GetServiceVersionIdx(service, sTypes, stIdx)
+	if err != nil {
+		return err, http.StatusBadRequest
 	}
 
-	if !svOk {
-		return false, errors.New("service version " + service.Version + " is not supported")
+	if err, status := ValidateConfigs(service, sTypes[stIdx].Versions[svIdx].Configs); err != nil {
+		return err, status
 	}
 
-	//validate configs
-	for k, v := range service.Config {
-		flagPN := false
-		for _, sc := range sTypes[stIdx].Versions[svIdx].Configs {
-			if k == sc.ParameterName {
-				flagPN = true
-
-				//check type
-				if !sc.IsList {
-					switch sc.Type {
-					case "int":
-						if _, err := strconv.ParseInt(v, 10, 32); err != nil {
-							return false, err
-						}
-					case "float":
-						if _, err := strconv.ParseFloat(v, 64); err != nil {
-							return false, err
-						}
-					case "bool":
-						if _, err := strconv.ParseBool(v); err != nil {
-							return false, err
-						}
-					}
-				} else {
-					switch sc.Type {
-					case "int":
-						var valList []int64
-						if err := json.Unmarshal([]byte(v), &valList); err != nil {
-							return false, err
-						}
-					case "float":
-						var valList []float64
-						if err := json.Unmarshal([]byte(v), &valList); err != nil {
-							return false, err
-						}
-					case "bool":
-						var valList []bool
-						if err := json.Unmarshal([]byte(v), &valList); err != nil {
-							return false, err
-						}
-					case "string":
-						var valList []string
-						if err := json.Unmarshal([]byte(v), &valList); err != nil {
-							return false, err
-						}
-					}
-				}
-
-				//check for possible values
-				if sc.PossibleValues != nil {
-					flagPV := CheckValuesAllowed(v, sc.PossibleValues)
-					if !flagPV {
-						return false, errors.New("service version " + v + " is not supported")
-					}
-				}
-
-				break
-			}
-		}
-		if !flagPN {
-			return false, errors.New("service config param name " + k + " is not supported")
-		}
-	}
-
-	return true, nil
+	return nil, 0
 }
 
 func ValidateProjectCreate(hs HttpServer, project *protobuf.Project) (error, int) {
@@ -402,7 +319,7 @@ func ValidateProjectCreate(hs HttpServer, project *protobuf.Project) (error, int
 	if project.GroupID != "" {
 		return ErrProjectFieldIsGenerated("GroupID"), http.StatusBadRequest
 	}
-	if err, status := CheckValidName(project.DisplayName, utils.ProjectNamePattern); err != nil {
+	if err, status := CheckValidName(project.DisplayName, utils.ProjectNamePattern, ErrProjectValidation); err != nil {
 		return err, status
 	}
 	if project.DefaultImage == "" {
@@ -466,7 +383,7 @@ func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, i
 			return err, http.StatusInternalServerError
 		}
 		if flavor.Name == "" {
-			return ErrProjectFlavorNotFound("DefaultMasterFlavor"), http.StatusBadRequest
+			return ErrFlavorFieldValueNotFound("DefaultMasterFlavor"), http.StatusBadRequest
 		}
 	}
 	if project.DefaultSlavesFlavor != "" {
@@ -475,7 +392,7 @@ func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, i
 			return err, http.StatusInternalServerError
 		}
 		if flavor.Name == "" {
-			return ErrProjectFlavorNotFound("DefaultSlavesFlavor"), http.StatusBadRequest
+			return ErrFlavorFieldValueNotFound("DefaultSlavesFlavor"), http.StatusBadRequest
 		}
 	}
 	if project.DefaultStorageFlavor != "" {
@@ -484,7 +401,7 @@ func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, i
 			return err, http.StatusInternalServerError
 		}
 		if flavor.Name == "" {
-			return ErrProjectFlavorNotFound("DefaultStorageFlavor"), http.StatusBadRequest
+			return ErrFlavorFieldValueNotFound("DefaultStorageFlavor"), http.StatusBadRequest
 		}
 	}
 	if project.DefaultMonitoringFlavor != "" {
@@ -493,7 +410,7 @@ func ValidateProjectFieldsDb(hs HttpServer, project *protobuf.Project) (error, i
 			return err, http.StatusInternalServerError
 		}
 		if flavor.Name == "" {
-			return ErrProjectFlavorNotFound("DefaultMonitoringFlavor"), http.StatusBadRequest
+			return ErrFlavorFieldValueNotFound("DefaultMonitoringFlavor"), http.StatusBadRequest
 		}
 	}
 	return nil, 0
@@ -514,10 +431,10 @@ func MakeLogFilePath(filename string, LogsFilePath string) string {
 	return "./" + LogsFilePath + "/" + filename
 }
 
-func CheckValidName(name string, pattern string) (error, int) {
+func CheckValidName(name string, pattern string, errorType error) (error, int) {
 	validName := regexp.MustCompile(pattern).MatchString
 	if !validName(name) {
-		return ErrProjectValidation, http.StatusBadRequest
+		return errorType, http.StatusBadRequest
 	}
 	return nil, 0
 }
@@ -913,5 +830,89 @@ func ValidateServiceTypeDelete(hS HttpServer, serviceType string) (error, int) {
 			}
 		}
 	}
+	return nil, 0
+}
+
+func GetServiceTypeIdx(service *protobuf.Service, ServiceTypes []protobuf.ServiceType) (int, error) {
+	for i, serviceType := range ServiceTypes {
+		if serviceType.Type == service.Type {
+			return i, nil
+		}
+	}
+	return 0, ErrClusterServiceTypeNotSupported(service.Type)
+}
+
+func GetServiceVersionIdx(service *protobuf.Service, ServiceTypes []protobuf.ServiceType, stIdx int) (int, error) {
+	for i, sv := range ServiceTypes[stIdx].Versions {
+		if sv.Version == service.Version {
+			return i, nil
+		}
+	}
+	return 0, ErrClusterServiceVersionNotSupported(service.Version, service.Type)
+}
+
+func ValidateConfigs(service *protobuf.Service, Configs []*protobuf.ServiceConfig) (error, int) {
+	for key, value := range service.Config {
+		flagPN := false
+		for _, sc := range Configs {
+			if key == sc.ParameterName {
+				flagPN = true
+
+				//check type
+				if !sc.IsList {
+					switch sc.Type {
+					case "int":
+						if _, err := strconv.ParseInt(value, 10, 32); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					case "float":
+						if _, err := strconv.ParseFloat(value, 64); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					case "bool":
+						if _, err := strconv.ParseBool(value); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					}
+				} else {
+					switch sc.Type {
+					case "int":
+						var valList []int64
+						if err := json.Unmarshal([]byte(value), &valList); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					case "float":
+						var valList []float64
+						if err := json.Unmarshal([]byte(value), &valList); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					case "bool":
+						var valList []bool
+						if err := json.Unmarshal([]byte(value), &valList); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					case "string":
+						var valList []string
+						if err := json.Unmarshal([]byte(value), &valList); err != nil {
+							return ErrClusterServiceConfigIncorrectType(key, service.Type), http.StatusBadRequest
+						}
+					}
+				}
+
+				//check for possible values
+				if sc.PossibleValues != nil {
+					if !CheckValuesAllowed(value, sc.PossibleValues) {
+						return ErrClusterServiceConfigNotPossibleValue(key, service.Type), http.StatusBadRequest
+					}
+				}
+
+				break
+			}
+		}
+		if !flagPN {
+			return ErrClusterServiceConfigNotSupported(key, service.Type), http.StatusBadRequest
+		}
+	}
+
 	return nil, 0
 }
