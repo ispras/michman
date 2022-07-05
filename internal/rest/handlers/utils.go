@@ -628,31 +628,56 @@ func CheckPossibleValues(possibleValues []string, vType string, IsList bool) err
 	return nil
 }
 
-func CheckConfigs(versionConfigs []*protobuf.ServiceConfig) (error, int) {
-	for i, curConfig := range versionConfigs {
-		// check param type
-		err := CheckType(curConfig.Type)
+func CheckConfigDefaultValue(defaultValue string, possibleValues []string) error {
+	for _, value := range possibleValues {
+		if value == defaultValue {
+			return nil
+		}
+	}
+	return ErrServiceTypeVersionConfigDefaultValue
+}
+
+func CheckConfig(config *protobuf.ServiceConfig, versionConfigs []*protobuf.ServiceConfig) (error, int) {
+	// check param type
+	err := CheckType(config.Type)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	// check param name is unique
+	if config.ParameterName == "" {
+		return ErrServiceTypeVersionConfigParamEmpty("ParameterName"), http.StatusBadRequest
+	}
+
+	// check config is unique by parameter name
+	err = CheckConfigsUnique(versionConfigs, *config)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	//check param possible values
+	if config.PossibleValues != nil {
+		err = CheckPossibleValues(config.PossibleValues, config.Type, config.IsList)
 		if err != nil {
 			return err, http.StatusBadRequest
 		}
-
-		// check param name is unique
-		if curConfig.ParameterName == "" {
-			return ErrServiceTypeVersionConfigParamEmpty("ParameterName"), http.StatusBadRequest
-		}
-
-		// check config is unique by parameter name
-		err = CheckConfigsUnique(versionConfigs[i+1:], *curConfig)
-		if err != nil {
-			return err, http.StatusBadRequest
-		}
-
-		//check param possible values
-		if curConfig.PossibleValues != nil {
-			err = CheckPossibleValues(curConfig.PossibleValues, curConfig.Type, curConfig.IsList)
+		if config.DefaultValue == "" {
+			return ErrServiceTypeVersionConfiqDefaultValutEmpty, http.StatusBadRequest
+		} else {
+			err = CheckConfigDefaultValue(config.DefaultValue, config.PossibleValues)
 			if err != nil {
 				return err, http.StatusBadRequest
 			}
+		}
+	}
+	return nil, 0
+}
+
+func CheckConfigs(versionConfigs []*protobuf.ServiceConfig) (error, int) {
+	for i, curConfig := range versionConfigs {
+		err, status := CheckConfig(curConfig, versionConfigs[i+1:])
+		if err != nil {
+			return err, status
 		}
 	}
 	return nil, 0
@@ -913,6 +938,40 @@ func ValidateConfigs(service *protobuf.Service, Configs []*protobuf.ServiceConfi
 			return ErrClusterServiceConfigNotSupported(key, service.Type), http.StatusBadRequest
 		}
 	}
+	return nil, 0
+}
 
+func ValidateServiceTypeVersionConfigCreate(newServiceTypeConfig *protobuf.ServiceConfig, oldConfigs []*protobuf.ServiceConfig) (error, int) {
+	err, status := CheckConfig(newServiceTypeConfig, oldConfigs)
+	if err != nil {
+		return err, status
+	}
+	return nil, 0
+}
+
+func ValidateServiceTypeVersionConfigUpdate(newServiceTypeConfig *protobuf.ServiceConfig) (error, int) {
+	if newServiceTypeConfig.ParameterName != "" || newServiceTypeConfig.AnsibleVarName != "" {
+		return ErrServiceTypeVersionConfigUnmodFields, http.StatusBadRequest
+	}
+	if newServiceTypeConfig.Type != "" {
+		err := CheckType(newServiceTypeConfig.Type)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+	if newServiceTypeConfig.PossibleValues != nil {
+		err := CheckPossibleValues(newServiceTypeConfig.PossibleValues, newServiceTypeConfig.Type, newServiceTypeConfig.IsList)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+		if newServiceTypeConfig.DefaultValue == "" {
+			return ErrServiceTypeVersionConfiqDefaultValutEmpty, http.StatusBadRequest
+		} else {
+			err = CheckConfigDefaultValue(newServiceTypeConfig.DefaultValue, newServiceTypeConfig.PossibleValues)
+			if err != nil {
+				return err, http.StatusBadRequest
+			}
+		}
+	}
 	return nil, 0
 }

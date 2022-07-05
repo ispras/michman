@@ -553,9 +553,7 @@ func (db CouchDatabase) ReadServiceTypeVersion(serviceTypeIdOrName string, versi
 	if sType.ID == "" {
 		return nil, ErrObjectParamNotExist(serviceTypeIdOrName)
 	}
-
 	var sTypeVersion *protobuf.ServiceVersion
-
 	isUuid := utils.IsUuid(versionIdOrName)
 	if isUuid {
 		sTypeVersion, err = readServiceTypeVersionById(sType, versionIdOrName)
@@ -618,6 +616,103 @@ func (db CouchDatabase) UpdateServiceTypeVersion(serviceTypeIdOrName string, ver
 	sType.Versions[idToUpdate] = version
 
 	err = db.UpdateServiceType(sType)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// service type version config:
+
+func (db CouchDatabase) ReadServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, parameterName string) (*protobuf.ServiceConfig, error) {
+	sType, err := db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		return nil, err
+	}
+
+	if sType.ID == "" {
+		return nil, ErrObjectParamNotExist(serviceTypeIdOrName)
+	}
+	var sTypeVersion *protobuf.ServiceVersion
+	isUuid := utils.IsUuid(versionIdOrName)
+	if isUuid {
+		sTypeVersion, err = readServiceTypeVersionById(sType, versionIdOrName)
+	} else {
+		sTypeVersion, err = readServiceTypeVersionByName(sType, versionIdOrName)
+	}
+
+	if sTypeVersion.ID == "" {
+		return nil, ErrObjectParamNotExist(versionIdOrName)
+	}
+
+	sTypeVersionConfig := new(protobuf.ServiceConfig)
+	if sTypeVersion.Configs != nil {
+		for _, config := range sTypeVersion.Configs {
+			if config.ParameterName == parameterName {
+				sTypeVersionConfig = config
+				break
+			}
+		}
+	}
+	return sTypeVersionConfig, nil
+}
+
+func (db CouchDatabase) UpdateServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, config *protobuf.ServiceConfig) error {
+	sTypeVersion, err := db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		return err
+	}
+
+	if sTypeVersion.ID == "" {
+		return ErrObjectParamNotExist(versionIdOrName)
+	}
+
+	idToUpdate := -1
+	for i, curVersionConfig := range sTypeVersion.Configs {
+		if curVersionConfig.ParameterName == config.ParameterName {
+			idToUpdate = i
+			break
+		}
+	}
+	if idToUpdate == -1 {
+		return ErrObjectParamNotExist(config.ParameterName)
+	}
+
+	sTypeVersion.Configs[idToUpdate] = config
+
+	err = db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db CouchDatabase) DeleteServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, parameterName string) error {
+	sTypeVersion, err := db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		return err
+	}
+
+	if sTypeVersion.ID == "" {
+		return ErrObjectParamNotExist(versionIdOrName)
+	}
+
+	idToDelete := -1
+	for i, curConfig := range sTypeVersion.Configs {
+		if curConfig.ParameterName == parameterName {
+			idToDelete = i
+			break
+		}
+	}
+	if idToDelete == -1 {
+		return ErrObjectParamNotExist(parameterName)
+	}
+
+	configsLen := len(sTypeVersion.Configs)
+	sTypeVersion.Configs[idToDelete] = sTypeVersion.Configs[configsLen-1]
+	sTypeVersion.Configs = sTypeVersion.Configs[:configsLen-1]
+
+	err = db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
 	if err != nil {
 		return err
 	}

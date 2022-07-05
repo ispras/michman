@@ -26,7 +26,7 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.DELETE("/projects/:projectIdOrName/clusters/:clusterIdOrName", hS.ClustersDelete)
 
 	// service type:
-	hS.Router.POST("/configs", hS.ConfigsCreateServiceType)
+	hS.Router.POST("/configs", hS.ConfigsServiceTypeCreate)
 	hS.Router.GET("/configs", hS.ConfigsServiceTypesGetList)
 	hS.Router.GET("/configs/:serviceTypeIdOrName", hS.ConfigsServiceTypeGet)
 	hS.Router.PUT("/configs/:serviceTypeIdOrName", hS.ConfigsServiceTypeUpdate)
@@ -38,7 +38,13 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionGet)
 	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionUpdate)
 	hS.Router.DELETE("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionDelete)
-	hS.Router.POST("/configs/:serviceTypeIdOrName/versions/:versionId/configs", hS.ConfigsCreateConfigParam)
+
+	// service type version configs:
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs", hS.ConfigsServiceTypeVersionConfigsGet)
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigGet)
+	hS.Router.POST("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs", hS.ConfigsServiceTypeVersionConfigCreate)
+	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigUpdate)
+	hS.Router.DELETE("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigDelete)
 
 	// images:
 	hS.Router.GET("/images", hS.ImagesGetList)

@@ -34,6 +34,10 @@ type Database interface {
 	DeleteServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) error
 	UpdateServiceTypeVersion(serviceTypeIdOrName string, version *protobuf.ServiceVersion) error
 
+	ReadServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, parameterName string) (*protobuf.ServiceConfig, error)
+	UpdateServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, config *protobuf.ServiceConfig) error
+	DeleteServiceTypeVersionConfig(serviceTypeIdOrName string, versionIdOrName string, parameterName string) error
+
 	ReadImage(imageIdOrName string) (*protobuf.Image, error)
 	WriteImage(image *protobuf.Image) error
 	DeleteImage(imageIdOrName string) error

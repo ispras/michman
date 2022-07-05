@@ -81,6 +81,13 @@ const (
 	errServiceTypeVersionExisted           = "service type version with this name already exists"
 	errServiceTypeUnmodVersionFields       = "service types version fields (config, dependencies) can't be modified in this response. Use specified one"
 	errServiceTypeDeleteVersionDefault     = "service type version set in default version"
+
+	errServiceTypeVersionConfigNotFound          = "service type version config with this id or name not found"
+	errServiceTypeVersionConfigExists            = "service type version config with this id or name already exists"
+	errServiceTypeVersionConfigDefaultValueEmpty = "service type version config default value must be set"
+	errServiceTypeVersionConfigDefaultValue      = "service type version config default value not in possible values"
+
+	errServiceTypeVersionConfigUnmodFields = "some service type version config fields can't be modified (ParameterName, AnsibleVarName)"
 )
 
 var (
@@ -144,6 +151,13 @@ var (
 	ErrServiceTypeVersionEmptyVersionField = errors.New(errServiceTypeVersionEmptyVersionField)
 	ErrServiceTypeUnmodVersionFields       = errors.New(errServiceTypeUnmodVersionFields)
 	ErrServiceTypeDeleteVersionDefault     = errors.New(errServiceTypeDeleteVersionDefault)
+
+	ErrServiceTypeVersionConfigNotFound          = errors.New(errServiceTypeVersionConfigNotFound)
+	ErrServiceTypeVersionConfiqDefaultValutEmpty = errors.New(errServiceTypeVersionConfigDefaultValueEmpty)
+	ErrServiceTypeVersionConfigDefaultValue      = errors.New(errServiceTypeVersionConfigDefaultValue)
+
+	ErrServiceTypeVersionConfigExists      = errors.New(errServiceTypeVersionConfigExists)
+	ErrServiceTypeVersionConfigUnmodFields = errors.New(errServiceTypeVersionConfigUnmodFields)
 )
 
 func ErrValidTypeParam(param string) error {
@@ -340,4 +354,12 @@ func init() {
 	HandlerErrorsMap[ErrServiceTypeUnmodVersionFields] = utils.DatabaseError
 
 	HandlerErrorsMap[ErrServiceTypeDeleteVersionDefault] = utils.ValidationError
+
+	HandlerErrorsMap[ErrServiceTypeVersionConfigNotFound] = utils.DatabaseError
+	HandlerErrorsMap[ErrServiceTypeVersionConfiqDefaultValutEmpty] = utils.ValidationError
+	HandlerErrorsMap[ErrServiceTypeVersionConfigDefaultValue] = utils.ValidationError
+
+	HandlerErrorsMap[ErrServiceTypeVersionConfigExists] = utils.ValidationError
+
+	HandlerErrorsMap[ErrServiceTypeVersionConfigUnmodFields] = utils.ValidationError
 }
