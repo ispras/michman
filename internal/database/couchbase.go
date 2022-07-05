@@ -1,7 +1,6 @@
 package database
 
 import (
-	"errors"
 	"fmt"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
@@ -30,82 +29,86 @@ type CouchDatabase struct {
 }
 
 func NewCouchBase(vaultCom utils.SecretStorage) (Database, error) {
-	cb := new(CouchDatabase)
-	cb.VaultCommunicator = vaultCom
-	client, vaultCfg, err := cb.VaultCommunicator.ConnectVault()
+	couchbase := new(CouchDatabase)
+	couchbase.VaultCommunicator = vaultCom
+	client, vaultCfg, err := couchbase.VaultCommunicator.ConnectVault()
 	if client == nil || err != nil {
-		return nil, errors.New("Error: can't connect to vault secrets storage")
+		return nil, err
 	}
 
 	couchSecrets, err := client.Logical().Read(vaultCfg.CbKey)
 	if err != nil {
-		return nil, err
+		return nil, ErrCouchSecretsRead
 	}
 
-	cb.auth = &utils.CbCredentials{
+	couchbase.auth = &utils.CbCredentials{
 		Address:  couchSecrets.Data[utils.CouchbasePath].(string),
 		Username: couchSecrets.Data[utils.CouchbaseUsername].(string),
 		Password: couchSecrets.Data[utils.CouchbasePassword].(string),
 	}
-	cluster, err := gocb.Connect(cb.auth.Address)
+	cluster, err := gocb.Connect(couchbase.auth.Address)
 	if err != nil {
-		return nil, err
+		return nil, ErrCouchbaseClusterConnection
 	}
-	cluster.Authenticate(gocb.PasswordAuthenticator{
-		Username: cb.auth.Username,
-		Password: cb.auth.Password,
+	err = cluster.Authenticate(gocb.PasswordAuthenticator{
+		Username: couchbase.auth.Username,
+		Password: couchbase.auth.Password,
 	})
-	cb.couchCluster = cluster
-
-	bucket, err := cb.couchCluster.OpenBucket(projectBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrCouchbaseClusterAuthenticate
 	}
-	cb.projectsBucket = bucket
 
-	bucket, err = cb.couchCluster.OpenBucket(clusterBucketName, "")
+	couchbase.couchCluster = cluster
+
+	bucket, err := couchbase.couchCluster.OpenBucket(projectBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrOpenParamBucket("project")
 	}
-	cb.clustersBucket = bucket
+	couchbase.projectsBucket = bucket
 
-	bucket, err = cb.couchCluster.OpenBucket(templateBucketName, "")
+	bucket, err = couchbase.couchCluster.OpenBucket(clusterBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrOpenParamBucket("cluster")
 	}
-	cb.templatesBucket = bucket
+	couchbase.clustersBucket = bucket
 
-	bucket, err = cb.couchCluster.OpenBucket(serviceTypeBucketName, "")
+	bucket, err = couchbase.couchCluster.OpenBucket(templateBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrOpenParamBucket("template")
 	}
-	cb.serviceTypesBucket = bucket
+	couchbase.templatesBucket = bucket
 
-	bucket, err = cb.couchCluster.OpenBucket(imageBucketName, "")
+	bucket, err = couchbase.couchCluster.OpenBucket(serviceTypeBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrOpenParamBucket("service")
 	}
-	cb.imageBucket = bucket
+	couchbase.serviceTypesBucket = bucket
 
-	bucket, err = cb.couchCluster.OpenBucket(flavorBucketName, "")
+	bucket, err = couchbase.couchCluster.OpenBucket(imageBucketName, "")
 	if err != nil {
-		return nil, err
+		return nil, ErrOpenParamBucket("image")
 	}
-	cb.flavorBucket = bucket
+	couchbase.imageBucket = bucket
 
-	return cb, nil
+	bucket, err = couchbase.couchCluster.OpenBucket(flavorBucketName, "")
+	if err != nil {
+		return nil, ErrOpenParamBucket("flavor")
+	}
+	couchbase.flavorBucket = bucket
+
+	return couchbase, nil
 }
 
 func (db *CouchDatabase) getCouchCluster() error {
 	if db.auth == nil {
 		client, vaultCfg, err := db.VaultCommunicator.ConnectVault()
 		if client == nil || err != nil {
-			return errors.New("Error: can't connect to vault secrets storage")
+			return err
 		}
 
 		couchSecrets, err := client.Logical().Read(vaultCfg.CbKey)
 		if err != nil {
-			return err
+			return ErrCouchSecretsRead
 		}
 
 		db.auth = &utils.CbCredentials{
@@ -117,12 +120,15 @@ func (db *CouchDatabase) getCouchCluster() error {
 
 	cluster, err := gocb.Connect(db.auth.Address)
 	if err != nil {
-		return err
+		return ErrCouchbaseClusterConnection
 	}
-	cluster.Authenticate(gocb.PasswordAuthenticator{
+	err = cluster.Authenticate(gocb.PasswordAuthenticator{
 		Username: db.auth.Username,
 		Password: db.auth.Password,
 	})
+	if err != nil {
+		return ErrCouchbaseClusterAuthenticate
+	}
 	db.couchCluster = cluster
 	return nil
 }

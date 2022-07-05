@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
+	"github.com/ispras/michman/cmd"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/logger"
@@ -26,7 +27,7 @@ const (
 )
 
 func main() {
-	//set flags for config path and ansible service adress
+	//set flags for config path and ansible service address
 	configPath := flag.String("config", utils.ConfigPath, "Path to the config.yaml file")
 	launcherAddr := flag.String("launcher", addressAnsibleService, "Launcher service address")
 	restPort := flag.String("port", restDefaultPort, "Rest service port")
@@ -41,9 +42,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	logFile, err := os.OpenFile(config.LogsFilePath+"/http_server.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		panic(err)
+		panic(cmd.ErrOpenFile)
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
@@ -88,7 +90,7 @@ func main() {
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
 	if err != nil {
-		httpLogger.Fatal(err)
+		httpLogger.Fatal(cmd.ErrAtoi)
 	}
 	if iRestPort <= 0 {
 		*restPort = restDefaultPort
@@ -97,17 +99,20 @@ func main() {
 	// setup casbin auth rules
 	authEnforcer, err := casbin.NewEnforcerSafe("./configs/auth_model.conf", "./configs/policy.csv")
 	if err != nil {
-		httpLogger.Fatal(err)
+		httpLogger.Fatal(cmd.ErrNewEnforcerSafe)
 	}
 
 	// creating vault communicator
 	vaultCommunicator := utils.VaultCommunicator{}
-	vaultCommunicator.Init()
+	err = vaultCommunicator.Init()
+	if err != nil {
+		httpLogger.Fatal(err)
+	}
 
 	//initialize db connection
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		httpLogger.Fatal("Can't create couchbase communicator")
+		httpLogger.Fatal(err)
 	}
 
 	gc := grpc_client.GrpcClient{Db: db}

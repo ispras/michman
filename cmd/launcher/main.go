@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/ispras/michman/cmd"
 	"github.com/ispras/michman/internal/ansible"
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/logger"
@@ -24,12 +25,14 @@ func main() {
 	//set config file path
 	utils.SetConfigPath(*configPath)
 	config := utils.Config{}
-	if err := config.MakeCfg(); err != nil {
-		panic(err)
-	}
-	logFile, err := os.OpenFile(config.LogsFilePath+"/launcher.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	err := config.MakeCfg()
 	if err != nil {
 		panic(err)
+	}
+
+	logFile, err := os.OpenFile(config.LogsFilePath+"/launcher.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		panic(cmd.ErrOpenFile)
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 
@@ -52,11 +55,11 @@ func main() {
 	}
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
-		LauncherLogger.Fatal("Can't create database connection. Exit...")
+		LauncherLogger.Fatal(err)
 	}
 	lis, err := net.Listen("tcp", ":"+*launcherPort)
 	if err != nil {
-		LauncherLogger.Fatalf("failed to listen: %v", err)
+		LauncherLogger.Fatal(cmd.ErrTcpListen(*launcherPort))
 	}
 
 	gas := grpc.NewServer()
@@ -66,7 +69,8 @@ func main() {
 	protobuf.RegisterAnsibleRunnerServer(gas, &aService)
 
 	aService.Logger.Info("Ansible runner start work...")
-	if err := gas.Serve(lis); err != nil {
-		aService.Logger.Fatalf("failed to serve: %v", err)
+	err = gas.Serve(lis)
+	if err != nil {
+		aService.Logger.Fatal(cmd.ErrServe)
 	}
 }

@@ -15,11 +15,21 @@ const (
 	errUpdateObjectByKey = "error occurred while replacing an object in database"
 	errCloseQuerySession = "error occurred while closing query session"
 	errDeleteObjectByKey = "error occurred while removing object from database"
+
+	// errors without class:
+	errCouchSecretsRead             = "error occurred while reading couchbase secrets"
+	errCouchbaseClusterConnection   = "error occurred while creating Cluster object for a specific couchbase cluster"
+	errCouchbaseClusterAuthenticate = "couchbase cluster authentication error"
 )
 
 func ErrObjectParamNotExist(param string) error {
 	ErrParamType := fmt.Errorf("object with this name or id (%s) does not exist", param)
 	DbErrorsMap[ErrParamType] = utils.DatabaseError
+	return ErrParamType
+}
+
+func ErrOpenParamBucket(param string) error {
+	ErrParamType := fmt.Errorf("can't open %s bucket", param)
 	return ErrParamType
 }
 
@@ -30,6 +40,11 @@ var (
 	ErrUpdateObjectByKey = errors.New(errUpdateObjectByKey)
 	ErrCloseQuerySession = errors.New(errCloseQuerySession)
 	ErrDeleteObjectByKey = errors.New(errDeleteObjectByKey)
+
+	// errors without class:
+	ErrCouchSecretsRead             = errors.New(errCouchSecretsRead)
+	ErrCouchbaseClusterConnection   = errors.New(errCouchbaseClusterConnection)
+	ErrCouchbaseClusterAuthenticate = errors.New(errCouchbaseClusterAuthenticate)
 )
 
 func init() {

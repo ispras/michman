@@ -64,7 +64,7 @@ type VaultCommunicator struct {
 func (vc *VaultCommunicator) Init() error {
 	path, err := os.Getwd()
 	if err != nil {
-		return err
+		return ErrGetwd
 	}
 
 	var vaultConfigPath string
@@ -75,8 +75,13 @@ func (vc *VaultCommunicator) Init() error {
 	}
 
 	vaultBs, err := ioutil.ReadFile(vaultConfigPath)
-	if err := yaml.Unmarshal(vaultBs, &vc.config); err != nil {
-		return err
+	if err != nil {
+		return ErrVaultReadFile
+	}
+
+	err = yaml.Unmarshal(vaultBs, &vc.config)
+	if err != nil {
+		return ErrUnmarshal
 	}
 	return nil
 }
@@ -86,7 +91,7 @@ func (vc *VaultCommunicator) ConnectVault() (*vaultapi.Client, *Config, error) {
 		Address: vc.config.VaultAddr,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, ErrVaultNewClient
 	}
 
 	client.SetToken(vc.config.Token)
