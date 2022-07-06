@@ -139,13 +139,11 @@ func main() {
 	}
 
 	router := httprouter.New()
-	RespHandler := handlers.HttpResponseHandler{}
 
 	authorizeClient := authorization.AuthorizeClient{Logger: authorizeLogger, Db: db,
 		Config: config, SessionManager: sessionManager, Auth: usedAuth, Router: router}
 
-	hS := handlers.HttpServer{Gc: gc, Logger: httpLogger, Db: db,
-		RespHandler: RespHandler, Router: router, Auth: usedAuth, Config: config}
+	hS := handlers.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Auth: usedAuth, Config: config}
 
 	authorizeClient.CreateRoutes()
 	hS.CreateRoutes()

@@ -16,11 +16,10 @@ type GrpcClient interface {
 }
 
 type HttpServer struct {
-	Gc          GrpcClient
-	Logger      *logrus.Logger
-	Db          database.Database
-	RespHandler ResponseHandler
-	Router      *httprouter.Router
-	Auth        auth.Authenticate
-	Config      utils.Config
+	Gc     GrpcClient
+	Logger *logrus.Logger
+	Db     database.Database
+	Router *httprouter.Router
+	Auth   auth.Authenticate
+	Config utils.Config
 }
