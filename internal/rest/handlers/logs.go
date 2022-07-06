@@ -80,6 +80,8 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 		return
 	}
 
+	hS.Logger.Println(cluster)
+
 	queryValues := r.URL.Query()
 	action := utils.ActionCreate
 

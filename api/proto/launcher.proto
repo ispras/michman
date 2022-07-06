@@ -3,9 +3,9 @@ syntax = "proto3";
 package protobuf;
 
 service AnsibleRunner {
-    rpc Create (Cluster) returns (stream TaskStatus) {}
-    rpc Delete (Cluster) returns (stream TaskStatus) {}
-    rpc Update (Cluster) returns (stream TaskStatus) {}
+    rpc Create (Cluster) returns (TaskStatus) {}
+    rpc Delete (Cluster) returns (TaskStatus) {}
+    rpc Update (Cluster) returns (TaskStatus) {}
 }
 
 message Project {

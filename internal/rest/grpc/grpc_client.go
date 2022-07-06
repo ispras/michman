@@ -2,13 +2,13 @@ package grpc
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/ispras/michman/internal/database"
 	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 )
 
@@ -30,7 +30,7 @@ func (gc *GrpcClient) SetLogger(l *logrus.Logger) {
 func (gc *GrpcClient) SetConnection(ansibleServiceAddr string) error {
 	connAnsible, errAnsible := grpc.Dial(ansibleServiceAddr, grpc.WithInsecure())
 	if errAnsible != nil {
-		return errors.New(fmt.Sprintf("gRPC client connection error: %v", errAnsible))
+		return ErrGrpcConnection
 	}
 	gc.ansibleServiceClient = protobuf.NewAnsibleRunnerClient(connAnsible)
 	return nil
@@ -42,9 +42,15 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 	defer cancel()
 
 	gc.logger.Info("Sending request to ansible-service")
-	stream, err := gc.ansibleServiceClient.Create(ctx, c)
+	message, err := gc.ansibleServiceClient.Create(ctx, c)
+
 	if err != nil {
-		gc.logger.Warn(err)
+		errStatus, _ := status.FromError(err)
+		if errStatus.Code() == codes.Unavailable {
+			gc.logger.Warn(ErrServerUnavailable)
+		} else {
+			gc.logger.Warn(ErrCreate)
+		}
 		c.EntityStatus = utils.StatusFailed
 		err = gc.Db.WriteCluster(c)
 		if err != nil {
@@ -53,16 +59,9 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 		return
 	}
 
-	message, err := stream.Recv()
-	if err != nil {
-		gc.logger.Warn(err)
-	}
 	gc.logger.Infof("From ansible-service: %s", message.Status)
 
-	if err != nil || message.Status != utils.AnsibleOk {
-		if err != nil {
-			gc.logger.Warn(err)
-		}
+	if message.Status != utils.AnsibleOk {
 		// request to db-service about errors with ansible service
 		c.EntityStatus = utils.StatusFailed
 		err = gc.Db.WriteCluster(c)
@@ -72,20 +71,23 @@ func (gc GrpcClient) StartClusterCreation(c *protobuf.Cluster) {
 		return
 	}
 
-	gc.logger.Infof("Sending to db-service new status for %s cluster", c.Name)
 	newC, err := gc.Db.ReadCluster(c.ProjectID, c.ID)
 	if err != nil {
-		gc.logger.Fatal(err)
+		gc.logger.Warn(err)
+		return
 	}
 	if newC.Name == "" {
-		gc.logger.Fatalf("Cluster with ID %v not found", c.ID)
+		gc.logger.Warn("Cluster with ID %v not found", c.ID)
+		return
 	}
 
+	gc.logger.Infof("Sending to db-service new status for %s cluster", c.Name)
 	newC.EntityStatus = utils.StatusActive
 	err = gc.Db.WriteCluster(newC)
 	if err != nil {
 		gc.logger.Warn(err)
 	}
+	return
 }
 
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
@@ -94,27 +96,28 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	defer cancel()
 
 	gc.logger.Print("Sending request to ansible-service")
-	stream, err := gc.ansibleServiceClient.Delete(ctx, c)
+	message, err := gc.ansibleServiceClient.Delete(ctx, c)
 	if err != nil {
-		gc.logger.Warn(err)
+		errStatus, _ := status.FromError(err)
+		if errStatus.Code() == codes.Unavailable {
+			gc.logger.Warn(ErrServerUnavailable)
+		} else {
+			gc.logger.Warn(ErrDestroy)
+		}
 		c.EntityStatus = utils.StatusFailed
-		err = gc.Db.WriteCluster(c)
+		err = gc.Db.UpdateCluster(c)
 		if err != nil {
 			gc.logger.Warn(err)
 		}
 		return
 	}
 
-	message, err := stream.Recv()
 	gc.logger.Infof("From ansible-service: %s", message.Status)
 
-	if err != nil || message.Status != utils.AnsibleOk {
-		if err != nil {
-			gc.logger.Warn(err)
-		}
+	if message.Status != utils.AnsibleOk {
 		// request to db-service about errors with ansible service
 		c.EntityStatus = utils.StatusFailed
-		err = gc.Db.WriteCluster(c)
+		err = gc.Db.UpdateCluster(c)
 		if err != nil {
 			gc.logger.Warn(err)
 		}
@@ -126,6 +129,7 @@ func (gc GrpcClient) StartClusterDestroying(c *protobuf.Cluster) {
 	if err != nil {
 		gc.logger.Warn(err)
 	}
+	return
 }
 
 // StartClusterDestroying will send cluster struct to ansible-service for run ansible delete
@@ -134,9 +138,14 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 	defer cancel()
 
 	gc.logger.Info("Sending request to ansible-service")
-	stream, err := gc.ansibleServiceClient.Update(ctx, c)
+	message, err := gc.ansibleServiceClient.Update(ctx, c)
 	if err != nil {
-		gc.logger.Warn(err)
+		errStatus, _ := status.FromError(err)
+		if errStatus.Code() == codes.Unavailable {
+			gc.logger.Warn(ErrServerUnavailable)
+		} else {
+			gc.logger.Warn(ErrModify)
+		}
 		c.EntityStatus = utils.StatusFailed
 		err = gc.Db.UpdateCluster(c)
 		if err != nil {
@@ -145,13 +154,9 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		return
 	}
 
-	message, err := stream.Recv()
 	gc.logger.Infof("From ansible-service: %s", message.Status)
 
-	if err != nil || message.Status != utils.AnsibleOk {
-		if err != nil {
-			gc.logger.Warn(err)
-		}
+	if message.Status != utils.AnsibleOk {
 		// request to db-service about errors with ansible service
 		c.EntityStatus = utils.StatusFailed
 		err = gc.Db.UpdateCluster(c)
@@ -160,13 +165,15 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		return
 	}
+
 	newC, err := gc.Db.ReadCluster(c.ProjectID, c.ID)
 	if err != nil {
-		gc.logger.Fatal(err)
+		gc.logger.Warn(err)
 	}
 	if newC.Name == "" {
-		gc.logger.Fatalf("Cluster with ID %v not found", c.ID)
+		gc.logger.Warn("Cluster with ID %v not found", c.ID)
 	}
+
 	gc.logger.Infof("Sending to db-service new status for %s cluster", c.Name)
 	newC.EntityStatus = utils.StatusActive
 	err = gc.Db.UpdateCluster(newC)

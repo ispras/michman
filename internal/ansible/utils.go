@@ -27,7 +27,7 @@ type ServiceExists struct {
 	service *protobuf.Service
 }
 
-func (aL LauncherServer) GetElasticConnectorJar() string {
+func (aL LauncherServer) GetElasticConnectorJar() (string, error) {
 	elasticHadoopUrl := "http://download.elastic.co/hadoop/elasticsearch-hadoop-5.5.0.zip"
 	elasticHadoopFilename := filepath.Join("/tmp", filepath.Base(elasticHadoopUrl))
 	elasticDir := filepath.Join("/tmp", "elasticsearch-hadoop/")
@@ -37,17 +37,21 @@ func (aL LauncherServer) GetElasticConnectorJar() string {
 		if os.IsNotExist(err) {
 			// file does not exist
 			aL.Logger.Info("Downloading ElasticSearch Hadoop integration")
-			utils.DownloadFile(elasticHadoopUrl, elasticHadoopFilename)
+			err = utils.DownloadFile(elasticHadoopUrl, elasticHadoopFilename)
+			if err != nil {
+				return "", ErrDownload
+			}
 
-			if _, err := utils.Unzip(elasticHadoopFilename, elasticDir); err != nil {
-				aL.Logger.Warn(err)
+			_, err = utils.Unzip(elasticHadoopFilename, elasticDir)
+			if err != nil {
+				return "", err
 			}
 		}
 	}
-	return elasticPath
+	return elasticPath, nil
 }
 
-func (aL LauncherServer) GetCassandraConnectorJar(sparkVersion string) string {
+func (aL LauncherServer) GetCassandraConnectorJar(sparkVersion string) (string, error) {
 	var sparkCassandraConnectorUrl string
 	if strings.HasPrefix(sparkVersion, "1.6") {
 		sparkCassandraConnectorUrl = "http://dl.bintray.com/spark-packages/maven/datastax/spark-cassandra-connector/1.6.8-s_2.10/spark-cassandra-connector-1.6.8-s_2.10.jar"
@@ -61,19 +65,21 @@ func (aL LauncherServer) GetCassandraConnectorJar(sparkVersion string) string {
 		if os.IsNotExist(err) {
 			// file does not exist
 			aL.Logger.Info("Downloading Spark Cassandra Connector for Spark version ", sparkVersion)
-			utils.DownloadFile(sparkCassandraConnectorFile, sparkCassandraConnectorUrl)
+			err = utils.DownloadFile(sparkCassandraConnectorFile, sparkCassandraConnectorUrl)
+			if err != nil {
+				return "", ErrDownload
+			}
 		}
 	}
-	return sparkCassandraConnectorFile
+	return sparkCassandraConnectorFile, nil
 }
 
 func (aL LauncherServer) AddJar(path string) (map[string]string, error) {
-	var absPath string
-	if v, err := filepath.Abs(path); err != nil {
-		return nil, err
-	} else {
-		absPath = v
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, ErrAbs
 	}
+
 	var newElem = map[string]string{
 		"name": filepath.Base(path), "path": absPath,
 	}
@@ -88,71 +94,63 @@ func SetServiceVersion(stype string) string {
 	return stype + "_version"
 }
 
-func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst bool) interface{} {
+func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst bool) (interface{}, error) {
 	if !flagLst {
 		switch vType {
 		case "int":
-			if v, err := strconv.ParseInt(value, 10, 32); err != nil {
-				aL.Logger.Warn(err)
-				return nil
-			} else {
-				return v
+			parsedValue, err := strconv.ParseInt(value, 10, 32)
+			if err != nil {
+				return nil, ErrParseValue(value)
 			}
+			return parsedValue, nil
 		case "float":
-			if v, err := strconv.ParseFloat(value, 64); err != nil {
-				aL.Logger.Warn(err)
-				return nil
-			} else {
-				return v
+			parsedValue, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				return nil, ErrParseValue(value)
 			}
+			return parsedValue, nil
 		case "bool":
-			if v, err := strconv.ParseBool(value); err != nil {
-				aL.Logger.Warn(err)
-				return nil
-			} else {
-				return v
+			parsedValue, err := strconv.ParseBool(value)
+			if err != nil {
+				return nil, ErrParseValue(value)
 			}
+			return parsedValue, nil
 		case "string":
-			return value
-		}
-	} else {
-		switch vType {
-		case "int":
-			var valList []int64
-			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Warn(err)
-				return err
-			} else {
-				return valList
-			}
-		case "float":
-			var valList []float64
-			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Warn(err)
-				return err
-			} else {
-				return valList
-			}
-		case "bool":
-			var valList []bool
-			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Warn(err)
-				return err
-			} else {
-				return valList
-			}
-		case "string":
-			var valList []string
-			if err := json.Unmarshal([]byte(value), &valList); err != nil {
-				aL.Logger.Warn(err)
-				return err
-			} else {
-				return valList
-			}
+			return value, nil
 		}
 	}
 
-	return nil
+	switch vType {
+	case "int":
+		var valList []int64
+		err := json.Unmarshal([]byte(value), &valList)
+		if err != nil {
+			return nil, ErrUnMarshal
+		}
+		return valList, nil
+	case "float":
+		var valList []float64
+		err := json.Unmarshal([]byte(value), &valList)
+		if err != nil {
+			return nil, ErrUnMarshal
+		}
+		return valList, nil
+	case "bool":
+		var valList []bool
+		err := json.Unmarshal([]byte(value), &valList)
+		if err != nil {
+			return nil, ErrUnMarshal
+		}
+		return valList, nil
+	case "string":
+		var valList []string
+		err := json.Unmarshal([]byte(value), &valList)
+		if err != nil {
+			return nil, ErrUnMarshal
+		}
+		return valList, nil
+	}
+	return nil, ErrConvertParam
 }
 
 func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) (InterfaceMap, error) {
@@ -199,10 +197,16 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 			for _, sc := range curSv.Configs {
 				//check if in request presents current config param
 				if value, ok := curS.Config[sc.ParameterName]; ok {
-					extraVars[sc.AnsibleVarName] = aL.ConvertParamValue(value, sc.Type, sc.IsList)
+					extraVars[sc.AnsibleVarName], err = aL.ConvertParamValue(value, sc.Type, sc.IsList)
+					if err != nil {
+						return nil, err
+					}
 				} else if sc.Required {
 					//set default value if param is obligated
-					extraVars[sc.AnsibleVarName] = aL.ConvertParamValue(sc.DefaultValue, sc.Type, sc.IsList)
+					extraVars[sc.AnsibleVarName], err = aL.ConvertParamValue(sc.DefaultValue, sc.Type, sc.IsList)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
@@ -219,9 +223,15 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 			if st.HealthCheck[0].CheckType != "NotSupported" {
 				for _, hc := range st.HealthCheck[0].Configs {
 					if value, ok := curS.Config[hc.ParameterName]; ok {
-						extraVars[hc.AnsibleVarName] = aL.ConvertParamValue(value, hc.Type, hc.IsList)
+						extraVars[hc.AnsibleVarName], err = aL.ConvertParamValue(value, hc.Type, hc.IsList)
+						if err != nil {
+							return nil, err
+						}
 					} else if hc.Required {
-						extraVars[hc.AnsibleVarName] = aL.ConvertParamValue(hc.DefaultValue, hc.Type, hc.IsList)
+						extraVars[hc.AnsibleVarName], err = aL.ConvertParamValue(hc.DefaultValue, hc.Type, hc.IsList)
+						if err != nil {
+							return nil, err
+						}
 					}
 				}
 			}
@@ -283,7 +293,10 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	var extraJars []map[string]string
 	extraVars["spark_extra_jars"] = []map[string]string{}
 	if extraVars[SetDeployService("cassandra")] == true {
-		cassandraJar := aL.GetCassandraConnectorJar(extraVars["spark_version"].(string))
+		cassandraJar, err := aL.GetCassandraConnectorJar(extraVars["spark_version"].(string))
+		if err != nil {
+			return nil, err
+		}
 		alAddJar, err := aL.AddJar(cassandraJar)
 		if err != nil {
 			return nil, err
@@ -293,7 +306,10 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 
 	//TODO: change this
 	if extraVars[SetDeployService("elastic")] == true {
-		elasticJar := aL.GetElasticConnectorJar()
+		elasticJar, err := aL.GetElasticConnectorJar()
+		if err != nil {
+			return nil, err
+		}
 		alAddJar, err := aL.AddJar(elasticJar)
 		if err != nil {
 			return nil, err
@@ -332,7 +348,6 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	if extraVars["create_monitoring"] == true {
 		extraVars["deploy_consul"] = true
 	}
-
 	return extraVars, nil
 }
 
@@ -362,18 +377,17 @@ func (aL LauncherServer) RunAnsible(cmd string, args []string, stdout io.Writer,
 
 	err := os.Setenv(utils.AnsibleConfigVar, utils.AnsibleConfigPath)
 	if err != nil {
-		aL.Logger.Warn(err)
-		return false, err
+		return false, ErrSetEnv
 	}
 
-	if err := prepCmd.Start(); err != nil {
-		aL.Logger.Warn(err)
-		return false, err
+	err = prepCmd.Start()
+	if err != nil {
+		return false, ErrCmdStart
 	}
 
-	if err := prepCmd.Wait(); err != nil {
-		aL.Logger.Warn(err)
-		return false, err
+	err = prepCmd.Wait()
+	if err != nil {
+		return false, ErrCmdWait
 	}
 	return true, nil
 }
@@ -469,7 +483,7 @@ func (aL LauncherServer) MakeOsCreds(keyName string, vaultClient *vaultapi.Clien
 func (aL LauncherServer) MakeDockerCreds(keyName string, vaultClient *vaultapi.Client) (*utils.DockerCredentials, error) {
 	secrets, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
-		return nil, err
+		return nil, ErrCouchSecretsRead
 	}
 	var res utils.DockerCredentials
 	res.Url = secrets.Data[utils.DockerLoginUlr].(string)
@@ -483,28 +497,28 @@ func (aL LauncherServer) CheckSshKey(keyName string, vaultClient *vaultapi.Clien
 	if _, err := os.Stat(sshPath); os.IsNotExist(err) {
 		secretValues, err := vaultClient.Logical().Read(keyName)
 		if err != nil {
-			return err
+			return ErrCouchSecretsRead
 		}
 		sshKey := secretValues.Data[utils.VaultSshKey].(string)
 		f, err := os.Create(sshPath)
 		if err != nil {
-			return err
+			return ErrCreate
 		}
 		err = os.Chmod(sshPath, 0777)
 		if err != nil {
-			return err
+			return ErrChmod
 		}
 		_, err = f.WriteString(sshKey)
 		if err != nil {
-			return err
+			return ErrWrite
 		}
 		err = f.Close()
 		if err != nil {
-			return err
+			return ErrClose
 		}
 		err = os.Chmod(sshPath, 0400)
 		if err != nil {
-			return err
+			return ErrChmod
 		}
 	}
 	return nil
