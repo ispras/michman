@@ -11,4 +11,5 @@ type LauncherServer struct {
 	Db                database.Database
 	VaultCommunicator utils.SecretStorage
 	Config            utils.Config
+	OsCreds           utils.OsCredentials
 }

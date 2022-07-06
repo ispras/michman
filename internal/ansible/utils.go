@@ -153,7 +153,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 	return nil, ErrConvertParam
 }
 
-func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osCreds *utils.OsCredentials, osConfig *utils.Config, action string) (InterfaceMap, error) {
+func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osConfig *utils.Config, action string) (InterfaceMap, error) {
 	sTypes, err := db.ReadServicesTypesList()
 	if err != nil {
 		return nil, err
@@ -267,10 +267,10 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	extraVars["hadoop_user"] = image.AnsibleUser
 	extraVars["os_image"] = image.CloudImageID
 	extraVars["skip_packages"] = false
-	extraVars["os_project_name"] = osCreds.OsProjectName
+	extraVars["os_project_name"] = aL.OsCreds[utils.OsProjectName]
 
 	extraVars["floating_ip_pool"] = osConfig.FloatingIP
-	extraVars["os_auth_url"] = osCreds.OsAuthUrl
+	extraVars["os_auth_url"] = aL.OsCreds[utils.OsAuthUrl]
 	extraVars["use_oracle_java"] = false //must be always false
 	extraVars["ansible_ssh_private_key_file"] = utils.SshKeyPath
 
@@ -285,8 +285,8 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	extraVars["virtual_network"] = osConfig.VirtualNetwork
 	extraVars["os_key_name"] = osConfig.Key
 
-	extraVars["os_swift_user_name"] = osCreds.OsSwiftUserName
-	extraVars["os_swift_password"] = osCreds.OsSwiftPassword
+	extraVars["os_swift_user_name"] = aL.OsCreds[utils.OsSwiftUserName]
+	extraVars["os_swift_password"] = aL.OsCreds[utils.OsSwiftPassword]
 
 	//make extra jars
 	//TODO: change this
@@ -392,92 +392,30 @@ func (aL LauncherServer) RunAnsible(cmd string, args []string, stdout io.Writer,
 	return true, nil
 }
 
-// SetOsVar TODO It's necessary to do correct error handling
-func (aL LauncherServer) SetOsVar(utilVal string, secretValues *vaultapi.Secret) string {
-	osCred := secretValues.Data[utilVal].(string)
-	err := os.Setenv(utilVal, osCred)
-	if err != nil {
-		aL.Logger.Fatal(err)
-	}
-	return osCred
-}
-
-// main.go:
-func (aL LauncherServer) MakeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) (*utils.OsCredentials, error) {
+func MakeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) (utils.OsCredentials, error) {
 	secretValues, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
-		aL.Logger.Warn(err)
-		return nil, err
+		return nil, ErrCouchSecretsRead
 	}
-	var osCreds utils.OsCredentials
-	switch version {
-	case utils.OsUssuriVersion:
-		osCreds.OsAuthUrl = aL.SetOsVar(utils.OsAuthUrl, secretValues)
-		osCreds.OsProjectName = aL.SetOsVar(utils.OsProjectName, secretValues)
-		osCreds.OsProjectID = aL.SetOsVar(utils.OsProjectID, secretValues)
-		osCreds.OsInterface = aL.SetOsVar(utils.OsInterface, secretValues)
-		osCreds.OsPassword = aL.SetOsVar(utils.OsPassword, secretValues)
-		osCreds.OsRegionName = aL.SetOsVar(utils.OsRegionName, secretValues)
-		osCreds.OsUserName = aL.SetOsVar(utils.OsUserName, secretValues)
-		osCreds.OsUserDomainName = aL.SetOsVar(utils.OsUserDomainName, secretValues)
-		osCreds.OsProjectDomainID = aL.SetOsVar(utils.OsProjectDomainID, secretValues)
-		osCreds.OsIdentityApiVersion = aL.SetOsVar(utils.OsIdentityApiVersion, secretValues)
-	case utils.OsSteinVersion:
-		osCreds.OsAuthUrl = aL.SetOsVar(utils.OsAuthUrl, secretValues)
-		osCreds.OsPassword = aL.SetOsVar(utils.OsPassword, secretValues)
-		osCreds.OsProjectName = aL.SetOsVar(utils.OsProjectName, secretValues)
-		osCreds.OsRegionName = aL.SetOsVar(utils.OsRegionName, secretValues)
-		osCreds.OsUserName = aL.SetOsVar(utils.OsUserName, secretValues)
-		osCreds.OsComputeApiVersion = aL.SetOsVar(utils.OsComputeApiVersion, secretValues)
-		osCreds.OsNovaVersion = aL.SetOsVar(utils.OsNovaVersion, secretValues)
-		osCreds.OsAuthType = aL.SetOsVar(utils.OsAuthType, secretValues)
-		osCreds.OsCloudname = aL.SetOsVar(utils.OsCloudname, secretValues)
-		osCreds.OsIdentityApiVersion = aL.SetOsVar(utils.OsIdentityApiVersion, secretValues)
-		osCreds.OsImageApiVersion = aL.SetOsVar(utils.OsImageApiVersion, secretValues)
-		osCreds.OsNoCache = aL.SetOsVar(utils.OsNoCache, secretValues)
-		osCreds.OsProjectDomainName = aL.SetOsVar(utils.OsProjectDomainName, secretValues)
-		osCreds.OsUserDomainName = aL.SetOsVar(utils.OsUserDomainName, secretValues)
-		osCreds.OsVolumeApiVersion = aL.SetOsVar(utils.OsVolumeApiVersion, secretValues)
-		osCreds.OsPythonwarnings = aL.SetOsVar(utils.OsPythonwarnings, secretValues)
-		osCreds.OsNoProxy = aL.SetOsVar(utils.OsNoProxy, secretValues)
-	case utils.OsLibertyVersion:
-		osCreds.OsAuthUrl = aL.SetOsVar(utils.OsAuthUrl, secretValues)
-		osCreds.OsPassword = aL.SetOsVar(utils.OsPassword, secretValues)
-		osCreds.OsProjectName = aL.SetOsVar(utils.OsProjectName, secretValues)
-		osCreds.OsRegionName = aL.SetOsVar(utils.OsRegionName, secretValues)
-		osCreds.OsTenantId = aL.SetOsVar(utils.OsTenantId, secretValues)
-		osCreds.OsTenantName = aL.SetOsVar(utils.OsTenantName, secretValues)
-		osCreds.OsUserName = aL.SetOsVar(utils.OsUserName, secretValues)
-		if _, ok := secretValues.Data[utils.OsSwiftUserName]; ok {
-			osCreds.OsSwiftUserName = aL.SetOsVar(utils.OsSwiftUserName, secretValues)
-		} else {
-			osCreds.OsSwiftUserName = ""
-		}
-		if _, ok := secretValues.Data[utils.OsSwiftPassword]; ok {
-			osCreds.OsSwiftUserName = aL.SetOsVar(utils.OsSwiftPassword, secretValues)
-		} else {
-			osCreds.OsSwiftPassword = ""
-		}
-	default: //liberty as default version
-		osCreds.OsAuthUrl = aL.SetOsVar(utils.OsAuthUrl, secretValues)
-		osCreds.OsPassword = aL.SetOsVar(utils.OsPassword, secretValues)
-		osCreds.OsProjectName = aL.SetOsVar(utils.OsProjectName, secretValues)
-		osCreds.OsRegionName = aL.SetOsVar(utils.OsRegionName, secretValues)
-		osCreds.OsTenantId = aL.SetOsVar(utils.OsTenantId, secretValues)
-		osCreds.OsTenantName = aL.SetOsVar(utils.OsTenantName, secretValues)
-		osCreds.OsUserName = aL.SetOsVar(utils.OsUserName, secretValues)
-		if _, ok := secretValues.Data[utils.OsSwiftUserName]; ok {
-			osCreds.OsSwiftUserName = aL.SetOsVar(utils.OsSwiftUserName, secretValues)
-		} else {
-			osCreds.OsSwiftUserName = ""
-		}
-		if _, ok := secretValues.Data[utils.OsSwiftPassword]; ok {
-			osCreds.OsSwiftPassword = aL.SetOsVar(utils.OsSwiftPassword, secretValues)
-		} else {
-			osCreds.OsSwiftPassword = ""
-		}
+	osCreds := make(utils.OsCredentials)
+	var resVersion string
+	_, exists := utils.OpenstackSecretsKeys[version]
+	if exists {
+		resVersion = version
+	} else {
+		resVersion = utils.OsUssuriVersion
 	}
-	return &osCreds, nil
+	for key, value := range utils.OpenstackSecretsKeys[resVersion] {
+		osCred := secretValues.Data[value].(string)
+		if osCred != "" {
+			err := os.Setenv(value, osCred)
+			if err != nil {
+				return nil, ErrSetEnv
+			}
+		}
+		osCreds[key] = osCred
+	}
+	return osCreds, nil
 }
 
 func (aL LauncherServer) MakeDockerCreds(keyName string, vaultClient *vaultapi.Client) (*utils.DockerCredentials, error) {

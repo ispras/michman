@@ -61,10 +61,17 @@ func main() {
 	if err != nil {
 		LauncherLogger.Fatal(cmd.ErrTcpListen(*launcherPort))
 	}
-
 	gas := grpc.NewServer()
+
+	vaultClient, vaultCfg, err := vaultCommunicator.ConnectVault()
+	if vaultClient == nil || err != nil {
+		LauncherLogger.Fatal(err)
+	}
+
+	osCreds, err := ansible.MakeOsCreds(vaultCfg.OsKey, vaultClient, config.OsVersion)
+
 	aService := ansible.LauncherServer{Logger: LauncherLogger, Db: db,
-		VaultCommunicator: &vaultCommunicator, Config: config}
+		VaultCommunicator: &vaultCommunicator, Config: config, OsCreds: osCreds}
 
 	protobuf.RegisterAnsibleRunnerServer(gas, &aService)
 

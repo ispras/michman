@@ -56,32 +56,6 @@ const (
 	//ansible get ip of any instance with role
 	AnsibleIpRole = "ansible/get_ip.yml"
 
-	//openstack secrets keys
-	OsAuthUrl            = "OS_AUTH_URL"
-	OsPassword           = "OS_PASSWORD"
-	OsProjectName        = "OS_PROJECT_NAME"
-	OsProjectID          = "OS_PROJECT_ID"
-	OsProjectDomainID    = "OS_PROJECT_DOMAIN_ID"
-	OsInterface          = "OS_INTERFACE"
-	OsRegionName         = "OS_REGION_NAME"
-	OsTenantId           = "OS_TENANT_ID"
-	OsTenantName         = "OS_TENANT_NAME"
-	OsUserName           = "OS_USERNAME"
-	OsSwiftUserName      = "OS_SWIFT_USERNAME"
-	OsSwiftPassword      = "OS_SWIFT_PASSWORD"
-	OsComputeApiVersion  = "COMPUTE_API_VERSION"
-	OsNovaVersion        = "NOVA_VERSION"
-	OsAuthType           = "OS_AUTH_TYPE"
-	OsCloudname          = "OS_CLOUDNAME"
-	OsIdentityApiVersion = "OS_IDENTITY_API_VERSION"
-	OsImageApiVersion    = "OS_IMAGE_API_VERSION"
-	OsNoCache            = "OS_NO_CACHE"
-	OsProjectDomainName  = "OS_PROJECT_DOMAIN_NAME"
-	OsUserDomainName     = "OS_USER_DOMAIN_NAME"
-	OsVolumeApiVersion   = "OS_VOLUME_API_VERSION"
-	OsPythonwarnings     = "PYTHONWARNINGS"
-	OsNoProxy            = "no_proxy"
-
 	// Docker login secrets keys
 	DockerLoginUlr      = "url"
 	DockerLoginUser     = "user"
@@ -146,10 +120,31 @@ const (
 	ClusterNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
 	ProjectNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
 
-	ColorReset  = "\033[0m"
-	ColorRed    = "\033[31m"
-	ColorGreen  = "\033[32m"
-	ColorYellow = "\033[33m"
+	//openstack secrets keys value names
+	OsAuthUrl            = "OsAuthUrl"
+	OsPassword           = "OsPassword"
+	OsProjectName        = "OsProjectName"
+	OsProjectID          = "OsProjectID"
+	OsProjectDomainID    = "OsProjectDomainID"
+	OsInterface          = "OsInterface"
+	OsRegionName         = "OsRegionName"
+	OsTenantId           = "OsTenantId"
+	OsTenantName         = "OsTenantName"
+	OsUserName           = "OsUserName"
+	OsSwiftUserName      = "OsSwiftUserName"
+	OsSwiftPassword      = "OsSwiftPassword"
+	OsComputeApiVersion  = "OsComputeApiVersion"
+	OsNovaVersion        = "OsNovaVersion"
+	OsAuthType           = "OsAuthType"
+	OsCloudName          = "OsCloudName"
+	OsIdentityApiVersion = "OsIdentityApiVersion"
+	OsImageApiVersion    = "OsImageApiVersion"
+	OsNoCache            = "OsNoCache"
+	OsProjectDomainName  = "OsProjectDomainName"
+	OsUserDomainName     = "OsUserDomainName"
+	OsVolumeApiVersion   = "OsVolumeApiVersion"
+	OsPythonWarnings     = "OsPythonWarnings"
+	OsNoProxy            = "OsNoProxy"
 )
 
 var (
@@ -157,3 +152,52 @@ var (
 	ConfigPath  = "configs/config.yaml"
 	UseBasePath = true
 )
+
+var OpenstackSecretsKeys = map[string]map[string]string{
+	// ussuri:
+	OsUssuriVersion: {
+		OsAuthUrl:            "OS_AUTH_URL",
+		OsProjectName:        "OS_PROJECT_NAME",
+		OsProjectID:          "OS_PROJECT_ID",
+		OsInterface:          "OS_INTERFACE",
+		OsPassword:           "OS_PASSWORD",
+		OsRegionName:         "OS_REGION_NAME",
+		OsUserName:           "OS_USERNAME",
+		OsUserDomainName:     "OS_USER_DOMAIN_NAME",
+		OsProjectDomainID:    "OS_PROJECT_DOMAIN_ID",
+		OsIdentityApiVersion: "OS_IDENTITY_API_VERSION",
+	},
+
+	// stein:
+	OsSteinVersion: {
+		OsAuthUrl:            "OS_AUTH_URL",
+		OsPassword:           "OS_PASSWORD",
+		OsProjectName:        "OS_PROJECT_NAME",
+		OsRegionName:         "OS_REGION_NAME",
+		OsUserName:           "OS_USERNAME",
+		OsComputeApiVersion:  "COMPUTE_API_VERSION",
+		OsNovaVersion:        "NOVA_VERSION",
+		OsAuthType:           "OS_AUTH_TYPE",
+		OsCloudName:          "OS_CLOUDNAME",
+		OsIdentityApiVersion: "OS_IDENTITY_API_VERSION",
+		OsImageApiVersion:    "OS_IMAGE_API_VERSION",
+		OsNoCache:            "OS_NO_CACHE",
+		OsProjectDomainName:  "OS_PROJECT_DOMAIN_NAME",
+		OsUserDomainName:     "OS_USER_DOMAIN_NAME",
+		OsVolumeApiVersion:   "OS_VOLUME_API_VERSION",
+		OsPythonWarnings:     "PYTHONWARNINGS",
+		OsNoProxy:            "no_proxy",
+	},
+
+	// liberty:
+	OsLibertyVersion: {
+		OsAuthUrl:       "OS_AUTH_URL",
+		OsPassword:      "OS_PASSWORD",
+		OsProjectName:   "OS_PROJECT_NAME",
+		OsRegionName:    "OS_REGION_NAME",
+		OsTenantId:      "OS_TENANT_ID",
+		OsTenantName:    "OS_TENANT_NAME",
+		OsSwiftUserName: "OS_SWIFT_USERNAME",
+		OsSwiftPassword: "OS_SWIFT_PASSWORD",
+	},
+}

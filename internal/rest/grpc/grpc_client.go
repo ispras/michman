@@ -153,7 +153,7 @@ func (gc GrpcClient) StartClusterModification(c *protobuf.Cluster) {
 		}
 		return
 	}
-
+	
 	gc.logger.Infof("From ansible-service: %s", message.Status)
 
 	if message.Status != utils.AnsibleOk {

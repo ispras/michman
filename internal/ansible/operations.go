@@ -18,14 +18,6 @@ func (aL *LauncherServer) Delete(ctx context.Context, cluster *protobuf.Cluster)
 		return nil, err
 	}
 
-	keyName := vaultCfg.OsKey
-
-	osCreds, err := aL.MakeOsCreds(keyName, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil || err != nil {
-		aL.Logger.Warn(err)
-		return nil, err
-	}
-
 	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		aL.Logger.Warn(err)
@@ -41,7 +33,7 @@ func (aL *LauncherServer) Delete(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionDelete)
+	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionDelete)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err
@@ -64,12 +56,6 @@ func (aL *LauncherServer) Update(ctx context.Context, cluster *protobuf.Cluster)
 		return nil, err
 	}
 
-	osCreds, err := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil || err != nil {
-		aL.Logger.Warn(err)
-		return nil, err
-	}
-
 	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		aL.Logger.Warn(err)
@@ -85,7 +71,7 @@ func (aL *LauncherServer) Update(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionUpdate)
+	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionUpdate)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err
@@ -107,12 +93,6 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 		return nil, err
 	}
 
-	osCreds, err := aL.MakeOsCreds(vaultCfg.OsKey, vaultClient, aL.Config.OsVersion)
-	if osCreds == nil || err != nil {
-		aL.Logger.Warn(err)
-		return nil, err
-	}
-
 	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
 	if err != nil {
 		aL.Logger.Warn(err)
@@ -127,7 +107,7 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, osCreds, dockRegCreds, &aL.Config, utils.ActionCreate)
+	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionCreate)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err

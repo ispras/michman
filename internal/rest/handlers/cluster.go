@@ -63,7 +63,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	// set default project flavors if not specifie
+	// set default project flavors if not specified
 	if clusterRes.MasterFlavor == "" {
 		clusterRes.MasterFlavor = project.DefaultMasterFlavor
 	}
@@ -75,6 +75,11 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	}
 	if clusterRes.MonitoringFlavor == "" {
 		clusterRes.MonitoringFlavor = project.DefaultMonitoringFlavor
+	}
+
+	// set default project image if not specified
+	if clusterRes.Image == "" {
+		clusterRes.Image = project.DefaultImage
 	}
 
 	// validate struct
@@ -208,11 +213,6 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			}
 			s.ID = sUuid.String()
 		}
-	}
-
-	// set default project Image if not specified
-	if clusterRes.Image == "" {
-		clusterRes.Image = project.DefaultImage
 	}
 
 	clusterRes.EntityStatus = utils.StatusInited

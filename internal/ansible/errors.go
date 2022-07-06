@@ -6,7 +6,6 @@ import (
 )
 
 const (
-	errGrpcSend         = "error in sending ansible status"
 	errMarshal          = "error occurred while encoding json"
 	errUnMarshal        = "error occurred while parsing JSON"
 	errDownload         = "error occurred while downloading file"
@@ -23,7 +22,6 @@ const (
 )
 
 var (
-	ErrGrpcSend         = errors.New(errGrpcSend)
 	ErrMarshal          = errors.New(errMarshal)
 	ErrDownload         = errors.New(errDownload)
 	ErrAbs              = errors.New(errAbs)

@@ -9,9 +9,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, osCreds *utils.OsCredentials, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) (string, error) {
+func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) (string, error) {
 	//constructing ansible-playbook command
-	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, osCreds, osConfig, action)
+	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, osConfig, action)
 	if err != nil {
 		return utils.RunFail, err
 	}

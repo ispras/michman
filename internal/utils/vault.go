@@ -8,32 +8,7 @@ import (
 	"path/filepath"
 )
 
-type OsCredentials struct {
-	OsAuthUrl            string
-	OsPassword           string
-	OsProjectID          string
-	OsProjectName        string
-	OsProjectDomainID    string
-	OsInterface          string
-	OsRegionName         string
-	OsTenantId           string
-	OsTenantName         string
-	OsUserName           string
-	OsSwiftUserName      string
-	OsSwiftPassword      string
-	OsComputeApiVersion  string
-	OsNovaVersion        string
-	OsAuthType           string
-	OsCloudname          string
-	OsIdentityApiVersion string
-	OsImageApiVersion    string
-	OsNoCache            string
-	OsProjectDomainName  string
-	OsUserDomainName     string
-	OsVolumeApiVersion   string
-	OsPythonwarnings     string
-	OsNoProxy            string
-}
+type OsCredentials map[string]string
 
 type DockerCredentials struct {
 	Url      string
