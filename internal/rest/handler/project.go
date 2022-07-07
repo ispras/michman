@@ -1,9 +1,11 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/rest/handler/response"
+	"github.com/ispras/michman/internal/rest/handler/validate"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -15,12 +17,12 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	ResponseOK(w, projects, request)
+	response.Ok(w, projects, request)
 }
 
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -31,19 +33,19 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	err := json.NewDecoder(r.Body).Decode(&project)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		ResponseBadRequest(w, ErrJsonIncorrect)
+		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	err, status := ValidateProjectCreate(hS, &project)
+	err, status := validate.ProjectCreate(hS.Db, hS.Logger, &project)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
 		case http.StatusBadRequest:
-			ResponseBadRequest(w, err)
+			response.BadRequest(w, err)
 			return
 		case http.StatusInternalServerError:
-			ResponseInternalError(w, err)
+			response.InternalError(w, err)
 			return
 		}
 	}
@@ -53,7 +55,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-		ResponseInternalError(w, ErrUuidLibError)
+		response.InternalError(w, ErrUuidLibError)
 		return
 	}
 	project.ID = pUuid.String()
@@ -61,12 +63,12 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	err = hS.Db.WriteProject(&project)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusCreated)
-	ResponseCreated(w, project, request)
+	response.Created(w, project, request)
 }
 
 func (hS HttpServer) ProjectGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -77,17 +79,17 @@ func (hS HttpServer) ProjectGet(w http.ResponseWriter, r *http.Request, params h
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if project.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		ResponseNotFound(w, ErrProjectNotFound)
+		response.NotFound(w, ErrProjectNotFound)
 		return
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	ResponseOK(w, project, request)
+	response.Ok(w, project, request)
 }
 
 func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -98,12 +100,12 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	oldProj, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if oldProj.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		ResponseNotFound(w, ErrProjectNotFound)
+		response.NotFound(w, ErrProjectNotFound)
 		return
 	}
 
@@ -113,19 +115,19 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	err = json.NewDecoder(r.Body).Decode(&newProj)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		ResponseBadRequest(w, ErrJsonIncorrect)
+		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	err, status := ValidateProjectUpdate(hS, &newProj)
+	err, status := validate.ProjectUpdate(hS.Db, hS.Logger, &newProj)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
 		case http.StatusBadRequest:
-			ResponseBadRequest(w, err)
+			response.BadRequest(w, err)
 			return
 		case http.StatusInternalServerError:
-			ResponseInternalError(w, err)
+			response.InternalError(w, err)
 			return
 		}
 	}
@@ -155,12 +157,12 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	err = hS.Db.UpdateProject(resProj)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	ResponseOK(w, resProj, request)
+	response.Ok(w, resProj, request)
 }
 
 func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -171,34 +173,34 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if project.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		ResponseNotFound(w, ErrProjectNotFound)
+		response.NotFound(w, ErrProjectNotFound)
 		return
 	}
 
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if len(clusters) > 0 {
 		hS.Logger.Warn("Request ", request, " failed  with status ", http.StatusBadRequest, ": ", ErrProjectHasClusters.Error())
-		ResponseBadRequest(w, ErrProjectHasClusters)
+		response.BadRequest(w, ErrProjectHasClusters)
 		return
 	}
 
 	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)
-	ResponseNoContent(w)
+	response.NoContent(w)
 }

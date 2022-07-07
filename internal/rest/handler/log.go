@@ -1,7 +1,10 @@
-package handlers
+package handler
 
 import (
 	cluster_logger "github.com/ispras/michman/internal/logger"
+	"github.com/ispras/michman/internal/rest/handler/check"
+	"github.com/ispras/michman/internal/rest/handler/helpfunc"
+	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -21,11 +24,11 @@ func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Reque
 	request := "logs/launcher GET"
 	hS.Logger.Info("Get " + request)
 
-	path := MakeLogFilePath(utils.LauncherLogFileName, hS.Config.LogsFilePath)
+	path := helpfunc.MakeLogFilePath(utils.LauncherLogFileName, hS.Config.LogsFilePath)
 
-	if exist, err := CheckFileExists(path); !exist || err != nil {
+	if exist, err := check.FileExists(path); !exist || err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
@@ -37,11 +40,11 @@ func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, 
 	request := "logs/http_server GET"
 	hS.Logger.Info("Get " + request)
 
-	path := MakeLogFilePath(utils.HttpLogFileName, hS.Config.LogsFilePath)
+	path := helpfunc.MakeLogFilePath(utils.HttpLogFileName, hS.Config.LogsFilePath)
 
-	if exist, err := CheckFileExists(path); !exist || err != nil {
+	if exist, err := check.FileExists(path); !exist || err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
@@ -58,12 +61,12 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if project.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrProjectNotFound.Error())
-		ResponseBadRequest(w, ErrProjectNotFound)
+		response.BadRequest(w, ErrProjectNotFound)
 		return
 	}
 
@@ -71,12 +74,12 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 	if cluster.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrClusterNotFound.Error())
-		ResponseBadRequest(w, ErrClusterNotFound)
+		response.BadRequest(w, ErrClusterNotFound)
 		return
 	}
 
@@ -90,7 +93,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 			action = tmpAction
 		} else {
 			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrLogsBadActionParam.Error())
-			ResponseBadRequest(w, ErrLogsBadActionParam)
+			response.BadRequest(w, ErrLogsBadActionParam)
 			return
 		}
 	}
@@ -99,16 +102,16 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	cLogger, err := cluster_logger.MakeNewClusterLogger(hS.Config, cluster.ID, action)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 		return
 	}
 
 	clusterLogs, err := cLogger.ReadClusterLogs()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		ResponseInternalError(w, err)
+		response.InternalError(w, err)
 	}
 	resp := clusterLog{ClusterIdOrName: clusterIdOrName, Action: action, ClusterLogs: clusterLogs}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	ResponseOK(w, resp, request)
+	response.Ok(w, resp, request)
 }

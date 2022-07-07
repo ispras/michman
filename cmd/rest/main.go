@@ -10,7 +10,7 @@ import (
 	"github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/rest/authorization"
 	grpc_client "github.com/ispras/michman/internal/rest/grpc"
-	"github.com/ispras/michman/internal/rest/handlers"
+	"github.com/ispras/michman/internal/rest/handler"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -85,7 +85,7 @@ func main() {
 		},
 	}
 
-	httpLogger.Infof("Build version: %v", handlers.VersionID)
+	httpLogger.Infof("Build version: %v", handler.VersionID)
 
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
@@ -143,7 +143,7 @@ func main() {
 	authorizeClient := authorization.AuthorizeClient{Logger: authorizeLogger, Db: db,
 		Config: config, SessionManager: sessionManager, Auth: usedAuth, Router: router}
 
-	hS := handlers.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Auth: usedAuth, Config: config}
+	hS := handler.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Auth: usedAuth, Config: config}
 
 	authorizeClient.CreateRoutes()
 	hS.CreateRoutes()

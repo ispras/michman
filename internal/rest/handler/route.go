@@ -1,6 +1,7 @@
-package handlers
+package handler
 
 import (
+	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -89,5 +90,5 @@ func (hS *HttpServer) CreateRoutes() {
 func (hS *HttpServer) GetVersion(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	request := "/version GET"
 	hS.Logger.Info("Get " + request)
-	ResponseOK(w, VersionID, request)
+	response.Ok(w, VersionID, request)
 }
