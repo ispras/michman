@@ -8,31 +8,6 @@ import (
 	"net/http"
 )
 
-func IsFlavorUsed(db database.Database, logger *logrus.Logger, flavorName string) (bool, error) {
-	logger.Print("Checking is flavor used...")
-	clusters, err := db.ReadClustersList()
-	if err != nil {
-		return false, err
-	}
-	for _, c := range clusters {
-		if c.MasterFlavor == flavorName || c.StorageFlavor == flavorName ||
-			c.SlavesFlavor == flavorName || c.MonitoringFlavor == flavorName {
-			return true, nil
-		}
-	}
-	projects, err := db.ReadProjectsList()
-	if err != nil {
-		return false, err
-	}
-	for _, p := range projects {
-		if p.DefaultMasterFlavor == flavorName || p.DefaultStorageFlavor == flavorName ||
-			p.DefaultSlavesFlavor == flavorName || p.DefaultMonitoringFlavor == flavorName {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func AddDependencies(db database.Database, cluster *protobuf.Cluster, curS *protobuf.Service) ([]*protobuf.Service, error, int) {
 	var serviceToAdd *protobuf.Service = nil
 	var servicesList []*protobuf.Service = nil

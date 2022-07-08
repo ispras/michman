@@ -15,6 +15,7 @@ const (
 	errClusterImageNotFound                = "specified Image not found"
 	errFlavorIdNotEmpty                    = "flavor ID is generated field. It can't be filled in by user"
 	errFlavorEmptyName                     = "flavor Name can't be empty"
+	errFlavorZeroField                     = "flavor VCPUs | Disk | RAM can't be zero"
 	errImageIdNotEmpty                     = "image ID is generated field. It can't be filled in by user"
 	errProjectValidation                   = "project validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
 	errProjectExisted                      = "project with this name already exists"
@@ -29,6 +30,7 @@ const (
 	errConfigServiceTypeDependenceExists   = "service type presents in dependencies for another service"
 	errServiceTypeVersionUnmodFields       = "some service type version fields can't be modified (ID, Version)"
 	errServiceTypeVersionEmptyVersionField = "version field must be set"
+	errFlavorExisted                       = "flavor with this name already exists"
 )
 
 var (
@@ -41,6 +43,8 @@ var (
 	// flavor:
 	ErrFlavorIdNotEmpty = errors.New(errFlavorIdNotEmpty)
 	ErrFlavorEmptyName  = errors.New(errFlavorEmptyName)
+	ErrFlavorExisted    = errors.New(errFlavorExisted)
+	ErrFlavorZeroField  = errors.New(errFlavorZeroField)
 
 	// image:
 	ErrImageIdNotEmpty = errors.New(errImageIdNotEmpty)
@@ -67,18 +71,6 @@ var (
 
 func ErrFlavorFieldValueNotFound(param string) error {
 	ErrParamType := fmt.Errorf("specified %s not found", param)
-	HandlerValidateErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrFlavorParamVal(param string) error {
-	ErrParamVal := fmt.Errorf("flavor %s can't be less than or equal to zero", param)
-	HandlerValidateErrorMap[ErrParamVal] = utils.ValidationError
-	return ErrParamVal
-}
-
-func ErrFlavorParamType(param string) error {
-	ErrParamType := fmt.Errorf("flavor %s must be int type", param)
 	HandlerValidateErrorMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
 }
@@ -150,8 +142,8 @@ func init() {
 	HandlerValidateErrorMap[ErrServiceTypeVersionUnmodFields] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeVersionEmptyVersionField] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeUnmodVersionFields] = utils.DatabaseError
-
+	HandlerValidateErrorMap[ErrFlavorExisted] = utils.ObjectExists
 	HandlerValidateErrorMap[ErrServiceTypeDeleteVersionDefault] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeVersionConfigUnmodFields] = utils.ValidationError
-
+	HandlerValidateErrorMap[ErrFlavorZeroField] = utils.ValidationError
 }

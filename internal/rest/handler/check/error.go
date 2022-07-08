@@ -76,6 +76,18 @@ func ErrServiceDependenciesNotExists(param string) error {
 	return ErrParamType
 }
 
+func ErrFlavorParamVal(param string) error {
+	ErrParamVal := fmt.Errorf("flavor %s can't be less than or equal to zero", param)
+	HandlerCheckersErrorMap[ErrParamVal] = utils.ValidationError
+	return ErrParamVal
+}
+
+func ErrFlavorParamType(param string) error {
+	ErrParamType := fmt.Errorf("flavor %s must be int type", param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
 func init() {
 	HandlerCheckersErrorMap[ErrServiceTypeClass] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypePort] = utils.ValidationError

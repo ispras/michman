@@ -68,7 +68,7 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.PUT("/templates/:templateID", hS.TemplateUpdate)
 	hS.Router.DELETE("/templates/:templateID", hS.TemplateDelete)
 
-	// project templates
+	// project templates:
 	hS.Router.GET("/projects/:projectIdOrName/templates", hS.TemplatesGetList)
 	hS.Router.POST("/projects/:projectIdOrName/templates", hS.TemplateCreate)
 	hS.Router.GET("/projects/:projectIdOrName/templates/:templateID", hS.TemplateGet)

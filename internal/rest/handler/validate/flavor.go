@@ -1,44 +1,46 @@
 package validate
 
 import (
+	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/sirupsen/logrus"
+	"github.com/ispras/michman/internal/rest/handler/check"
+	"net/http"
 )
 
-func Flavor(logger *logrus.Logger, flavor *protobuf.Flavor) error {
-	logger.Info("Validating flavor...")
+// FlavorCreate validates fields of the flavor structure for correct filling when creating
+func FlavorCreate(flavor *protobuf.Flavor) error {
 	if flavor.ID != "" {
 		return ErrFlavorIdNotEmpty
 	}
 	if flavor.Name == "" {
 		return ErrFlavorEmptyName
 	}
-
-	switch interface{}(flavor.VCPUs).(type) {
-	case int32:
-		if flavor.VCPUs <= 0 {
-			return ErrFlavorParamVal("VCPUs")
-		}
-	default:
-		return ErrFlavorParamType("VCPUs")
+	if flavor.VCPUs == 0 || flavor.Disk == 0 || flavor.RAM == 0 {
+		return ErrFlavorZeroField
 	}
 
-	switch interface{}(flavor.RAM).(type) {
-	case int32:
-		if flavor.RAM <= 0 {
-			return ErrFlavorParamVal("RAM")
-		}
-	default:
-		return ErrFlavorParamType("RAM")
-	}
-
-	switch interface{}(flavor.Disk).(type) {
-	case int32:
-		if flavor.Disk <= 0 {
-			return ErrFlavorParamVal("Disk")
-		}
-	default:
-		return ErrFlavorParamType("RAM")
+	err := check.FlavorFields(flavor)
+	if err != nil {
+		return err
 	}
 	return nil
+}
+
+// FlavorUpdate validates fields of the flavor structure for correct filling when updating
+func FlavorUpdate(db database.Database, oldFlavor *protobuf.Flavor, newFlavor *protobuf.Flavor) (error, int) {
+	if newFlavor.Name != "" && newFlavor.Name != oldFlavor.Name {
+		dbFlavor, err := db.ReadFlavor(newFlavor.Name)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		if dbFlavor.ID != "" {
+			return ErrFlavorExisted, http.StatusBadRequest
+		}
+	}
+
+	err := check.FlavorFields(newFlavor)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+	return nil, 0
 }
