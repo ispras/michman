@@ -3,34 +3,6 @@ package utils
 import "os"
 
 const (
-	//list of supported services types
-	ServiceTypeSpark      string = "spark"
-	ServiceTypeIgnite     string = "ignite"
-	ServiceTypeCassandra  string = "cassandra"
-	ServiceTypeJupyter    string = "jupyter"
-	ServiceTypeJupyterhub string = "jupyterhub"
-	ServiceTypeElastic    string = "elastic"
-	ServiceTypeNFS        string = "nfs-server"
-	ServiceTypeNextCloud  string = "nextcloud"
-
-	//supported spark configurations
-	SparkUseYarn         string = "use-yarn"
-	SparkHadoopVersion   string = "hadoop-version"
-	SparkWorkerMemMb     string = "worker-mem-mb"
-	SparkYarnMasterMemMb string = "yarn-master-mem-mb"
-
-	//supported jupyter configurations
-	JupyterToreeVersion string = "toree-version"
-
-	//supported ignite configurations
-	IgniteMemory string = "ignite-memory"
-
-	//supported elastic configurations
-	ElasticHeapSize string = "es-heap-size"
-
-	//supported cassandra configurations
-	CassandraDefaultVersion string = "3.11.4"
-
 	//statuses for ansible runner
 	AnsibleOk   string = "OK"
 	AnsibleFail string = "FAIL"
@@ -49,10 +21,13 @@ const (
 
 	//base path
 	BasePath = "michman"
+
 	//ansible main role path
 	AnsibleMainRole = "ansible/main.yml"
+
 	//ansible get master ip role path
 	AnsibleMasterIpRole = "ansible/get_master.yml"
+
 	//ansible get ip of any instance with role
 	AnsibleIpRole = "ansible/get_ip.yml"
 
