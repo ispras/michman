@@ -122,61 +122,15 @@ func PossibleValuesUnique(possibleValues []string) error {
 }
 
 func PossibleValues(possibleValues []string, vType string, IsList bool) error {
-	//check PossibleValues type
-	if !IsList {
-		switch vType {
-		case "int":
-			for _, value := range possibleValues {
-				if _, err := strconv.ParseInt(value, 10, 32); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		case "float":
-			for _, value := range possibleValues {
-				if _, err := strconv.ParseFloat(value, 64); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		case "bool":
-			for _, value := range possibleValues {
-				if _, err := strconv.ParseBool(value); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
+	//check PossibleValues type correct
+	for _, value := range possibleValues {
+		if err := CorrectType(value, vType, IsList); err != nil {
+			return ErrServiceTypeVersionConfigPossibleValues(value)
 		}
-	} else {
-		switch vType {
-		case "int":
-			var valList []int64
-			for _, value := range possibleValues {
-				if err := json.Unmarshal([]byte(value), &valList); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		case "float":
-			var valList []float64
-			for _, value := range possibleValues {
-				if err := json.Unmarshal([]byte(value), &valList); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		case "bool":
-			var valList []bool
-			for _, value := range possibleValues {
-				if err := json.Unmarshal([]byte(value), &valList); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		case "string":
-			var valList []string
-			for _, value := range possibleValues {
-				if err := json.Unmarshal([]byte(value), &valList); err != nil {
-					return ErrServiceTypeVersionConfigPossibleValues(value)
-				}
-			}
-		}
+	}
 
-		//format PossibleValue strings
+	//format PossibleValue strings
+	if IsList {
 		for i, pV := range possibleValues {
 			possibleValues[i] = helpfunc.DeleteSpaces(pV)
 		}
@@ -289,4 +243,77 @@ func Dependencies(db database.Database, serviceDependencies []*protobuf.ServiceD
 		}
 	}
 	return nil, 0
+}
+
+func ServiceConfigCorrectValue(service *protobuf.Service, Configs []*protobuf.ServiceConfig) error {
+	for configName, configValue := range service.Config {
+		flagPN := false
+		for _, serviceConfig := range Configs {
+			if configName == serviceConfig.ParameterName {
+				flagPN = true
+
+				if err := CorrectType(configValue, serviceConfig.Type, serviceConfig.IsList); err != nil {
+					return ErrClusterServiceConfigIncorrectType(configName, service.Type)
+				}
+
+				//check for possible values
+				if serviceConfig.PossibleValues != nil {
+					if !ValuesAllowed(configValue, serviceConfig.PossibleValues) {
+						return ErrClusterServiceConfigNotPossibleValue(configName, service.Type)
+					}
+				}
+
+				break
+			}
+		}
+		if !flagPN {
+			return ErrClusterServiceConfigNotSupported(configName, service.Type)
+		}
+	}
+	return nil
+}
+
+func CorrectType(value string, Type string, IsList bool) error {
+	//check value type correct
+	if !IsList {
+		switch Type {
+		case "int":
+			if _, err := strconv.ParseInt(value, 10, 32); err != nil {
+				return err
+			}
+		case "float":
+			if _, err := strconv.ParseFloat(value, 64); err != nil {
+				return err
+			}
+		case "bool":
+			if _, err := strconv.ParseBool(value); err != nil {
+				return err
+			}
+		}
+	} else {
+		switch Type {
+		case "int":
+			var valList []int64
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				return err
+			}
+		case "float":
+			var valList []float64
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				return err
+			}
+		case "bool":
+			var valList []bool
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				return err
+			}
+		case "string":
+			var valList []string
+			if err := json.Unmarshal([]byte(value), &valList); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

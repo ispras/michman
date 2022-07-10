@@ -3,6 +3,7 @@ package validate
 import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/rest/handler/check"
 	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -37,8 +38,8 @@ func Service(db database.Database, logger *logrus.Logger, service *protobuf.Serv
 		return err, http.StatusBadRequest
 	}
 
-	if err, status := Configs(service, sTypes[stIdx].Versions[svIdx].Configs); err != nil {
-		return err, status
+	if err = check.ServiceConfigCorrectValue(service, sTypes[stIdx].Versions[svIdx].Configs); err != nil {
+		return err, http.StatusBadRequest
 	}
 
 	return nil, 0

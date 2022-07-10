@@ -88,6 +88,24 @@ func ErrFlavorParamType(param string) error {
 	return ErrParamType
 }
 
+func ErrClusterServiceConfigIncorrectType(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param '%s' has incorrect value type", service, param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceConfigNotPossibleValue(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param '%s' value is not supported", service, param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrClusterServiceConfigNotSupported(param string, service string) error {
+	ErrParamType := fmt.Errorf("'%s' service config param name '%s' is not supported", service, param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
 func init() {
 	HandlerCheckersErrorMap[ErrServiceTypeClass] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypePort] = utils.ValidationError
