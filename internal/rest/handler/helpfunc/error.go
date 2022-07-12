@@ -24,3 +24,9 @@ func ErrClusterServiceVersionNotSupported(param string, service string) error {
 	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
 }
+
+func ErrObjectUnique(param string) error {
+	ErrParamType := fmt.Errorf("param %s is not unique", param)
+	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}

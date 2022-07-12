@@ -70,13 +70,13 @@ mock)
         fi
 	echo "generate mocks..."
 	cd ./internal/database
-	mockgen --destination=../mocks/mock_database.go -package=mocks . Database
+	mockgen --destination=../mock/mock_database.go -package=mock . Database
         cd ..
-        cd ./rest/handlers
-        mockgen --destination=../../mocks/mock_grpcclient.go -package=mocks . GrpcClient
+        cd ./rest/handler
+        mockgen --destination=../../mock/mock_grpcclient.go -package=mock . GrpcClient
         cd ../..
         cd ./utils
-        mockgen --destination=../mocks/mock_vault.go -package=mocks . SecretStorage
+        mockgen --destination=../mock/mock_vault.go -package=mock . SecretStorage
         cd ../..
         ;;
 test) 
@@ -85,7 +85,7 @@ test)
 		./build.sh mock
 	fi
 	echo "run tests..."
-	cd ./internal/rest/handlers
+	cd ./test/handlers
 	go test
 	;;
 compile)
@@ -138,7 +138,7 @@ stop)
 	;;
 clean)
 	echo "remove all generated and binary files"
-	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN $PROTO_CODE ./internal/mocks/mock_*
+	1>/dev/null 2>/dev/null rm ./$LAUNCHER_BIN ./$REST_BIN $PROTO_CODE ./internal/mock/mock_*
 	;;
 help) echo -e $usage
 #*) echo $usage

@@ -27,7 +27,6 @@ const (
 	errServiceTypeVersionConfigUnmodFields = "some service type version config fields can't be modified (ParameterName, AnsibleVarName)"
 	errServiceTypeUnmodVersionFields       = "service types version fields (config, dependencies) can't be modified in this response. Use specified one"
 	errServiceTypeDeleteVersionDefault     = "service type version set in default version"
-	errConfigServiceTypeDependenceExists   = "service type presents in dependencies for another service"
 	errServiceTypeVersionUnmodFields       = "some service type version fields can't be modified (ID, Version)"
 	errServiceTypeVersionEmptyVersionField = "version field must be set"
 	errFlavorExisted                       = "flavor with this name already exists"
@@ -65,7 +64,6 @@ var (
 	ErrServiceTypeVersionEmptyVersionField = errors.New(errServiceTypeVersionEmptyVersionField)
 	ErrServiceTypeUnmodVersionFields       = errors.New(errServiceTypeUnmodVersionFields)
 	ErrServiceTypeDeleteVersionDefault     = errors.New(errServiceTypeDeleteVersionDefault)
-	ErrConfigServiceTypeDependenceExists   = errors.New(errConfigServiceTypeDependenceExists)
 	ErrServiceTypeVersionConfigUnmodFields = errors.New(errServiceTypeVersionConfigUnmodFields)
 )
 
@@ -99,12 +97,6 @@ func ErrClusterServiceVersionsEmpty(param string) error {
 	return ErrParamType
 }
 
-func ErrConfigServiceTypeDependenceVersionExists(param1 string, param2 string) error {
-	ErrParamType := fmt.Errorf("service type version %s presents in dependencies versions in %s service", param1, param2)
-	HandlerValidateErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
 func init() {
 	HandlerValidateErrorMap[ErrClusterBadName] = utils.ValidationError
 	HandlerValidateErrorMap[ErrClusterNhostsZero] = utils.ValidationError
@@ -120,7 +112,6 @@ func init() {
 	HandlerValidateErrorMap[ErrClusterServiceTypeEmpty] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeUnmodFields] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeUnmodVersionsField] = utils.ValidationError
-	HandlerValidateErrorMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed
 	HandlerValidateErrorMap[ErrServiceTypeVersionUnmodFields] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeVersionEmptyVersionField] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeUnmodVersionFields] = utils.DatabaseError

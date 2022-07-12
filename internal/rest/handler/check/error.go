@@ -19,6 +19,7 @@ const (
 	errConfigServiceDependencyVersionNotFound        = "service version in dependency doesn't exist"
 	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
 	errConfigDependencyServiceVersionEmpty           = "service versions list in dependencies can't be empty"
+	errConfigServiceTypeDependenceExists             = "service type presents in dependencies for another service"
 )
 
 var (
@@ -32,10 +33,17 @@ var (
 	ErrConfigServiceDependencyVersionNotFound        = errors.New(errConfigServiceDependencyVersionNotFound)
 	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
 	ErrConfigDependencyServiceVersionEmpty           = errors.New(errConfigDependencyServiceVersionEmpty)
+	ErrConfigServiceTypeDependenceExists             = errors.New(errConfigServiceTypeDependenceExists)
 )
 
 func ErrValidTypeParam(param string) error {
 	ErrParamType := fmt.Errorf("parameter type must be int, float, bool, string. Got: %s", param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrConfigServiceTypeDependenceVersionExists(param1 string, param2 string) error {
+	ErrParamType := fmt.Errorf("service type version %s presents in dependencies versions in %s service", param1, param2)
 	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
 }
@@ -117,5 +125,5 @@ func init() {
 	HandlerCheckersErrorMap[ErrServiceTypeVersionConfiqDefaultValueEmpty] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypeVersionConfigDefaultValue] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrConfigDependencyServiceVersionEmpty] = utils.ValidationError
-
+	HandlerCheckersErrorMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed
 }

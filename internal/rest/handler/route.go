@@ -34,14 +34,14 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.DELETE("/configs/:serviceTypeIdOrName", hS.ConfigsServiceTypeDelete)
 
 	// service type versions:
-	hS.Router.GET("/configs/:serviceTypeIdOrName/versions", hS.ConfigsServiceTypeVersionsGet)
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions", hS.ConfigsServiceTypeVersionsGetList)
 	hS.Router.POST("/configs/:serviceTypeIdOrName/versions", hS.ConfigsServiceTypeVersionCreate)
 	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionGet)
 	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionUpdate)
 	hS.Router.DELETE("/configs/:serviceTypeIdOrName/versions/:versionIdOrName", hS.ConfigsServiceTypeVersionDelete)
 
 	// service type version configs:
-	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs", hS.ConfigsServiceTypeVersionConfigsGet)
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs", hS.ConfigsServiceTypeVersionConfigsGetList)
 	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigGet)
 	hS.Router.POST("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs", hS.ConfigsServiceTypeVersionConfigCreate)
 	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigUpdate)

@@ -65,6 +65,7 @@ func IsImageUsed(db database.Database, logger *logrus.Logger, name string) (bool
 	return false, nil
 }
 
+// DeleteSpaces deletes all spaces in given string
 func DeleteSpaces(valStr string) string {
 	resStr := ""
 	for _, ch := range valStr {
