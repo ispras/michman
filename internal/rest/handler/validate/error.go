@@ -9,27 +9,28 @@ import (
 var HandlerValidateErrorMap = make(map[error]int)
 
 const (
-	errClusterBadName                      = "cluster validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
-	errClusterNhostsZero                   = "NHosts parameter must be number >= 0"
-	errClustersNhostsMasterSlave           = "NHosts parameter must be number >= 1 if you want to install master-slave services"
-	errClusterImageNotFound                = "specified Image not found"
-	errFlavorIdNotEmpty                    = "flavor ID is generated field. It can't be filled in by user"
-	errFlavorEmptyName                     = "flavor Name can't be empty"
-	errFlavorZeroField                     = "flavor VCPUs | Disk | RAM can't be zero"
-	errImageIdNotEmpty                     = "image ID is generated field. It can't be filled in by user"
-	errProjectValidation                   = "project validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
-	errProjectExisted                      = "project with this name already exists"
-	errProjectUnmodFields                  = "some project fields can't be modified (ID, Name, GroupID)"
-	errProjectImageNotFound                = "specified DefaultImage not found"
-	errClusterServiceTypeEmpty             = "service type field can't be empty"
-	errServiceTypeUnmodFields              = "some service types fields can't be modified (ID, Type)"
-	errServiceTypeUnmodVersionsField       = "service types versions field can't be modified in this response. Use specified one"
-	errServiceTypeVersionConfigUnmodFields = "some service type version config fields can't be modified (ParameterName, AnsibleVarName)"
-	errServiceTypeUnmodVersionFields       = "service types version fields (config, dependencies) can't be modified in this response. Use specified one"
-	errServiceTypeDeleteVersionDefault     = "service type version set in default version"
-	errServiceTypeVersionUnmodFields       = "some service type version fields can't be modified (ID, Version)"
-	errServiceTypeVersionEmptyVersionField = "version field must be set"
-	errFlavorExisted                       = "flavor with this name already exists"
+	errClusterBadName                          = "cluster validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
+	errClusterNhostsZero                       = "NHosts parameter must be number >= 0"
+	errClustersNhostsMasterSlave               = "NHosts parameter must be number >= 1 if you want to install master-slave services"
+	errClusterImageNotFound                    = "specified Image not found"
+	errFlavorIdNotEmpty                        = "flavor ID is generated field. It can't be filled in by user"
+	errFlavorEmptyName                         = "flavor Name can't be empty"
+	errFlavorZeroField                         = "flavor VCPUs | Disk | RAM can't be zero"
+	errImageIdNotEmpty                         = "image ID is generated field. It can't be filled in by user"
+	errProjectValidation                       = "project validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
+	errProjectExisted                          = "project with this name already exists"
+	errProjectUnmodFields                      = "some project fields can't be modified (ID, Name, GroupID)"
+	errProjectImageNotFound                    = "specified DefaultImage not found"
+	errClusterServiceTypeEmpty                 = "service type field can't be empty"
+	errServiceTypeUnmodFields                  = "some service types fields can't be modified (ID, Type)"
+	errServiceTypeUnmodVersionsField           = "service types versions field can't be modified in this response. Use specified one"
+	errServiceTypeVersionConfigUnmodFields     = "some service type version config fields can't be modified (ParameterName, AnsibleVarName)"
+	errServiceTypeUnmodVersionFields           = "service types version fields (config, dependencies) can't be modified in this response. Use specified one"
+	errServiceTypeDeleteVersionDefault         = "service type version set in default version"
+	errServiceTypeVersionUnmodFields           = "some service type version fields can't be modified (ID, Version)"
+	errServiceTypeVersionEmptyVersionField     = "version field must be set"
+	errFlavorExisted                           = "flavor with this name already exists"
+	errServiceTypeVersionDependencyUnmodFields = "some service types version dependency fields can't be modified (Service Type)"
 )
 
 var (
@@ -58,13 +59,14 @@ var (
 	ErrClusterServiceTypeEmpty = errors.New(errClusterServiceTypeEmpty)
 
 	// service type:
-	ErrServiceTypeUnmodFields              = errors.New(errServiceTypeUnmodFields)
-	ErrServiceTypeUnmodVersionsField       = errors.New(errServiceTypeUnmodVersionsField)
-	ErrServiceTypeVersionUnmodFields       = errors.New(errServiceTypeVersionUnmodFields)
-	ErrServiceTypeVersionEmptyVersionField = errors.New(errServiceTypeVersionEmptyVersionField)
-	ErrServiceTypeUnmodVersionFields       = errors.New(errServiceTypeUnmodVersionFields)
-	ErrServiceTypeDeleteVersionDefault     = errors.New(errServiceTypeDeleteVersionDefault)
-	ErrServiceTypeVersionConfigUnmodFields = errors.New(errServiceTypeVersionConfigUnmodFields)
+	ErrServiceTypeUnmodFields                  = errors.New(errServiceTypeUnmodFields)
+	ErrServiceTypeUnmodVersionsField           = errors.New(errServiceTypeUnmodVersionsField)
+	ErrServiceTypeVersionUnmodFields           = errors.New(errServiceTypeVersionUnmodFields)
+	ErrServiceTypeVersionEmptyVersionField     = errors.New(errServiceTypeVersionEmptyVersionField)
+	ErrServiceTypeUnmodVersionFields           = errors.New(errServiceTypeUnmodVersionFields)
+	ErrServiceTypeDeleteVersionDefault         = errors.New(errServiceTypeDeleteVersionDefault)
+	ErrServiceTypeVersionConfigUnmodFields     = errors.New(errServiceTypeVersionConfigUnmodFields)
+	ErrServiceTypeVersionDependencyUnmodFields = errors.New(errServiceTypeVersionDependencyUnmodFields)
 )
 
 func ErrFlavorFieldValueNotFound(param string) error {
@@ -119,4 +121,6 @@ func init() {
 	HandlerValidateErrorMap[ErrServiceTypeDeleteVersionDefault] = utils.ValidationError
 	HandlerValidateErrorMap[ErrServiceTypeVersionConfigUnmodFields] = utils.ValidationError
 	HandlerValidateErrorMap[ErrFlavorZeroField] = utils.ValidationError
+	HandlerValidateErrorMap[ErrServiceTypeVersionDependencyUnmodFields] = utils.ValidationError
+
 }

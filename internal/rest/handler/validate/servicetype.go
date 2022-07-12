@@ -119,7 +119,7 @@ func ServiceTypeVersionCreate(db database.Database, versions []*protobuf.Service
 
 	//check service version config
 	if newServiceTypeVersion.Configs != nil {
-		err, status := check.ServiceTypeConfigs(newServiceTypeVersion.Configs)
+		err, status := check.ServiceTypeVersionConfigs(newServiceTypeVersion.Configs)
 		if err != nil {
 			return err, status
 		}
@@ -169,7 +169,7 @@ func ServiceTypeVersionDelete(db database.Database, serviceType *protobuf.Servic
 
 // ServiceTypeVersionConfigCreate validates fields of the service type version config structure for correct filling when creating
 func ServiceTypeVersionConfigCreate(newServiceTypeConfig *protobuf.ServiceConfig, oldConfigs []*protobuf.ServiceConfig) (error, int) {
-	err, status := check.ServiceTypeConfig(newServiceTypeConfig, oldConfigs)
+	err, status := check.ServiceTypeVersionConfig(newServiceTypeConfig, oldConfigs)
 	if err != nil {
 		return err, status
 	}
@@ -193,12 +193,51 @@ func ServiceTypeVersionConfigUpdate(newServiceTypeConfig *protobuf.ServiceConfig
 			return err, http.StatusBadRequest
 		}
 		if newServiceTypeConfig.DefaultValue == "" {
-			return check.ErrServiceTypeVersionConfiqDefaultValueEmpty, http.StatusBadRequest
+			return check.ErrServiceTypeVersionConfigDefaultValueEmpty, http.StatusBadRequest
 		} else {
 			err = check.ServiceTypeConfigDefaultValue(newServiceTypeConfig.DefaultValue, newServiceTypeConfig.PossibleValues)
 			if err != nil {
 				return err, http.StatusBadRequest
 			}
+		}
+	}
+	return nil, 0
+}
+
+// ServiceTypeVersionDependencyCreate validates fields of the service type version config structure for correct filling when creating
+func ServiceTypeVersionDependencyCreate(db database.Database, newServiceTypeDependency *protobuf.ServiceDependency, oldDependencies []*protobuf.ServiceDependency) (error, int) {
+	err, status := check.ServiceTypeVersionDependency(db, newServiceTypeDependency, oldDependencies)
+	if err != nil {
+		return err, status
+	}
+	return nil, 0
+}
+
+// ServiceTypeVersionDependencyUpdate validates fields of the service type version dependency structure for correct filling when updating
+func ServiceTypeVersionDependencyUpdate(db database.Database, oldServiceTypeDependency *protobuf.ServiceDependency, newServiceTypeDependency *protobuf.ServiceDependency) (error, int) {
+	if newServiceTypeDependency.ServiceType != "" {
+		return ErrServiceTypeVersionDependencyUnmodFields, http.StatusBadRequest
+	}
+
+	if newServiceTypeDependency.ServiceVersions != nil {
+		sType, err := db.ReadServiceType(oldServiceTypeDependency.ServiceType)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+
+		//check correctness of new dependency versions list
+		err, status := check.ServiceTypeVersionDependencyPossibleVersions(newServiceTypeDependency, sType)
+		if err != nil {
+			return err, status
+		}
+	}
+
+	if newServiceTypeDependency.DefaultServiceVersion != "" {
+		//check correctness of default service version
+		errNew, statusNew := check.ServiceTypeVersionDependencyDefaultServiceVersion(newServiceTypeDependency, newServiceTypeDependency.DefaultServiceVersion)
+		errOld, _ := check.ServiceTypeVersionDependencyDefaultServiceVersion(oldServiceTypeDependency, newServiceTypeDependency.DefaultServiceVersion)
+		if errNew != nil && errOld != nil {
+			return errNew, statusNew
 		}
 	}
 	return nil, 0

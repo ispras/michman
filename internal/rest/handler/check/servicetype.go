@@ -56,10 +56,19 @@ func ServiceTypeDefaultVersion(sTypeVersions []*protobuf.ServiceVersion, default
 	return ErrServiceTypeDefaultVersion
 }
 
-func ServiceTypeConfigsUnique(sTypeVersionConfigs []*protobuf.ServiceConfig, newConfig protobuf.ServiceConfig) error {
+func ServiceTypeVersionConfigsUnique(sTypeVersionConfigs []*protobuf.ServiceConfig, newConfig protobuf.ServiceConfig) error {
 	for _, curConfig := range sTypeVersionConfigs {
 		if curConfig.ParameterName == newConfig.ParameterName {
 			return ErrServiceTypeVersionConfigUnique(curConfig.ParameterName)
+		}
+	}
+	return nil
+}
+
+func ServiceTypeVersionDependenciesUnique(sTypeVersionDependencies []*protobuf.ServiceDependency, newDependency protobuf.ServiceDependency) error {
+	for _, curDependency := range sTypeVersionDependencies {
+		if curDependency.ServiceType == newDependency.ServiceType {
+			return ErrServiceTypeVersionDependencyUnique(curDependency.ServiceType)
 		}
 	}
 	return nil
@@ -74,8 +83,8 @@ func ServiceTypeVersionUnique(sTypeVersions []*protobuf.ServiceVersion, newVersi
 	return nil
 }
 
-// ServiceTypeConfig checks that service type version config is unique and checks all fields for correctness
-func ServiceTypeConfig(config *protobuf.ServiceConfig, versionConfigs []*protobuf.ServiceConfig) (error, int) {
+// ServiceTypeVersionConfig checks that service type version config is unique and checks all fields for correctness
+func ServiceTypeVersionConfig(config *protobuf.ServiceConfig, versionConfigs []*protobuf.ServiceConfig) (error, int) {
 	// check param type
 	err := SupportedType(config.Type)
 	if err != nil {
@@ -88,7 +97,7 @@ func ServiceTypeConfig(config *protobuf.ServiceConfig, versionConfigs []*protobu
 	}
 
 	// check config is unique by parameter name
-	err = ServiceTypeConfigsUnique(versionConfigs, *config)
+	err = ServiceTypeVersionConfigsUnique(versionConfigs, *config)
 	if err != nil {
 		return err, http.StatusBadRequest
 	}
@@ -100,7 +109,7 @@ func ServiceTypeConfig(config *protobuf.ServiceConfig, versionConfigs []*protobu
 			return err, http.StatusBadRequest
 		}
 		if config.DefaultValue == "" {
-			return ErrServiceTypeVersionConfiqDefaultValueEmpty, http.StatusBadRequest
+			return ErrServiceTypeVersionConfigDefaultValueEmpty, http.StatusBadRequest
 		} else {
 			err = ServiceTypeConfigDefaultValue(config.DefaultValue, config.PossibleValues)
 			if err != nil {
@@ -111,10 +120,10 @@ func ServiceTypeConfig(config *protobuf.ServiceConfig, versionConfigs []*protobu
 	return nil, 0
 }
 
-// ServiceTypeConfigs checks all configs
-func ServiceTypeConfigs(versionConfigs []*protobuf.ServiceConfig) (error, int) {
+// ServiceTypeVersionConfigs checks all configs
+func ServiceTypeVersionConfigs(versionConfigs []*protobuf.ServiceConfig) (error, int) {
 	for i, curConfig := range versionConfigs {
-		err, status := ServiceTypeConfig(curConfig, versionConfigs[i+1:])
+		err, status := ServiceTypeVersionConfig(curConfig, versionConfigs[i+1:])
 		if err != nil {
 			return err, status
 		}
@@ -134,7 +143,7 @@ func serviceTypeVersion(db database.Database, sTypeVersion *protobuf.ServiceVers
 
 	// check service version config
 	if sTypeVersion.Configs != nil {
-		err, status := ServiceTypeConfigs(sTypeVersion.Configs)
+		err, status := ServiceTypeVersionConfigs(sTypeVersion.Configs)
 		if err != nil {
 			return err, status
 		}
@@ -191,28 +200,8 @@ func ServiceTypeDependencyNotExists(serviceType string, serviceTypes []protobuf.
 	return nil, 0
 }
 
-// serviceTypeVersionDependency checks service type version dependency for correctness
-func serviceTypeVersionDependency(db database.Database, serviceDependency *protobuf.ServiceDependency) (error, int) {
-	// read from database service type on which it depends
-	sType, err := db.ReadServiceType(serviceDependency.ServiceType)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-
-	if sType.Type == "" {
-		return ErrServiceDependenciesNotExists(serviceDependency.ServiceType), http.StatusBadRequest
-	}
-
-	if serviceDependency.ServiceVersions == nil {
-		return ErrConfigDependencyServiceVersionEmpty, http.StatusBadRequest
-	}
-
-	if serviceDependency.DefaultServiceVersion == "" {
-		return ErrConfigDependencyServiceDefaultVersionEmpty, http.StatusBadRequest
-	}
-
-	//check correctness of dependency versions list
-	flagDefaultVersion := false
+// ServiceTypeVersionDependencyPossibleVersions checks service type version dependency possible service versions
+func ServiceTypeVersionDependencyPossibleVersions(serviceDependency *protobuf.ServiceDependency, sType *protobuf.ServiceType) (error, int) {
 	for _, dependencyServiceVersion := range serviceDependency.ServiceVersions {
 		flag := false
 
@@ -226,13 +215,61 @@ func serviceTypeVersionDependency(db database.Database, serviceDependency *proto
 		if !flag {
 			return ErrConfigServiceDependencyVersionNotFound, http.StatusBadRequest
 		}
-		if dependencyServiceVersion == serviceDependency.DefaultServiceVersion {
+	}
+	return nil, 0
+}
+
+// ServiceTypeVersionDependencyDefaultServiceVersion checks service type version dependency default service version
+func ServiceTypeVersionDependencyDefaultServiceVersion(serviceDependency *protobuf.ServiceDependency, defaultVersion string) (error, int) {
+	flagDefaultVersion := false
+	for _, dependencyServiceVersion := range serviceDependency.ServiceVersions {
+		if dependencyServiceVersion == defaultVersion {
 			flagDefaultVersion = true
+			break
 		}
 	}
-
 	if !flagDefaultVersion {
 		return ErrConfigServiceDependencyDefaultVersionNotFound, http.StatusBadRequest
+	}
+	return nil, 0
+}
+
+// ServiceTypeVersionDependency checks service type version dependency for correctness
+func ServiceTypeVersionDependency(db database.Database, serviceDependency *protobuf.ServiceDependency, versionDependencies []*protobuf.ServiceDependency) (error, int) {
+	// read from database service type on which it depends
+	sType, err := db.ReadServiceType(serviceDependency.ServiceType)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+
+	if sType.Type == "" {
+		return ErrServiceDependenciesNotExists(serviceDependency.ServiceType), http.StatusBadRequest
+	}
+
+	// check dependency is unique by service type
+	err = ServiceTypeVersionDependenciesUnique(versionDependencies, *serviceDependency)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	if serviceDependency.ServiceVersions == nil {
+		return ErrConfigDependencyServiceVersionEmpty, http.StatusBadRequest
+	}
+
+	if serviceDependency.DefaultServiceVersion == "" {
+		return ErrConfigDependencyServiceDefaultVersionEmpty, http.StatusBadRequest
+	}
+
+	//check correctness of dependency versions list
+	err, status := ServiceTypeVersionDependencyPossibleVersions(serviceDependency, sType)
+	if err != nil {
+		return err, status
+	}
+
+	//check correctness of default service version
+	err, status = ServiceTypeVersionDependencyDefaultServiceVersion(serviceDependency, serviceDependency.DefaultServiceVersion)
+	if err != nil {
+		return err, status
 	}
 	return nil, 0
 }
@@ -240,7 +277,7 @@ func serviceTypeVersionDependency(db database.Database, serviceDependency *proto
 // ServiceTypeVersionDependencies checks all dependencies
 func ServiceTypeVersionDependencies(db database.Database, serviceDependencies []*protobuf.ServiceDependency) (error, int) {
 	for _, serviceDependency := range serviceDependencies {
-		err, status := serviceTypeVersionDependency(db, serviceDependency)
+		err, status := ServiceTypeVersionDependency(db, serviceDependency, serviceDependencies)
 		if err != nil {
 			return err, status
 		}

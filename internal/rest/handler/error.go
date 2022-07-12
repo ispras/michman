@@ -40,19 +40,20 @@ const (
 	errClusterUnmodFields                 = "some cluster fields can't be modified"
 	errClusterStatus                      = "cluster status must be 'ACTIVE' or 'FAILED' for UPDATE or DELETE"
 	errClusterExisted                     = "cluster with this name already exists"
-	errClusterServicesIncompatibleVersion = "Incompatible versions between services"
+	errClusterServicesIncompatibleVersion = "incompatible versions between services"
 
 	//logs
 	errBadActionParam = "bad action param. Supported query variables for action parameter are 'create', 'update' and 'delete'. Action 'create' is default"
 
 	//service type:
-	errServiceTypeNotFound              = "service type with this id or name not found"
-	errServiceTypeExisted               = "service type with this name already exists"
-	errGetQueryParams                   = "bad view param. Supported query variables for view parameter are 'full' and 'summary', 'summary' is default"
-	errServiceTypeVersionNotFound       = "service type version with this id or name not found"
-	errServiceTypeVersionExisted        = "service type version with this name already exists"
-	errServiceTypeVersionConfigNotFound = "service type version config with this id or name not found"
-	errServiceTypeVersionConfigExists   = "service type version config with this id or name already exists"
+	errServiceTypeNotFound                = "service type with this id or name not found"
+	errServiceTypeExisted                 = "service type with this name already exists"
+	errGetQueryParams                     = "bad view param. Supported query variables for view parameter are 'full' and 'summary', 'summary' is default"
+	errServiceTypeVersionNotFound         = "service type version with this id or name not found"
+	errServiceTypeVersionExisted          = "service type version with this name already exists"
+	errServiceTypeVersionConfigNotFound   = "service type version config with this id or name not found"
+	errServiceTypeVersionConfigExists     = "service type version config with this id or name already exists"
+	errServiceTypeVersionDependencyExists = "service type version dependency with this service type already exists"
 )
 
 var (
@@ -83,6 +84,7 @@ var (
 	ErrServiceTypeVersionNotFound         = errors.New(errServiceTypeVersionNotFound)
 	ErrServiceTypeVersionConfigNotFound   = errors.New(errServiceTypeVersionConfigNotFound)
 	ErrServiceTypeVersionConfigExists     = errors.New(errServiceTypeVersionConfigExists)
+	ErrServiceTypeVersionDependencyExists = errors.New(errServiceTypeVersionDependencyExists)
 )
 
 func ErrClusterServiceHealthCheck(service string) error {
@@ -119,5 +121,5 @@ func init() {
 	response.HandlerErrorsMap[ErrServiceTypeVersionExisted] = utils.DatabaseError
 	response.HandlerErrorsMap[ErrServiceTypeVersionConfigNotFound] = utils.DatabaseError
 	response.HandlerErrorsMap[ErrServiceTypeVersionConfigExists] = utils.ValidationError
-
+	response.HandlerErrorsMap[ErrServiceTypeVersionDependencyExists] = utils.ValidationError
 }

@@ -47,6 +47,13 @@ func (hS *HttpServer) CreateRoutes() {
 	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigUpdate)
 	hS.Router.DELETE("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/configs/:parameterName", hS.ConfigsServiceTypeVersionConfigDelete)
 
+	// service type version dependencies:
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/dependencies", hS.ConfigsServiceTypeVersionDependenciesGetList)
+	hS.Router.GET("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/dependencies/:dependencyType", hS.ConfigsServiceTypeVersionDependencyGet)
+	hS.Router.POST("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/dependencies", hS.ConfigsServiceTypeVersionDependencyCreate)
+	hS.Router.PUT("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/dependencies/:dependencyType", hS.ConfigsServiceTypeVersionDependencyUpdate)
+	hS.Router.DELETE("/configs/:serviceTypeIdOrName/versions/:versionIdOrName/dependencies/:dependencyType", hS.ConfigsServiceTypeVersionDependencyDelete)
+
 	// images:
 	hS.Router.GET("/images", hS.ImagesGetList)
 	hS.Router.GET("/images/:imageName", hS.ImageGet)

@@ -16,7 +16,7 @@ const (
 	errServiceTypeVersionConfigDefaultValue          = "service type version config default value not in possible values"
 	errServiceTypeVersionConfigDefaultValueEmpty     = "service type version config default value must be set"
 	errConfigDependencyServiceDefaultVersionEmpty    = "service default version in dependency can't be empty"
-	errConfigServiceDependencyVersionNotFound        = "service version in dependency doesn't exist"
+	errConfigServiceDependencyVersionNotFound        = "service version in versions list doesn't exist"
 	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
 	errConfigDependencyServiceVersionEmpty           = "service versions list in dependencies can't be empty"
 	errConfigServiceTypeDependenceExists             = "service type presents in dependencies for another service"
@@ -28,7 +28,7 @@ var (
 	ErrServiceTypeDefaultVersion                     = errors.New(errServiceTypeDefaultVersion)
 	ErrConfigPossibleValueEmpty                      = errors.New(errConfigPossibleValueEmpty)
 	ErrServiceTypeVersionConfigDefaultValue          = errors.New(errServiceTypeVersionConfigDefaultValue)
-	ErrServiceTypeVersionConfiqDefaultValueEmpty     = errors.New(errServiceTypeVersionConfigDefaultValueEmpty)
+	ErrServiceTypeVersionConfigDefaultValueEmpty     = errors.New(errServiceTypeVersionConfigDefaultValueEmpty)
 	ErrConfigDependencyServiceDefaultVersionEmpty    = errors.New(errConfigDependencyServiceDefaultVersionEmpty)
 	ErrConfigServiceDependencyVersionNotFound        = errors.New(errConfigServiceDependencyVersionNotFound)
 	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
@@ -56,6 +56,12 @@ func ErrServiceTypeVersionUnique(param string) error {
 
 func ErrServiceTypeVersionConfigUnique(param string) error {
 	ErrParamType := fmt.Errorf("config with parameter name %s is not unique", param)
+	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
+	return ErrParamType
+}
+
+func ErrServiceTypeVersionDependencyUnique(param string) error {
+	ErrParamType := fmt.Errorf("dependency with service type %s is not unique", param)
 	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
 	return ErrParamType
 }
@@ -122,7 +128,7 @@ func init() {
 	HandlerCheckersErrorMap[ErrConfigDependencyServiceDefaultVersionEmpty] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrConfigServiceDependencyVersionNotFound] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrConfigServiceDependencyDefaultVersionNotFound] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrServiceTypeVersionConfiqDefaultValueEmpty] = utils.ValidationError
+	HandlerCheckersErrorMap[ErrServiceTypeVersionConfigDefaultValueEmpty] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypeVersionConfigDefaultValue] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrConfigDependencyServiceVersionEmpty] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed

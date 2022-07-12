@@ -931,3 +931,446 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigDelete(w http.ResponseWriter
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)
 	response.NoContent(w)
 }
+
+// service type version dependencies:
+
+// ConfigsServiceTypeVersionDependencyGet processes a request to get a service type version dependency struct by dependency type from database
+func (hS HttpServer) ConfigsServiceTypeVersionDependencyGet(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	versionIdOrName := params.ByName("versionIdOrName")
+	dependencyType := params.ByName("dependencyType")
+	request := "GET /configs/" + serviceTypeIdOrName + "/versions/" + versionIdOrName + "/dependencies/" + dependencyType
+	hS.Logger.Info(request)
+
+	// read service type from database to verify the existence
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeNotFound.Error())
+		response.NotFound(w, ErrServiceTypeNotFound)
+		return
+	}
+
+	// read service type version from database to verify the existence
+	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sTypeVersion.ID == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionNotFound)
+		return
+	}
+
+	// read service type version config from database
+
+	// TODO: ReadServiceTypeVersionDependency
+	//sTypeVersionDependency, err := hS.Db.ReadServiceTypeVersionDependency(serviceTypeIdOrName, versionIdOrName, dependencyType)
+	//if err != nil {
+	//	hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+	//	response.InternalError(w, err)
+	//	return
+	//}
+	//
+
+	sTypeVersionDependency := new(protobuf.ServiceDependency)
+	if sTypeVersion.Dependencies != nil {
+		for _, dependency := range sTypeVersion.Dependencies {
+			if dependency.ServiceType == dependencyType {
+				sTypeVersionDependency = dependency
+				break
+			}
+		}
+	}
+
+	if sTypeVersionDependency.ServiceType == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionConfigNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionConfigNotFound)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	response.Ok(w, sTypeVersionDependency, request)
+}
+
+// ConfigsServiceTypeVersionDependenciesGetList processes a request to get a list of all service type version dependencies in database
+func (hS HttpServer) ConfigsServiceTypeVersionDependenciesGetList(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	versionIdOrName := params.ByName("versionIdOrName")
+	request := "GET /configs/" + serviceTypeIdOrName + "/versions/" + versionIdOrName + "/dependencies"
+	hS.Logger.Info(request)
+
+	// read service type from database to verify the existence
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeNotFound.Error())
+		response.NotFound(w, ErrServiceTypeNotFound)
+		return
+	}
+
+	// read service type version from database
+	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sTypeVersion.ID == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionNotFound.Error())
+		response.BadRequest(w, ErrServiceTypeVersionNotFound)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	response.Ok(w, sTypeVersion.Dependencies, request)
+}
+
+// ConfigsServiceTypeVersionDependencyCreate processes a request to create a service type version dependency struct in database
+func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	versionIdOrName := params.ByName("versionIdOrName")
+	request := "POST /configs/" + serviceTypeIdOrName + "/versions/" + versionIdOrName + "/dependencies"
+	hS.Logger.Info(request)
+
+	// read service type from database to verify the existence
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeNotFound.Error())
+		response.NotFound(w, ErrServiceTypeNotFound)
+		return
+	}
+
+	// read service type version from database to verify the existence
+	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sTypeVersion.ID == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionNotFound)
+		return
+	}
+
+	var newServiceTypeDependency *protobuf.ServiceDependency
+	err = json.NewDecoder(r.Body).Decode(&newServiceTypeDependency)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		response.BadRequest(w, ErrJsonIncorrect)
+		return
+	}
+
+	// check service type version config does not exist in the database
+
+	// TODO: ReadServiceTypeVersionDependency
+	//dbDependency, err := hS.Db.ReadServiceTypeVersionDependency(serviceTypeIdOrName, versionIdOrName, newServiceTypeConfig.ParameterName)
+	//if err != nil {
+	//	hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+	//	response.InternalError(w, err)
+	//	return
+	//}
+
+	dbDependency := new(protobuf.ServiceDependency)
+	if sTypeVersion.Dependencies != nil {
+		for _, dependency := range sTypeVersion.Dependencies {
+			if dependency.ServiceType == newServiceTypeDependency.ServiceType {
+				dbDependency = dependency
+				break
+			}
+		}
+	}
+
+	if dbDependency.ServiceType != "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionConfigExists.Error())
+		response.BadRequest(w, ErrServiceTypeVersionDependencyExists)
+		return
+	}
+
+	hS.Logger.Info("Validating service type version config for creation...")
+	err, status := validate.ServiceTypeVersionDependencyCreate(hS.Db, newServiceTypeDependency, sTypeVersion.Dependencies)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
+	}
+
+	sTypeVersion.Dependencies = append(sTypeVersion.Dependencies, newServiceTypeDependency)
+
+	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusCreated)
+	response.Created(w, newServiceTypeDependency, request)
+}
+
+// ConfigsServiceTypeVersionDependencyUpdate processes a request to update a service type version dependency struct in database
+func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	versionIdOrName := params.ByName("versionIdOrName")
+	dependencyType := params.ByName("dependencyType")
+	request := "PUT /configs/" + serviceTypeIdOrName + "/versions/" + versionIdOrName + "/configs/" + dependencyType
+	hS.Logger.Info(request)
+
+	// read service type from database to verify the existence
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeNotFound.Error())
+		response.NotFound(w, ErrServiceTypeNotFound)
+		return
+	}
+
+	// read service type version from database to verify the existence
+	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sTypeVersion.ID == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionNotFound)
+		return
+	}
+
+	// read service type version dependency from database
+
+	// TODO: ReadServiceTypeVersionDependency
+	//oldSTypeVersionVersionDependency, err := hS.Db.ReadServiceTypeVersionDependency(serviceTypeIdOrName, versionIdOrName, dependencyType)
+	//if err != nil {
+	//	hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+	//	response.InternalError(w, err)
+	//	return
+	//}
+	//
+
+	oldSTypeVersionVersionDependency := new(protobuf.ServiceDependency)
+	if sTypeVersion.Dependencies != nil {
+		for _, dependency := range sTypeVersion.Dependencies {
+			if dependency.ServiceType == dependencyType {
+				oldSTypeVersionVersionDependency = dependency
+				break
+			}
+		}
+	}
+
+	if oldSTypeVersionVersionDependency.ServiceType == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionConfigNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionConfigNotFound)
+		return
+	}
+
+	var newServiceTypeDependency *protobuf.ServiceDependency
+	err = json.NewDecoder(r.Body).Decode(&newServiceTypeDependency)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
+		response.BadRequest(w, ErrJsonIncorrect)
+		return
+	}
+
+	hS.Logger.Info("Validating service type version values for update...")
+	err, status := validate.ServiceTypeVersionDependencyUpdate(hS.Db, oldSTypeVersionVersionDependency, newServiceTypeDependency)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
+	}
+
+	if newServiceTypeDependency.ServiceVersions != nil {
+		if oldSTypeVersionVersionDependency.ServiceVersions != nil {
+			newSVLen := len(newServiceTypeDependency.ServiceVersions)
+			for _, oldSV := range oldSTypeVersionVersionDependency.ServiceVersions {
+				f := false
+				for _, newSV := range newServiceTypeDependency.ServiceVersions[:newSVLen] {
+					if oldSV == newSV {
+						f = true
+						break
+					}
+				}
+				//add old dependency if it hasn't been updated
+				if !f {
+					newServiceTypeDependency.ServiceVersions = append(newServiceTypeDependency.ServiceVersions, oldSV)
+				}
+			}
+		}
+		oldSTypeVersionVersionDependency.ServiceVersions = newServiceTypeDependency.ServiceVersions
+	}
+
+	if newServiceTypeDependency.DefaultServiceVersion != "" {
+		oldSTypeVersionVersionDependency.DefaultServiceVersion = newServiceTypeDependency.DefaultServiceVersion
+	}
+
+	if newServiceTypeDependency.Description != "" {
+		oldSTypeVersionVersionDependency.Description = newServiceTypeDependency.Description
+	}
+
+	// TODO: UpdateServiceTypeVersionDependency
+
+	idToUpdate := -1
+	for i, curVersionDependency := range sTypeVersion.Dependencies {
+		if curVersionDependency.ServiceType == oldSTypeVersionVersionDependency.ServiceType {
+			idToUpdate = i
+			break
+		}
+	}
+
+	sTypeVersion.Dependencies[idToUpdate] = oldSTypeVersionVersionDependency
+
+	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
+	response.Ok(w, oldSTypeVersionVersionDependency, request)
+}
+
+// ConfigsServiceTypeVersionDependencyDelete processes a request to delete a service type version dependency struct from database
+func (hS HttpServer) ConfigsServiceTypeVersionDependencyDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	serviceTypeIdOrName := params.ByName("serviceTypeIdOrName")
+	versionIdOrName := params.ByName("versionIdOrName")
+	dependencyType := params.ByName("dependencyType")
+	request := "DELETE /configs/" + serviceTypeIdOrName + "/versions/" + versionIdOrName + "/configs/" + dependencyType
+	hS.Logger.Info(request)
+
+	// read service type from database to verify the existence
+	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sType.Type == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeNotFound.Error())
+		response.NotFound(w, ErrServiceTypeNotFound)
+		return
+	}
+
+	// read service type version from database to verify the existence
+	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	if sTypeVersion.ID == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionNotFound)
+		return
+	}
+
+	// read service type dependency from database
+
+	// TODO: ReadServiceTypeVersionDependency
+	//sTypeVersionVersionDependency, err := hS.Db.ReadServiceTypeVersionDependency(serviceTypeIdOrName, versionIdOrName, dependencyType)
+	//if err != nil {
+	//	hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+	//	response.InternalError(w, err)
+	//	return
+	//}
+	//
+
+	sTypeVersionVersionDependency := new(protobuf.ServiceDependency)
+	if sTypeVersion.Dependencies != nil {
+		for _, dependency := range sTypeVersion.Dependencies {
+			if dependency.ServiceType == dependencyType {
+				sTypeVersionVersionDependency = dependency
+				break
+			}
+		}
+	}
+
+	if sTypeVersionVersionDependency.ServiceType == "" {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrServiceTypeVersionConfigNotFound.Error())
+		response.NotFound(w, ErrServiceTypeVersionConfigNotFound)
+		return
+	}
+
+	// TODO:
+	//hS.Logger.Info("Validating service type version config values for delete...")
+	//err, status := ValidateServiceTypeVersionDependencyDelete(hS, sType, sTypeVersionConfig)
+	//if err != nil {
+	//	hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+	//	switch status {
+	//	case http.StatusBadRequest:
+	//		response.BadRequest(w, err)
+	//		return
+	//	case http.StatusInternalServerError:
+	//		response.InternalError(w, err)
+	//		return
+	//	}
+	//}
+
+	// TODO: DeleteServiceTypeVersionDependency
+
+	idToDelete := -1
+	for i, curDependency := range sTypeVersion.Dependencies {
+		if curDependency.ServiceType == dependencyType {
+			idToDelete = i
+			break
+		}
+	}
+
+	dependenciesLen := len(sTypeVersion.Dependencies)
+	sTypeVersion.Dependencies[idToDelete] = sTypeVersion.Dependencies[dependenciesLen-1]
+	sTypeVersion.Dependencies = sTypeVersion.Dependencies[:dependenciesLen-1]
+
+	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
+		return
+	}
+
+	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusNoContent)
+	response.NoContent(w)
+}
