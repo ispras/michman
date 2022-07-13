@@ -118,6 +118,29 @@ func BadRequest(w http.ResponseWriter, respErr error) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// Forbidden The 403 (Forbidden) status code indicates that the server understood the request,
+//but refuses to fulfill it
+func Forbidden(w http.ResponseWriter, respErr error) {
+	respStruct := structure{
+		Type:   strconv.Itoa(FindErrorType(respErr)),
+		Status: http.StatusForbidden,
+		Title:  respErr.Error(),
+		Detail: details{
+			Message: "Forbidden",
+			Data:    "No data",
+		},
+	}
+
+	w.WriteHeader(respStruct.Status)
+	enc := json.NewEncoder(w)
+	err := enc.Encode(respStruct)
+	if err != nil {
+		InternalError(w, ErrJsonEncode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
 // NotFound (The 404 (Not Found) status code indicates that the origin server
 // did not find a current representation for the target resource or is not willing to disclose that one exists)
 func NotFound(w http.ResponseWriter, respErr error) {
@@ -149,7 +172,7 @@ func InternalError(w http.ResponseWriter, respErr error) {
 		Status: http.StatusInternalServerError,
 		Title:  respErr.Error(),
 		Detail: details{
-			Message: "Object not found",
+			Message: "Internal Server Error",
 			Data:    "No data",
 		},
 	}

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ispras/michman/internal/utils"
 	"net/http"
@@ -52,7 +51,9 @@ func NewKeystoneAuthenticate() (Authenticate, error) {
 	k := new(KeystoneAuthenticate)
 
 	config := utils.Config{}
-	config.MakeCfg()
+	if err := config.MakeCfg(); err != nil {
+		return nil, err
+	}
 	k.config = config
 	k.keystoneUrl = k.config.KeystoneAddr
 	return k, nil
@@ -62,51 +63,42 @@ func (keystone KeystoneAuthenticate) CheckAuth(token string) (bool, error) {
 	return true, nil
 }
 
-func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.ResponseWriter, r *http.Request) (http.ResponseWriter, error) {
+func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
 	//set session manager
 	sessionManager = sm
 
 	//get auth and subject tokens from headers
 	authToken := r.Header.Get(authTokenKey)
 	if authToken == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return w, errors.New("X-Auth-Token from headers is nil")
+		return ErrAuthTokenNil, http.StatusBadRequest
 	}
 
 	subToken := r.Header.Get(subTokenKey)
 	if subToken == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return w, errors.New("X-Subject-Token from headers is nil")
+		return ErrSubjectTokenNil, http.StatusBadRequest
 	}
 
 	//prepare request
 	tokenReq, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl+checkTokenPath, nil)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return w, err
+		return err, http.StatusBadRequest
 	}
+
 	tokenReq.Header.Add(authTokenKey, authToken)
 	tokenReq.Header.Add(subTokenKey, subToken)
 
 	client := &http.Client{}
 	//make token request for getting information about user roles
 	resp, err := client.Do(tokenReq)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return w, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		w.WriteHeader(resp.StatusCode)
-		return w, err
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return err, http.StatusBadRequest
 	}
 
 	//parse request body
 	var tokenBody *keystoneToken
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return w, err
+		return ErrParseRequest, http.StatusBadRequest
 	}
 
 	//generate user groups by roles names
@@ -123,8 +115,7 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.Resp
 	//init session for current user
 	err = sessionManager.RenewToken(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return w, err
+		return err, http.StatusInternalServerError
 	}
 
 	//save in user session information about groups and tokens
@@ -134,7 +125,7 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.Resp
 		sessionManager.Put(r.Context(), utils.GroupKey, userGroups.String())
 	}
 
-	return w, nil
+	return nil, http.StatusOK
 }
 
 func (keystone KeystoneAuthenticate) RetrieveToken(r *http.Request) (string, error) {

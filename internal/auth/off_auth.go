@@ -13,7 +13,9 @@ type NoneAuthenticate struct {
 func NewNoneAuthenticate() (Authenticate, error) {
 	n := new(NoneAuthenticate)
 	config := utils.Config{}
-	config.MakeCfg()
+	if err := config.MakeCfg(); err != nil {
+		return nil, err
+	}
 	n.config = config
 	return n, nil
 }
@@ -22,19 +24,18 @@ func (n NoneAuthenticate) CheckAuth(token string) (bool, error) {
 	return true, nil
 }
 
-func (n NoneAuthenticate) SetAuth(sm *scs.SessionManager, w http.ResponseWriter, r *http.Request) (http.ResponseWriter, error) {
+func (n NoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
 	//set session manager
 	sessionManager = sm
 
 	//init session for current user
 	err := sessionManager.RenewToken(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return w, err
+		return err, http.StatusInternalServerError
 	}
 
 	sessionManager.Put(r.Context(), utils.GroupKey, n.config.AdminGroup)
-	return w, nil
+	return nil, http.StatusOK
 }
 
 func (n NoneAuthenticate) RetrieveToken(r *http.Request) (string, error) {

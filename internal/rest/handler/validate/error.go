@@ -19,7 +19,7 @@ const (
 	errImageIdNotEmpty                         = "image ID is generated field. It can't be filled in by user"
 	errProjectValidation                       = "project validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
 	errProjectExisted                          = "project with this name already exists"
-	errProjectUnmodFields                      = "some project fields can't be modified (ID, Name, GroupID)"
+	errProjectUnmodFields                      = "some project fields can't be modified (ID, Name)"
 	errProjectImageNotFound                    = "specified DefaultImage not found"
 	errClusterServiceTypeEmpty                 = "service type field can't be empty"
 	errServiceTypeUnmodFields                  = "some service types fields can't be modified (ID, Type)"

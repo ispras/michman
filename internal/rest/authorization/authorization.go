@@ -1,12 +1,11 @@
 package authorization
 
 import (
-	"encoding/json"
-	"errors"
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
+	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -31,7 +30,7 @@ type AuthorizeClient struct {
 }
 
 func isProjectPath(path string) bool {
-	projectPath := regexp.MustCompile(`^/projects/`).MatchString
+	projectPath := regexp.MustCompile(utils.ProjectPathPattern).MatchString
 	if projectPath(path) {
 		return true
 	}
@@ -43,7 +42,7 @@ func getProjectIdOrName(urlPath string) (string, error) {
 
 	//if length of urlKeys less then 2 -- error
 	if len(urlKeys) < 2 {
-		return "", errors.New("ERROR: no project ID or name in URL path")
+		return "", ErrNoProjectInURL
 	}
 
 	return urlKeys[2], nil
@@ -62,6 +61,8 @@ func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []s
 func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			request := r.Method + " " + r.URL.Path
+
 			//var for casbin role, set as user because user is default role
 			role := user
 
@@ -73,17 +74,15 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 					//get project which user wants to access
 					projectIdOrName, err := getProjectIdOrName(r.URL.Path)
 					if err != nil {
-						auth.Logger.Warn(err)
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("ERROR"))
+						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+						response.InternalError(w, err)
 						return
 					}
 
 					project, err := auth.Db.ReadProject(projectIdOrName)
 					if err != nil {
-						auth.Logger.Warn(err)
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("ERROR"))
+						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+						response.InternalError(w, err)
 						return
 					}
 
@@ -120,17 +119,15 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			// casbin enforcer
 			res, err := e.EnforceSafe(role, r.URL.Path, r.Method)
 			if err != nil {
-				auth.Logger.Warn("ERROR: ", err.Error())
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("ERROR"))
+				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+				response.InternalError(w, err)
 				return
 			}
 			if res {
 				next.ServeHTTP(w, r)
 			} else {
-				auth.Logger.Warn("ERROR: ", "unauthorized")
-				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte("FORBIDDEN"))
+				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusForbidden, ": ", ErrUnauthorized.Error())
+				response.Forbidden(w, ErrUnauthorized)
 				return
 			}
 		}
@@ -140,18 +137,27 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 }
 
 func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	request := "GET /auth"
+	auth.Logger.Info(request)
+
 	//set auth facts
-	w, err := auth.Auth.SetAuth(auth.SessionManager, w, r)
+	err, status := auth.Auth.SetAuth(auth.SessionManager, r)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		auth.Logger.Warn(err)
-		return
+		auth.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
 	}
 
 	g := auth.SessionManager.GetString(r.Context(), utils.GroupKey)
 
 	auth.Logger.Info("Authentication success!")
-	auth.Logger.Info("User groups are: " + g)
+	auth.Logger.Info("----User groups are: " + g)
 
 	var userGroups string
 	if g == "" {
@@ -160,13 +166,6 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, par
 		userGroups = "You are a member of the following groups: " + g
 	}
 
-	enc := json.NewEncoder(w)
-	err = enc.Encode("Authentication success! " + userGroups)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		auth.Logger.Warn(err)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	message := "Authentication success! " + userGroups
+	response.Ok(w, message, request)
 }

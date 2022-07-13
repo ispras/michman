@@ -20,9 +20,6 @@ func ProjectCreate(db database.Database, logger *logrus.Logger, project *protobu
 	if project.Name != "" {
 		return ErrProjectFieldIsGenerated("Name"), http.StatusBadRequest
 	}
-	if project.GroupID != "" {
-		return ErrProjectFieldIsGenerated("GroupID"), http.StatusBadRequest
-	}
 	if err, status := check.ValidName(project.DisplayName, utils.ProjectNamePattern, ErrProjectValidation); err != nil {
 		return err, status
 	}
@@ -60,7 +57,7 @@ func ProjectCreate(db database.Database, logger *logrus.Logger, project *protobu
 
 func ProjectUpdate(db database.Database, logger *logrus.Logger, project *protobuf.Project) (error, int) {
 	logger.Info("Validating updated values of the project fields...")
-	if project.ID != "" || project.Name != "" || project.GroupID != "" {
+	if project.ID != "" || project.Name != "" {
 		return ErrProjectUnmodFields, http.StatusBadRequest
 	}
 	err, status := ProjectFieldsDb(db, project)

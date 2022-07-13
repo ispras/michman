@@ -132,6 +132,9 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		}
 	}
 
+	if newProj.GroupID != "" {
+		resProj.GroupID = newProj.GroupID
+	}
 	if newProj.Description != "" {
 		resProj.Description = newProj.Description
 	}

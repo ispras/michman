@@ -39,8 +39,10 @@ func MSServices(db database.Database, cluster *protobuf.Cluster) (bool, error) {
 	return false, nil
 }
 
-func ValuesAllowed(val string, posVal []string) bool {
-	val = helpfunc.DeleteSpaces(val)
+func ValuesAllowed(val string, posVal []string, IsList bool) bool {
+	if IsList {
+		val = helpfunc.DeleteSpaces(val)
+	}
 	for _, pv := range posVal {
 		if val == pv {
 			return true
@@ -116,7 +118,7 @@ func ServiceConfigCorrectValue(service *protobuf.Service, Configs []*protobuf.Se
 
 				//check for possible values
 				if serviceConfig.PossibleValues != nil {
-					if !ValuesAllowed(configValue, serviceConfig.PossibleValues) {
+					if !ValuesAllowed(configValue, serviceConfig.PossibleValues, serviceConfig.IsList) {
 						return ErrClusterServiceConfigNotPossibleValue(configName, service.Type)
 					}
 				}

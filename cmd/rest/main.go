@@ -81,7 +81,7 @@ func main() {
 			NoColors:        true,
 			NoFieldsColors:  true,
 			ShowFullLevel:   false,
-			LoggerName:      "AUTHORIZE_CLIENT",
+			LoggerName:      "AUTH_CLIENT",
 		},
 	}
 
@@ -133,7 +133,7 @@ func main() {
 	}
 
 	var usedAuth auth.Authenticate
-	usedAuth, err = auth.InitAuth(httpLogger, config.AuthorizationModel)
+	usedAuth, err = auth.InitAuth(config.AuthorizationModel)
 	if err != nil {
 		httpLogger.Fatal(err)
 	}
