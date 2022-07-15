@@ -29,6 +29,7 @@ type AuthorizeClient struct {
 	Router         *httprouter.Router
 }
 
+// isProjectPath checks if there is a project in the request path
 func isProjectPath(path string) bool {
 	projectPath := regexp.MustCompile(utils.ProjectPathPattern).MatchString
 	if projectPath(path) {
@@ -40,7 +41,7 @@ func isProjectPath(path string) bool {
 func getProjectIdOrName(urlPath string) (string, error) {
 	urlKeys := strings.Split(urlPath, "/")
 
-	//if length of urlKeys less then 2 -- error
+	// if length of urlKeys less then 2 -- error
 	if len(urlKeys) < 2 {
 		return "", ErrNoProjectInURL
 	}
@@ -48,6 +49,7 @@ func getProjectIdOrName(urlPath string) (string, error) {
 	return urlKeys[2], nil
 }
 
+//getUserGroups returns a string array of user groups that the user is a member of
 func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []string {
 	groups := auth.SessionManager.GetString(r.Context(), groupKey)
 	if groups == "" {
@@ -58,20 +60,21 @@ func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []s
 	return groupsList
 }
 
+// Authorizer checks whether the user is authorized and allowed to access the requested resource or method
 func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			request := r.Method + " " + r.URL.Path
 
-			//var for casbin role, set as user because user is default role
+			// var for casbin role, set as user because user is default role
 			role := user
 
 			groups := auth.getUserGroups(r, utils.GroupKey)
-			//check if user is a project member
-			//if groups are nil -- role is user
+			// check if user is a project member
+			// if groups are nil -- role is user
 			if groups != nil {
 				if isProjectPath(r.URL.Path) {
-					//get project which user wants to access
+					// get project which user wants to access
 					projectIdOrName, err := getProjectIdOrName(r.URL.Path)
 					if err != nil {
 						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -86,7 +89,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 						return
 					}
 
-					//check if one of user groups presents in project
+					// check if one of user groups presents in project
 					projectMemberFlag := false
 					for _, g := range groups {
 						if g == project.GroupID {
@@ -95,12 +98,12 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 						}
 					}
 
-					//user is project member
+					// user is project member
 					if projectMemberFlag {
 						role = projectMember
 					}
 				} else {
-					//check if user is admin -- admin group must present in groups list
+					// check if user is admin -- admin group must present in groups list
 					adminFlag := false
 					for _, g := range groups {
 						if g == auth.Config.AdminGroup {
@@ -109,7 +112,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 						}
 					}
 
-					//user is admin
+					// user is admin
 					if adminFlag {
 						role = admin
 					}
@@ -136,11 +139,12 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 	}
 }
 
-func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// AuthGet processes a request to authenticate client and show user groups
+func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	request := "GET /auth"
 	auth.Logger.Info(request)
 
-	//set auth facts
+	// set auth facts
 	err, status := auth.Auth.SetAuth(auth.SessionManager, r)
 	if err != nil {
 		auth.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())

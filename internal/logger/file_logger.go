@@ -16,10 +16,13 @@ type FileLogger struct {
 	action    string
 }
 
+// NewFileLogger create new cluster logger file
 func NewFileLogger(clusterID string, action string) (Logger, error) {
 	fl := new(FileLogger)
 	config := utils.Config{}
-	config.MakeCfg()
+	if err := config.MakeCfg(); err != nil {
+		return nil, err
+	}
 	fl.filePath = config.LogsFilePath
 
 	fl.clusterID = clusterID
@@ -33,6 +36,7 @@ func NewFileLogger(clusterID string, action string) (Logger, error) {
 	return fl, nil
 }
 
+// makeFileName make cluster log file name
 func (fl FileLogger) makeFileName(clusterID string, action string) string {
 	return fl.filePath + "/" + action + "_" + clusterID + ".log"
 }
@@ -49,6 +53,7 @@ func (fl FileLogger) FinClusterLogsWriter() error {
 	return nil
 }
 
+// ReadClusterLogs read cluster logs from file
 func (fl FileLogger) ReadClusterLogs() (string, error) {
 	clusterLogs, err := ioutil.ReadFile(fl.makeFileName(fl.clusterID, fl.action))
 	if err != nil {

@@ -56,10 +56,10 @@ func (hS *HttpServer) CreateRoutes() {
 
 	// images:
 	hS.Router.GET("/images", hS.ImagesGetList)
-	hS.Router.GET("/images/:imageName", hS.ImageGet)
+	hS.Router.GET("/images/:imageIdOrName", hS.ImageGet)
 	hS.Router.POST("/images", hS.ImageCreate)
-	hS.Router.PUT("/images/:imageName", hS.ImageUpdate)
-	hS.Router.DELETE("/images/:imageName", hS.ImageDelete)
+	hS.Router.PUT("/images/:imageIdOrName", hS.ImageUpdate)
+	hS.Router.DELETE("/images/:imageIdOrName", hS.ImageDelete)
 
 	// flavors:
 	hS.Router.POST("/flavors", hS.FlavorCreate)

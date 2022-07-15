@@ -6,9 +6,6 @@ import (
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/utils"
-	"net/http"
-	"os"
-	"regexp"
 	"strconv"
 )
 
@@ -39,34 +36,7 @@ func MSServices(db database.Database, cluster *protobuf.Cluster) (bool, error) {
 	return false, nil
 }
 
-func ValuesAllowed(val string, posVal []string, IsList bool) bool {
-	if IsList {
-		val = helpfunc.DeleteSpaces(val)
-	}
-	for _, pv := range posVal {
-		if val == pv {
-			return true
-		}
-	}
-	return false
-}
-
-func FileExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	return false, err
-}
-
-func ValidName(name string, pattern string, errorType error) (error, int) {
-	validName := regexp.MustCompile(pattern).MatchString
-	if !validName(name) {
-		return errorType, http.StatusBadRequest
-	}
-	return nil, 0
-}
-
+// PossibleValuesUnique checks whether the values in the transmitted list are unique
 func PossibleValuesUnique(possibleValues []string) error {
 	for i, curVal := range possibleValues[:len(possibleValues)-1] {
 		if curVal == "" {
@@ -83,21 +53,21 @@ func PossibleValuesUnique(possibleValues []string) error {
 
 // PossibleValues checks possible values field on correctness
 func PossibleValues(possibleValues []string, vType string, IsList bool) error {
-	//check PossibleValues type correct
+	// check PossibleValues type correct
 	for _, value := range possibleValues {
 		if err := CorrectType(value, vType, IsList); err != nil {
 			return ErrServiceTypeVersionConfigPossibleValues(value)
 		}
 	}
 
-	//format PossibleValue strings
+	// format PossibleValue strings
 	if IsList {
 		for i, pV := range possibleValues {
 			possibleValues[i] = helpfunc.DeleteSpaces(pV)
 		}
 	}
 
-	//check PossibleValues are unique
+	// check PossibleValues are unique
 	err := PossibleValuesUnique(possibleValues)
 	if err != nil {
 		return err
@@ -105,36 +75,8 @@ func PossibleValues(possibleValues []string, vType string, IsList bool) error {
 	return nil
 }
 
-func ServiceConfigCorrectValue(service *protobuf.Service, Configs []*protobuf.ServiceConfig) error {
-	for configName, configValue := range service.Config {
-		flagPN := false
-		for _, serviceConfig := range Configs {
-			if configName == serviceConfig.ParameterName {
-				flagPN = true
-
-				if err := CorrectType(configValue, serviceConfig.Type, serviceConfig.IsList); err != nil {
-					return ErrClusterServiceConfigIncorrectType(configName, service.Type)
-				}
-
-				//check for possible values
-				if serviceConfig.PossibleValues != nil {
-					if !ValuesAllowed(configValue, serviceConfig.PossibleValues, serviceConfig.IsList) {
-						return ErrClusterServiceConfigNotPossibleValue(configName, service.Type)
-					}
-				}
-
-				break
-			}
-		}
-		if !flagPN {
-			return ErrClusterServiceConfigNotSupported(configName, service.Type)
-		}
-	}
-	return nil
-}
-
+// CorrectType checks whether the value matches the required type
 func CorrectType(value string, Type string, IsList bool) error {
-	//check value type correct
 	if !IsList {
 		switch Type {
 		case "int":

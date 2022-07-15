@@ -10,9 +10,10 @@ import (
 	"net/http"
 )
 
-func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	request := "/projects GET"
-	hS.Logger.Info("Get " + request)
+// ProjectsGetList processes a request to get a list of all projects in database
+func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+	request := "GET /projects"
+	hS.Logger.Info(request)
 
 	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
@@ -25,9 +26,10 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, r *http.Request, _ h
 	response.Ok(w, projects, request)
 }
 
+// ProjectCreate processes a request to create a project struct in database
 func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	request := "/projects POST"
-	hS.Logger.Info("Get " + request)
+	request := "POST /projects"
+	hS.Logger.Info(request)
 
 	var project protobuf.Project
 	err := json.NewDecoder(r.Body).Decode(&project)
@@ -37,7 +39,8 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 		return
 	}
 
-	err, status := validate.ProjectCreate(hS.Db, hS.Logger, &project)
+	hS.Logger.Info("Validating project...")
+	err, status := validate.ProjectCreate(hS.Db, &project)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
@@ -52,6 +55,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 
 	project.Name = project.DisplayName
 
+	// generating UUID for new project
 	pUuid, err := uuid.NewRandom()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
@@ -71,10 +75,11 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	response.Created(w, project, request)
 }
 
-func (hS HttpServer) ProjectGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ProjectGet processes a request to get a project struct by id or name from database
+func (hS HttpServer) ProjectGet(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "/projects/" + projectIdOrName + " GET"
-	hS.Logger.Info("Get " + request)
+	request := "GET /projects/" + projectIdOrName
+	hS.Logger.Info(request)
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
@@ -92,10 +97,11 @@ func (hS HttpServer) ProjectGet(w http.ResponseWriter, r *http.Request, params h
 	response.Ok(w, project, request)
 }
 
+// ProjectUpdate processes a request to update a project struct in database
 func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "/projects/" + projectIdOrName + " PUT"
-	hS.Logger.Info("Get " + request)
+	request := "PUT /projects/" + projectIdOrName
+	hS.Logger.Info(request)
 
 	oldProj, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
@@ -119,7 +125,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	err, status := validate.ProjectUpdate(hS.Db, hS.Logger, &newProj)
+	hS.Logger.Info("Validating updated values of the project fields...")
+	err, status := validate.ProjectUpdate(hS.Db, &newProj)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
@@ -168,10 +175,11 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	response.Ok(w, resProj, request)
 }
 
-func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ProjectDelete processes a request to delete a project struct from database
+func (hS HttpServer) ProjectDelete(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "/projects/" + projectIdOrName + " DELETE"
-	hS.Logger.Info("Get " + request)
+	request := "DELETE /projects/" + projectIdOrName
+	hS.Logger.Info(request)
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
@@ -185,16 +193,17 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	clusters, err := hS.Db.ReadProjectClusters(project.ID)
+	err, status := validate.ProjectDelete(hS.Db, project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if len(clusters) > 0 {
-		hS.Logger.Warn("Request ", request, " failed  with status ", http.StatusBadRequest, ": ", ErrProjectHasClusters.Error())
-		response.BadRequest(w, ErrProjectHasClusters)
-		return
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
 	}
 
 	err = hS.Db.DeleteProject(project.ID)

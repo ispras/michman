@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	proto "github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/rest/handler/check"
 	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/rest/handler/validate"
@@ -12,11 +13,13 @@ import (
 	"net/http"
 )
 
-func (hS HttpServer) ClustersGetList(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ClustersGetList processes a request to get a list of all clusters in database
+func (hS HttpServer) ClustersGetList(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "/projects/" + projectIdOrName + "/clusters GET"
-	hS.Logger.Info("Get " + request)
+	request := "GET /projects/" + projectIdOrName + "/clusters"
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -29,7 +32,6 @@ func (hS HttpServer) ClustersGetList(w http.ResponseWriter, r *http.Request, par
 		return
 	}
 
-	//reading cluster info from database
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -41,11 +43,13 @@ func (hS HttpServer) ClustersGetList(w http.ResponseWriter, r *http.Request, par
 	response.Ok(w, clusters, request)
 }
 
+// ClusterCreate processes a request to create a cluster struct in database
 func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "/project/" + projectIdOrName + "/clusters POST"
-	hS.Logger.Info("Get " + request)
+	request := "POST /project/" + projectIdOrName + "/clusters"
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -58,35 +62,19 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		return
 	}
 
-	var clusterRes *proto.Cluster
-	err = json.NewDecoder(r.Body).Decode(&clusterRes)
+	var resCluster *proto.Cluster
+	err = json.NewDecoder(r.Body).Decode(&resCluster)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
 		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	// set default project flavors if not specified
-	if clusterRes.MasterFlavor == "" {
-		clusterRes.MasterFlavor = project.DefaultMasterFlavor
-	}
-	if clusterRes.StorageFlavor == "" {
-		clusterRes.StorageFlavor = project.DefaultStorageFlavor
-	}
-	if clusterRes.SlavesFlavor == "" {
-		clusterRes.SlavesFlavor = project.DefaultSlavesFlavor
-	}
-	if clusterRes.MonitoringFlavor == "" {
-		clusterRes.MonitoringFlavor = project.DefaultMonitoringFlavor
-	}
+	// set fields by defaults if not specified by user
+	helpfunc.SetDefaults(resCluster, project)
 
-	// set default project image if not specified
-	if clusterRes.Image == "" {
-		clusterRes.Image = project.DefaultImage
-	}
-
-	// validate struct
-	err, status := validate.Cluster(hS.Db, hS.Logger, clusterRes)
+	hS.Logger.Info("Validating cluster structure...")
+	err, status := validate.ClusterCreate(hS.Db, resCluster)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
@@ -99,98 +87,59 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		}
 	}
 
-	//check, that cluster with such name doesn't exist
-	searchedName := clusterRes.DisplayName + "-" + project.Name
-	cluster, err := hS.Db.ReadCluster(project.ID, searchedName)
+	// check, that cluster with such name doesn't exist
+	clusterExists, oldCluster, err, status := check.ClusterExist(hS.Db, resCluster, project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-
-	clusterExists := false
-
-	if cluster.Name != "" {
-		clusterExists = true
-		if cluster.EntityStatus != utils.StatusFailed {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrClusterExisted.Error())
-			response.BadRequest(w, ErrClusterExisted)
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
 			return
 		}
 	}
 
 	// If cluster was failed
 	if clusterExists {
-		clusterRes = cluster
+		resCluster = oldCluster
 	} else {
+		// generating UUID for new cluster
 		cUuid, err := uuid.NewRandom()
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
 			response.InternalError(w, ErrUuidLibError)
 			return
 		}
-		clusterRes.ID = cUuid.String()
+		resCluster.ID = cUuid.String()
 
-		//add services from user request and from dependencies
-		if clusterRes.Services != nil {
-			retryFlag := true
-			startIdx := 0
+		// add services from user request and from dependencies
+		if resCluster.Services != nil {
+			// set uuids for all cluster services
+			if err := helpfunc.SetClusterServicesUuids(resCluster); err != nil {
+				hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
+				response.InternalError(w, ErrUuidLibError)
+				return
+			}
 
-			//first for cycle is used for updating range values with appended services
-			for retryFlag {
-				for i, s := range clusterRes.Services[startIdx:] {
-					st, err := hS.Db.ReadServiceType(s.Type)
-					if err != nil {
-						hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-						response.InternalError(w, err)
-						return
-					}
-
-					if len(st.HealthCheck) == 0 {
-						hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrClusterServiceHealthCheck(st.Type).Error())
-						response.InternalError(w, ErrClusterServiceHealthCheck(st.Type))
-						return
-					}
-
-					if s.Version == "" {
-						s.Version = st.DefaultVersion
-					}
-
-					//add services from dependencies
-					sToAdd, err, status := helpfunc.AddDependencies(hS.Db, clusterRes, s)
-					if err != nil {
-						hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-						switch status {
-						case http.StatusBadRequest:
-							response.BadRequest(w, err)
-							return
-						case http.StatusInternalServerError:
-							response.InternalError(w, err)
-							return
-						}
-						return
-					}
-
-					changesFlag := false
-					if sToAdd != nil {
-						for _, curS := range sToAdd {
-							clusterRes.Services = append(clusterRes.Services, curS)
-						}
-						changesFlag = true
-					}
-					if !changesFlag {
-						retryFlag = false
-					} else {
-						//update range values if new services has been added and start new iteration from the next value
-						startIdx = i + 1
-						break
-					}
+			err, status := helpfunc.UpdateRangeValuesAppendedServices(hS.Db, 0, resCluster, utils.ActionCreate)
+			if err != nil {
+				hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+				switch status {
+				case http.StatusBadRequest:
+					response.BadRequest(w, err)
+					return
+				case http.StatusInternalServerError:
+					response.InternalError(w, err)
+					return
 				}
+				return
 			}
 		}
 
-		//cluster should be validated after addition services from dependencies
-		err, status := validate.Cluster(hS.Db, hS.Logger, clusterRes)
+		// cluster should be validated after addition services from dependencies
+		err, status := validate.ClusterCreate(hS.Db, resCluster)
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 			switch status {
@@ -203,42 +152,34 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 			}
 		}
 
-		clusterRes.ProjectID = project.ID
-		clusterRes.Name = clusterRes.DisplayName + "-" + project.Name
-
-		//set uuids for all cluster services
-		for _, s := range clusterRes.Services {
-			sUuid, err := uuid.NewRandom()
-			if err != nil {
-				hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-				response.InternalError(w, ErrUuidLibError)
-				return
-			}
-			s.ID = sUuid.String()
-		}
+		resCluster.ProjectID = project.ID
+		resCluster.Name = resCluster.DisplayName + "-" + project.Name
 	}
 
-	clusterRes.EntityStatus = utils.StatusInited
+	resCluster.EntityStatus = utils.StatusInited
+
 	if !clusterExists {
-		err = hS.Db.WriteCluster(clusterRes)
+		err = hS.Db.WriteCluster(resCluster)
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 			response.InternalError(w, err)
 			return
 		}
 	}
-	go hS.Gc.StartClusterCreation(clusterRes)
+	go hS.Gc.StartClusterCreation(resCluster)
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusCreated)
-	response.Created(w, clusterRes, request)
+	response.Created(w, resCluster, request)
 }
 
-func (hS HttpServer) ClusterGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ClusterGet processes a request to get a cluster struct by id or name from database
+func (hS HttpServer) ClusterGet(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
-	request := "/projects/" + projectIdOrName + "/clusters/" + clusterIdOrName + " GET"
-	hS.Logger.Info("Get " + request)
+	request := "GET /projects/" + projectIdOrName + "/clusters/" + clusterIdOrName
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -268,12 +209,14 @@ func (hS HttpServer) ClusterGet(w http.ResponseWriter, r *http.Request, params h
 	response.Ok(w, cluster, request)
 }
 
-func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ClusterStatusGet processes a request to get a cluster status message by id or name from database
+func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
-	request := "/projects/" + projectIdOrName + "/clusters/" + clusterIdOrName + "/status GET"
-	hS.Logger.Info("Get " + request)
+	request := "GET /projects/" + projectIdOrName + "/clusters/" + clusterIdOrName + "/status"
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -303,12 +246,14 @@ func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, r *http.Request, pa
 	response.Ok(w, cluster.EntityStatus, request)
 }
 
+// ClustersUpdate processes a request to update a cluster struct in database
 func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
-	request := "/projects/" + projectIdOrName + "/clusters/" + clusterIdOrName + " PUT"
-	hS.Logger.Info("Get " + request)
+	request := "PUT /projects/" + projectIdOrName + "/clusters/" + clusterIdOrName
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -321,47 +266,63 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	//check that cluster exists
-	hS.Logger.Info("Sending request to db-service to check that cluster exists...")
-
 	// reading cluster info from database
-	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
+	oldCluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
 		return
 	}
-	if cluster.Name == "" {
+	if oldCluster.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrClusterNotFound.Error())
 		response.NotFound(w, ErrClusterNotFound)
 		return
 	}
 
-	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrClusterStatus.Error())
-		response.InternalError(w, ErrClusterStatus)
-		return
-	}
-
-	// validate request struct
-	var newC proto.Cluster
-	err = json.NewDecoder(r.Body).Decode(&newC)
+	var newCluster proto.Cluster
+	err = json.NewDecoder(r.Body).Decode(&newCluster)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
 		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	if newC.ID != "" || newC.Name != "" || newC.EntityStatus != "" || newC.NHosts != 0 ||
-		newC.HostURL != "" || newC.MasterIP != "" || newC.ProjectID != "" || newC.Image != "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrClusterUnmodFields.Error())
-		response.BadRequest(w, ErrClusterUnmodFields)
+	hS.Logger.Info("Validating updated values of the cluster fields...")
+	err, status := validate.ClusterUpdate(hS.Db, oldCluster, &newCluster)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
+	}
+
+	resCluster := oldCluster
+
+	// set existed services
+	serviceTypesOld, oldServiceNumber, err := helpfunc.SetServiceExistInfo(hS.Db, oldCluster)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		response.InternalError(w, err)
 		return
 	}
 
-	//check correctness of new services
-	for _, s := range newC.Services {
-		err, status := validate.Service(hS.Db, hS.Logger, s)
+	// append new services to the resCluster struct
+	newHost, err := helpfunc.AppendNewServices(hS.Db, serviceTypesOld, &newCluster, resCluster)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
+		response.InternalError(w, ErrUuidLibError)
+		return
+	}
+
+	// check if new services are added
+	if oldServiceNumber != len(resCluster.Services) {
+		// updating range values of appended services
+		err, status := helpfunc.UpdateRangeValuesAppendedServices(hS.Db, oldServiceNumber, resCluster, utils.ActionUpdate)
 		if err != nil {
 			hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 			switch status {
@@ -375,143 +336,32 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		}
 	}
 
-	sTypes, err := hS.Db.ReadServicesTypesList()
-	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
+	if newCluster.Description != "" {
+		resCluster.Description = newCluster.Description
 	}
-	//appending old services which does not exist in new cluster configuration
-	var serviceTypesOld = make(map[string]ServiceExists)
-
-	for _, st := range sTypes {
-		serviceTypesOld[st.Type] = ServiceExists{
-			Exists:  false,
-			Service: nil,
-		}
+	if newCluster.DisplayName != "" {
+		resCluster.DisplayName = newCluster.DisplayName
 	}
 
-	for _, s := range cluster.Services {
-		serviceTypesOld[s.Type] = ServiceExists{
-			Exists:  true,
-			Service: s,
-		}
-	}
-	//new nodes must be added for some special services types
-	newHost := false
-
-	//number of old services
-	oldSN := len(cluster.Services)
-
-	for _, s := range newC.Services {
-		if serviceTypesOld[s.Type].Exists == false {
-			sUuid, err := uuid.NewRandom()
-			if err != nil {
-				hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-				response.InternalError(w, ErrUuidLibError)
-				return
-			}
-			s.ID = sUuid.String()
-			cluster.Services = append(cluster.Services, s)
-		}
-
-		st, err := hS.Db.ReadServiceType(s.Type)
-		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-			response.InternalError(w, err)
-			return
-		}
-		if st.Class == utils.ClassStorage {
-			newHost = true
-		}
-	}
-
-	//check if new services are added
-	if oldSN != len(cluster.Services) {
-		retryFlag := true
-		startIdx := oldSN
-
-		//first for cycle is used for updating range values with appended services
-		for retryFlag {
-			for i, s := range cluster.Services[startIdx:] {
-				st, err := hS.Db.ReadServiceType(s.Type)
-				if err != nil {
-					hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-					response.InternalError(w, err)
-					return
-				}
-
-				if s.Version == "" {
-					s.Version = st.DefaultVersion
-				}
-
-				//add services from dependencies
-				sToAdd, err, status := helpfunc.AddDependencies(hS.Db, cluster, s)
-				if err != nil {
-					hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-					switch status {
-					case http.StatusBadRequest:
-						response.BadRequest(w, err)
-						return
-					case http.StatusInternalServerError:
-						response.InternalError(w, err)
-						return
-					}
-					return
-				}
-
-				changesFlag := false
-				if sToAdd != nil {
-					for _, curS := range sToAdd {
-						sUuid, err := uuid.NewRandom()
-						if err != nil {
-							hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-							response.InternalError(w, ErrUuidLibError)
-							return
-						}
-						curS.ID = sUuid.String()
-
-						cluster.Services = append(cluster.Services, curS)
-					}
-					changesFlag = true
-				}
-
-				if !changesFlag {
-					retryFlag = false
-				} else {
-					//update range values if new services has been added and start new iteration from the next value
-					startIdx = i + 1
-					break
-				}
-			}
-		}
-	}
-
-	if newC.Description != "" {
-		cluster.Description = newC.Description
-	}
-
-	if newC.DisplayName != "" {
-		cluster.DisplayName = newC.DisplayName
-	}
-
-	cluster.EntityStatus = utils.StatusInited
-	if newC.NHosts != 0 || newHost {
-		go hS.Gc.StartClusterCreation(cluster)
+	resCluster.EntityStatus = utils.StatusInited
+	if newCluster.NHosts != 0 || newHost {
+		go hS.Gc.StartClusterCreation(resCluster)
 	} else {
-		go hS.Gc.StartClusterModification(cluster)
+		go hS.Gc.StartClusterModification(resCluster)
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	response.Ok(w, cluster, request)
+	response.Ok(w, resCluster, request)
 }
 
-func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+// ClustersDelete processes a request to delete a cluster struct from database
+func (hS HttpServer) ClustersDelete(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
 	projectIdOrName := params.ByName("projectIdOrName")
 	clusterIdOrName := params.ByName("clusterIdOrName")
-	request := "/projects/" + projectIdOrName + "/clusters/" + clusterIdOrName + " DELETE"
-	hS.Logger.Info("Get " + request)
+	request := "DELETE /projects/" + projectIdOrName + "/clusters/" + clusterIdOrName
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -537,10 +387,10 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, r *http.Request, para
 		return
 	}
 
-	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrClusterStatus.Error())
-		response.InternalError(w, ErrClusterStatus)
-		return
+	err, status := validate.ClusterDelete(cluster)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		response.InternalError(w, err)
 	}
 
 	cluster.EntityStatus = utils.StatusStopping

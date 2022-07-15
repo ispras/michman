@@ -11,6 +11,7 @@ type Logger interface {
 	ReadClusterLogs() (string, error)
 }
 
+// MakeNewClusterLogger create new cluster logger file or logstash logger (depending on 'logs_output' in configuration file)
 func MakeNewClusterLogger(cfg utils.Config, clusterID string, action string) (Logger, error) {
 	var clusterLogger Logger
 	var err error

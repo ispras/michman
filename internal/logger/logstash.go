@@ -30,10 +30,13 @@ type LogstashLogger struct {
 	logsBuffer   *bytes.Buffer
 }
 
+// NewLogstashLogger create new cluster logstash logger
 func NewLogstashLogger(clusterID string, action string) (Logger, error) {
 	ll := new(LogstashLogger)
 	config := utils.Config{}
-	config.MakeCfg()
+	if err := config.MakeCfg(); err != nil {
+		return nil, err
+	}
 	ll.logstashAddr = config.LogstashAddr
 	ll.elasticAddr = config.ElasticAddr
 	ll.clusterID = clusterID
@@ -42,6 +45,7 @@ func NewLogstashLogger(clusterID string, action string) (Logger, error) {
 	return ll, nil
 }
 
+// makeClusterName make cluster log name
 func makeClusterName(clusterID string, action string) string {
 	return action + "_" + clusterID
 }
@@ -67,10 +71,13 @@ func (ll LogstashLogger) FinClusterLogsWriter() error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "*/*")
 
-	client.Do(req)
+	if _, err := client.Do(req); err != nil {
+		return err
+	}
 	return nil
 }
 
+// ReadClusterLogs read cluster logs from logstash
 func (ll LogstashLogger) ReadClusterLogs() (string, error) {
 	getLogQuery := "SELECT * FROM \"" + makeClusterName(ll.clusterID, ll.action) + "\""
 	logs := queryLog{Query: getLogQuery}
@@ -90,7 +97,7 @@ func (ll LogstashLogger) ReadClusterLogs() (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
-	if resp.StatusCode != http.StatusOK {
+	if err != nil || resp.StatusCode != http.StatusOK {
 		return "", err
 	}
 	defer resp.Body.Close()

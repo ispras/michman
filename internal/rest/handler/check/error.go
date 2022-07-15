@@ -9,6 +9,7 @@ import (
 var HandlerCheckersErrorMap = make(map[error]int)
 
 const (
+	errClusterExisted                                = "cluster with this name already exists"
 	errServiceTypeClass                              = "class for service type is not supported"
 	errServiceTypeAccessPort                         = "port is incorrect"
 	errServiceTypeDefaultVersion                     = "default version not found in versions list"
@@ -23,6 +24,7 @@ const (
 )
 
 var (
+	ErrClusterExisted                                = errors.New(errClusterExisted)
 	ErrServiceTypeClass                              = errors.New(errServiceTypeClass)
 	ErrServiceTypePort                               = errors.New(errServiceTypeAccessPort)
 	ErrServiceTypeDefaultVersion                     = errors.New(errServiceTypeDefaultVersion)
@@ -121,6 +123,7 @@ func ErrClusterServiceConfigNotSupported(param string, service string) error {
 }
 
 func init() {
+	HandlerCheckersErrorMap[ErrClusterExisted] = utils.ObjectExists
 	HandlerCheckersErrorMap[ErrServiceTypeClass] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypePort] = utils.ValidationError
 	HandlerCheckersErrorMap[ErrServiceTypeDefaultVersion] = utils.ValidationError

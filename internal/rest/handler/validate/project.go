@@ -5,12 +5,11 @@ import (
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/rest/handler/check"
 	"github.com/ispras/michman/internal/utils"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func ProjectCreate(db database.Database, logger *logrus.Logger, project *protobuf.Project) (error, int) {
-	logger.Info("Validating project...")
+//ProjectCreate validates fields of the project structure for correct filling when creating
+func ProjectCreate(db database.Database, project *protobuf.Project) (error, int) {
 	if project.DisplayName == "" {
 		return ErrProjectFieldEmpty("DisplayName"), http.StatusBadRequest
 	}
@@ -52,11 +51,11 @@ func ProjectCreate(db database.Database, logger *logrus.Logger, project *protobu
 		return err, status
 	}
 
-	return nil, 0
+	return nil, http.StatusOK
 }
 
-func ProjectUpdate(db database.Database, logger *logrus.Logger, project *protobuf.Project) (error, int) {
-	logger.Info("Validating updated values of the project fields...")
+// ProjectUpdate validates fields of the project structure for correct filling when updating
+func ProjectUpdate(db database.Database, project *protobuf.Project) (error, int) {
 	if project.ID != "" || project.Name != "" {
 		return ErrProjectUnmodFields, http.StatusBadRequest
 	}
@@ -65,9 +64,10 @@ func ProjectUpdate(db database.Database, logger *logrus.Logger, project *protobu
 		return err, status
 	}
 
-	return nil, 0
+	return nil, http.StatusOK
 }
 
+// ProjectFieldsDb used in validation and checks whether the specified values of project fields exist in the database
 func ProjectFieldsDb(db database.Database, project *protobuf.Project) (error, int) {
 	if project.DefaultImage != "" {
 		dbImg, err := db.ReadImage(project.DefaultImage)
@@ -114,5 +114,17 @@ func ProjectFieldsDb(db database.Database, project *protobuf.Project) (error, in
 			return ErrFlavorFieldValueNotFound("DefaultMonitoringFlavor"), http.StatusBadRequest
 		}
 	}
-	return nil, 0
+	return nil, http.StatusOK
+}
+
+// ProjectDelete checks the project structure for the presence of used clusters when deleting
+func ProjectDelete(db database.Database, project *protobuf.Project) (error, int) {
+	clusters, err := db.ReadProjectClusters(project.ID)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if len(clusters) > 0 {
+		return ErrProjectHasClusters, http.StatusBadRequest
+	}
+	return nil, http.StatusOK
 }

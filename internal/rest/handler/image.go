@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/rest/handler/validate"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
-func (hS HttpServer) ImagesGetList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	request := "/images GET"
-	hS.Logger.Info("Get " + request)
+// ImagesGetList processes a request to get a list of all images in database
+func (hS HttpServer) ImagesGetList(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+	request := "GET /images"
+	hS.Logger.Info(request)
 
 	images, err := hS.Db.ReadImagesList()
 	if err != nil {
@@ -26,12 +26,13 @@ func (hS HttpServer) ImagesGetList(w http.ResponseWriter, r *http.Request, _ htt
 	response.Ok(w, images, request)
 }
 
-func (hS HttpServer) ImageGet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	imageName := params.ByName("imageName")
-	request := "/images/" + imageName + " GET"
-	hS.Logger.Info("Get " + request)
+// ImageGet processes a request to get an image struct by id or name from database
+func (hS HttpServer) ImageGet(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	imageIdOrName := params.ByName("imageIdOrName")
+	request := "GET /images/" + imageIdOrName
+	hS.Logger.Info(request)
 
-	image, err := hS.Db.ReadImage(imageName)
+	image, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
@@ -47,9 +48,10 @@ func (hS HttpServer) ImageGet(w http.ResponseWriter, r *http.Request, params htt
 	response.Ok(w, image, request)
 }
 
+// ImageCreate processes a request to create an image struct in database
 func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	request := "/images POST"
-	hS.Logger.Info("Get " + request)
+	request := "POST /images"
+	hS.Logger.Info(request)
 
 	var image protobuf.Image
 	err := json.NewDecoder(r.Body).Decode(&image)
@@ -58,25 +60,22 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
-	err = validate.Image(hS.Logger, &image)
+
+	hS.Logger.Info("Validating image...")
+	err, status := validate.ImageCreate(hS.Db, &image)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", err.Error())
-		response.BadRequest(w, err)
-		return
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
 	}
 
-	dbImg, err := hS.Db.ReadImage(image.Name)
-	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if dbImg.ID != "" {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageExisted.Error())
-		response.BadRequest(w, ErrImageExisted)
-		return
-	}
-
+	// generating UUID for new image
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
@@ -96,71 +95,57 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 	response.Created(w, image, request)
 }
 
+// ImageUpdate processes a request to update an image struct in database
 func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	imageName := params.ByName("imageName")
-	request := "/images/" + imageName + " PUT"
-	hS.Logger.Info("Get " + request)
+	imageIdOrName := params.ByName("imageIdOrName")
+	request := "PUT /images/" + imageIdOrName
+	hS.Logger.Info(request)
 
-	oldImg, err := hS.Db.ReadImage(imageName)
+	oldImage, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
 		return
 	}
-	if oldImg.Name == "" {
+	if oldImage.Name == "" {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrImageNotFound.Error())
 		response.NotFound(w, ErrImageNotFound)
 		return
 	}
 
-	var newImg protobuf.Image
-	err = json.NewDecoder(r.Body).Decode(&newImg)
+	var newImage protobuf.Image
+	err = json.NewDecoder(r.Body).Decode(&newImage)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
 		response.BadRequest(w, ErrJsonIncorrect)
 		return
 	}
 
-	used, err := helpfunc.IsImageUsed(hS.Db, hS.Logger, oldImg.Name)
+	hS.Logger.Info("Validating updated values of the image fields...")
+	err, status := validate.ImageUpdate(hS.Db, oldImage, &newImage)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-	}
-	if used {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageUsed.Error())
-		response.BadRequest(w, ErrImageUsed)
-		return
-	}
-
-	if newImg.ID != "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrImageUnmodFields.Error())
-		response.BadRequest(w, ErrImageUnmodFields)
-		return
-	}
-
-	resImg := oldImg
-	if newImg.Name != "" && oldImg.Name != newImg.Name {
-		dbImg, err := hS.Db.ReadImage(newImg.Name)
-		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
 			response.InternalError(w, err)
 			return
 		}
-		if dbImg.ID != "" {
-			hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageExisted.Error())
-			response.BadRequest(w, ErrImageExisted)
-			return
-		}
-		resImg.Name = newImg.Name
-	}
-	if newImg.AnsibleUser != "" {
-		resImg.AnsibleUser = newImg.AnsibleUser
-	}
-	if newImg.CloudImageID != "" {
-		resImg.CloudImageID = newImg.CloudImageID
 	}
 
-	err = hS.Db.UpdateImage(resImg)
+	resImage := oldImage
+	resImage.Name = newImage.Name
+
+	if newImage.AnsibleUser != "" {
+		resImage.AnsibleUser = newImage.AnsibleUser
+	}
+	if newImage.CloudImageID != "" {
+		resImage.CloudImageID = newImage.CloudImageID
+	}
+
+	err = hS.Db.UpdateImage(resImage)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
@@ -168,15 +153,16 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	}
 
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
-	response.Ok(w, resImg, request)
+	response.Ok(w, resImage, request)
 }
 
-func (hS HttpServer) ImageDelete(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	imageName := params.ByName("imageName")
-	request := "/images/" + imageName + " DELETE"
-	hS.Logger.Info("Get " + request)
+// ImageDelete processes a request to delete an image struct from database
+func (hS HttpServer) ImageDelete(w http.ResponseWriter, _ *http.Request, params httprouter.Params) {
+	imageIdOrName := params.ByName("imageIdOrName")
+	request := "DELETE /images/" + imageIdOrName
+	hS.Logger.Info(request)
 
-	image, err := hS.Db.ReadImage(imageName)
+	image, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
@@ -188,16 +174,17 @@ func (hS HttpServer) ImageDelete(w http.ResponseWriter, r *http.Request, params 
 		return
 	}
 
-	used, err := helpfunc.IsImageUsed(hS.Db, hS.Logger, imageName)
+	err, status := validate.ImageDelete(hS.Db, image)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if used {
-		hS.Logger.Warn("Request ", request, " completed with status ", http.StatusBadRequest, ": ", ErrImageUsed.Error())
-		response.BadRequest(w, ErrImageUsed)
-		return
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
+		}
 	}
 
 	err = hS.Db.DeleteImage(params.ByName("imageName"))

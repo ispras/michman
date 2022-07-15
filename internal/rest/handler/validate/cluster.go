@@ -4,19 +4,20 @@ import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/rest/handler/check"
+	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/utils"
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-func Cluster(db database.Database, logger *logrus.Logger, cluster *protobuf.Cluster) (error, int) {
-	logger.Info("Validating cluster...")
+// ClusterCreate validates fields of the cluster structure for correct filling when creating
+func ClusterCreate(db database.Database, cluster *protobuf.Cluster) (error, int) {
 	if err, status := check.ValidName(cluster.DisplayName, utils.ClusterNamePattern, ErrClusterBadName); err != nil {
 		return err, status
 	}
 
+	// check correctness of services
 	for _, service := range cluster.Services {
-		if err, status := Service(db, logger, service); err != nil {
+		if err, status := ClusterService(db, service); err != nil {
 			return err, status
 		}
 	}
@@ -70,5 +71,90 @@ func Cluster(db database.Database, logger *logrus.Logger, cluster *protobuf.Clus
 	if dbFlavor.ID == "" {
 		return ErrFlavorFieldValueNotFound("MonitoringFlavor"), http.StatusBadRequest
 	}
+	return nil, http.StatusOK
+}
+
+// ClusterUpdate validates fields of the cluster structure for correct filling when updating
+func ClusterUpdate(db database.Database, oldCluster *protobuf.Cluster, newCluster *protobuf.Cluster) (error, int) {
+	if oldCluster.EntityStatus != utils.StatusActive && oldCluster.EntityStatus != utils.StatusFailed {
+		return ErrClusterStatus, http.StatusInternalServerError
+	}
+	if newCluster.ID != "" {
+		return ErrClusterUnmodFields("ID"), http.StatusBadRequest
+	}
+	if newCluster.Name != "" {
+		return ErrClusterUnmodFields("Name"), http.StatusBadRequest
+	}
+	if newCluster.EntityStatus != "" {
+		return ErrClusterUnmodFields("EntityStatus"), http.StatusBadRequest
+	}
+	if newCluster.NHosts != 0 {
+		return ErrClusterUnmodFields("NHosts"), http.StatusBadRequest
+	}
+	if newCluster.HostURL != "" {
+		return ErrClusterUnmodFields("HostURL"), http.StatusBadRequest
+	}
+	if newCluster.MasterIP != "" {
+		return ErrClusterUnmodFields("MasterIP"), http.StatusBadRequest
+	}
+	if newCluster.ProjectID != "" {
+		return ErrClusterUnmodFields("ProjectID"), http.StatusBadRequest
+	}
+	if newCluster.Image != "" {
+		return ErrClusterUnmodFields("Image"), http.StatusBadRequest
+	}
+
+	// check correctness of new services
+	for _, services := range newCluster.Services {
+		err, status := ClusterService(db, services)
+		if err != nil {
+			return err, status
+		}
+	}
+
+	return nil, http.StatusOK
+}
+
+// ClusterDelete validates the cluster structure for the correct status when deleting
+func ClusterDelete(cluster *protobuf.Cluster) (error, int) {
+	if cluster.EntityStatus != utils.StatusActive && cluster.EntityStatus != utils.StatusFailed {
+		return ErrClusterStatus, http.StatusInternalServerError
+	}
+
+	return nil, http.StatusOK
+}
+
+// ClusterService validates service fields of the cluster structure for correct filling when updating or creating
+func ClusterService(db database.Database, service *protobuf.Service) (error, int) {
+	if service.Type == "" {
+		return ErrClusterServiceTypeEmpty, http.StatusBadRequest
+	}
+
+	sTypes, err := db.ReadServicesTypesList()
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+
+	stIdx, err := helpfunc.GetServiceTypeIdx(service, sTypes)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	// check service version
+	if service.Version == "" && sTypes[stIdx].DefaultVersion != "" {
+		service.Version = sTypes[stIdx].DefaultVersion
+	} else if service.Version == "" && sTypes[stIdx].DefaultVersion == "" {
+		return ErrClusterServiceVersionsEmpty(service.Type), http.StatusBadRequest
+	}
+
+	svIdx, err := helpfunc.GetServiceVersionIdx(service, sTypes, stIdx)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+
+	if err = check.ServiceConfigCorrectValue(service, sTypes[stIdx].Versions[svIdx].Configs); err != nil {
+		return err, http.StatusBadRequest
+	}
+
 	return nil, 0
 }

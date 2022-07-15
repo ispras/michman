@@ -1,7 +1,7 @@
 package handler
 
 import (
-	cluster_logger "github.com/ispras/michman/internal/logger"
+	clusterlogger "github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/rest/handler/check"
 	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/rest/handler/response"
@@ -20,9 +20,10 @@ type clusterLog struct {
 	ClusterLogs     string `json:"cluster_logs"`
 }
 
-func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	request := "logs/launcher GET"
-	hS.Logger.Info("Get " + request)
+// ServeAnsibleServiceLog processes the request to get the launcher.log file on the path specified in the configuration file
+func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	request := "GET logs/launcher"
+	hS.Logger.Info(request)
 
 	path := helpfunc.MakeLogFilePath(utils.LauncherLogFileName, hS.Config.LogsFilePath)
 
@@ -36,9 +37,10 @@ func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Reque
 	http.ServeFile(w, r, path)
 }
 
-func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	request := "logs/http_server GET"
-	hS.Logger.Info("Get " + request)
+// ServeHttpServerLog processes the request to get the http.log file on the path specified in the configuration file
+func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	request := "GET logs/http_server"
+	hS.Logger.Info(request)
 
 	path := helpfunc.MakeLogFilePath(utils.HttpLogFileName, hS.Config.LogsFilePath)
 
@@ -52,12 +54,16 @@ func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, 
 	http.ServeFile(w, r, path)
 }
 
+// ServeClusterLog processes the request to get cluster logs on the path specified in the configuration file,
+// depending on the action specified in the request(create, delete, update).
+// by default create action
 func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	clusterIdOrName := params.ByName("clusterIdOrName")
 	projectIdOrName := params.ByName("projectIdOrName")
-	request := "logs/project/" + projectIdOrName + "/clusters/" + clusterIdOrName + " GET"
-	hS.Logger.Info("Get " + request)
+	request := "GET logs/project/" + projectIdOrName + "/clusters/" + clusterIdOrName
+	hS.Logger.Info(request)
 
+	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
@@ -83,11 +89,10 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 		return
 	}
 
-	hS.Logger.Println(cluster)
-
 	queryValues := r.URL.Query()
 	action := utils.ActionCreate
 
+	// checking the action field from the request for compliance with: create, delete, update
 	if tmpAction := queryValues.Get(respActionKey); tmpAction != "" {
 		if tmpAction == utils.ActionCreate || tmpAction == utils.ActionDelete || tmpAction == utils.ActionUpdate {
 			action = tmpAction
@@ -98,19 +103,21 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 		}
 	}
 
-	//initialize cluster logger
-	cLogger, err := cluster_logger.MakeNewClusterLogger(hS.Config, cluster.ID, action)
+	// initialize cluster logger
+	cLogger, err := clusterlogger.MakeNewClusterLogger(hS.Config, cluster.ID, action)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
 		return
 	}
 
+	// read cluster logs from file or logstash (depending on 'logs_output' in configuration file)
 	clusterLogs, err := cLogger.ReadClusterLogs()
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)
 	}
+
 	resp := clusterLog{ClusterIdOrName: clusterIdOrName, Action: action, ClusterLogs: clusterLogs}
 	hS.Logger.Info("Request ", request, " has succeeded with status ", http.StatusOK)
 	response.Ok(w, resp, request)
