@@ -72,28 +72,33 @@ func GetDependencies(db database.Database, cluster *protobuf.Cluster, curService
 	var serviceToAdd *protobuf.Service = nil
 	var servicesList []*protobuf.Service = nil
 
-	sv, err := db.ReadServiceTypeVersion(curService.Type, curService.Version)
+	// a set of services specified in the user request or existed in cluster
+	clusterServiceTypesInfo, _, err := SetServiceExistInfo(db, cluster)
+	if err != nil {
+		return nil, err, http.StatusInternalServerError
+	}
+
+	serviceVersion, err := db.ReadServiceTypeVersion(curService.Type, curService.Version)
 	if err != nil {
 		return nil, err, http.StatusInternalServerError
 	}
 
 	// check if version has dependencies
-	if sv.Dependencies != nil {
-		for _, sd := range sv.Dependencies {
-			// check if the service from dependencies has already listed in cluster and version is ok
-			for _, clusterS := range cluster.Services {
-				if clusterS.Type == sd.ServiceType {
-					if !utils.ItemExists(sd.ServiceVersions, clusterS.Version) {
-						return nil, ErrClusterDependenceServicesIncompatibleVersion(clusterS.Type, curService.Type), http.StatusBadRequest
-					}
+	if serviceVersion.Dependencies != nil {
+		for _, serviceDependency := range serviceVersion.Dependencies {
+			// checking that the service from the dependencies is explicitly specified by the user and there is no need to add a default
+			if servInfo := clusterServiceTypesInfo[serviceDependency.ServiceType]; servInfo.Exists == true {
+				if !utils.ItemExists(serviceDependency.ServiceVersions, servInfo.Service.Version) {
+					return nil, ErrClusterDependenceServicesIncompatibleVersion(servInfo.Service.Type, curService.Type), http.StatusBadRequest
 				}
+				continue
 			}
 
 			// add service from dependencies with default configurations
 			serviceToAdd = &protobuf.Service{
 				Name:    curService.Name + "-dependent", //TODO: use better service name?
-				Type:    sd.ServiceType,
-				Version: sd.DefaultServiceVersion,
+				Type:    serviceDependency.ServiceType,
+				Version: serviceDependency.DefaultServiceVersion,
 			}
 			servicesList = append(servicesList, serviceToAdd)
 		}
@@ -112,18 +117,18 @@ func SetServiceExistInfo(db database.Database, oldCluster *protobuf.Cluster) (ma
 	var serviceTypesOld = make(map[string]ServiceExists)
 
 	// services not exist in old cluster struct
-	for _, st := range sTypes {
-		serviceTypesOld[st.Type] = ServiceExists{
+	for _, serviceType := range sTypes {
+		serviceTypesOld[serviceType.Type] = ServiceExists{
 			Exists:  false,
 			Service: nil,
 		}
 	}
 
 	// services exist in old cluster struct
-	for _, s := range oldCluster.Services {
-		serviceTypesOld[s.Type] = ServiceExists{
+	for _, service := range oldCluster.Services {
+		serviceTypesOld[service.Type] = ServiceExists{
 			Exists:  true,
-			Service: s,
+			Service: service,
 		}
 	}
 
@@ -138,18 +143,18 @@ func AppendNewServices(db database.Database, serviceTypesOld map[string]ServiceE
 	// new nodes must be added for some special services types
 	newHost := false
 
-	for _, s := range newCluster.Services {
-		if serviceTypesOld[s.Type].Exists == false {
+	for _, service := range newCluster.Services {
+		if serviceTypesOld[service.Type].Exists == false {
 			// generating UUID for new services
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
 				return false, ErrUuidLibError
 			}
-			s.ID = sUuid.String()
-			resCluster.Services = append(resCluster.Services, s)
+			service.ID = sUuid.String()
+			resCluster.Services = append(resCluster.Services, service)
 		}
 
-		st, err := db.ReadServiceType(s.Type)
+		st, err := db.ReadServiceType(service.Type)
 		if err != nil {
 			return false, err
 		}
