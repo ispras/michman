@@ -15,6 +15,10 @@ func ClusterCreate(db database.Database, cluster *protobuf.Cluster) (error, int)
 		return err, status
 	}
 
+	if cluster.OwnerID != "" {
+		return ErrClusterOwnerNotEmpty, http.StatusBadRequest
+	}
+
 	// check correctness of services
 	for _, service := range cluster.Services {
 		if err, status := ClusterService(db, service); err != nil {
@@ -103,6 +107,21 @@ func ClusterUpdate(db database.Database, oldCluster *protobuf.Cluster, newCluste
 	if newCluster.Image != "" {
 		return ErrClusterUnmodFields("Image"), http.StatusBadRequest
 	}
+	if newCluster.OwnerID != "" {
+		return ErrClusterUnmodFields("OwnerID"), http.StatusBadRequest
+	}
+	if newCluster.MasterFlavor != "" {
+		return ErrClusterUnmodFields("MasterFlavor"), http.StatusBadRequest
+	}
+	if newCluster.SlavesFlavor != "" {
+		return ErrClusterUnmodFields("SlavesFlavor"), http.StatusBadRequest
+	}
+	if newCluster.StorageFlavor != "" {
+		return ErrClusterUnmodFields("StorageFlavor"), http.StatusBadRequest
+	}
+	if newCluster.MonitoringFlavor != "" {
+		return ErrClusterUnmodFields("MonitoringFlavor"), http.StatusBadRequest
+	}
 
 	// check correctness of new services
 	for _, services := range newCluster.Services {
@@ -121,6 +140,17 @@ func ClusterDelete(cluster *protobuf.Cluster) (error, int) {
 		return ErrClusterStatus, http.StatusInternalServerError
 	}
 
+	return nil, http.StatusOK
+}
+
+// ClusterAddedServices validates service fields of the cluster structure after addition services from dependencies
+func ClusterAddedServices(db database.Database, cluster *protobuf.Cluster) (error, int) {
+	// check correctness of services
+	for _, service := range cluster.Services {
+		if err, status := ClusterService(db, service); err != nil {
+			return err, status
+		}
+	}
 	return nil, http.StatusOK
 }
 

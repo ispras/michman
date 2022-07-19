@@ -109,7 +109,7 @@ func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
 	var intrBody *hydraIntrospect
 	err = json.NewDecoder(resp.Body).Decode(&intrBody)
 	if err != nil {
-		return false, ErrParseRequest
+		return false, ErrParseRequest("introspect")
 	}
 
 	jBody, err := json.Marshal(intrBody)
@@ -129,19 +129,19 @@ func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
 }
 
 func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
-	//set session manager
+	// set session manager
 	sessionManager = sm
 
 	urlKeys := r.URL.Query()
 
-	//get authorization code from url params
+	// get authorization code from url params
 	code := urlKeys.Get("code")
 
 	if code == "" {
-		return ErrAuthCodeNil, http.StatusBadRequest
+		return ErrAuthCodeNil, http.StatusUnauthorized
 	}
 
-	//set body params for token request
+	// set body params for token request
 	body := url.Values{}
 	body.Set("grant_type", "authorization_code")
 	body.Set("code", code)
@@ -151,62 +151,63 @@ func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) 
 
 	tokenReq, err := http.NewRequest(http.MethodPost, hydra.hydraClientUrl+tokenReqPath, strings.NewReader(body.Encode()))
 	if err != nil {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
 	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	tokenReq.Header.Add("Accept", "application/json")
 
 	client := &http.Client{}
-	//make token request for getting information about access token
+
+	// make token request for getting information about access token
 	resp, err := client.Do(tokenReq)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
 	var tokenBody *hydraToken
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
-		return ErrParseRequest, http.StatusBadRequest
+		return ErrParseRequest("token"), http.StatusInternalServerError
 	}
 
-	//access token have to be not nil
+	// access token have to be not nil
 	if tokenBody.AccessToken == "" {
-		return ErrAccessTokenEmpty, http.StatusBadRequest
+		return ErrAccessTokenEmpty, http.StatusUnauthorized
 	}
 
-	//set params for userinfo request
+	// set params for userinfo request
 	uInfoReq, err := http.NewRequest(http.MethodGet, hydra.hydraClientUrl+uInfoReqPath, nil)
 	if err != nil {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
 	uInfoReq.Header.Add("Authorization", "Bearer "+tokenBody.AccessToken)
 	uInfoReq.Header.Add("Accept", "application/json")
 
-	//make userinfo request for getting information about user group
+	// make userinfo request for getting information about user group
 	uInfoResp, err := client.Do(uInfoReq)
 	if err != nil {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
 	var uInfoBody *hydraUserInfo
 	err = json.NewDecoder(uInfoResp.Body).Decode(&uInfoBody)
 	if err != nil {
-		return ErrParseRequest, http.StatusBadRequest
+		return ErrParseRequest("user info"), http.StatusInternalServerError
 	}
 
 	if uInfoBody.Groups == "" {
-		return ErrAccessTokenEmpty, http.StatusBadRequest
+		return ErrAccessTokenEmpty, http.StatusUnauthorized
 	}
 
-	//init session for current user
+	// init session for current user
 	err = sessionManager.RenewToken(r.Context())
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 
-	//save in user session information about group and access token
+	// save in user session information about group and access token
 	sessionManager.Put(r.Context(), utils.GroupKey, uInfoBody.Groups)
 	sessionManager.Put(r.Context(), utils.AccessTokenKey, tokenBody.AccessToken)
 

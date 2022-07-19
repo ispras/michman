@@ -118,6 +118,29 @@ func BadRequest(w http.ResponseWriter, respErr error) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// Unauthorized The 401 (Unauthorized) status code indicates that the request has not been applied
+// because it lacks valid authentication credentials for the target resource.
+func Unauthorized(w http.ResponseWriter, respErr error) {
+	respStruct := structure{
+		Type:   strconv.Itoa(FindErrorType(respErr)),
+		Status: http.StatusUnauthorized,
+		Title:  "Unauthorized",
+		Detail: details{
+			Message: respErr.Error(),
+			Data:    "No data",
+		},
+	}
+
+	w.WriteHeader(respStruct.Status)
+	enc := json.NewEncoder(w)
+	err := enc.Encode(respStruct)
+	if err != nil {
+		InternalError(w, ErrJsonEncode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
 // Forbidden The 403 (Forbidden) status code indicates that the server understood the request,
 //but refuses to fulfill it
 func Forbidden(w http.ResponseWriter, respErr error) {

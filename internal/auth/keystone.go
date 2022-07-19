@@ -12,6 +12,7 @@ const (
 	checkTokenPath = "/v3/auth/tokens"
 	authTokenKey   = "X-Auth-Token"
 	subTokenKey    = "X-Subject-Token"
+	userIdKey      = "user_id"
 )
 
 type KeystoneAuthenticate struct {
@@ -26,10 +27,17 @@ type keystoneRole struct {
 	Name        string            `json:"name"`
 }
 
+type keystoneUser struct {
+	Domain          interface{} `json:"domain"`
+	Id              string      `json:"id"`
+	Name            string      `json:"name"`
+	PasswordExpired interface{} `json:"password_expires_at"`
+}
+
 type tokenInfo struct {
 	Methods   []string       `json:"methods"`
 	Links     interface{}    `json:"links"`
-	User      interface{}    `json:"user"`
+	User      keystoneUser   `json:"user"`
 	Token     interface{}    `json:"token"`
 	ExpiresAt string         `json:"expires_at"`
 	Catalog   []interface{}  `json:"catalog,omitempty"`
@@ -48,77 +56,82 @@ type keystoneToken struct {
 }
 
 func NewKeystoneAuthenticate() (Authenticate, error) {
-	k := new(KeystoneAuthenticate)
+	keystoneAuth := new(KeystoneAuthenticate)
 
 	config := utils.Config{}
 	if err := config.MakeCfg(); err != nil {
 		return nil, err
 	}
-	k.config = config
-	k.keystoneUrl = k.config.KeystoneAddr
-	return k, nil
+	keystoneAuth.config = config
+	keystoneAuth.keystoneUrl = keystoneAuth.config.KeystoneAddr
+	return keystoneAuth, nil
 }
 
-func (keystone KeystoneAuthenticate) CheckAuth(token string) (bool, error) {
+func (keystone KeystoneAuthenticate) CheckAuth(_ string) (bool, error) {
 	return true, nil
 }
 
 func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
-	//set session manager
+	// set session manager
 	sessionManager = sm
 
-	//get auth and subject tokens from headers
+	// get auth and subject tokens from headers
 	authToken := r.Header.Get(authTokenKey)
 	if authToken == "" {
-		return ErrAuthTokenNil, http.StatusBadRequest
+		return ErrAuthTokenNil, http.StatusUnauthorized
 	}
 
 	subToken := r.Header.Get(subTokenKey)
 	if subToken == "" {
-		return ErrSubjectTokenNil, http.StatusBadRequest
+		return ErrSubjectTokenNil, http.StatusUnauthorized
 	}
 
-	//prepare request
+	// prepare request
 	tokenReq, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl+checkTokenPath, nil)
 	if err != nil {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
 	tokenReq.Header.Add(authTokenKey, authToken)
 	tokenReq.Header.Add(subTokenKey, subToken)
 
 	client := &http.Client{}
-	//make token request for getting information about user roles
+
+	// make token request for getting information about user roles
 	resp, err := client.Do(tokenReq)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		return err, http.StatusBadRequest
+		return err, http.StatusInternalServerError
 	}
 
-	//parse request body
+	// parse request body
 	var tokenBody *keystoneToken
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
-		return ErrParseRequest, http.StatusBadRequest
+		return ErrParseRequest("token"), http.StatusInternalServerError
 	}
 
-	//generate user groups by roles names
+	// get user ID from token request
+	userID := tokenBody.Token.User.Id
+
+	// generate user groups by roles names
 	var userGroups strings.Builder
-	for i, r := range tokenBody.Token.Roles {
+	for i, role := range tokenBody.Token.Roles {
 		if i == 0 {
-			//join role without comma for the first time
-			userGroups.WriteString(r.Name)
+			// join role without comma for the first time
+			userGroups.WriteString(role.Name)
 		} else {
-			userGroups.WriteString("," + r.Name)
+			userGroups.WriteString("," + role.Name)
 		}
 	}
 
-	//init session for current user
+	// init session for current user
 	err = sessionManager.RenewToken(r.Context())
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 
-	//save in user session information about groups and tokens
+	// save in user session information about groups, tokens and user ID
+	sessionManager.Put(r.Context(), userIdKey, userID)
 	sessionManager.Put(r.Context(), authTokenKey, authToken)
 	sessionManager.Put(r.Context(), subTokenKey, subToken)
 	if userGroups.String() != "" {
@@ -128,6 +141,6 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Req
 	return nil, http.StatusOK
 }
 
-func (keystone KeystoneAuthenticate) RetrieveToken(r *http.Request) (string, error) {
+func (keystone KeystoneAuthenticate) RetrieveToken(_ *http.Request) (string, error) {
 	return "", nil
 }

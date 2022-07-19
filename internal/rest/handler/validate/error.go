@@ -14,6 +14,7 @@ const (
 	errClustersNhostsMasterSlave               = "NHosts parameter must be number >= 1 if you want to install master-slave services"
 	errClusterImageNotFound                    = "specified Image not found"
 	errClusterStatus                           = "cluster status must be 'ACTIVE' or 'FAILED' for UPDATE or DELETE"
+	errClusterOwnerNotEmpty                    = "cluster 'OwnerID' is generated field. It can't be filled in by user"
 	errFlavorIdNotEmpty                        = "flavor ID is generated field. It can't be filled in by user"
 	errFlavorEmptyName                         = "flavor Name can't be empty"
 	errFlavorZeroField                         = "flavor VCPUs | Disk | RAM can't be zero"
@@ -45,6 +46,7 @@ var (
 	ErrClustersNhostsMasterSlave = errors.New(errClustersNhostsMasterSlave)
 	ErrClusterImageNotFound      = errors.New(errClusterImageNotFound)
 	ErrClusterStatus             = errors.New(errClusterStatus)
+	ErrClusterOwnerNotEmpty      = errors.New(errClusterOwnerNotEmpty)
 
 	// flavor:
 	ErrFlavorIdNotEmpty = errors.New(errFlavorIdNotEmpty)
@@ -121,6 +123,7 @@ func init() {
 	HandlerValidateErrorMap[ErrClustersNhostsMasterSlave] = utils.ValidationError
 	HandlerValidateErrorMap[ErrClusterStatus] = utils.DatabaseError
 	HandlerValidateErrorMap[ErrClusterImageNotFound] = utils.ValidationError
+	HandlerValidateErrorMap[ErrClusterOwnerNotEmpty] = utils.ValidationError
 	HandlerValidateErrorMap[ErrFlavorIdNotEmpty] = utils.ValidationError
 	HandlerValidateErrorMap[ErrFlavorEmptyName] = utils.ValidationError
 	HandlerValidateErrorMap[ErrImageIdNotEmpty] = utils.ValidationError

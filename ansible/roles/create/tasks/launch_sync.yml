@@ -14,7 +14,7 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master"
+    meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master,owner={{ cluster_owner }}"
   retries: 3
   when:
     - floating_ip_pool != "None"
@@ -33,7 +33,7 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master"
+    meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master,owner={{ cluster_owner }}"
   retries: 3
   when:
     - floating_ip_pool == "None"
@@ -50,7 +50,7 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
+    meta: "hostname={{ item }},group={{ cluster_name }}_slaves,owner={{ cluster_owner }}"
   with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1 }} format={{ cluster_name }}-slave-%d
   retries: 3
   when:
@@ -70,7 +70,7 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ item }},group={{ cluster_name }}_slaves"
+    meta: "hostname={{ item }},group={{ cluster_name }}_slaves,owner={{ cluster_owner }}"
   with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1 }} format={{ cluster_name }}-slave-%d
   retries: 3
   when:
@@ -88,7 +88,7 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage"
+    meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage,owner={{ cluster_owner }}"
   retries: 3
   when: floating_ip_pool != "None" and create_storage is defined and create_storage == true
 
@@ -104,6 +104,6 @@
     network: "{{ virtual_network }}"
     boot_from_volume: "{{ boot_from_volume }}"
     security_groups: "{{ cluster_name }}"
-    meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage"
+    meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage,owner={{ cluster_owner }}"
   retries: 3
   when: floating_ip_pool == "None" and create_storage is defined and create_storage == true

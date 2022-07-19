@@ -32,14 +32,15 @@ message Cluster {
     int32 NHosts = 8;
     string MasterIP = 9;
     string ProjectID = 10;
-    string Description = 11;
-    string Image = 12;
-    repeated string Keys = 13;
-    bool Monitoring = 14;
-    string MasterFlavor = 15;
-    string SlavesFlavor = 16;
-    string StorageFlavor = 17;
-    string MonitoringFlavor = 18;
+    string OwnerID = 11;
+    string Description = 12;
+    string Image = 13;
+    repeated string Keys = 14;
+    bool Monitoring = 15;
+    string MasterFlavor = 16;
+    string SlavesFlavor = 17;
+    string StorageFlavor = 18;
+    string MonitoringFlavor = 19;
 }
 
 message Service {

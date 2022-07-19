@@ -20,15 +20,15 @@ func NewNoneAuthenticate() (Authenticate, error) {
 	return n, nil
 }
 
-func (n NoneAuthenticate) CheckAuth(token string) (bool, error) {
+func (n NoneAuthenticate) CheckAuth(_ string) (bool, error) {
 	return true, nil
 }
 
 func (n NoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
-	//set session manager
+	// set session manager
 	sessionManager = sm
 
-	//init session for current user
+	// init session for current user
 	err := sessionManager.RenewToken(r.Context())
 	if err != nil {
 		return err, http.StatusInternalServerError
@@ -38,6 +38,6 @@ func (n NoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (erro
 	return nil, http.StatusOK
 }
 
-func (n NoneAuthenticate) RetrieveToken(r *http.Request) (string, error) {
+func (n NoneAuthenticate) RetrieveToken(_ *http.Request) (string, error) {
 	return "", nil
 }

@@ -20,6 +20,12 @@ const (
 	projectMember = "project_member"
 )
 
+type RespData struct {
+	Message string `json:"message"`
+	Groups  string `json:"groups"`
+	UserID  string `json:"user_id"`
+}
+
 type AuthorizeClient struct {
 	Logger         *logrus.Logger
 	Db             database.Database
@@ -49,7 +55,7 @@ func getProjectIdOrName(urlPath string) (string, error) {
 	return urlKeys[2], nil
 }
 
-//getUserGroups returns a string array of user groups that the user is a member of
+// getUserGroups returns a string array of user groups that the user is a member of
 func (auth *AuthorizeClient) getUserGroups(r *http.Request, groupKey string) []string {
 	groups := auth.SessionManager.GetString(r.Context(), groupKey)
 	if groups == "" {
@@ -68,6 +74,10 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 
 			// var for casbin role, set as user because user is default role
 			role := user
+
+			// add userID variable to the request header
+			userId := auth.SessionManager.GetString(r.Context(), utils.UserIdKey)
+			r.Header.Add(utils.UserIdKey, userId)
 
 			groups := auth.getUserGroups(r, utils.GroupKey)
 			// check if user is a project member
@@ -129,6 +139,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			if res {
 				next.ServeHTTP(w, r)
 			} else {
+				auth.Logger.Info(request)
 				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusForbidden, ": ", ErrUnauthorized.Error())
 				response.Forbidden(w, ErrUnauthorized)
 				return
@@ -149,8 +160,8 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 	if err != nil {
 		auth.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
+		case http.StatusUnauthorized:
+			response.Unauthorized(w, err)
 			return
 		case http.StatusInternalServerError:
 			response.InternalError(w, err)
@@ -158,18 +169,20 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 		}
 	}
 
-	g := auth.SessionManager.GetString(r.Context(), utils.GroupKey)
+	// get user groups(roles) from request response body
+	groups := auth.SessionManager.GetString(r.Context(), utils.GroupKey)
 
-	auth.Logger.Info("Authentication success!")
-	auth.Logger.Info("----User groups are: " + g)
+	// get userID from request response body
+	userId := auth.SessionManager.GetString(r.Context(), utils.UserIdKey)
 
-	var userGroups string
-	if g == "" {
-		userGroups = "You are not a member of any group."
+	if groups == "" {
+		auth.Logger.Warn("Request ", request, " failed with status ", http.StatusUnauthorized, ": ", ErrAuthenticationUnsuccessful.Error())
+		response.Unauthorized(w, ErrAuthenticationUnsuccessful)
 	} else {
-		userGroups = "You are a member of the following groups: " + g
+		message := "Authentication success! " + "You are a member of some groups"
+		auth.Logger.Info("Authentication success!")
+		auth.Logger.Info("----User groups are: " + groups)
+		respData := RespData{message, groups, userId}
+		response.Ok(w, respData, request)
 	}
-
-	message := "Authentication success! " + userGroups
-	response.Ok(w, message, request)
 }

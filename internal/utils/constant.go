@@ -77,6 +77,7 @@ const (
 	//sessions keys
 	GroupKey       = "groups"
 	AccessTokenKey = "AccessToken"
+	UserIdKey      = "user_id"
 
 	//cluster logs outputs
 	LogsFileOutput     = "file"

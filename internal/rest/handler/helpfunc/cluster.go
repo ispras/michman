@@ -13,6 +13,14 @@ type ServiceExists struct {
 	Service *protobuf.Service
 }
 
+// GetClusterOwnerId return user ID from the request header
+func GetClusterOwnerId(r *http.Request) string {
+	if id := r.Header.Get(utils.UserIdKey); id != "" {
+		return id
+	}
+	return "unauthorized"
+}
+
 // GetServiceTypeIdx returns the ordinal number of the desired service in the list of all existing service types
 func GetServiceTypeIdx(service *protobuf.Service, ServiceTypes []protobuf.ServiceType) (int, error) {
 	for i, serviceType := range ServiceTypes {

@@ -348,6 +348,9 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	if extraVars["create_monitoring"] == true {
 		extraVars["deploy_consul"] = true
 	}
+
+	extraVars["cluster_owner"] = cluster.OwnerID
+
 	return extraVars, nil
 }
 

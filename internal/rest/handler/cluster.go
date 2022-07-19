@@ -114,6 +114,9 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		}
 		resCluster.ID = cUuid.String()
 
+		// get userID from the request
+		resCluster.OwnerID = helpfunc.GetClusterOwnerId(r)
+
 		// add services from user request and from dependencies
 		if resCluster.Services != nil {
 			// set uuids for all cluster services
@@ -136,19 +139,19 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 				}
 				return
 			}
-		}
 
-		// cluster should be validated after addition services from dependencies
-		err, status := validate.ClusterCreate(hS.Db, resCluster)
-		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-			switch status {
-			case http.StatusBadRequest:
-				response.BadRequest(w, err)
-				return
-			case http.StatusInternalServerError:
-				response.InternalError(w, err)
-				return
+			// cluster should be validated after addition services from dependencies
+			err, status = validate.ClusterAddedServices(hS.Db, resCluster)
+			if err != nil {
+				hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+				switch status {
+				case http.StatusBadRequest:
+					response.BadRequest(w, err)
+					return
+				case http.StatusInternalServerError:
+					response.InternalError(w, err)
+					return
+				}
 			}
 		}
 
@@ -333,6 +336,20 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 				response.InternalError(w, err)
 				return
 			}
+		}
+	}
+
+	// cluster should be validated after addition services from dependencies
+	err, status = validate.ClusterAddedServices(hS.Db, resCluster)
+	if err != nil {
+		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
+		switch status {
+		case http.StatusBadRequest:
+			response.BadRequest(w, err)
+			return
+		case http.StatusInternalServerError:
+			response.InternalError(w, err)
+			return
 		}
 	}
 
