@@ -28,9 +28,9 @@ func Ok(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 	respStruct := structure{
 		Type:   strconv.Itoa(okCode),
 		Status: http.StatusOK,
-		Title:  "Request: " + requestName,
+		Title:  "Request successful",
 		Detail: details{
-			Message: "Request successful",
+			Message: "Request: " + requestName,
 			Data:    "No data",
 		},
 	}
@@ -55,9 +55,9 @@ func Created(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 	respStruct := structure{
 		Type:   strconv.Itoa(createdCode),
 		Status: http.StatusCreated,
-		Title:  "Request: " + requestName,
+		Title:  "Request successful",
 		Detail: details{
-			Message: "Request successful",
+			Message: "Request: " + requestName,
 			Data:    "No data",
 		},
 	}
@@ -101,9 +101,9 @@ func BadRequest(w http.ResponseWriter, respErr error) {
 	respStruct := structure{
 		Type:   strconv.Itoa(FindErrorType(respErr)),
 		Status: http.StatusBadRequest,
-		Title:  respErr.Error(),
+		Title:  "Bad request",
 		Detail: details{
-			Message: "Bad request",
+			Message: respErr.Error(),
 			Data:    "No data",
 		},
 	}
@@ -147,9 +147,9 @@ func Forbidden(w http.ResponseWriter, respErr error) {
 	respStruct := structure{
 		Type:   strconv.Itoa(FindErrorType(respErr)),
 		Status: http.StatusForbidden,
-		Title:  respErr.Error(),
+		Title:  "Forbidden",
 		Detail: details{
-			Message: "Forbidden",
+			Message: respErr.Error(),
 			Data:    "No data",
 		},
 	}
@@ -170,9 +170,9 @@ func NotFound(w http.ResponseWriter, respErr error) {
 	respStruct := structure{
 		Type:   strconv.Itoa(FindErrorType(respErr)),
 		Status: http.StatusNotFound,
-		Title:  respErr.Error(),
+		Title:  "Object not found",
 		Detail: details{
-			Message: "Object not found",
+			Message: respErr.Error(),
 			Data:    "No data",
 		},
 	}
@@ -193,9 +193,9 @@ func InternalError(w http.ResponseWriter, respErr error) {
 	respStruct := structure{
 		Type:   strconv.Itoa(FindErrorType(respErr)),
 		Status: http.StatusInternalServerError,
-		Title:  respErr.Error(),
+		Title:  "Internal Server Error",
 		Detail: details{
-			Message: "Internal Server Error",
+			Message: respErr.Error(),
 			Data:    "No data",
 		},
 	}
