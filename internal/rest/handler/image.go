@@ -187,7 +187,7 @@ func (hS HttpServer) ImageDelete(w http.ResponseWriter, _ *http.Request, params 
 		}
 	}
 
-	err = hS.Db.DeleteImage(params.ByName("imageName"))
+	err = hS.Db.DeleteImage(imageIdOrName)
 	if err != nil {
 		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
 		response.InternalError(w, err)

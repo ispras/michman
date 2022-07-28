@@ -19,7 +19,7 @@ func ImageCreate(db database.Database, image *protobuf.Image) (error, int) {
 		return ErrImageValidationParam("AnsibleUser"), http.StatusBadRequest
 	}
 	if image.CloudImageID == "" {
-		return ErrImageValidationParam("ImageID"), http.StatusBadRequest
+		return ErrImageValidationParam("CloudImageID"), http.StatusBadRequest
 	}
 
 	dbImg, err := db.ReadImage(image.Name)
