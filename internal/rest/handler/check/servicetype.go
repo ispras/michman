@@ -276,8 +276,8 @@ func ServiceTypeVersionDependency(db database.Database, serviceDependency *proto
 
 // ServiceTypeVersionDependencies checks all dependencies
 func ServiceTypeVersionDependencies(db database.Database, serviceDependencies []*protobuf.ServiceDependency) (error, int) {
-	for _, serviceDependency := range serviceDependencies {
-		err, status := ServiceTypeVersionDependency(db, serviceDependency, serviceDependencies)
+	for i, serviceDependency := range serviceDependencies {
+		err, status := ServiceTypeVersionDependency(db, serviceDependency, serviceDependencies[i+1:])
 		if err != nil {
 			return err, status
 		}
