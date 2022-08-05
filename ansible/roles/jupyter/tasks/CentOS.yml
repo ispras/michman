@@ -1,0 +1,14 @@
+---
+- name: install packages
+  yum:
+    name:
+      - libffi-devel
+      - python3-pip
+      - python3-setuptools
+      - python3-virtualenv
+      - "{{ jupyter_python3_version | replace('.', '') }}"
+      - "{{ jupyter_python3_version | replace('.', '') }}-pip"
+      - "{{ jupyter_python3_version | replace('.', '') }}-setuptools"
+      - "{{ jupyter_python3_version | replace('.', '') }}-devel"
+    update_cache: yes
+  become: yes

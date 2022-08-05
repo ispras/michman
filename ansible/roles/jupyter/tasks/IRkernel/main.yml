@@ -1,0 +1,51 @@
+---
+- name: install R
+  include_tasks: "R/{{ ansible_distribution }}.yml"
+
+- name: create local R lib directory
+  file:
+    path: "{{ jupyter_r_dir }}"
+    state: directory
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+  become: yes
+
+- name: install R packages
+  shell: source {{ jupyter_venv }}/bin/activate && Rscript --vanilla -e "install.packages('{{ item }}', lib='{{ jupyter_r_dir }}', repos='{{ jupyter_cran_mirror }}')"
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ jupyter_user }}"
+  loop:
+    - rzmq
+    - repr
+    - IRdisplay
+    - IRkernel
+
+- name: set path to local R libs in environment
+  lineinfile:
+    path: "{{ jupyter_home }}/.bashrc"
+    state: present
+    line: "export R_LIBS_USER={{ jupyter_r_dir }}"
+  become: yes
+  become_user: "{{ jupyter_user }}"
+
+- name: install IRkernel specs
+  shell:
+    cmd: 'source {{ jupyter_venv }}/bin/activate && Rscript --vanilla -e "IRkernel::installspec()"'
+    chdir: "{{ jupyter_home }}"
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ jupyter_user }}"
+  environment:
+    R_LIBS_USER: "{{ jupyter_r_dir }}"
+
+- name: make local R libs visible to IRkernel
+  lineinfile:
+    path: "{{ jupyter_home }}/.local/share/jupyter/kernels/ir/kernel.json"
+    state: present
+    insertafter: '"display_name": "R",'
+    line: '"env": {"R_LIBS_USER": "{{ jupyter_r_dir }}"},'
+  become: yes
+  become_user: "{{ jupyter_user }}"

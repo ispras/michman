@@ -1,12 +1,24 @@
 [Unit]
-Description=Apache Livy service
+Description=Apache Livy
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
 
 [Service]
+User={{ jupyter_user }}
+Group={{ jupyter_user }}
 Type=forking
-ExecStart={{ livy_home }}/bin/livy-server start
-ExecStop={{ livy_home }}/bin/livy-server stop
-Environment=SPARK_HOME=/opt/spark
-Environment=HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+WorkingDirectory={{ jupyter_livy_dir }}
+ExecStart={{ jupyter_livy_dir }}/bin/livy-server start
+ExecStop={{ jupyter_livy_dir }}/bin/livy-server stop
+Environment=SPARK_HOME={{ jupyter_spark_home }}
+Environment=HADOOP_CONF_DIR={{ jupyter_hadoop_conf_dir }}
+TimeoutSec=30
+Restart= on-failure
+RestartSec= 30
+StartLimitInterval=350
+StartLimitBurst=10
+SuccessExitStatus=143
 
 [Install]
 WantedBy=multi-user.target

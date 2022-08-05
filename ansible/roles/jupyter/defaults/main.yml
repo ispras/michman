@@ -1,0 +1,7 @@
+---
+jupyter_version: jupyter-notebook
+jupyter_python3_version: python3.8
+jupyter_install_irkernel: False
+jupyter_cran_mirror: https://mirror.truenetwork.ru/CRAN
+jupyter_install_sparkmagic: False
+jupyter_livy_version: 0.7.1

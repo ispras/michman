@@ -1,4 +1,0 @@
----
-dependencies:
-  - role: spark_common
-    when: jupyter_version == "{{ jupyter_with_spark_version }}"

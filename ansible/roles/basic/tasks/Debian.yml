@@ -36,10 +36,10 @@
     mode: 0664
   when: use_package_mirror
 
-- name: install python
+- name: install python3
   become: yes
   apt:
-    name: python
+    name: python3
     update_cache: yes
 
 - name: Create .pip directory

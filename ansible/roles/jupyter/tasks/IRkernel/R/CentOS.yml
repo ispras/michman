@@ -1,0 +1,21 @@
+---
+- name: add EPEL repo
+  yum:
+    name: epel-release
+    state: latest
+  become: yes
+
+- name: enable powertools repo
+  shell: yum config-manager --set-enabled powertools
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: install R
+  yum:
+    name:
+      - R
+      - R-devel
+    state: latest
+    update_cache: yes
+  become: yes

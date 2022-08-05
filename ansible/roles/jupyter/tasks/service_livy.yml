@@ -1,9 +1,0 @@
----
-
-- template: src=init.d-livy.j2 dest=/etc/init.d/livy mode=0751
-
-- file: path=/lib/systemd/system/ state=directory
-
-- template: src=systemd-livy.j2 dest=/lib/systemd/system/livy.service mode=0644
-
-- service: name=livy state=started enabled=yes

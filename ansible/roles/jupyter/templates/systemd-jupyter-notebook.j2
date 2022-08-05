@@ -1,0 +1,16 @@
+[Unit]
+Description=Jupyter Notebook service
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/run/jupyter_notebook.pid
+User={{ jupyter_user }}
+Group={{ jupyter_user }}
+ExecStart={{ jupyter_venv }}/bin/jupyter notebook \
+        --config={{ jupyter_service_conf_path }}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

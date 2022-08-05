@@ -1,13 +1,14 @@
 ---
-python_version: 3
-install_as_service: False
-jupyter_service_name: jupyter
-
-livy_service_name: livy
-livy_base_dir: /opt
-livy_file_name: livy-0.5.0-incubating-bin
-livy_download_url: "http://archive.apache.org/dist/incubator/livy/0.5.0-incubating/livy-0.5.0-incubating-bin.zip"
-livy_home: "{{ livy_base_dir }}/{{ livy_file_name }}"
-
-jupyter_version: "{{ jupyter_with_spark_version }}"
-jupyter_with_spark_version: 6.0.1
+jupyter_access_port: 8888
+jupyter_user: jupyter
+jupyter_home: "/home/{{ jupyter_user }}"
+jupyter_venv: "{{ jupyter_home }}/venv"
+jupyter_conf_dir: "{{ jupyter_home }}/.jupyter"
+jupyter_nb_dir: "{{ jupyter_home }}/notebooks"
+jupyter_r_dir: "{{ jupyter_home }}/R"
+jupyter_sparkmagic_dir: "{{ jupyter_venv }}/lib/{{ jupyter_python3_version }}/site-packages/sparkmagic"
+jupyter_livy_release: "apache-livy-{{ jupyter_livy_version }}-incubating-bin"
+jupyter_livy_url: "https://dlcdn.apache.org/incubator/livy/{{ jupyter_livy_version }}-incubating/{{ jupyter_livy_release }}.zip"
+jupyter_livy_dir: "{{ jupyter_home }}/{{ jupyter_livy_release }}"
+jupyter_spark_home: /opt/spark
+jupyter_hadoop_conf_dir: /usr/local/hadoop/etc/hadoop

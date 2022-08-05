@@ -1,0 +1,14 @@
+---
+- name: install packages
+  apt:
+    name:
+      - acl   # https://github.com/georchestra/ansible/issues/55
+      - libffi-dev
+      - python3
+      - python3-pip
+      - python3-setuptools
+      - python3-venv
+      - "{{ jupyter_python3_version }}"
+      - "{{ jupyter_python3_version }}-dev"
+    update_cache: yes
+  become: yes

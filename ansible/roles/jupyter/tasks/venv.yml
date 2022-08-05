@@ -1,0 +1,32 @@
+---
+- name: upgrade pip system wide
+  pip:
+    name: pip
+    state: latest
+    extra_args: --user
+  become_user: "{{ jupyter_user }}"
+  become: yes
+
+- name: install venv
+  pip:
+    name: virtualenv
+    state: latest
+    extra_args: --user
+  become_user: "{{ jupyter_user }}"
+  become: yes
+
+- name: create venv
+  command:
+    cmd: "python3 -m virtualenv --python={{ jupyter_python3_version }} {{ jupyter_venv }}"
+  become_user: "{{ jupyter_user }}"
+  become: yes
+
+#- name: create venv and upgrade pip
+#  pip:
+#    virtualenv: "{{ jupyter_venv }}"
+#    virtualenv_command: "python3 -m venv"
+#    virtualenv_python: "{{ jupyter_python3_version }}"
+#    name: pip
+#    state: latest
+#  become_user: "{{ jupyter_user }}"
+#  become: yes

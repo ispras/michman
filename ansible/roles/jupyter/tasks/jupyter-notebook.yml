@@ -1,0 +1,7 @@
+---
+- name: install jupyter
+  pip:
+    name: jupyter
+    virtualenv: "{{ jupyter_venv }}"
+  become_user: "{{ jupyter_user }}"
+  become: yes

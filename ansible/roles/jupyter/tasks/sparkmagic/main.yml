@@ -1,0 +1,39 @@
+---
+- name: install Kerberos library (Ubuntu)
+  apt:
+    name: libkrb5-dev
+  become: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: install Kerberos library (CentOS)
+  yum:
+    name: krb5-devel
+  become: yes
+  when: ansible_distribution == "CentOS"
+
+- include_tasks: livy.yml
+
+- name: install sparkmagic
+  pip:
+    name: sparkmagic
+    virtualenv: "{{ jupyter_venv }}"
+  become: yes
+  become_user: "{{ jupyter_user }}"
+
+- name: make sure that ipywidgets is properly installed
+  shell: "source {{ jupyter_venv }}/bin/activate && jupyter nbextension enable --py --sys-prefix widgetsnbextension"
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ jupyter_user }}"
+
+- name: install wrapper kernels
+  shell: "source {{ jupyter_venv }}/bin/activate && jupyter-kernelspec install --user {{ jupyter_sparkmagic_dir }}/kernels/{{ item }}"
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ jupyter_user }}"
+  loop:
+    - sparkkernel
+    - pysparkkernel
+    - sparkrkernel

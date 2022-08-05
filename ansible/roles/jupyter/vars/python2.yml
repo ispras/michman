@@ -1,4 +1,0 @@
----
-
-apt_pkg_pref: python
-spark_magic_path: '/usr/local/lib/python2.7/dist-packages/sparkmagic'

@@ -1,128 +1,47 @@
 ---
-
-- include: prepare.yml
-  when: not skip_install|default(False)
-
-
-- name: Download and unarchive livy
+- name: create jupyter user
+  user:
+    name: "{{ jupyter_user }}"
+    home: "{{ jupyter_home }}"
+    state: present
+    shell: /bin/bash
   become: yes
-  unarchive:
-    src: "{{ livy_download_url }}"
-    dest: "{{ livy_base_dir }}"
-    remote_src: yes
-  when: jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
 
-- name: setup sparkmagic_spark_kernel
-  become: yes
-  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkkernel
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
+- include_tasks: "{{ ansible_distribution }}.yml"
 
+- include_tasks: venv.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
-- name: setup sparkmagic_pyspark_kernel
-  become: yes
-  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/pysparkkernel
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
+- name: set jupyter service config path (jupyter-notebook)
+  set_fact:
+    jupyter_service_conf_path: "{{ jupyter_conf_dir }}/jupyter_notebook_config.py"
+  when: jupyter_version == "jupyter-notebook"
 
+- name: set jupyter service config path (jupyter-lab)
+  set_fact:
+    jupyter_service_conf_path: "{{ jupyter_conf_dir }}/jupyter_notebook_config.py"
+  when: jupyter_version == "jupyter-lab"
 
-- name: setup sparkmagic_sparkr_kernel
-  become: yes
-  shell: jupyter-kernelspec install {{ spark_magic_path }}/kernels/sparkrkernel
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
+- include_tasks: "{{ jupyter_version }}.yml"
 
+- include_tasks: service.yml
 
-- name: create livy config dir
-  become: yes
-  file: path=~/.sparkmagic state=directory
-  when: jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
+- name: Print
+  debug:
+    var: jupyter_install_irkernel
 
+- name: Print
+  debug:
+    var: jupyter_install_sparkmagic
 
-- name: copy livy kernel config
-  become: yes
-  template: src=livy_config.json dest=~/.sparkmagic/config.json
-  when: jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
+- name: Print
+  debug:
+    var: deploy_spark
+  when: deploy_spark is defined
 
+- include_tasks: IRkernel/main.yml
+  when: jupyter_install_irkernel
 
-- name: create config
-  shell: jupyter notebook --generate-config -y
-  when: not skip_install|default(False)
-  become: false
-  tags:
-  - install
-  - jupyter_install
-
-- name: change jupyter_notebook_config.py
-
-#TODO: authentification is disabled,NotebookApp.token must be changed
-  lineinfile:
-    dest=/home/{{ hadoop_user }}/.jupyter/jupyter_notebook_config.py
-    state=present insertafter=EOF
-    line="c.NotebookApp.ip = '0.0.0.0'\nc.NotebookApp.token = ''"
-    create=true
-  tags:
-  - install
-  - jupyter_install
-
-
-- name: download scala
-  shell: wget http://www.scala-lang.org/files/archive/scala-2.10.4.deb
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
-
-- name: get dependencies
-  package: name=libjansi-java state=present
-  become: yes
-  when: jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
-
-- name: do magic
-  become: yes
-  shell: apt-get update
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
-
-- name: install scala
-  become: yes
-  shell: apt-get install -y scala
-  when: not skip_install|default(False) and jupyter_version == "{{ jupyter_with_spark_version }}"
-  tags:
-  - install
-  - jupyter_install
-
-- include: service_livy.yml
-  become: yes
-  become_user: root
-  when: install_as_service and jupyter_version == "{{ jupyter_with_spark_version }}"
-
-- debug: msg="Livy install finished on {{ hostvars[inventory_hostname].ansible_ssh_host }}"
-
-
-- include: service_jupyter.yml
-  become: yes
-  become_user: root
-  when: install_as_service
-
-- debug: msg="jupyter install finished on {{ hostvars[inventory_hostname].ansible_ssh_host }} (python_version={{ python_version }})"
+- include_tasks: sparkmagic/main.yml
+  when: jupyter_install_sparkmagic and deploy_spark is defined and deploy_spark

@@ -1,7 +1,7 @@
 {
   "Type": "jupyter",
   "Description": "Jupyter service",
-  "DefaultVersion": "6.0.1",
+  "DefaultVersion": "jupyter-notebook",
   "Class": "stand-alone",
   "AccessPort": 8888,
   "HealthCheck":[
@@ -12,100 +12,120 @@
   ],
   "Versions": [
     {
-      "Version": "6.0.1",
-      "Description": "Jupyter version 6.0.1 (latest for pip install)",
+      "Version": "jupyter-notebook",
+      "Description": "Latest version of Jupyter Notebook",
       "Configs": [
         {
-          "ParameterName": "core",
+          "ParameterName": "python3_version",
           "Type": "string",
-          "DefaultValue": "4.5.0",
+          "DefaultValue": "python3.8",
+          "Required": true,
           "PossibleValues": [
-            "4.5.0"
+            "python3.7",
+            "python3.8",
+            "python3.9"
           ],
-          "Required": false,
-          "Description": "default jupyter core version (now this config param is not supported)"
+          "Description": "Version of python3 jupyter would be installed for, format - 'python3.x'",
+          "AnsibleVarName": "jupyter_python3_version"
         },
         {
-          "ParameterName": "qtconsole",
+          "ParameterName": "install_irkernel",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Install additional kernel for R - IRkernel",
+          "AnsibleVarName": "jupyter_install_irkernel"
+        },
+        {
+          "ParameterName": "install_sparkmagic",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Install additional kernel for Pyspark, Spark and SparkR - sparkmagic, takes effect only if Spark service is installed",
+          "AnsibleVarName": "jupyter_install_sparkmagic"
+        },
+        {
+          "ParameterName": "cran_mirror",
           "Type": "string",
-          "DefaultValue": "-",
+          "DefaultValue": "https://mirror.truenetwork.ru/CRAN",
+          "Required": true,
+          "Description": "Mirror URL for CRAN packages, takes effect only if IRkernel is installed",
+          "AnsibleVarName": "jupyter_cran_mirror"
+        },
+        {
+          "ParameterName": "livy_version",
+          "Type": "string",
+          "DefaultValue": "0.7.1",
+          "Required": true,
           "PossibleValues": [
-            "-"
+            "0.4.0",
+            "0.5.0",
+            "0.6.0",
+            "0.7.0",
+            "0.7.1"
           ],
-          "Required": false,
-          "Description": "now qtconsole is not installed (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "ipython",
-          "Type": "string",
-          "DefaultValue": "7.8.0",
-          "Required": false,
-          "Description": "default ipython version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "ipykernel",
-          "Type": "string",
-          "DefaultValue": "5.1.2",
-          "Required": false,
-          "Description": "default ipykernel version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "client",
-          "Type": "string",
-          "DefaultValue": "5.3.1",
-          "Required": false,
-          "Description": "default jupyter client version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "lab",
-          "Type": "string",
-          "DefaultValue": "1.1.1",
-          "Required": false,
-          "Description": "default jupyter lab version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "nbconvert",
-          "Type": "string",
-          "DefaultValue": "5.6.0",
-          "Required": false,
-          "Description": "default nbconvert version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "ipywidgets",
-          "Type": "string",
-          "DefaultValue": "-",
-          "Required": false,
-          "Description": "now ipywidgets is not installed (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "nbformat",
-          "Type": "string",
-          "DefaultValue": "4.4.0",
-          "Required": false,
-          "Description": "default nbformat version (now this config param is not supported)"
-        },
-        {
-          "ParameterName": "traitlets",
-          "Type": "string",
-          "DefaultValue": "4.3.2",
-          "Required": false,
-          "Description": "default traitlets version (now this config param is not supported)"
+          "Description": "Version of Apache Livy to be installed, takes effect only if sparkmagic is installed",
+          "AnsibleVarName": "jupyter_livy_version"
         }
-      ],
-    "Dependencies": [
-      {
-          "ServiceType": "spark",
-          "ServiceVersions": ["1.0.0", "1.0.1", "1.0.2", "1.1.0", "1.1.1", "1.2.0", "1.2.1", "1.2.2",
-          "1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.5.0", "1.5.1", "1.5.2", "1.6.0", "1.6.1", "1.6.2",
-          "2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.2.0", "2.2.1", "2.3.0"],
-          "DefaultServiceVersion": "2.3.0",
-          "Description": "Dependency jupyter->spark"
-      }
-    ]
-  },
-  {
-    "Version": "simple",
-    "Description": "Jupyter version 6.0.1 (latest for pip install) without spark-dependency"
-  }
+      ]
+    },
+    {
+      "Version": "jupyter-lab",
+      "Description": "Latest version of Jupyter Lab",
+      "Configs": [
+        {
+          "ParameterName": "python3_version",
+          "Type": "string",
+          "DefaultValue": "python3.8",
+          "Required": true,
+          "PossibleValues": [
+            "python3.7",
+            "python3.8",
+            "python3.9"
+          ],
+          "Description": "Version of python3 jupyter would be installed for, format - 'python3.x'",
+          "AnsibleVarName": "jupyter_python3_version"
+        },
+        {
+          "ParameterName": "install_irkernel",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Install additional kernel for R - IRkernel",
+          "AnsibleVarName": "jupyter_install_irkernel"
+        },
+        {
+          "ParameterName": "install_sparkmagic",
+          "Type": "bool",
+          "DefaultValue": "false",
+          "Required": true,
+          "Description": "Install additional kernel for Pyspark, Spark and SparkR - sparkmagic, takes effect only if Spark service is installed",
+          "AnsibleVarName": "jupyter_install_sparkmagic"
+        },
+        {
+          "ParameterName": "cran_mirror",
+          "Type": "string",
+          "DefaultValue": "https://mirror.truenetwork.ru/CRAN",
+          "Required": true,
+          "Description": "Mirror URL for CRAN packages, takes effect only if IRkernel is installed",
+          "AnsibleVarName": "jupyter_cran_mirror"
+        },
+        {
+          "ParameterName": "livy_version",
+          "Type": "string",
+          "DefaultValue": "0.7.1",
+          "Required": true,
+          "PossibleValues": [
+            "0.4.0",
+            "0.5.0",
+            "0.6.0",
+            "0.7.0",
+            "0.7.1"
+          ],
+          "Description": "Version of Apache Livy to be installed, takes effect only if sparkmagic is installed",
+          "AnsibleVarName": "jupyter_livy_version"
+        }
+      ]
+    }
   ]
 }

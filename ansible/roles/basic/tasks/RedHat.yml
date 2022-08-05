@@ -22,10 +22,10 @@
     mode: 0644
   when: use_package_mirror
 
-- name: install python
+- name: install python3
   become: yes
   yum:
-    name: python
+    name: python3
     update_cache: yes
 
 - name: Create .pip directory

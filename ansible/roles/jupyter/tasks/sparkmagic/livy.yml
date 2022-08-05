@@ -1,0 +1,69 @@
+---
+- name: install packages (Ubuntu)
+  apt:
+    name:
+      - unzip
+  become: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: install packages (CentOS)
+  yum:
+    name:
+      - unzip
+  become: yes
+  when: ansible_distribution == "CentOS"
+
+# unzip is required
+- name: download and unarchive livy
+  unarchive:
+    src: "{{ jupyter_livy_url }}"
+    dest: "{{ jupyter_home }}"
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+    remote_src: yes
+  become: yes
+
+- name: create livy config dir
+  file:
+    path: "{{ jupyter_home }}/.sparkmagic"
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+    state: directory
+  become: yes
+
+- name: create livy config from template
+  template:
+    src: conf-livy.j2
+    dest: "{{ jupyter_home }}/.sparkmagic/config.json"
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+    mode: 0644
+  become: yes
+
+- name: create systemd file for livy service
+  template:
+    src: systemd-livy.j2
+    dest: /etc/systemd/system/livy.service
+    mode: 0644
+  become: yes
+
+- name: change security policy for livy service (CentOS)
+  when: ansible_distribution == "CentOS"
+  block:
+    - name: set SELinux permissions on venv binaries
+      sefcontext:
+        target: "{{ jupyter_livy_dir }}/bin(/.*)?"
+        setype: bin_t
+        state: present
+      become: yes
+
+    - name: reload SELinux policy
+      command: "restorecon -irv {{ jupyter_livy_dir }}/bin"
+      become: yes
+
+# TODO: find out why systemd module doesn't work on CentOS
+- name: start livy service
+  shell: systemctl start livy
+  args:
+    executable: /bin/bash
+  become: yes

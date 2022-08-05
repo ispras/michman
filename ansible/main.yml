@@ -11,6 +11,7 @@
         name: os_facts
       when: act != "destroy"
 
+# TODO: task fails on CentOS because of python3
 - hosts: all
   gather_facts: no
   vars:
@@ -19,6 +20,7 @@
     - name: wait for hosts to become reachable
       wait_for_connection:
 
+# TODO: task fails on CentOS because of python3
 - hosts: all
   vars:
     ansible_python_interpreter: "/usr/bin/python3"
@@ -31,6 +33,7 @@
     - include_role:
         name: mem_mb
 
+# TODO: task fails on CentOS because of python3
 - hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
   become: yes
   vars:
@@ -99,7 +102,9 @@
     - include_role:
         name: jupyter
       vars:
-        install_as_service: True
+        jupyter_irkernel_install: False
+        jupyter_sparkmagic_install: False
+        jupyter_install_as_jupyter_lab: False
       when: deploy_jupyter is defined and deploy_jupyter
     - include_role:
         name: jupyterhub

@@ -1,0 +1,66 @@
+---
+- name: create jupyter notebooks directory
+  file:
+    path: "{{ jupyter_nb_dir }}"
+    state: directory
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+  become: yes
+
+- name: create directory for jupyter config
+  file:
+    path: "{{ jupyter_conf_dir }}"
+    state: directory
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+  become: yes
+
+- name: create jupyter config from template
+  template:
+    src: "conf-{{ jupyter_version }}.j2"
+    dest: "{{ jupyter_service_conf_path }}"
+    owner: "{{ jupyter_user }}"
+    group: "{{ jupyter_user }}"
+  become: yes
+
+- name: create systemd directory
+  file:
+    path: /etc/systemd/system/
+    state: directory
+  become: yes
+
+- name: create systemd file for jupyter service
+  template:
+    src: "systemd-{{ jupyter_version }}.j2"
+    dest: "/etc/systemd/system/{{ jupyter_version }}.service"
+    mode: 0644
+  become: yes
+
+- name: change security policy for jupyter service (CentOS)
+  when: ansible_distribution == "CentOS"
+  block:
+    - name: set SELinux permissions on venv binaries
+      sefcontext:
+        target: "{{ jupyter_venv }}/bin(/.*)?"
+        setype: bin_t
+        state: present
+      become: yes
+
+    - name: reload SELinux policy
+      command: "restorecon -irv {{ jupyter_venv }}/bin"
+      become: yes
+
+# TODO: find out why this doesn't work on CentOS
+#- name: start jupyter service
+#  systemd:
+#    name: "{{ jupyter_version }}"
+#    state: started
+#    daemon-reload: yes
+#    enabled: yes
+#  become: yes
+
+- name: start jupyter service
+  shell: "systemctl start {{ jupyter_version }}"
+  args:
+    executable: /bin/bash
+  become: yes

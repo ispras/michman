@@ -1,0 +1,37 @@
+---
+- name: make sure directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+  become: yes
+
+- name: install wget
+  apt:
+    name: wget
+    state: present
+  become: yes
+
+- name: delete existing R repository key
+  file:
+    path: /etc/apt/keyrings/cran_ubuntu_key.gpg
+    state: absent
+  become: yes
+
+- name: add R repository key
+  shell: sudo wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /etc/apt/keyrings/cran_ubuntu_key.gpg
+  become: yes
+
+- name: add R repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/cran_ubuntu_key.gpg] https://cloud.r-project.org/bin/linux/ubuntu {{ ansible_distribution_release }}-cran40/"
+    state: present
+  become: yes
+
+- name: install R
+  apt:
+    name:
+      - libzmq3-dev
+      - r-base
+      - r-base-dev
+    update_cache: yes
+  become: yes

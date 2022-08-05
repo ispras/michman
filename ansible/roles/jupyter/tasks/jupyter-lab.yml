@@ -1,0 +1,7 @@
+---
+- name: install jupyterlab
+  pip:
+    name: jupyterlab
+    virtualenv: "{{ jupyter_venv }}"
+  become: yes
+  become_user: "{{ jupyter_user }}"
