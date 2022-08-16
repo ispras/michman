@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ispras/michman/internal/rest/handlers"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +10,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	mocks "github.com/ispras/michman/internal/mocks"
+	mocks "github.com/ispras/michman/internal/mock"
 	protobuf "github.com/ispras/michman/internal/protobuf"
 	"github.com/julienschmidt/httprouter"
 )

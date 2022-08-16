@@ -51,20 +51,24 @@ func main() {
 	vaultCommunicator := utils.VaultCommunicator{}
 	err = vaultCommunicator.Init()
 	if err != nil {
+		LauncherLogger.SetOutput(os.Stderr)
 		LauncherLogger.Fatal(err)
 	}
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
+		LauncherLogger.SetOutput(os.Stderr)
 		LauncherLogger.Fatal(err)
 	}
 	lis, err := net.Listen("tcp", ":"+*launcherPort)
 	if err != nil {
+		LauncherLogger.SetOutput(os.Stderr)
 		LauncherLogger.Fatal(cmd.ErrTcpListen(*launcherPort))
 	}
 	gas := grpc.NewServer()
 
 	vaultClient, vaultCfg, err := vaultCommunicator.ConnectVault()
 	if vaultClient == nil || err != nil {
+		LauncherLogger.SetOutput(os.Stderr)
 		LauncherLogger.Fatal(err)
 	}
 
@@ -78,6 +82,7 @@ func main() {
 	aService.Logger.Info("Ansible runner start work...")
 	err = gas.Serve(lis)
 	if err != nil {
+		LauncherLogger.SetOutput(os.Stderr)
 		aService.Logger.Fatal(cmd.ErrServe)
 	}
 }

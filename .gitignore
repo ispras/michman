@@ -111,10 +111,23 @@ ENV/
 .pydevproject
 .settings/
 
+#mocks
+mock_database.go
+mock_grpcclient.go
+mock_vault.go
+
 **/ssh_key
 **/keys/*
 config.yaml
 logs/*.log
+
+.launch_start.log
+.http_start.log
+.http.pid
+.launch.pid
+http
+launch
+launcher.pb.go
 
 .DS_Store
 munge.key

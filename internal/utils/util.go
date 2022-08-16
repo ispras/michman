@@ -2,6 +2,7 @@ package utils
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"io"
@@ -120,4 +121,15 @@ func IsUuid(idOrNotId string) bool {
 		isUuid = false
 	}
 	return isUuid
+}
+
+func FileExists(name string) (bool, error) {
+	_, err := os.Stat(name)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }

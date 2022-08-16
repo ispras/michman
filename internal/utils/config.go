@@ -45,13 +45,15 @@ type Config struct {
 
 	//Authentication
 	UseAuth            bool   `yaml:"use_auth"`
-	AuthorizationModel string `yaml:"authorization_model,omitempty"`   //Now are supported only 'oauth2', 'none' or 'keystone' values
-	AdminGroup         string `yaml:"admin_group,omitempty"`           //name of the Admin user group
-	SessionIdleTimeout int    `yaml:"session_idle_timeout,omitempty"'` //time in minutes, controls the maximum length of time a session can be inactive before it expires
-	SessionLifetime    int    `yaml:"session_lifetime,omitempty"`      //time in minutes, controls the maximum length of time that a session is valid for before it expires
-	HydraAdmin         string `yaml:"hydra_admin,omitempty"`           //hydra admin address
-	HydraClient        string `yaml:"hydra_client,omitempty"`          //hydra client address
-	KeystoneAddr       string `yaml:"keystone_addr,omitempty"`         //keystone service address
+	AuthorizationModel string `yaml:"authorization_model,omitempty"`  //Now are supported only 'oauth2', 'none' or 'keystone' values
+	AdminGroup         string `yaml:"admin_group,omitempty"`          //name of the Admin user group
+	SessionIdleTimeout int    `yaml:"session_idle_timeout,omitempty"` //time in minutes, controls the maximum length of time a session can be inactive before it expires
+	SessionLifetime    int    `yaml:"session_lifetime,omitempty"`     //time in minutes, controls the maximum length of time that a session is valid for before it expires
+	HydraAdmin         string `yaml:"hydra_admin,omitempty"`          //hydra admin address
+	HydraClient        string `yaml:"hydra_client,omitempty"`         //hydra client address
+	KeystoneAddr       string `yaml:"keystone_addr,omitempty"`        //keystone service address
+	AuthConfigPath     string `yaml:"auth_config_path,omitempty"`     //path to auth_model.conf
+	PolicyPath         string `yaml:"policy_path,omitempty"`          //path to policy.csv
 
 	//Cluster logs
 	LogsOutput   string `yaml:"logs_output"`              //file or logstash

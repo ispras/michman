@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
@@ -20,6 +19,5 @@ type HttpServer struct {
 	Logger *logrus.Logger
 	Db     database.Database
 	Router *httprouter.Router
-	Auth   auth.Authenticate
 	Config utils.Config
 }

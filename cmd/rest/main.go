@@ -36,7 +36,7 @@ func main() {
 	//set config file path
 	utils.SetConfigPath(*configPath)
 
-	// create a multiwriter which writes to stdout and a file simultaneously
+	// create a multi-writer which writes to stdout and a file simultaneously
 	config := utils.Config{}
 	err := config.MakeCfg()
 	if err != nil {
@@ -84,34 +84,52 @@ func main() {
 			LoggerName:      "AUTH_CLIENT",
 		},
 	}
-
 	httpLogger.Infof("Build version: %v", handler.VersionID)
 
 	//check rest port correctness
 	iRestPort, err := strconv.Atoi(*restPort)
 	if err != nil {
+		httpLogger.SetOutput(os.Stderr)
 		httpLogger.Fatal(cmd.ErrAtoi)
 	}
 	if iRestPort <= 0 {
 		*restPort = restDefaultPort
 	}
 
-	// setup casbin auth rules
-	authEnforcer, err := casbin.NewEnforcerSafe("./configs/auth_model.conf", "./configs/policy.csv")
-	if err != nil {
-		httpLogger.Fatal(cmd.ErrNewEnforcerSafe)
+	var authEnforcer *casbin.Enforcer
+	if config.UseAuth {
+		exists, err := utils.FileExists(config.AuthConfigPath)
+		if !exists {
+			httpLogger.SetOutput(os.Stderr)
+			httpLogger.Fatal(cmd.ErrAuthModelNotExists)
+		}
+
+		exists, err = utils.FileExists(config.PolicyPath)
+		if !exists {
+			httpLogger.SetOutput(os.Stderr)
+			httpLogger.Fatal(cmd.ErrPolicyNotExists)
+		}
+
+		// setup casbin auth rules
+		authEnforcer, err = casbin.NewEnforcerSafe(config.AuthConfigPath, config.PolicyPath)
+		if err != nil {
+			httpLogger.SetOutput(os.Stderr)
+			httpLogger.Fatal(cmd.ErrNewEnforcerSafe)
+		}
 	}
 
 	// creating vault communicator
 	vaultCommunicator := utils.VaultCommunicator{}
 	err = vaultCommunicator.Init()
 	if err != nil {
+		httpLogger.SetOutput(os.Stderr)
 		httpLogger.Fatal(err)
 	}
 
 	//initialize db connection
 	db, err := database.NewCouchBase(&vaultCommunicator)
 	if err != nil {
+		httpLogger.SetOutput(os.Stderr)
 		httpLogger.Fatal(err)
 	}
 
@@ -119,6 +137,7 @@ func main() {
 	gc.SetLogger(grpcLogger)
 	err = gc.SetConnection(*launcherAddr)
 	if err != nil {
+		httpLogger.SetOutput(os.Stderr)
 		grpcLogger.Fatal(err)
 	}
 
@@ -132,28 +151,31 @@ func main() {
 		sessionManager.Lifetime = time.Duration(config.SessionLifetime) * time.Minute
 	}
 
-	var usedAuth auth.Authenticate
-	usedAuth, err = auth.InitAuth(config.AuthorizationModel)
-	if err != nil {
-		httpLogger.Fatal(err)
-	}
-
 	router := httprouter.New()
 
-	authorizeClient := authorization.AuthorizeClient{Logger: authorizeLogger, Db: db,
-		Config: config, SessionManager: sessionManager, Auth: usedAuth, Router: router}
-
-	hS := handler.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Auth: usedAuth, Config: config}
-
-	authorizeClient.CreateRoutes()
-	hS.CreateRoutes()
-
 	httpLogger.Info("Server starts to work")
+
 	//serve with session and authorization if authentication is used
 	if config.UseAuth {
-		httpLogger.Fatal(http.ListenAndServe(":"+*restPort,
-			sessionManager.LoadAndSave(authorizeClient.Authorizer(authEnforcer)(router))))
+		var usedAuth auth.Authenticate
+		usedAuth, err = auth.InitAuth(config.AuthorizationModel)
+		if err != nil {
+			httpLogger.SetOutput(os.Stderr)
+			httpLogger.Fatal(err)
+		}
+		authorizeClient := authorization.AuthorizeClient{Logger: authorizeLogger, Db: db,
+			Config: config, SessionManager: sessionManager, Auth: usedAuth, Router: router}
+
+		authorizeClient.CreateRoutes()
+		err = http.ListenAndServe(":"+*restPort, sessionManager.LoadAndSave(authorizeClient.Authorizer(authEnforcer)(router)))
+
+		httpLogger.SetOutput(os.Stderr)
+		httpLogger.Fatal(err)
 	} else {
-		httpLogger.Fatal(http.ListenAndServe(":"+*restPort, router))
+		hS := handler.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Config: config}
+		hS.CreateRoutes()
+		err = http.ListenAndServe(":"+*restPort, router)
+		httpLogger.SetOutput(os.Stderr)
+		httpLogger.Fatal(err)
 	}
 }
