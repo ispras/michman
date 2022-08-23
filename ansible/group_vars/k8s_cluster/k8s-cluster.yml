@@ -33,7 +33,7 @@ kube_cert_group: kube-cert
 kube_log_level: 2
 
 # Directory where credentials will be stored
-credentials_dir: "{{ playbook_dir }}/files/kube"
+credentials_dir: "{{ playbook_dir }}/files/kube/{{ cluster_name }}"
 
 ## It is possible to activate / deactivate selected authentication methods (oidc, static token auth)
 # kube_oidc_auth: false

@@ -118,6 +118,7 @@ mock_vault.go
 
 **/ssh_key
 **/keys/*
+**/kube/*
 config.yaml
 logs/*.log
 

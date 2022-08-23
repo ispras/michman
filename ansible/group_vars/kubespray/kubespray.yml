@@ -7,7 +7,7 @@ etcd_kubeadm_enabled: true
 
 ## Directory where the binaries will be installed
 bin_dir: /usr/local/bin
-artifacts_dir: "{{ playbook_dir }}/files/kube"
+artifacts_dir: "{{ playbook_dir }}/files/kube/{{ cluster_name }}"
 
 ## The access_ip variable is used to define how other nodes should access
 ## the node.  This is used in flannel to allow other flannel nodes to see

@@ -127,17 +127,18 @@
   gather_facts: yes
   become: yes
   tasks:
-    - name: Change kubeconfig permission
+    - name: Create kube config dir for hadoop user
       file:
-        path: "/etc/kubernetes/admin.conf"
-        owner: ubuntu
+        path: "/home/{{ hadoop_user }}/.kube"
+        mode: "0700"
+        owner: "{{ hadoop_user }}"
+        state: directory
 
-    - name: Change external kubeconfig permission
-      file:
-        path: "/etc/kubernetes/external-admin.conf"
-        owner: ubuntu
-
-    - name: Export kubeconfig path
-      lineinfile:
-        path: "/home/ubuntu/.bashrc"
-        line: export KUBECONFIG=/etc/kubernetes/admin.conf
+    - name: Copy admin kubeconfig to hadoop user home
+      copy:
+        src: "{{ kube_config_dir }}/admin.conf"
+        dest: "/home/{{ hadoop_user }}/.kube/config"
+        remote_src: yes
+        mode: "0600"
+        owner: "{{ hadoop_user }}"
+        backup: yes
