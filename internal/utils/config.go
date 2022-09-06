@@ -23,6 +23,7 @@ type Config struct {
 	CbKey       string `yaml:"cb_key"`
 	RegistryKey string `yaml:"registry_key"`
 	HydraKey    string `yaml:"hydra_key"`
+	MySqlKey    string `yaml:"mysql_key"`
 
 	// Mirror
 	UsePackageMirror string `yaml:"use_package_mirror,omitempty"`
@@ -60,6 +61,9 @@ type Config struct {
 	LogsFilePath string `yaml:"logs_file_path,omitempty"` //path to directory with cluster logs if file output is used
 	LogstashAddr string `yaml:"logstash_addr,omitempty"`  //logstash address if logstash output is used
 	ElasticAddr  string `yaml:"elastic_addr,omitempty"`   //elastic address if logstash output is used
+
+	//Storage provider
+	Storage string `yaml:"storage"` //couchbase or mysql
 }
 
 func SetConfigPath(configPath string) {
@@ -129,6 +133,10 @@ func (Cfg *Config) MakeCfg() error {
 	//check logstash addr not empty
 	if Cfg.LogsOutput == LogsLogstashOutput && (Cfg.LogstashAddr == "" || Cfg.ElasticAddr == "") {
 		return ErrLogstashOutputParams
+	}
+
+	if Cfg.Storage != StorageCouchbase && Cfg.Storage != StorageMySQL {
+		return ErrStorage
 	}
 	return nil
 }

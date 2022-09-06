@@ -2,6 +2,12 @@ package main
 
 import (
 	"flag"
+	"io"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/alexedwards/scs/v2"
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/cmd"
@@ -14,11 +20,6 @@ import (
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
-	"io"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
 )
 
 const (
@@ -127,10 +128,17 @@ func main() {
 	}
 
 	//initialize db connection
-	db, err := database.NewCouchBase(&vaultCommunicator)
-	if err != nil {
-		httpLogger.SetOutput(os.Stderr)
-		httpLogger.Fatal(err)
+	var db database.Database
+	if config.Storage == utils.StorageMySQL {
+		db, err = database.NewMySQL(&vaultCommunicator)
+		if err != nil {
+			httpLogger.Fatal(err)
+		}
+	} else {
+		db, err = database.NewCouchBase(&vaultCommunicator)
+		if err != nil {
+			httpLogger.Fatal(err)
+		}
 	}
 
 	gc := grpc_client.GrpcClient{Db: db}

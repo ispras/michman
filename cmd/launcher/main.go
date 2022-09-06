@@ -54,11 +54,21 @@ func main() {
 		LauncherLogger.SetOutput(os.Stderr)
 		LauncherLogger.Fatal(err)
 	}
-	db, err := database.NewCouchBase(&vaultCommunicator)
-	if err != nil {
-		LauncherLogger.SetOutput(os.Stderr)
-		LauncherLogger.Fatal(err)
-	}
+
+	//initialize db connection
+	var db database.Database
+	if config.Storage == utils.StorageMySQL {
+		db, err = database.NewMySQL(&vaultCommunicator)
+		if err != nil {
+			LauncherLogger.Fatal(err)
+		}
+	} else {
+		db, err = database.NewCouchBase(&vaultCommunicator)
+		if err != nil {
+			LauncherLogger.Fatal(err)
+		}
+	} 
+
 	lis, err := net.Listen("tcp", ":"+*launcherPort)
 	if err != nil {
 		LauncherLogger.SetOutput(os.Stderr)

@@ -25,7 +25,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 
 	//saving cluster to database
 	logger.Info("Writing new cluster to db...")
-	err = aL.Db.WriteCluster(cluster)
+	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
 		return utils.RunFail, err
 	}

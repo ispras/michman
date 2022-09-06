@@ -18,7 +18,7 @@ type Database interface {
 	UpdateProject(project *protobuf.Project) error
 	DeleteProject(projectIdOrName string) error
 
-	ReadTemplate(projectID, id string) (*protobuf.Template, error)
+	ReadTemplate(templateId string) (*protobuf.Template, error)
 	ReadTemplateByName(templateName string) (*protobuf.Template, error)
 	WriteTemplate(template *protobuf.Template) error
 	DeleteTemplate(id string) error

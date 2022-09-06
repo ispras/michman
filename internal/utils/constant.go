@@ -36,10 +36,20 @@ const (
 	DockerLoginUser     = "user"
 	DockerLoginPassword = "password"
 
+	//storage providers
+	StorageCouchbase = "couchbase"
+	StorageMySQL = "mysql"
+
 	//Couchbase secret keys
 	CouchbasePath     = "path"
 	CouchbaseUsername = "username"
 	CouchbasePassword = "password"
+
+	//mysql secret keys
+	MySqlAddress = "address"
+	MySqlUser = "user"
+	MySqlPassword = "password"
+	MySqlDatabase = "database"
 
 	//Hydra secret keys
 	HydraRedirectUri  = "redirect_uri"

@@ -48,15 +48,13 @@ message Service {
     string Name = 2;
     string Type = 3;
     string ClusterRef = 4;
-    string ServiceState = 5;
-    string ServiceURL = 6;
-    map<string, string> Config = 7;
-    string DisplayName = 8;
-    string EntityStatus = 9;
-    string Version = 10;
-    string URL = 11;
-    string Description = 12;
-//    repeated DependencyConfig Dependencies = 13;
+    map<string, string> Config = 5;
+    string DisplayName = 6;
+    string EntityStatus = 7;
+    string Version = 8;
+    string URL = 9; //masterIP + AccessPort - check run.go
+    string Description = 10;
+//    repeated DependencyConfig Dependencies = 11;
 }
 
 //message DependencyConfig {
@@ -90,8 +88,9 @@ message HealthConfigs {
 }
 
 message ServiceHealthCheck {
-    string CheckType = 1;               // Types: Script, HTTP, TCP, TTL, Docker, gRPC 
-    repeated HealthConfigs Configs = 2; 
+    string ID = 1;
+    string CheckType = 2;               // Types: Script, HTTP, TCP, TTL, Docker, gRPC 
+    repeated HealthConfigs Configs = 3; 
 }
 
 message ServiceType {
@@ -116,14 +115,15 @@ message ServiceVersion {
 }
 
 message ServiceConfig {
-    string ParameterName = 1; //name for ansible extra vars
-    string Type = 2; //string, bool, float or int
-    repeated string PossibleValues = 3; //TODO: add stored functions for values verification
-    string DefaultValue = 4;
-    bool Required = 5; //add this param to ansible extra vars or no
-    string Description = 6;
-    string AnsibleVarName = 7;
-    bool IsList = 8;
+    string ID = 1;
+    string ParameterName = 2; //name for ansible extra vars
+    string Type = 3; //string, bool, float or int
+    repeated string PossibleValues = 4; //TODO: add stored functions for values verification
+    string DefaultValue = 5;
+    bool Required = 6; //add this param to ansible extra vars or no
+    string Description = 7;
+    string AnsibleVarName = 8;
+    bool IsList = 9;
 }
 
 message ServiceDependency {

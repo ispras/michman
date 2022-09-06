@@ -29,6 +29,7 @@ const (
 	errLogsOutputParams        = "for config parameter 'logs_output` are supported only 'file' or 'logstash' values"
 	errLogsFilePathEmpty       = "'logs_file_path' couldn't be empty"
 	errLogstashOutputParams    = "for logstash logs output config parameters 'logstash_addr' and 'elastic_addr' couldn't be empty"
+	errStorage                 = "for storage config parameter are supported only 'couchbase' or 'mysql' values"
 )
 
 var (
@@ -43,4 +44,5 @@ var (
 	ErrLogsFilePathEmpty       = errors.New(errLogsFilePathEmpty)
 	ErrMkdir                   = errors.New(errMkdir)
 	ErrLogstashOutputParams    = errors.New(errLogstashOutputParams)
+	ErrStorage                 = errors.New(errStorage)
 )

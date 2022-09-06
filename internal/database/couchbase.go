@@ -956,13 +956,10 @@ func (db CouchDatabase) WriteTemplate(template *protobuf.Template) error {
 	return nil
 }
 
-func (db CouchDatabase) ReadTemplate(projectID, id string) (*protobuf.Template, error) {
+func (db CouchDatabase) ReadTemplate( id string) (*protobuf.Template, error) {
 	var template protobuf.Template
 	_, err := db.templatesBucket.Get(id, &template)
 	if err != nil {
-		return &protobuf.Template{}, nil
-	}
-	if projectID != template.ProjectID {
 		return &protobuf.Template{}, nil
 	}
 	return &template, nil

@@ -121,7 +121,7 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	//check, that template with such ID exists
-	dbTemplate, err := hS.Db.ReadTemplate(projectID, templateID)
+	dbTemplate, err := hS.Db.ReadTemplate(templateID)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -174,7 +174,7 @@ func (hS HttpServer) TemplateDelete(w http.ResponseWriter, r *http.Request, para
 		projectID = utils.CommonProjectID
 	}
 
-	t, err := hS.Db.ReadTemplate(projectID, templateID)
+	t, err := hS.Db.ReadTemplate(templateID)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -241,7 +241,7 @@ func (hS HttpServer) TemplateGet(w http.ResponseWriter, r *http.Request, params 
 
 	//reading template info from database
 	hS.Logger.Print("Reading template information from db...")
-	template, err := hS.Db.ReadTemplate(projectID, templateID)
+	template, err := hS.Db.ReadTemplate(templateID)
 	if err != nil {
 		hS.Logger.Print(err)
 		w.WriteHeader(http.StatusBadRequest)

@@ -3,10 +3,6 @@ package ansible
 import (
 	"encoding/json"
 	"fmt"
-	vaultapi "github.com/hashicorp/vault/api"
-	"github.com/ispras/michman/internal/database"
-	"github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/utils"
 	"io"
 	"os"
 	"os/exec"
@@ -14,6 +10,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/ispras/michman/internal/database"
+	"github.com/ispras/michman/internal/protobuf"
+	"github.com/ispras/michman/internal/utils"
 )
 
 const (
