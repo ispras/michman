@@ -1,0 +1,17 @@
+---
+- name: Install CUDA .rpm
+  yum:
+    state: present
+    name: "{{ cuda_repo_pkg_base_url }}{{ cuda_repo_pkg_name }}"
+  become: yes
+
+# Ignore warning
+- name: Clean yum cache
+  command: yum clean all
+  become: yes
+
+- name: Install CUDA-toolkit
+  yum:
+    state: present
+    name: "cuda-toolkit-{{ cuda_minor_version_dash }}"
+  become: yes

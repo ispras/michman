@@ -1,0 +1,16 @@
+---
+- name: Include OS specific tasks
+  include_tasks: "gpu_driver/{{ ansible_distribution }}.yml"
+
+- name: Get drivers for Tesla
+  get_url:
+    url: "{{ cuda_driver_runfile_base_url }}{{ cuda_driver_runfile_name }}"
+    dest: "/home/{{ hadoop_user }}/{{ cuda_driver_runfile_name }}"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_user }}"
+    mode: "755"
+  become: yes
+
+- name: Run Tesla driver installation
+  command: "/home/{{ hadoop_user }}/{{ cuda_driver_runfile_name }} --silent"
+  become: yes

@@ -1,0 +1,32 @@
+---
+- name: Add nouveau driver to blacklist
+  lineinfile:
+    state: present
+    create: yes
+    path: /etc/modprobe.d/blacklist-nouveau.conf
+    line: "{{ item }}"
+    insertafter: EOF
+  become: yes
+  loop:
+    - blacklist nouveau
+    - options nouveau modeset=0
+
+# In case nouveau driver is present in initramfs
+- name: Regenerate the kernel initramfs
+  command: update-initramfs -u
+  become: yes
+
+# Try to run "sudo modprobe -r nouveau" or reboot instance here in case of any problems with nouveau driver
+# Was not required to do in our cloud on Ubuntu images, but may happen in the future
+
+# Might fail if there is no linux-headers for desired kernel version
+# In that case try to update kernel and update kernel facts as done for CentOS
+- name: Install packages to set up GPU driver (Ubuntu)
+  apt:
+    update_cache: yes
+    state: present
+    name:
+    - "linux-headers-{{ ansible_facts['kernel'] }}"
+    - build-essential
+    - gcc
+  become: yes

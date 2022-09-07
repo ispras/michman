@@ -1,0 +1,3 @@
+---
+cuda_version: 11.4.2
+cuda_gpu_driver_version: "{{ cuda_minimal_gpu_driver_version[cuda_version] }}"

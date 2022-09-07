@@ -1,0 +1,91 @@
+---
+cuda_major_version: "{{ cuda_version.split('.')[0] }}"
+cuda_minor_version: "{{ cuda_version.split('.')[:2] | join('.') }}"
+cuda_minor_version_dash: "{{ cuda_minor_version | replace('.', '-') }}"
+
+cuda_driver_runfile_base_url: "https://us.download.nvidia.com/tesla/{{ cuda_gpu_driver_version }}/"
+cuda_driver_runfile_name: "NVIDIA-Linux-x86_64-{{ cuda_gpu_driver_version }}.run"
+
+cuda_repo_pkg_base_url: "{{ cuda_repo_pkg_base_url_template[cuda_major_version] }}"
+cuda_repo_name: "{{ cuda_repo_name_template[ansible_distribution] }}"
+cuda_repo_pkg_name: "{{ cuda_repo_pkg_name_template[ansible_distribution] }}"
+
+cuda_repo_pkg_base_url_template:
+  "10": "https://developer.{{ cuda_version is version('10.1.168', '>') | ternary('download.', '') }}nvidia.com/compute/cuda/{{ cuda_minor_version }}/Prod/local_installers/"
+  "11": "https://developer.download.nvidia.com/compute/cuda/{{ cuda_version }}/local_installers/"
+
+cuda_repo_name_template:
+  "Ubuntu": "cuda-repo-ubuntu{{ ansible_distribution_version | replace('.', '') }}-{{ cuda_minor_version_dash }}-local"
+  "CentOS": "cuda-repo-rhel{{ ansible_distribution_major_version }}-{{ cuda_minor_version_dash }}-local"
+
+cuda_repo_pkg_name_template:
+  "Ubuntu": "{{ cuda_repo_pkg_name_ubuntu_template[cuda_major_version] }}"
+  "CentOS": "{{ cuda_repo_pkg_name_centos_template[cuda_major_version] }}"
+
+cuda_repo_pkg_name_ubuntu_template:
+  "10": "{{ cuda_repo_name_template['Ubuntu'] }}-{{ cuda_version }}-{{ cuda_pkg_name_gpu_driver_version[cuda_version] }}_1.0-1_amd64.deb"
+  "11": "{{ cuda_repo_name_template['Ubuntu'] }}_{{ cuda_version }}-{{ cuda_pkg_name_gpu_driver_version[cuda_version] }}-1_amd64.deb"
+
+cuda_repo_pkg_name_centos_template:
+  "10": "{{ cuda_repo_name_template['CentOS'] }}-{{ cuda_version }}-{{ cuda_pkg_name_gpu_driver_version[cuda_version] }}-1.0-1.x86_64.rpm"
+  "11": "{{ cuda_repo_name_template['CentOS'] }}-{{ cuda_version }}_{{ cuda_pkg_name_gpu_driver_version[cuda_version] }}-1.x86_64.rpm"
+
+cuda_pkg_name_gpu_driver_version:
+  10.1.105: 418.39
+  10.1.168: 418.67
+  10.1.243: 418.87.00
+  10.2.89: 440.33.01
+  11.0.0: 450.51.05
+  11.0.1: 450.36.06
+  11.0.2: 450.51.05
+  11.0.3: 450.51.06
+  11.1.0: 455.23.05
+  11.1.1: 455.32.00
+  11.2.0: 460.27.04
+  11.2.1: 460.32.03
+  11.2.2: 460.32.03
+  11.3.0: 465.19.01
+  11.3.1: 465.19.01
+  11.4.0: 470.42.01
+  11.4.1: 470.57.02
+  11.4.2: 470.57.02
+  11.4.3: 470.82.01
+  11.4.4: 470.82.01
+  11.5.0: 495.29.05
+  11.5.1: 495.29.05
+  11.5.2: 495.29.05
+  11.6.0: 510.39.01
+  11.6.1: 510.47.03
+  11.6.2: 510.47.03
+  11.7.0: 515.43.04
+  11.7.1: 515.65.01
+
+cuda_minimal_gpu_driver_version:
+  10.1.105: 418.40.04
+  10.1.168: 418.67
+  10.1.243: 418.116.00
+  10.2.89: 440.33.01
+  11.0.0: 450.51.05
+  11.0.1: 450.51.05
+  11.0.2: 450.51.05
+  11.0.3: 450.51.06
+  11.1.0: 460.32.03
+  11.1.1: 460.32.03
+  11.2.0: 460.32.03
+  11.2.1: 460.32.03
+  11.2.2: 460.32.03
+  11.3.0: 470.57.02
+  11.3.1: 470.57.02
+  11.4.0: 470.57.02
+  11.4.1: 470.57.02
+  11.4.2: 470.57.02
+  11.4.3: 470.82.01
+  11.4.4: 470.82.01
+  11.5.0: 510.47.03
+  11.5.1: 510.47.03
+  11.5.2: 510.47.03
+  11.6.0: 510.47.03
+  11.6.1: 510.47.03
+  11.6.2: 510.47.03
+  11.7.0: 515.43.0
+  11.7.1: 515.65.01

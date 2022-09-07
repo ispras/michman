@@ -1,0 +1,20 @@
+---
+- name: Debug url of GPU driver
+  debug:
+    msg: "{{ cuda_driver_runfile_base_url }}{{ cuda_driver_runfile_name }}"
+
+- name: Debug url of CUDA repo pkg
+  debug:
+    msg: "{{ cuda_repo_pkg_base_url }}{{ cuda_repo_pkg_name }}"
+
+- name: Install GPU driver
+  include_tasks: gpu_driver/main.yml
+
+- name: Include OS specific tasks
+  include_tasks: "{{ ansible_distribution }}.yml"
+
+- name: Configure environment
+  include_tasks: environment.yml
+
+- name: Nvidia command for creating dev files
+  command: nvidia-smi

@@ -1,0 +1,51 @@
+---
+# Required for CentOS 7 image since there are no headers for installed kernel version
+- name: Update kernel
+  yum:
+    state: latest
+    name: kernel
+  become: yes
+
+# Will take effect after reboot
+- name: Add nouveau driver to blacklist
+  lineinfile:
+    state: present
+    create: yes
+    path: /etc/modprobe.d/blacklist-nouveau.conf
+    line: "{{ item }}"
+    insertafter: EOF
+  become: yes
+  loop:
+    - blacklist nouveau
+    - options nouveau modeset=0
+
+# In case nouveau driver is present in initramfs
+- name: Regenerate the kernel initramfs
+  command: dracut --force
+  become: yes
+
+- name: Reboot instance with updated kernel
+  reboot:
+    reboot_timeout: 300
+  become: yes
+
+# Required after kernel update
+- name: Update kernel info in ansible facts
+  setup:
+    gather_subset:
+      - '!all'
+      - '!min'
+      - kernel
+
+- name: Install packages to set up GPU driver (CentOS)
+  yum:
+    state: present
+    name:
+      - "kernel-devel-{{ ansible_facts['kernel'] }}"
+      - "kernel-headers-{{ ansible_facts['kernel'] }}"
+      - gcc
+      - gcc-c++
+      - glibc-devel
+      - make
+      - elfutils-libelf-devel
+  become: yes

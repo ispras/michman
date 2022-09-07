@@ -1,0 +1,27 @@
+---
+- name: Environment variable PATH
+  shell: echo $PATH
+  register: cuda_echo_path
+
+- name: Environment variable LD_LIBRARY_PATH
+  shell: echo $LD_LIBRARY_PATH
+  register: cuda_echo_ld_library_path
+
+- name: Remove LD_LIBRARY_PATH and PATH in /etc/environments
+  lineinfile:
+    path: /etc/environment
+    regexp: "{{ item }}"
+    state: absent
+  loop:
+    - PATH.*
+    - LD_LIBRARY_PATH.*
+  become: yes
+
+- name: Configure environment variable LD_LIBRARY_PATH and PATH
+  lineinfile:
+    path: /etc/environment
+    line: "{{ item }}"
+  loop:
+  - 'LD_LIBRARY_PATH="/usr/local/cuda/lib64:{{ cuda_echo_ld_library_path.stdout }}"'
+  - 'PATH="/usr/local/cuda/bin:{{ cuda_echo_path.stdout }}"'
+  become: yes

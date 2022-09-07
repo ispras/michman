@@ -1,0 +1,49 @@
+---
+- name: Get cuda repository pin
+  get_url:
+    url: "https://developer.download.nvidia.com/compute/cuda/repos/{{ cuda_ubuntu_distribution }}/x86_64/cuda-{{ cuda_ubuntu_distribution }}.pin"
+    dest: /etc/apt/preferences.d/cuda-repository-pin-600
+  become: yes
+
+- name: Install CUDA .deb
+  apt:
+    deb: "{{ cuda_repo_pkg_base_url }}{{ cuda_repo_pkg_name }}"
+  become: yes
+
+- name: Add CUDA repo keys (older CUDA)
+  when: cuda_version is version('11.7.0', '<')
+  block:
+    - name: Detect .pub file
+      find:
+        paths: "/var/{{ cuda_repo_name }}"
+        patterns: '*.pub'
+      register: cuda_ubuntu_older_find_file
+
+    - name: Add CUDA repo key
+      apt_key:
+        file: "{{ item.path }}"
+      with_items: "{{ cuda_ubuntu_older_find_file.files }}"
+      become: yes
+
+- name: Add CUDA repo keys (newer CUDA)
+  when: cuda_version is version('11.7.0', '>=')
+  block:
+    - name: Detect .gpg file
+      find:
+        paths: "/var/{{ cuda_repo_name }}"
+        patterns: 'cuda-*-keyring.gpg'
+      register: cuda_ubuntu_newer_find_file
+
+    - name: Add CUDA repo keyring
+      copy:
+        remote_src: yes
+        src: "{{ item.path }}"
+        dest: /usr/share/keyrings/
+      with_items: "{{ cuda_ubuntu_newer_find_file.files }}"
+      become: yes
+
+- name: Update cache and install CUDA-toolkit
+  apt:
+    update_cache: yes
+    name: "cuda-toolkit-{{ cuda_minor_version_dash }}"
+  become: yes
