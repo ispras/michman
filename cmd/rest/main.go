@@ -163,6 +163,9 @@ func main() {
 
 	httpLogger.Info("Server starts to work")
 
+	hS := handler.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Config: config}
+	hS.CreateRoutes()
+
 	//serve with session and authorization if authentication is used
 	if config.UseAuth {
 		var usedAuth auth.Authenticate
@@ -180,8 +183,6 @@ func main() {
 		httpLogger.SetOutput(os.Stderr)
 		httpLogger.Fatal(err)
 	} else {
-		hS := handler.HttpServer{Gc: gc, Logger: httpLogger, Db: db, Router: router, Config: config}
-		hS.CreateRoutes()
 		err = http.ListenAndServe(":"+*restPort, router)
 		httpLogger.SetOutput(os.Stderr)
 		httpLogger.Fatal(err)
