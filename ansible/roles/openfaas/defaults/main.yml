@@ -1,6 +1,7 @@
 ---
 openfaas_login: 'admin'
 openfaas_password: ""
+openfaas_dockerhub_prefix: ""
 openfaas_sevice_type: NodePort
 openfaas_operator_create: false
 openfaas_image_pull_policy: "Always"

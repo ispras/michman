@@ -8,7 +8,16 @@
         group: ubuntu
 
     - name: configure environment
-      raw: "export KUBECONFIG=/etc/kubernetes/admin.conf"
+      lineinfile:
+        path: /etc/environment
+        state: present
+        regexp: "^[ ]*KUBECONFIG=.*"
+        line: KUBECONFIG=/etc/kubernetes/admin.conf
+
+    - name: save env var kubeconfig
+      shell: source /etc/environment
+      args:
+        executable: /bin/bash
   become: yes
   become_user: root
 
@@ -26,7 +35,7 @@
 
     - name: save password to file
       copy:
-        content: "{{ passsword.stdout }}"
+        content: "{{ passsword.stdout }}\n"
         dest: /home/ubuntu/OPF_password
 
     - name: create secrets
@@ -42,7 +51,7 @@
   block:
     - name: save password to file
       copy:
-        content: "{{ openfaas_password }}"
+        content: "{{ openfaas_password }}\n"
         dest: /home/ubuntu/OPF_password
 
     - name: create secrets
@@ -61,8 +70,22 @@
     - name: call helm update
       shell: helm repo update
 
+    - name: download openfaas helm chart archive
+      shell: helm pull openfaas/openfaas --version={{ chart_version }}
+
+    - name: unarchive openfaas
+      unarchive:
+        src: /home/ubuntu/openfaas-{{ chart_version }}.tgz
+        dest: /home/ubuntu
+        remote_src: yes
+
+    - name: edit alertmanager.conf file
+      template:
+        src: alertmanager-cfg.yaml.j2
+        dest: /home/ubuntu/openfaas/templates/alertmanager-cfg.yaml
+
     - name:  install openfaas chart
-      shell: helm upgrade openfaas --install openfaas/openfaas --version {{ chart_version }} --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
+      shell: helm upgrade openfaas --install /home/ubuntu/openfaas  --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
         --set kubernetesDNSDomain={{ cluster_name }} --set serviceType={{ openfaas_sevice_type }} --set operator.create={{ openfaas_operator_create }} --set openfaasImagePullPolicy={{ openfaas_image_pull_policy }} \
         --set faasnetes.readTimeout={{ openfaas_netes_read_timeout }} --set faasnetes.writeTimeout={{ openfaas_netes_write_timeout }} --set faasnetes.imagePullPolicy={{ openfaas_netes_image_pull_policy }} \
         --set gateway.replicas={{ openfaas_gateway_replicas }} --set gateway.readTimeout={{ openfaas_gateway_read_timeout }} --set gateway.writeTimeout={{ openfaas_gateway_write_timeout }} \
@@ -71,7 +94,7 @@
       when: openfaas_gateway_logs_url|length != 0
 
     - name: install openfaas chart
-      shell: helm upgrade openfaas --install openfaas/openfaas --version {{ chart_version }} --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
+      shell: helm upgrade openfaas --install /home/ubuntu/openfaas  --namespace openfaas --set basic_auth=true --set functionNamespace=openfaas-fn \
         --set kubernetesDNSDomain={{ cluster_name }} --set serviceType={{ openfaas_sevice_type }} --set operator.create={{ openfaas_operator_create }} --set openfaasImagePullPolicy={{ openfaas_image_pull_policy }} \
         --set faasnetes.readTimeout={{ openfaas_netes_read_timeout }} --set faasnetes.writeTimeout={{ openfaas_netes_write_timeout }} --set faasnetes.imagePullPolicy={{ openfaas_netes_image_pull_policy }} \
         --set gateway.replicas={{ openfaas_gateway_replicas }} --set gateway.readTimeout={{ openfaas_gateway_read_timeout }} --set gateway.writeTimeout={{ openfaas_gateway_write_timeout }} \
@@ -81,5 +104,84 @@
 
     - name: get the faas-cli
       shell: curl -SLsf https://cli.openfaas.com | sudo sh
+
+    - name: waiting for openfaas to running
+      shell: curl -u {{openfaas_login}}:{{password_of}} -iS http://{{hostvars[groups[cluster_name + '_master'][0]].openstack.public_v4}}:31112/ui/ | grep HTTP
+      register: result
+      until: result.stdout.find("HTTP/1.1 200 OK") != -1
+      retries: 10
+      delay: 10
+
+    - name: configure environment
+      lineinfile:
+        path: /etc/environment
+        state: present
+        regexp: "^[ ]*OPENFAAS_URL=.*"
+        line: OPENFAAS_URL=http://{{hostvars[groups[cluster_name + '_master'][0]].openstack.public_v4}}:31112
+
+    - name: save env var openfaas_url
+      shell: source /etc/environment
+      args:
+        executable: /bin/bash
+
+    - name: login faas-cli
+      shell: faas-cli login -g $OPENFAAS_URL -u {{openfaas_login}} --password {{password_of}}
+
+    - name: add docker hub username var to env
+      lineinfile:
+        path: /etc/environment
+        state: present
+        regexp: "^[ ]*OPENFAAS_PREFIX=.*"
+        line: OPENFAAS_PREFIX={{ openfaas_dockerhub_prefix }}
+
+    - name: save env var openfaas_prefix
+      shell: source /etc/environment
+      args:
+        executable: /bin/bash
+
+    - name: expose prometheus with nodeport
+      shell: kubectl -n openfaas expose service prometheus --type=NodePort --name=prometheus-external
+
+    - name: find out prometheus port number
+      shell: export PROMETHEUS_PORT=$(kubectl -n openfaas get svc prometheus-external -o jsonpath="{.spec.ports[0].nodePort}") ; echo $PROMETHEUS_PORT
+      register: prometheus
+
+    - name: configure environment
+      lineinfile:
+        path: /etc/environment
+        state: present
+        regexp: "^[ ]*PROMETHEUS_URL=.*"
+        line: PROMETHEUS_URL=http://{{hostvars[groups[cluster_name + '_master'][0]].openstack.public_v4}}:{{prometheus.stdout}}
+
+    - name: save env var prometheus_url
+      shell: source /etc/environment
+      args:
+        executable: /bin/bash
+  become: yes
+  become_user: root
+
+- name: install grafana
+  block:
+    - name: run grafana in openfaas namespase
+      shell: kubectl -n openfaas run --image=stefanprodan/faas-grafana:4.6.3 --port=3000 grafana
+
+    - name: expose grafana with nodeport
+      shell: kubectl -n openfaas expose pod/grafana --type=NodePort --name=grafana
+
+    - name: find out grafana port number
+      shell: export GRAFANA_PORT=$(kubectl -n openfaas get svc grafana -o jsonpath="{.spec.ports[0].nodePort}") ; echo $GRAFANA_PORT
+      register: grafana
+
+    - name: configure environment
+      lineinfile:
+        path: /etc/environment
+        state: present
+        regexp: "^[ ]*GRAFANA_URL=.*"
+        line: GRAFANA_URL=http://{{hostvars[groups[cluster_name + '_master'][0]].openstack.public_v4}}:{{grafana.stdout}}/dashboard/db/openfaas
+
+    - name: save env var grafana_url
+      shell: source /etc/environment
+      args:
+        executable: /bin/bash
   become: yes
   become_user: root

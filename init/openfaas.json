@@ -31,6 +31,14 @@
           "AnsibleVarName": "openfaas_password"
         },
         {
+          "ParameterName": "dockerhub_prefix",
+          "Type": "string",
+          "DefaultValue": "",
+          "Required": true,
+          "Description": "Default dockerhub username prefix doesn't set, you can set your own here, or change ~/.bashrc file later",
+          "AnsibleVarName": "openfaas_dockerhub_prefix"
+        },
+        {
           "ParameterName": "service_type",
           "Type": "string",
           "PossibleValues": [
