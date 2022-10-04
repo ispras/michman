@@ -7,6 +7,7 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
+
 {% for host in play_hosts %}
 {{ hostvars[host].openstack.private_v4 }}  {{ hostvars[host].openstack.name | lower }}
 {% endfor %}

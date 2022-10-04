@@ -1,0 +1,63 @@
+{
+    "Type":"greenplum",
+    "Description":"greenplum database service",
+    "DefaultVersion":"6.21.0",
+    "Class": "master-slave",
+    "HealthCheck":[
+      {
+        "CheckType": "NotSupported",
+        "Configs": []
+      }
+    ],
+    "Versions":[
+      {
+        "Version":"6.21.0",
+        "Description":"greenplum default version",
+        "Configs": [
+          {
+              "ParameterName": "db_password",
+              "Type": "string",
+              "DefaultValue": "qwerty",
+              "Required": true,
+              "Description": "Default user password for greenplum for default user, you can change it",
+              "AnsibleVarName": "greenplum_db_password"
+            },
+            {
+              "ParameterName": "db_user",
+              "Type": "string",
+              "DefaultValue": "GPUSER",
+              "Required": true,
+              "Description": "Default db_user for greenplum, you can change it",
+              "AnsibleVarName": "greenplum_db_user"
+            },
+            {
+              "ParameterName": "db_segments",
+              "Type": "string",
+              "DefaultValue": "2",
+              "Required": true,
+              "Description": "The amount of segments on each segment server. Each word /home/gpadmin/data1 means one segment. Write as many as you want to see segments on each segment host",
+              "AnsibleVarName": "greenplum_db_segments"
+            },
+            {
+              "ParameterName": "pam_nofile",
+              "Type": "string",
+              "DefaultValue": "524288",
+              "Required": true,
+              "Description": "The amount of segments on each segment server. Each word /home/gpadmin/data1 means one segment. Write as many as you want to see segments on each segment host",
+              "AnsibleVarName": "greenplum_pam_nofile"
+            },
+            {
+              "ParameterName": "pam_nproc",
+              "Type": "string",
+              "DefaultValue": "131072",
+              "Required": true,
+              "Description": "The amount of segments on each segment server. Each word /home/gpadmin/data1 means one segment. Write as many as you want to see segments on each segment host",
+              "AnsibleVarName": "greenplum_pam_nproc"
+            }
+
+        ]
+        
+      }
+    ]
+  
+}

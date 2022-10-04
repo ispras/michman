@@ -237,3 +237,24 @@
         name: consul
         tasks_from: check
       when: create_monitoring is defined and create_monitoring
+
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  become: yes
+  tasks:
+    - include_role:
+        name: greenplum_installation
+      when: deploy_greenplum is defined and deploy_greenplum
+
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  become: yes
+  tasks:
+    - include_role:
+        name: greenplum_setssh
+      when: deploy_greenplum is defined and deploy_greenplum
+      
+- hosts: "{{ cluster_name }}_master"
+  become: yes
+  tasks:  
+    - include_role:
+        name: greenplum_run
+      when: deploy_greenplum is defined and deploy_greenplum

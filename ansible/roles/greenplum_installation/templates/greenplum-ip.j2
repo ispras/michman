@@ -1,0 +1,4 @@
+{{ hostvars[groups[cluster_name + '_master'][0]].openstack.private_v4 }}
+{% for host in groups[cluster_name +'_slaves'] %}
+{{ hostvars[host].openstack.private_v4 }}
+{% endfor %}
