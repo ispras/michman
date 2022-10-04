@@ -114,6 +114,9 @@
     - include_role:
         name: openfaas
       when: deploy_openfaas is defined and deploy_openfaas
+    - include_role:
+        name: openpai
+      when: deploy_openpai is defined and deploy_openpai
 
 #When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"

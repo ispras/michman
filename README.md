@@ -14,6 +14,7 @@ Michman is an orchestration self-hosted service intended to simplify process of 
 * Kubernetes
 * Nextcloud
 * NFS-Server
+* OpenPAI
 * Slurm
 * PostgreSQL
 * Redis

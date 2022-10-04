@@ -13,6 +13,7 @@ Supported services types are:
 * Kubernetes
 * Nextcloud
 * NFS-Server
+* OpenPAI
 * Slurm
 * PostgreSQL
 * Redis
@@ -198,5 +199,22 @@ Example:
   "nfs_server_ip": "IP",
   "mariadb_image": "bgtregistry.ru:5000/mariadb",
   "nextcloud_image": "bgtregistry.ru:5000/nextcloud"
+}
+```
+
+## OpenPAI
+
+Config parameter for **openpai** service type supports:
+
+* **admin_username** -- name for the admin user.
+* **admin_password** -- password for the admin user.
+
+For this service, the kubernetes **container_runtime** must be left by default (docker).
+
+Example:
+```json
+"Config": {
+  "admin_username": "michman",
+  "admin_password": "michman-pswd"
 }
 ```

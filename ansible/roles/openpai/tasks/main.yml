@@ -1,0 +1,73 @@
+---
+
+- name: Clone OpenPAI repository
+  become: yes
+  git:
+    repo: https://github.com/microsoft/pai.git
+    dest: "{{ pai_dir }}"
+    version: "{{ openpai_version }}"
+
+- name: Create deploy directory
+  become: yes
+  file:
+    path: "{{ pai_deploy_dir }}"
+    state: directory
+
+- name: Generate layout
+  become: yes
+  template:
+    src: layout.yaml.j2
+    dest: "{{ pai_deploy_dir }}/layout.yaml"
+
+- name: Generate config
+  become: yes
+  template:
+    src: config.yaml.j2
+    dest: "{{ pai_deploy_dir }}/config.yaml"
+
+- name: Generate config
+  become: yes
+  template:
+    src: services-configuration.yaml.j2
+    dest: "{{ pai_deploy_dir }}/services-configuration.yaml"
+
+- name: Install python requirements
+  become: yes
+  pip:
+    requirements: "{{ pai_dir }}/contrib/kubespray/script/requirements.txt"
+
+- name: Validate layout
+  become: yes
+  command: >
+    python3 {{ pai_dir }}/contrib/kubespray/script/validate_layout_schema.py
+    -l {{ pai_deploy_dir }}/layout.yaml
+    -c {{ pai_deploy_dir }}/config.yaml
+
+# FIXME: remove this, when docker will be deployed with michman
+# scripts and not with kubespray scripts.
+- name: Install python docker library
+  become: yes
+  pip:
+    name: docker
+
+- name: Run dev-box container
+  become: yes
+  docker_container:
+    name: "{{ cluster_name }}_openpai_devbox"
+    image: "openpai/dev-box:{{ openpai_version }}"
+    interactive: yes
+    detach: yes
+    tty: yes
+    pid_mode: host
+    privileged: yes
+    network_mode: host
+    state: started
+    recreate: yes
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "{{ pai_deploy_dir }}:/cluster-configuration"
+      - "/etc/kubernetes:/kubernetes"
+      - "{{ pai_dir }}:/pai"
+
+- name: Include tasks for running OpenPAI setup inside the dev-box
+  include: dev-box.yml

@@ -1,0 +1,66 @@
+---
+
+- name: Copy kubeconfig
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox /bin/bash -c
+    "mkdir /root/.kube; cp /kubernetes/admin.conf /root/.kube/config"
+
+- name: Check k8s installation
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox
+    kubectl get node
+
+- name: (workaround) Add master taint, as taint removing is not idempotent
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox
+    kubectl taint nodes --overwrite --all node-role.kubernetes.io/master:NoSchedule
+
+- name: Remove master taint
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox
+    kubectl taint nodes --all node-role.kubernetes.io/master:NoSchedule-
+
+- name: Push cluster config to k8s
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox /bin/bash -c
+    'echo -e "{{ cluster_name }}\n" | ./paictl.py config push -p /cluster-configuration -m service'
+
+- name: Start OpenPAI service
+  become: yes
+  command: >
+    docker exec -w /pai {{ cluster_name }}_openpai_devbox /bin/bash -c
+    'echo -e "{{ cluster_name }}\n" | ./paictl.py service start -n {{ item }}'
+  loop:
+    - cluster-configuration
+    - docker-cache
+    - frameworkcontroller
+    - device-plugin
+    - hivedscheduler
+    - log-manager
+    - internal-storage
+    - postgresql
+    - database-controller
+    - rest-server
+    - storage-manager
+    - fluentd
+    - watchdog
+    - dshuttle-master
+    - dshuttle-worker
+    - k8s-dashboard
+    - webportal
+    - prometheus
+    - marketplace-db
+    - marketplace-restserver
+    - node-exporter
+    - job-exporter
+    - openpai-runtime
+    - grafana
+    - dshuttle-csi
+    - marketplace-webportal
+    - pylon
+    - alert-manager

@@ -1,0 +1,38 @@
+{
+  "Type": "openpai",
+  "Description": "OpenPAI Platform for AI",
+  "DefaultVersion": "v1.8.0",
+  "Class": "stand-alone",
+  "Versions": [
+    {
+      "Version": "v1.8.0",
+      "Description": "OpenPAI 1.8.0 version",
+      "Configs": [
+        {
+          "ParameterName": "admin_username",
+          "Description": "OpenPAI cluster admin username",
+          "Required": true,
+          "Type": "string",
+          "DefaultValue": "admin",
+          "AnsibleVarName": "openpai_admin_username"
+        },
+        {
+          "ParameterName": "admin_password",
+          "Description": "OpenPAI cluster admin password",
+          "Required": true,
+          "Type": "string",
+          "DefaultValue": "admin-password",
+          "AnsibleVarName": "openpai_admin_password"
+        }
+      ],
+      "Dependencies": [
+        {
+          "ServiceType": "kubernetes",
+          "ServiceVersions": ["v1.20.7"],
+          "DefaultServiceVersion": "v1.20.7",
+          "Description": "Dependency openpai->kubernetes"
+        }
+      ]
+    }
+  ]
+}

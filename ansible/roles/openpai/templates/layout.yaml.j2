@@ -1,0 +1,24 @@
+machine-sku:
+  master-machine:
+    mem: {{ hostvars[groups[cluster_name + '_master'][0]]['spark_worker_mem_mb'] }}Mi
+    cpu:
+      vcore: {{ hostvars[groups[cluster_name + '_master'][0]]['spark_worker_cores'] }}
+  cpu-machine:
+    mem: {{ hostvars[groups[cluster_name + '_slaves'][0]]['spark_worker_mem_mb'] }}Mi
+    cpu:
+      vcore: {{ hostvars[groups[cluster_name + '_slaves'][0]]['spark_worker_cores'] }}
+
+machine-list:
+  {% for host in groups[cluster_name + '_master'] %}
+- hostname: {{ hostvars[host].openstack.name }}
+    hostip: {{ hostvars[host].openstack.public_v4 }}
+    machine-type: master-machine
+    pai-master: "true"
+  {% endfor %}
+
+  {% for host in groups[cluster_name + '_slaves'] %}
+- hostname: {{ hostvars[host].openstack.name }}
+    hostip: {{ hostvars[host].openstack.public_v4 }}
+    machine-type: cpu-machine
+    pai-worker: "true"
+  {% endfor %}
