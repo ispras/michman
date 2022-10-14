@@ -4,71 +4,63 @@ import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/rest/handler/check"
-	"net/http"
+	"github.com/ispras/michman/internal/rest/response"
+	"github.com/ispras/michman/internal/utils"
 )
 
 // ImageCreate validates fields of the image structure for correct filling when creating
-func ImageCreate(db database.Database, image *protobuf.Image) (error, int) {
+func ImageCreate(db database.Database, image *protobuf.Image) error {
 	if image.ID != "" {
-		return ErrImageIdNotEmpty, http.StatusBadRequest
+		return ErrImageGeneratedField
 	}
 	if image.Name == "" {
-		return ErrImageValidationParam("Name"), http.StatusBadRequest
+		return ErrImageValidationParam("Name")
 	}
 	if image.AnsibleUser == "" {
-		return ErrImageValidationParam("AnsibleUser"), http.StatusBadRequest
+		return ErrImageValidationParam("AnsibleUser")
 	}
 	if image.CloudImageID == "" {
-		return ErrImageValidationParam("CloudImageID"), http.StatusBadRequest
+		return ErrImageValidationParam("ImageID")
 	}
-
-	dbImg, err := db.ReadImage(image.Name)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	if dbImg.ID != "" {
-		return ErrImageExisted, http.StatusBadRequest
-	}
-
-	return nil, http.StatusOK
+	return nil
 }
 
 // ImageUpdate validates fields of the image structure for correct filling when updating
-func ImageUpdate(db database.Database, oldImage *protobuf.Image, newImage *protobuf.Image) (error, int) {
+func ImageUpdate(db database.Database, oldImage *protobuf.Image, newImage *protobuf.Image) error {
 	used, err := check.ImageUsed(db, oldImage.Name)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return err
 	}
 	if used {
-		return ErrImageUsed, http.StatusBadRequest
+		return ErrImageUsed
 	}
 
 	if newImage.ID != "" {
-		return ErrImageUnmodFields, http.StatusBadRequest
+		return ErrImageUnmodFields
 	}
 
 	if newImage.Name != "" && oldImage.Name != newImage.Name {
-		dbImg, err := db.ReadImage(newImage.Name)
-		if err != nil {
-			return err, http.StatusInternalServerError
+		_, err := db.ReadImage(newImage.Name)
+		if err == nil {
+			return ErrObjectExists("image", newImage.Name)
 		}
-		if dbImg.ID != "" {
-			return ErrImageExisted, http.StatusBadRequest
+		if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
+			return err
 		}
 	}
 
-	return nil, http.StatusOK
+	return nil
 }
 
 // ImageDelete checks the structure of the image for use when deleting
-func ImageDelete(db database.Database, image *protobuf.Image) (error, int) {
+func ImageDelete(db database.Database, image *protobuf.Image) error {
 	used, err := check.ImageUsed(db, image.Name)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return err
 	}
 	if used {
-		return ErrImageUsed, http.StatusBadRequest
+		return ErrImageUsed
 	}
 
-	return nil, http.StatusOK
+	return nil
 }

@@ -133,3 +133,14 @@ func FileExists(name string) (bool, error) {
 	}
 	return false, err
 }
+
+// DeleteSpaces deletes all spaces in given string
+func DeleteSpaces(valStr string) string {
+	resStr := ""
+	for _, ch := range valStr {
+		if ch != ' ' {
+			resStr += string(ch)
+		}
+	}
+	return resStr
+}

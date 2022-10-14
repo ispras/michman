@@ -2,12 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	proto "github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/rest/handler/check"
 	"github.com/ispras/michman/internal/rest/handler/helpfunc"
-	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/rest/handler/validate"
+	response "github.com/ispras/michman/internal/rest/response"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -22,20 +21,15 @@ func (hS HttpServer) ClustersGetList(w http.ResponseWriter, _ *http.Request, par
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -52,120 +46,81 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	var resCluster *proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		response.BadRequest(w, ErrJsonIncorrect)
+		err = ErrJsonIncorrect
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// set fields by defaults if not specified by user
-	helpfunc.SetDefaults(resCluster, project)
+	helpfunc.SetClusterDefaults(resCluster, project)
 
-	hS.Logger.Info("Validating cluster structure...")
-	err, status := validate.ClusterCreate(hS.Db, resCluster)
+	hS.Logger.Infof("Validating cluster %s general info...", resCluster.Name)
+	err = validate.ClusterCreateGeneral(hS.Db, resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	// check, that cluster with such name doesn't exist
-	clusterExists, oldCluster, err, status := check.ClusterExist(hS.Db, resCluster, project)
-	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+	clusterExists, oldCluster, retErr := check.ClusterExist(hS.Db, resCluster, project)
+	if retErr != nil {
+		hS.Logger.Warn("Request ", request, "failed with an error: ", retErr.Error())
+		response.Error(w, retErr)
+		return
 	}
-
 	// If cluster was failed
 	if clusterExists {
 		resCluster = oldCluster
 	} else {
-		// generating UUID for new cluster
-		cUuid, err := uuid.NewRandom()
+		// Set ID, ProjectID, Name for new cluster
+		err := helpfunc.SetClusterGeneratedFields(resCluster, project)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-			response.InternalError(w, ErrUuidLibError)
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
+			response.Error(w, err)
 			return
 		}
-		resCluster.ID = cUuid.String()
-
-		// get userID from the request
+		// Set OwnerID from the request
 		resCluster.OwnerID = helpfunc.GetClusterOwnerId(r)
 
 		// add services from user request and from dependencies
-		if resCluster.Services != nil {
-			// set uuids for all cluster services
-			if err := helpfunc.SetClusterServicesUuids(resCluster); err != nil {
-				hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-				response.InternalError(w, ErrUuidLibError)
-				return
-			}
-
-			err, status := helpfunc.UpdateRangeValuesAppendedServices(hS.Db, 0, resCluster, utils.ActionCreate)
-			if err != nil {
-				hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-				switch status {
-				case http.StatusBadRequest:
-					response.BadRequest(w, err)
-					return
-				case http.StatusInternalServerError:
-					response.InternalError(w, err)
-					return
-				}
-				return
-			}
-
-			// cluster should be validated after addition services from dependencies
-			err, status = validate.ClusterAddedServices(hS.Db, resCluster)
-			if err != nil {
-				hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-				switch status {
-				case http.StatusBadRequest:
-					response.BadRequest(w, err)
-					return
-				case http.StatusInternalServerError:
-					response.InternalError(w, err)
-					return
-				}
-			}
+		if err := helpfunc.SetServices(hS.Db, resCluster); err != nil {
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
+			response.Error(w, err)
+			return
 		}
-
-		resCluster.ProjectID = project.ID
-		resCluster.Name = resCluster.DisplayName + "-" + project.Name
+		// cluster should be validated after addition services from dependencies
+		err = validate.ClusterServices(hS.Db, resCluster)
+		if err != nil {
+			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			response.Error(w, err)
+			return
+		}
 	}
 
+	hS.Logger.Info("validate services after adding service dependencies...")
+	sErr := validate.ClusterCreateServices(hS.Db, resCluster)
+	if sErr != nil {
+		hS.Logger.Warn("Request ", request, " failed with an error: ", sErr.Error())
+		response.Error(w, err)
+		return
+	}
 	resCluster.EntityStatus = utils.StatusInited
 
 	if !clusterExists {
 		err = hS.Db.WriteCluster(resCluster)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-			response.InternalError(w, err)
+			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			response.Error(w, err)
 			return
 		}
 	}
@@ -185,26 +140,16 @@ func (hS HttpServer) ClusterGet(w http.ResponseWriter, _ *http.Request, params h
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if cluster.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrClusterNotFound.Error())
-		response.NotFound(w, ErrClusterNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -222,26 +167,16 @@ func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, _ *http.Request, pa
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if cluster.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrClusterNotFound.Error())
-		response.NotFound(w, ErrClusterNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -259,49 +194,34 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// reading cluster info from database
 	oldCluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if oldCluster.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrClusterNotFound.Error())
-		response.NotFound(w, ErrClusterNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	var newCluster proto.Cluster
 	err = json.NewDecoder(r.Body).Decode(&newCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		response.BadRequest(w, ErrJsonIncorrect)
+		err = ErrJsonIncorrect
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	hS.Logger.Info("Validating updated values of the cluster fields...")
-	err, status := validate.ClusterUpdate(hS.Db, oldCluster, &newCluster)
+	err = validate.ClusterUpdate(hS.Db, oldCluster, &newCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	resCluster := oldCluster
@@ -309,48 +229,37 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// set existed services
 	serviceTypesOld, oldServiceNumber, err := helpfunc.SetServiceExistInfo(hS.Db, oldCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// append new services to the resCluster struct
 	newHost, err := helpfunc.AppendNewServices(hS.Db, serviceTypesOld, &newCluster, resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-		response.InternalError(w, ErrUuidLibError)
+		err = ErrUuidLibError
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// check if new services are added
 	if oldServiceNumber != len(resCluster.Services) {
 		// updating range values of appended services
-		err, status := helpfunc.UpdateRangeValuesAppendedServices(hS.Db, oldServiceNumber, resCluster, utils.ActionUpdate)
+		err = helpfunc.UpdateRangeValuesAppendedServices(hS.Db, oldServiceNumber, resCluster, utils.ActionUpdate)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-			switch status {
-			case http.StatusBadRequest:
-				response.BadRequest(w, err)
-				return
-			case http.StatusInternalServerError:
-				response.InternalError(w, err)
-				return
-			}
+			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			response.Error(w, err)
+			return
 		}
 	}
 
 	// cluster should be validated after addition services from dependencies
-	err, status = validate.ClusterAddedServices(hS.Db, resCluster)
+	err = validate.ClusterServices(hS.Db, resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	if newCluster.Description != "" {
@@ -358,6 +267,13 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 	if newCluster.DisplayName != "" {
 		resCluster.DisplayName = newCluster.DisplayName
+	}
+	if newCluster.Keys != nil {
+		for _, key := range newCluster.Keys {
+			if !utils.ItemExists(resCluster.Keys, key) {
+				resCluster.Keys = append(resCluster.Keys, key)
+			}
+		}
 	}
 
 	resCluster.EntityStatus = utils.StatusInited
@@ -381,33 +297,24 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, _ *http.Request, para
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if cluster.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrClusterNotFound.Error())
-		response.NotFound(w, ErrClusterNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
-	err, status := validate.ClusterDelete(cluster)
+	err = validate.ClusterDelete(cluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	cluster.EntityStatus = utils.StatusStopping

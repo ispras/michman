@@ -3,15 +3,15 @@ package check
 import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/rest/handler/helpfunc"
+	"github.com/ispras/michman/internal/rest/response"
 	"github.com/ispras/michman/internal/utils"
-	"net/http"
+	"regexp"
 )
 
 // ValuesAllowed checks whether the passed value is in the list of possible values
 func ValuesAllowed(value string, possibleValues []string, IsList bool) bool {
 	if IsList {
-		value = helpfunc.DeleteSpaces(value)
+		value = utils.DeleteSpaces(value)
 	}
 	for _, pv := range possibleValues {
 		if value == pv {
@@ -22,20 +22,24 @@ func ValuesAllowed(value string, possibleValues []string, IsList bool) bool {
 }
 
 // ClusterExist checks if a cluster with the same name exists and return old cluster structure if it's status failed
-func ClusterExist(db database.Database, clusterRes *protobuf.Cluster, project *protobuf.Project) (bool, *protobuf.Cluster, error, int) {
-	clusterExists := false
-	searchedName := clusterRes.DisplayName + "-" + project.Name
-	cluster, err := db.ReadCluster(project.ID, searchedName)
-	if err != nil {
-		return false, nil, err, http.StatusInternalServerError
+func ClusterExist(db database.Database, clusterRes *protobuf.Cluster, project *protobuf.Project) (bool, *protobuf.Cluster, error) {
+	searchName := ""
+	if clusterRes.Name != "" {
+		searchName = clusterRes.Name
+	} else {
+		searchName = clusterRes.DisplayName + "-" + project.Name
 	}
-	if cluster.Name != "" {
-		clusterExists = true
+	cluster, err := db.ReadCluster(project.ID, searchName)
+	if cluster != nil {
 		if cluster.EntityStatus != utils.StatusFailed {
-			return clusterExists, cluster, ErrClusterExisted, http.StatusBadRequest
+			return true, nil, ErrObjectExists("cluster", searchName)
 		}
+		return true, cluster, nil
 	}
-	return clusterExists, cluster, nil, http.StatusOK
+	if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
+		return false, nil, err
+	}
+	return false, nil, nil
 }
 
 // ServiceConfigCorrectValue checks all cluster configs for correct type, possible value and supporting
@@ -63,6 +67,15 @@ func ServiceConfigCorrectValue(service *protobuf.Service, Configs []*protobuf.Se
 		if !flagPN {
 			return ErrClusterServiceConfigNotSupported(configName, service.Type)
 		}
+	}
+	return nil
+}
+
+// ClusterValidName checks the correctness of the cluster name style for its use
+func ClusterValidName(name string) error {
+	validName := regexp.MustCompile(utils.ClusterNamePattern).MatchString
+	if !validName(name) {
+		return ErrClusterBadName
 	}
 	return nil
 }

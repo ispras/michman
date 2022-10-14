@@ -1,15 +1,15 @@
 package check
 
 import (
-	"net/http"
+	"github.com/ispras/michman/internal/utils"
 	"regexp"
 )
 
-// ValidName checks the correctness of the project name style for its use
-func ValidName(name string, pattern string, errorType error) (error, int) {
-	validName := regexp.MustCompile(pattern).MatchString
+// ProjectValidName checks the correctness of the project name style for its use
+func ProjectValidName(name string) error {
+	validName := regexp.MustCompile(utils.ProjectNamePattern).MatchString
 	if !validName(name) {
-		return errorType, http.StatusBadRequest
+		return ErrClusterBadName
 	}
-	return nil, 0
+	return nil
 }

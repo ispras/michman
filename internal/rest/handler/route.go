@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/ispras/michman/internal/rest/handler/response"
+	"github.com/ispras/michman/internal/rest/response"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )

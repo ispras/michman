@@ -1,48 +1,38 @@
 package helpfunc
 
 import (
-	"errors"
 	"fmt"
+	"github.com/ispras/michman/internal/rest"
 	"github.com/ispras/michman/internal/utils"
 )
 
-const errUuidLibError = "uuid generating error"
+const errUuidLibError = "uuid generation error"
 
 var (
-	HandlerHelpFuncsErrorMap = make(map[error]int)
-	ErrUuidLibError          = errors.New(errUuidLibError)
+	ErrUuidLibError = rest.MakeError(errUuidLibError, utils.LibError)
 )
 
 func ErrClusterDependenceServicesIncompatibleVersion(service string, currentService string) error {
-	ErrParamType := fmt.Errorf("service '%s' has incompatible version for service '%s'", service, currentService)
-	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("service '%s' has incompatible version for service '%s'", service, currentService)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceTypeNotSupported(param string) error {
-	ErrParamType := fmt.Errorf("service '%s' is not supported", param)
-	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("service '%s' is not supported", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceVersionNotSupported(param string, service string) error {
-	ErrParamType := fmt.Errorf("'%s' service version '%s' is not supported", service, param)
-	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("'%s' service version '%s' is not supported", service, param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceHealthCheck(service string) error {
-	ErrParamType := fmt.Errorf("'%s' HealthCheck field is empty", service)
-	HandlerHelpFuncsErrorMap[ErrParamType] = utils.DatabaseError
-	return ErrParamType
+	errMessage := fmt.Sprintf("'%s' HealthCheck field is empty", service)
+	return rest.MakeError(errMessage, utils.DatabaseError)
 }
 
 func ErrObjectUnique(param string) error {
-	ErrParamType := fmt.Errorf("param %s is not unique", param)
-	HandlerHelpFuncsErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func init() {
-	HandlerHelpFuncsErrorMap[ErrUuidLibError] = utils.LibError
+	errMessage := fmt.Sprintf("param %s is not unique", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }

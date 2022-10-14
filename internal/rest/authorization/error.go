@@ -1,6 +1,9 @@
 package authorization
 
-import "errors"
+import (
+	"github.com/ispras/michman/internal/rest"
+	"github.com/ispras/michman/internal/utils"
+)
 
 const (
 	errNoProjectInURL             = "no project ID or name in URL path"
@@ -9,7 +12,7 @@ const (
 )
 
 var (
-	ErrNoProjectInURL             = errors.New(errNoProjectInURL)
-	ErrUnauthorized               = errors.New(errUnauthorized)
-	ErrAuthenticationUnsuccessful = errors.New(errAuthenticationUnsuccessful)
+	ErrAuthenticationUnsuccessful = rest.MakeError(errAuthenticationUnsuccessful, utils.AuthorizationError)
+	ErrNoProjectInURL             = rest.MakeError(errNoProjectInURL, utils.AuthorizationError)
+	ErrUnauthorized               = rest.MakeError(errUnauthorized, utils.AuthorizationError)
 )

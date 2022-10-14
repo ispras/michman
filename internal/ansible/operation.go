@@ -33,7 +33,7 @@ func (aL *LauncherServer) Delete(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionDelete)
+	ansibleStatus, err := aL.Run(cluster, dockRegCreds, &aL.Config, utils.ActionDelete)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err
@@ -71,7 +71,7 @@ func (aL *LauncherServer) Update(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionUpdate)
+	ansibleStatus, err := aL.Run(cluster, dockRegCreds, &aL.Config, utils.ActionUpdate)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err
@@ -107,7 +107,7 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 		}
 	}
 
-	ansibleStatus, err := aL.Run(cluster, aL.Logger, dockRegCreds, &aL.Config, utils.ActionCreate)
+	ansibleStatus, err := aL.Run(cluster, dockRegCreds, &aL.Config, utils.ActionCreate)
 	if err != nil {
 		aL.Logger.Warn(err)
 		return nil, err

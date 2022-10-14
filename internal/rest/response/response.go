@@ -3,7 +3,6 @@ package response
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 )
 
 const (
@@ -16,8 +15,8 @@ type details struct {
 	Data    interface{}
 }
 
-type structure struct {
-	Type   string
+type responseBody struct {
+	Type   int
 	Status int
 	Title  string
 	Detail details
@@ -25,8 +24,8 @@ type structure struct {
 
 // Ok (The 200 (OK) status code indicates that the request has succeeded)
 func Ok(w http.ResponseWriter, msgStruct interface{}, requestName string) {
-	respStruct := structure{
-		Type:   strconv.Itoa(okCode),
+	respStruct := responseBody{
+		Type:   okCode,
 		Status: http.StatusOK,
 		Title:  "Request successful",
 		Detail: details{
@@ -41,9 +40,10 @@ func Ok(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -52,8 +52,8 @@ func Ok(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 // Created (The 201 (Created) status code indicates that the request has been fulfilled
 // and has resulted in one or more new resources being created.)
 func Created(w http.ResponseWriter, msgStruct interface{}, requestName string) {
-	respStruct := structure{
-		Type:   strconv.Itoa(createdCode),
+	respStruct := responseBody{
+		Type:   createdCode,
 		Status: http.StatusCreated,
 		Title:  "Request successful",
 		Detail: details{
@@ -68,9 +68,10 @@ func Created(w http.ResponseWriter, msgStruct interface{}, requestName string) {
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -97,22 +98,23 @@ func NotModified(w http.ResponseWriter) {
 
 // BadRequest The 400 (Bad Request) status code indicates that the server cannot
 // or will not process the request due to something that is perceived to be a client error
-func BadRequest(w http.ResponseWriter, respErr error) {
-	respStruct := structure{
-		Type:   strconv.Itoa(FindErrorType(respErr)),
+func BadRequest(w http.ResponseWriter, errMsg string, class int) {
+	respStruct := responseBody{
+		Type:   class,
 		Status: http.StatusBadRequest,
 		Title:  "Bad request",
 		Detail: details{
-			Message: respErr.Error(),
+			Message: errMsg,
 			Data:    "No data",
 		},
 	}
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -120,45 +122,47 @@ func BadRequest(w http.ResponseWriter, respErr error) {
 
 // Unauthorized The 401 (Unauthorized) status code indicates that the request has not been applied
 // because it lacks valid authentication credentials for the target resource.
-func Unauthorized(w http.ResponseWriter, respErr error) {
-	respStruct := structure{
-		Type:   strconv.Itoa(FindErrorType(respErr)),
+func Unauthorized(w http.ResponseWriter, errMsg string, class int) {
+	respStruct := responseBody{
+		Type:   class,
 		Status: http.StatusUnauthorized,
 		Title:  "Unauthorized",
 		Detail: details{
-			Message: respErr.Error(),
+			Message: errMsg,
 			Data:    "No data",
 		},
 	}
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 }
 
 // Forbidden The 403 (Forbidden) status code indicates that the server understood the request,
-//but refuses to fulfill it
-func Forbidden(w http.ResponseWriter, respErr error) {
-	respStruct := structure{
-		Type:   strconv.Itoa(FindErrorType(respErr)),
+// but refuses to fulfill it
+func Forbidden(w http.ResponseWriter, errMsg string, class int) {
+	respStruct := responseBody{
+		Type:   class,
 		Status: http.StatusForbidden,
 		Title:  "Forbidden",
 		Detail: details{
-			Message: respErr.Error(),
+			Message: errMsg,
 			Data:    "No data",
 		},
 	}
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -166,22 +170,23 @@ func Forbidden(w http.ResponseWriter, respErr error) {
 
 // NotFound (The 404 (Not Found) status code indicates that the origin server
 // did not find a current representation for the target resource or is not willing to disclose that one exists)
-func NotFound(w http.ResponseWriter, respErr error) {
-	respStruct := structure{
-		Type:   strconv.Itoa(FindErrorType(respErr)),
+func NotFound(w http.ResponseWriter, errMsg string, class int) {
+	respStruct := responseBody{
+		Type:   class,
 		Status: http.StatusNotFound,
 		Title:  "Object not found",
 		Detail: details{
-			Message: respErr.Error(),
+			Message: errMsg,
 			Data:    "No data",
 		},
 	}
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -189,22 +194,23 @@ func NotFound(w http.ResponseWriter, respErr error) {
 
 // InternalError (The 500 (Internal Server Error) status code indicates that
 // the server encountered an unexpected condition that prevented it from fulfilling the request)
-func InternalError(w http.ResponseWriter, respErr error) {
-	respStruct := structure{
-		Type:   strconv.Itoa(FindErrorType(respErr)),
+func InternalError(w http.ResponseWriter, errMsg string, class int) {
+	respStruct := responseBody{
+		Type:   class,
 		Status: http.StatusInternalServerError,
 		Title:  "Internal Server Error",
 		Detail: details{
-			Message: respErr.Error(),
+			Message: errMsg,
 			Data:    "No data",
 		},
 	}
 
 	w.WriteHeader(respStruct.Status)
 	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
 	err := enc.Encode(respStruct)
 	if err != nil {
-		InternalError(w, ErrJsonEncode)
+		Error(w, ErrJsonEncode)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

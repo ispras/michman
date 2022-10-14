@@ -139,7 +139,7 @@ func readProjectById(db CouchDatabase, projectID string) (*protobuf.Project, err
 	var project protobuf.Project
 	_, err := db.projectsBucket.Get(projectID, &project)
 	if err != nil {
-		return nil, ErrReadObjectByKey
+		return nil, ErrObjectNotFound("project", projectID)
 	}
 	return &project, nil
 }
@@ -156,6 +156,9 @@ func readProjectByName(db CouchDatabase, projectName string) (*protobuf.Project,
 	err = rows.Close()
 	if err != nil {
 		return nil, ErrCloseQuerySession
+	}
+	if project.ID == "" {
+		return nil, ErrObjectNotFound("project", projectName)
 	}
 	return &project, nil
 }
@@ -174,10 +177,6 @@ func deleteProjectByName(db CouchDatabase, projectName string) error {
 		return err
 	}
 
-	if project.ID == "" {
-		return ErrObjectParamNotExist(projectName)
-	}
-
 	err = deleteProjectById(db, project.ID)
 	return err
 }
@@ -191,7 +190,10 @@ func (db CouchDatabase) ReadProject(projectIdOrName string) (*protobuf.Project, 
 	} else {
 		project, err = readProjectByName(db, projectIdOrName)
 	}
-	return project, err
+	if err != nil {
+		return nil, err
+	}
+	return project, nil
 }
 
 func (db CouchDatabase) ReadProjectsList() ([]protobuf.Project, error) {
@@ -275,6 +277,9 @@ func readClusterById(db CouchDatabase, clusterID string) (*protobuf.Cluster, err
 	var cluster protobuf.Cluster
 	_, err := db.clustersBucket.Get(clusterID, &cluster)
 	if err != nil {
+		if err == gocb.ErrKeyNotFound {
+			return nil, ErrObjectNotFound("cluster", clusterID)
+		}
 		return nil, ErrReadObjectByKey
 	}
 	return &cluster, nil
@@ -283,15 +288,21 @@ func readClusterById(db CouchDatabase, clusterID string) (*protobuf.Cluster, err
 func readClusterByName(db CouchDatabase, projectID string, clusterName string) (*protobuf.Cluster, error) {
 	q := fmt.Sprintf("SELECT b.* FROM %s b WHERE ProjectID = '%s' and Name = '%s'", clusterBucketName, projectID, clusterName)
 	query := gocb.NewN1qlQuery(q)
+	var cluster protobuf.Cluster
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
+		if err == gocb.ErrKeyNotFound {
+			return nil, ErrObjectNotFound("cluster", clusterName)
+		}
 		return nil, ErrQueryExecution
 	}
-	var cluster protobuf.Cluster
 	rows.Next(&cluster)
 	err = rows.Close()
 	if err != nil {
 		return nil, ErrCloseQuerySession
+	}
+	if cluster.ID == "" {
+		return nil, ErrObjectNotFound("cluster", clusterName)
 	}
 	return &cluster, nil
 }
@@ -310,10 +321,6 @@ func deleteClusterByName(db CouchDatabase, projectIdOrName string, clusterName s
 		return err
 	}
 
-	if project.ID == "" {
-		return ErrObjectParamNotExist(projectIdOrName)
-	}
-
 	cluster, err := readClusterByName(db, project.ID, clusterName)
 	if err != nil {
 		return err
@@ -328,10 +335,6 @@ func (db CouchDatabase) ReadCluster(projectIdOrName string, clusterIdOrName stri
 		return nil, err
 	}
 
-	if project.ID == "" {
-		return nil, ErrObjectParamNotExist(projectIdOrName)
-	}
-
 	isUuid := utils.IsUuid(clusterIdOrName)
 	var cluster *protobuf.Cluster
 	if isUuid {
@@ -339,7 +342,10 @@ func (db CouchDatabase) ReadCluster(projectIdOrName string, clusterIdOrName stri
 	} else {
 		cluster, err = readClusterByName(db, project.ID, clusterIdOrName)
 	}
-	return cluster, err
+	if err != nil {
+		return nil, err
+	}
+	return cluster, nil
 }
 
 func (db CouchDatabase) ReadClustersList() ([]protobuf.Cluster, error) {
@@ -397,7 +403,11 @@ func readServiceTypeById(db CouchDatabase, serviceTypeID string) (*protobuf.Serv
 	var sType protobuf.ServiceType
 	_, err := db.serviceTypesBucket.Get(serviceTypeID, &sType)
 	if err != nil {
-		return nil, ErrReadObjectByKey
+		if err == gocb.ErrKeyNotFound {
+			return nil, ErrObjectNotFound("service type", serviceTypeID)
+		} else {
+			return nil, ErrReadObjectByKey
+		}
 	}
 	return &sType, nil
 }
@@ -409,11 +419,11 @@ func readServiceTypeByName(db CouchDatabase, serviceTypeName string) (*protobuf.
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
+	defer rows.Close()
 	var sType protobuf.ServiceType
 	rows.Next(&sType)
-	err = rows.Close()
-	if err != nil {
-		return nil, ErrCloseQuerySession
+	if sType.ID == "" {
+		return nil, ErrObjectNotFound("service type", serviceTypeName)
 	}
 	return &sType, nil
 }
@@ -432,10 +442,6 @@ func deleteServiceTypeByName(db CouchDatabase, serviceTypeName string) error {
 		return err
 	}
 
-	if sType.ID == "" {
-		return ErrObjectParamNotExist(serviceTypeName)
-	}
-
 	err = deleteServiceTypeById(db, sType.ID)
 	return err
 }
@@ -449,7 +455,10 @@ func (db CouchDatabase) ReadServiceType(serviceTypeIdOrName string) (*protobuf.S
 	} else {
 		sType, err = readServiceTypeByName(db, serviceTypeIdOrName)
 	}
-	return sType, err
+	if err != nil {
+		return nil, err
+	}
+	return sType, nil
 }
 
 func (db CouchDatabase) ReadServicesTypesList() ([]protobuf.ServiceType, error) {
@@ -457,7 +466,7 @@ func (db CouchDatabase) ReadServicesTypesList() ([]protobuf.ServiceType, error) 
 	query := gocb.NewN1qlQuery(q)
 	rows, err := db.serviceTypesBucket.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
 	var row protobuf.ServiceType
 	var result []protobuf.ServiceType
@@ -510,7 +519,7 @@ func readServiceTypeVersionById(sType *protobuf.ServiceType, versionId string) (
 		}
 	}
 
-	return nil, ErrObjectParamNotExist(versionId)
+	return nil, ErrObjectNotFound("version", versionId)
 }
 
 func readServiceTypeVersionByName(sType *protobuf.ServiceType, versionName string) (*protobuf.ServiceVersion, error) {
@@ -519,7 +528,7 @@ func readServiceTypeVersionByName(sType *protobuf.ServiceType, versionName strin
 			return curVersion, nil
 		}
 	}
-	return nil, ErrObjectParamNotExist(versionName)
+	return nil, ErrObjectNotFound("version", versionName)
 }
 
 func deleteServiceTypeVersionById(sType *protobuf.ServiceType, versionId string) (int, error) {
@@ -531,7 +540,7 @@ func deleteServiceTypeVersionById(sType *protobuf.ServiceType, versionId string)
 		}
 	}
 	if idToDelete == -1 {
-		return -1, ErrObjectParamNotExist(versionId)
+		return -1, ErrObjectNotFound("version", versionId)
 	}
 	return idToDelete, nil
 }
@@ -545,7 +554,7 @@ func deleteServiceTypeVersionByName(sType *protobuf.ServiceType, versionName str
 		}
 	}
 	if idToDelete == -1 {
-		return -1, ErrObjectParamNotExist(versionName)
+		return -1, ErrObjectNotFound("version", versionName)
 	}
 	return idToDelete, nil
 }
@@ -556,9 +565,6 @@ func (db CouchDatabase) ReadServiceTypeVersion(serviceTypeIdOrName string, versi
 		return nil, err
 	}
 
-	if sType.ID == "" {
-		return nil, ErrObjectParamNotExist(serviceTypeIdOrName)
-	}
 	var sTypeVersion *protobuf.ServiceVersion
 	isUuid := utils.IsUuid(versionIdOrName)
 	if isUuid {
@@ -566,17 +572,16 @@ func (db CouchDatabase) ReadServiceTypeVersion(serviceTypeIdOrName string, versi
 	} else {
 		sTypeVersion, err = readServiceTypeVersionByName(sType, versionIdOrName)
 	}
-	return sTypeVersion, err
+	if err != nil {
+		return nil, err
+	}
+	return sTypeVersion, nil
 }
 
 func (db CouchDatabase) DeleteServiceTypeVersion(serviceTypeIdOrName string, versionIdOrName string) error {
 	sType, err := db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
 		return err
-	}
-
-	if sType.ID == "" {
-		return ErrObjectParamNotExist(serviceTypeIdOrName)
 	}
 
 	idToDelete := -1
@@ -604,10 +609,6 @@ func (db CouchDatabase) UpdateServiceTypeVersion(serviceTypeIdOrName string, ver
 		return err
 	}
 
-	if sType.ID == "" {
-		return ErrObjectParamNotExist(serviceTypeIdOrName)
-	}
-
 	idToUpdate := -1
 	for i, curVersion := range sType.Versions {
 		if curVersion.ID == version.ID {
@@ -616,7 +617,7 @@ func (db CouchDatabase) UpdateServiceTypeVersion(serviceTypeIdOrName string, ver
 		}
 	}
 	if idToUpdate == -1 {
-		return ErrObjectParamNotExist(version.Version)
+		return ErrObjectNotFound("service type version", version.Version)
 	}
 
 	sType.Versions[idToUpdate] = version
@@ -636,9 +637,6 @@ func (db CouchDatabase) ReadServiceTypeVersionConfig(serviceTypeIdOrName string,
 		return nil, err
 	}
 
-	if sType.ID == "" {
-		return nil, ErrObjectParamNotExist(serviceTypeIdOrName)
-	}
 	var sTypeVersion *protobuf.ServiceVersion
 	isUuid := utils.IsUuid(versionIdOrName)
 	if isUuid {
@@ -647,8 +645,8 @@ func (db CouchDatabase) ReadServiceTypeVersionConfig(serviceTypeIdOrName string,
 		sTypeVersion, err = readServiceTypeVersionByName(sType, versionIdOrName)
 	}
 
-	if sTypeVersion.ID == "" {
-		return nil, ErrObjectParamNotExist(versionIdOrName)
+	if err != nil {
+		return nil, err
 	}
 
 	sTypeVersionConfig := new(protobuf.ServiceConfig)
@@ -669,10 +667,6 @@ func (db CouchDatabase) UpdateServiceTypeVersionConfig(serviceTypeIdOrName strin
 		return err
 	}
 
-	if sTypeVersion.ID == "" {
-		return ErrObjectParamNotExist(versionIdOrName)
-	}
-
 	idToUpdate := -1
 	for i, curVersionConfig := range sTypeVersion.Configs {
 		if curVersionConfig.ParameterName == config.ParameterName {
@@ -681,7 +675,7 @@ func (db CouchDatabase) UpdateServiceTypeVersionConfig(serviceTypeIdOrName strin
 		}
 	}
 	if idToUpdate == -1 {
-		return ErrObjectParamNotExist(config.ParameterName)
+		return ErrObjectNotFound("service type version config", config.ParameterName)
 	}
 
 	sTypeVersion.Configs[idToUpdate] = config
@@ -699,10 +693,6 @@ func (db CouchDatabase) DeleteServiceTypeVersionConfig(serviceTypeIdOrName strin
 		return err
 	}
 
-	if sTypeVersion.ID == "" {
-		return ErrObjectParamNotExist(versionIdOrName)
-	}
-
 	idToDelete := -1
 	for i, curConfig := range sTypeVersion.Configs {
 		if curConfig.ParameterName == parameterName {
@@ -711,7 +701,7 @@ func (db CouchDatabase) DeleteServiceTypeVersionConfig(serviceTypeIdOrName strin
 		}
 	}
 	if idToDelete == -1 {
-		return ErrObjectParamNotExist(parameterName)
+		return ErrObjectNotFound("service type version config", parameterName)
 	}
 
 	configsLen := len(sTypeVersion.Configs)
@@ -731,6 +721,9 @@ func readImageById(db CouchDatabase, imageID string) (*protobuf.Image, error) {
 	var image protobuf.Image
 	_, err := db.imageBucket.Get(imageID, &image)
 	if err != nil {
+		if err == gocb.ErrKeyNotFound {
+			return nil, ErrObjectNotFound("image", imageID)
+		}
 		return nil, ErrReadObjectByKey
 	}
 	return &image, nil
@@ -743,11 +736,11 @@ func readImageByName(db CouchDatabase, imageName string) (*protobuf.Image, error
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
+	defer rows.Close()
 	var image protobuf.Image
 	rows.Next(&image)
-	err = rows.Close()
-	if err != nil {
-		return nil, ErrCloseQuerySession
+	if image.ID == "" {
+		return nil, ErrObjectNotFound("image", imageName)
 	}
 	return &image, nil
 }
@@ -766,10 +759,6 @@ func deleteImageByName(db CouchDatabase, imageName string) error {
 		return err
 	}
 
-	if image.ID == "" {
-		return ErrObjectParamNotExist(imageName)
-	}
-
 	err = deleteImageById(db, image.ID)
 	return err
 }
@@ -783,7 +772,10 @@ func (db CouchDatabase) ReadImage(imageIdOrName string) (*protobuf.Image, error)
 	} else {
 		image, err = readImageByName(db, imageIdOrName)
 	}
-	return image, err
+	if err != nil {
+		return nil, err
+	}
+	return image, nil
 }
 
 func (db CouchDatabase) ReadImagesList() ([]protobuf.Image, error) {
@@ -842,6 +834,9 @@ func readFlavorById(db CouchDatabase, flavorID string) (*protobuf.Flavor, error)
 	var flavor protobuf.Flavor
 	_, err := db.flavorBucket.Get(flavorID, &flavor)
 	if err != nil {
+		if err == gocb.ErrKeyNotFound {
+			return nil, ErrObjectNotFound("flavor", flavorID)
+		}
 		return nil, ErrReadObjectByKey
 	}
 	return &flavor, nil
@@ -854,11 +849,11 @@ func readFlavorByName(db CouchDatabase, flavorName string) (*protobuf.Flavor, er
 	if err != nil {
 		return nil, ErrQueryExecution
 	}
+	defer rows.Close()
 	var flavor protobuf.Flavor
 	rows.Next(&flavor)
-	err = rows.Close()
-	if err != nil {
-		return nil, ErrCloseQuerySession
+	if flavor.ID == "" {
+		return nil, ErrObjectNotFound("flavor", flavorName)
 	}
 	return &flavor, nil
 }
@@ -877,10 +872,6 @@ func deleteFlavorByName(db CouchDatabase, flavorName string) error {
 		return err
 	}
 
-	if flavor.ID == "" {
-		return ErrObjectParamNotExist(flavorName)
-	}
-
 	err = deleteFlavorById(db, flavor.ID)
 	return err
 }
@@ -894,7 +885,10 @@ func (db CouchDatabase) ReadFlavor(flavorIdOrName string) (*protobuf.Flavor, err
 	} else {
 		flavor, err = readFlavorByName(db, flavorIdOrName)
 	}
-	return flavor, err
+	if err != nil {
+		return nil, err
+	}
+	return flavor, nil
 }
 
 func (db CouchDatabase) ReadFlavorsList() ([]protobuf.Flavor, error) {
@@ -956,7 +950,7 @@ func (db CouchDatabase) WriteTemplate(template *protobuf.Template) error {
 	return nil
 }
 
-func (db CouchDatabase) ReadTemplate( id string) (*protobuf.Template, error) {
+func (db CouchDatabase) ReadTemplate(id string) (*protobuf.Template, error) {
 	var template protobuf.Template
 	_, err := db.templatesBucket.Get(id, &template)
 	if err != nil {
@@ -971,7 +965,7 @@ func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Templ
 		templateBucketName, templateName))
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
 	var template protobuf.Template
 
@@ -988,7 +982,7 @@ func (db CouchDatabase) ListTemplates(projectID string) ([]protobuf.Template, er
 		templateBucketName, projectID))
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
-		return nil, err
+		return nil, ErrQueryExecution
 	}
 	var row protobuf.Template
 	var result []protobuf.Template

@@ -1,138 +1,139 @@
 package check
 
 import (
-	"errors"
 	"fmt"
+	"github.com/ispras/michman/internal/rest"
 	"github.com/ispras/michman/internal/utils"
 )
 
-var HandlerCheckersErrorMap = make(map[error]int)
-
 const (
-	errClusterExisted                                = "cluster with this name already exists"
+	// cluster:
+	errClusterBadName = "cluster validation error. Bad name. You should use only alpha-numeric characters and '-' symbols and only alphabetic characters for leading symbol"
+
+	// flavor:
+
+	// service type:
 	errServiceTypeClass                              = "class for service type is not supported"
-	errServiceTypeAccessPort                         = "port is incorrect"
-	errServiceTypeDefaultVersion                     = "default version not found in versions list"
-	errConfigPossibleValueEmpty                      = "config possible value is empty"
-	errServiceTypeVersionConfigDefaultValue          = "service type version config default value not in possible values"
+	errServiceTypePort                               = "port is incorrect"
 	errServiceTypeVersionConfigDefaultValueEmpty     = "service type version config default value must be set"
-	errConfigDependencyServiceDefaultVersionEmpty    = "service default version in dependency can't be empty"
+	errServiceTypeVersionConfigDefaultValue          = "service type version config default value not in possible values"
+	errServiceTypeDependencyServiceEmptyField        = "service default version | versions list in dependency can't be empty"
 	errConfigServiceDependencyVersionNotFound        = "service version in versions list doesn't exist"
 	errConfigServiceDependencyDefaultVersionNotFound = "service default version in dependencies doesn't exist"
-	errConfigDependencyServiceVersionEmpty           = "service versions list in dependencies can't be empty"
-	errConfigServiceTypeDependenceExists             = "service type presents in dependencies for another service"
+	errServiceTypeDefaultVersion                     = "default version not found in versions list"
+
+	// project:
+
+	// log:
+	errOsStat = "error occurred while reading file info describing the named file"
+
+	errConfigPossibleValueEmpty          = "config possible value is empty"
+	errConfigServiceTypeDependenceExists = "service type presents in dependencies for another service"
 )
 
 var (
-	ErrClusterExisted                                = errors.New(errClusterExisted)
-	ErrServiceTypeClass                              = errors.New(errServiceTypeClass)
-	ErrServiceTypePort                               = errors.New(errServiceTypeAccessPort)
-	ErrServiceTypeDefaultVersion                     = errors.New(errServiceTypeDefaultVersion)
-	ErrConfigPossibleValueEmpty                      = errors.New(errConfigPossibleValueEmpty)
-	ErrServiceTypeVersionConfigDefaultValue          = errors.New(errServiceTypeVersionConfigDefaultValue)
-	ErrServiceTypeVersionConfigDefaultValueEmpty     = errors.New(errServiceTypeVersionConfigDefaultValueEmpty)
-	ErrConfigDependencyServiceDefaultVersionEmpty    = errors.New(errConfigDependencyServiceDefaultVersionEmpty)
-	ErrConfigServiceDependencyVersionNotFound        = errors.New(errConfigServiceDependencyVersionNotFound)
-	ErrConfigServiceDependencyDefaultVersionNotFound = errors.New(errConfigServiceDependencyDefaultVersionNotFound)
-	ErrConfigDependencyServiceVersionEmpty           = errors.New(errConfigDependencyServiceVersionEmpty)
-	ErrConfigServiceTypeDependenceExists             = errors.New(errConfigServiceTypeDependenceExists)
+	ErrClusterBadName = rest.MakeError(errClusterBadName, utils.ValidationError)
+	// flavor:
+
+	// service type:
+	ErrServiceTypeClass                              = rest.MakeError(errServiceTypeClass, utils.ValidationError)
+	ErrServiceTypePort                               = rest.MakeError(errServiceTypePort, utils.ValidationError)
+	ErrServiceTypeVersionConfigDefaultValueEmpty     = rest.MakeError(errServiceTypeVersionConfigDefaultValueEmpty, utils.ValidationError)
+	ErrServiceTypeVersionConfigDefaultValue          = rest.MakeError(errServiceTypeVersionConfigDefaultValue, utils.ValidationError)
+	ErrServiceTypeDependencyServiceEmptyField        = rest.MakeError(errServiceTypeDependencyServiceEmptyField, utils.ValidationError)
+	ErrConfigServiceDependencyVersionNotFound        = rest.MakeError(errConfigServiceDependencyVersionNotFound, utils.ObjectNotFound)
+	ErrConfigServiceDependencyDefaultVersionNotFound = rest.MakeError(errConfigServiceDependencyDefaultVersionNotFound, utils.ObjectNotFound)
+	ErrServiceTypeDefaultVersion                     = rest.MakeError(errServiceTypeDefaultVersion, utils.ObjectNotFound)
+	ErrConfigServiceTypeDependenceExists             = rest.MakeError(errConfigServiceTypeDependenceExists, utils.ObjectExists)
+	ErrConfigPossibleValueEmpty                      = rest.MakeError(errConfigPossibleValueEmpty, utils.ValidationError)
+
+	// project:
+
+	// log:
+	ErrOsStat = rest.MakeError(errOsStat, utils.ValidationError)
 )
 
+// common:
+func ErrObjectExists(param1 string, param2 string) error {
+	errMessage := fmt.Sprintf("%s with this name or id (%s) already exists", param1, param2)
+	return rest.MakeError(errMessage, utils.ObjectExists)
+}
+
 func ErrValidTypeParam(param string) error {
-	ErrParamType := fmt.Errorf("parameter type must be int, float, bool, string. Got: %s", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("parameter type must be int, float, bool, string. Got: %s", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
-func ErrConfigServiceTypeDependenceVersionExists(param1 string, param2 string) error {
-	ErrParamType := fmt.Errorf("service type version %s presents in dependencies versions in %s service", param1, param2)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+func ErrPossibleValues(param string) error {
+	errMessage := fmt.Sprintf("config possible value %s set incorrectly", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
-func ErrServiceTypeVersionUnique(param string) error {
-	ErrParamType := fmt.Errorf("version %s is not unique", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceTypeVersionConfigUnique(param string) error {
-	ErrParamType := fmt.Errorf("config with parameter name %s is not unique", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceTypeVersionDependencyUnique(param string) error {
-	ErrParamType := fmt.Errorf("dependency with service type %s is not unique", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceTypeVersionConfigPossibleValuesUnique(param string) error {
-	ErrParamType := fmt.Errorf("config possible value %s is not unique", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceTypeVersionConfigPossibleValues(param string) error {
-	ErrParamType := fmt.Errorf("config possible value %s set incorrectly", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceTypeVersionConfigParamEmpty(param string) error {
-	ErrParamType := fmt.Errorf("config parameter %s must be set", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func ErrServiceDependenciesNotExists(param string) error {
-	ErrParamType := fmt.Errorf("service with type %s from dependencies doesn't exist", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
+// flavor:
 
 func ErrFlavorParamVal(param string) error {
-	ErrParamVal := fmt.Errorf("flavor %s can't be less than or equal to zero", param)
-	HandlerCheckersErrorMap[ErrParamVal] = utils.ValidationError
-	return ErrParamVal
+	errMessage := fmt.Sprintf("flavor %s can't be less than or equal to zero", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrFlavorParamType(param string) error {
-	ErrParamType := fmt.Errorf("flavor %s must be int type", param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("flavor %s must be int type", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+// service type:
+
+func ErrServiceTypeVersionUnique(param string) error {
+	errMessage := fmt.Sprintf("version %s is not unique", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrServiceTypeVersionConfigParamEmpty(param string) error {
+	errMessage := fmt.Sprintf("config parameter %s must be set", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrServiceTypeVersionConfigUnique(param string) error {
+	errMessage := fmt.Sprintf("config with parameter name %s is not unique", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrServiceDependenciesNotExists(param string) error {
+	errMessage := fmt.Sprintf("service with type %s from dependencies doesn't exist", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrServiceTypeVersionDependencyUnique(param string) error {
+	errMessage := fmt.Sprintf("dependency with service type %s is not unique", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrServiceTypeDependenceVersionExists(param1 string, param2 string) error {
+	errMessage := fmt.Sprintf("service type version %s presents in dependencies versions in %s service", param1, param2)
+	return rest.MakeError(errMessage, utils.ValidationError)
+}
+
+func ErrDependencyServiceTypeNotExists(used_service, dep_version string) error {
+	errMessage := fmt.Sprintf("service type %s not found in dependencies of version %s", used_service, dep_version)
+	return rest.MakeError(errMessage, utils.ObjectNotFound)
+}
+
+func ErrServiceTypeVersionConfigPossibleValuesUnique(param string) error {
+	errMessage := fmt.Sprintf("config possible value %s is not unique", param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceConfigIncorrectType(param string, service string) error {
-	ErrParamType := fmt.Errorf("'%s' service config param '%s' has incorrect value type", service, param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("'%s' service config param '%s' has incorrect value type", service, param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceConfigNotPossibleValue(param string, service string) error {
-	ErrParamType := fmt.Errorf("'%s' service config param '%s' value is not supported", service, param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
+	errMessage := fmt.Sprintf("'%s' service config param '%s' value is not supported", service, param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }
 
 func ErrClusterServiceConfigNotSupported(param string, service string) error {
-	ErrParamType := fmt.Errorf("'%s' service config param name '%s' is not supported", service, param)
-	HandlerCheckersErrorMap[ErrParamType] = utils.ValidationError
-	return ErrParamType
-}
-
-func init() {
-	HandlerCheckersErrorMap[ErrClusterExisted] = utils.ObjectExists
-	HandlerCheckersErrorMap[ErrServiceTypeClass] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrServiceTypePort] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrServiceTypeDefaultVersion] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigPossibleValueEmpty] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigDependencyServiceDefaultVersionEmpty] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigServiceDependencyVersionNotFound] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigServiceDependencyDefaultVersionNotFound] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrServiceTypeVersionConfigDefaultValueEmpty] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrServiceTypeVersionConfigDefaultValue] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigDependencyServiceVersionEmpty] = utils.ValidationError
-	HandlerCheckersErrorMap[ErrConfigServiceTypeDependenceExists] = utils.ObjectUsed
+	errMessage := fmt.Sprintf("'%s' service config param name '%s' is not supported", service, param)
+	return rest.MakeError(errMessage, utils.ValidationError)
 }

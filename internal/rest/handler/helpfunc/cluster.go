@@ -46,15 +46,15 @@ func SetClusterServicesUuids(cluster *protobuf.Cluster) error {
 	for _, service := range cluster.Services {
 		sUuid, err := uuid.NewRandom()
 		if err != nil {
-			return err
+			return ErrUuidLibError
 		}
 		service.ID = sUuid.String()
 	}
 	return nil
 }
 
-// SetDefaults set some cluster fields by default from project if not specified by user
-func SetDefaults(cluster *protobuf.Cluster, project *protobuf.Project) {
+// SetDefaults sets flavors and image cluster fields by default from project if not specified by user
+func SetClusterDefaults(cluster *protobuf.Cluster, project *protobuf.Project) {
 	// set default project flavors if not specified
 	if cluster.MasterFlavor == "" {
 		cluster.MasterFlavor = project.DefaultMasterFlavor
@@ -75,20 +75,32 @@ func SetDefaults(cluster *protobuf.Cluster, project *protobuf.Project) {
 	}
 }
 
+// SetClusterGeneratedFields sets ID, Name, ProjectID in cluster object
+func SetClusterGeneratedFields(cluster *protobuf.Cluster, project *protobuf.Project) error {
+	cUuid, err := uuid.NewRandom()
+	if err != nil {
+		return ErrUuidLibError
+	}
+	cluster.ID = cUuid.String()
+	cluster.Name = cluster.DisplayName + "-" + project.Name
+	cluster.ProjectID = project.ID
+	return nil
+}
+
 // GetDependencies get and return serviceList of services and their services from dependencies
-func GetDependencies(db database.Database, cluster *protobuf.Cluster, curService *protobuf.Service) ([]*protobuf.Service, error, int) {
+func GetDependencies(db database.Database, cluster *protobuf.Cluster, curService *protobuf.Service) ([]*protobuf.Service, error) {
 	var serviceToAdd *protobuf.Service = nil
 	var servicesList []*protobuf.Service = nil
 
 	// a set of services specified in the user request or existed in cluster
 	clusterServiceTypesInfo, _, err := SetServiceExistInfo(db, cluster)
 	if err != nil {
-		return nil, err, http.StatusInternalServerError
+		return nil, err
 	}
 
 	serviceVersion, err := db.ReadServiceTypeVersion(curService.Type, curService.Version)
 	if err != nil {
-		return nil, err, http.StatusInternalServerError
+		return nil, err
 	}
 
 	// check if version has dependencies
@@ -97,7 +109,7 @@ func GetDependencies(db database.Database, cluster *protobuf.Cluster, curService
 			// checking that the service from the dependencies is explicitly specified by the user and there is no need to add a default
 			if servInfo := clusterServiceTypesInfo[serviceDependency.ServiceType]; servInfo.Exists == true {
 				if !utils.ItemExists(serviceDependency.ServiceVersions, servInfo.Service.Version) {
-					return nil, ErrClusterDependenceServicesIncompatibleVersion(servInfo.Service.Type, curService.Type), http.StatusBadRequest
+					return nil, ErrClusterDependenceServicesIncompatibleVersion(servInfo.Service.Type, curService.Type)
 				}
 				continue
 			}
@@ -112,7 +124,7 @@ func GetDependencies(db database.Database, cluster *protobuf.Cluster, curService
 		}
 	}
 
-	return servicesList, nil, http.StatusOK
+	return servicesList, nil
 }
 
 // SetServiceExistInfo set information struct about services exist or not exist in old cluster
@@ -175,14 +187,14 @@ func AppendNewServices(db database.Database, serviceTypesOld map[string]ServiceE
 }
 
 // AppendDependentServices append services from dependencies to the cluster structure
-func AppendDependentServices(servicesToAdd []*protobuf.Service, resCluster *protobuf.Cluster) (bool, error, int) {
+func AppendDependentServices(servicesToAdd []*protobuf.Service, resCluster *protobuf.Cluster) (bool, error) {
 	changesFlag := false
 	if servicesToAdd != nil {
 		for _, curService := range servicesToAdd {
 			// generating UUID for added new services from dependencies
 			sUuid, err := uuid.NewRandom()
 			if err != nil {
-				return false, ErrUuidLibError, http.StatusInternalServerError
+				return false, ErrUuidLibError
 			}
 			curService.ID = sUuid.String()
 
@@ -191,11 +203,11 @@ func AppendDependentServices(servicesToAdd []*protobuf.Service, resCluster *prot
 		changesFlag = true
 	}
 
-	return changesFlag, nil, http.StatusOK
+	return changesFlag, nil
 }
 
 // UpdateRangeValuesAppendedServices used for updating range values of appended services and append services from their dependencies
-func UpdateRangeValuesAppendedServices(db database.Database, oldServiceNumber int, resCluster *protobuf.Cluster, action string) (error, int) {
+func UpdateRangeValuesAppendedServices(db database.Database, oldServiceNumber int, resCluster *protobuf.Cluster, action string) error {
 	retryFlag := true
 	startIdx := oldServiceNumber
 
@@ -205,11 +217,11 @@ func UpdateRangeValuesAppendedServices(db database.Database, oldServiceNumber in
 			// read service type from database
 			serviceType, err := db.ReadServiceType(service.Type)
 			if err != nil {
-				return err, http.StatusInternalServerError
+				return err
 			}
 
 			if action == utils.ActionCreate && len(serviceType.HealthCheck) == 0 {
-				return ErrClusterServiceHealthCheck(serviceType.Type), http.StatusInternalServerError
+				return ErrClusterServiceHealthCheck(serviceType.Type)
 			}
 
 			if service.Version == "" {
@@ -217,15 +229,15 @@ func UpdateRangeValuesAppendedServices(db database.Database, oldServiceNumber in
 			}
 
 			// get services from dependencies
-			servicesToAdd, err, status := GetDependencies(db, resCluster, service)
+			servicesToAdd, err := GetDependencies(db, resCluster, service)
 			if err != nil {
-				return err, status
+				return err
 			}
 
 			// append services from dependencies to resCluster struct
-			changesFlag, err, status := AppendDependentServices(servicesToAdd, resCluster)
+			changesFlag, err := AppendDependentServices(servicesToAdd, resCluster)
 			if err != nil {
-				return err, status
+				return err
 			}
 
 			if !changesFlag {
@@ -238,5 +250,17 @@ func UpdateRangeValuesAppendedServices(db database.Database, oldServiceNumber in
 		}
 	}
 
-	return nil, http.StatusOK
+	return nil
+}
+
+func SetServices(db database.Database, cluster *protobuf.Cluster) error {
+	if cluster.Services != nil {
+		if err := SetClusterServicesUuids(cluster); err != nil {
+			return err
+		}
+		if err := UpdateRangeValuesAppendedServices(db, 0, cluster, utils.ActionCreate); err != nil {
+			return err
+		}
+	}
+	return nil
 }

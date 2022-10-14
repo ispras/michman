@@ -8,5 +8,5 @@ func FileExists(path string) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	return false, err
+	return false, ErrOsStat
 }

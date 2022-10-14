@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/rest/handler/helpfunc"
 	"github.com/ispras/michman/internal/utils"
 	"strconv"
 )
@@ -56,14 +55,14 @@ func PossibleValues(possibleValues []string, vType string, IsList bool) error {
 	// check PossibleValues type correct
 	for _, value := range possibleValues {
 		if err := CorrectType(value, vType, IsList); err != nil {
-			return ErrServiceTypeVersionConfigPossibleValues(value)
+			return ErrPossibleValues(value)
 		}
 	}
 
 	// format PossibleValue strings
 	if IsList {
 		for i, pV := range possibleValues {
-			possibleValues[i] = helpfunc.DeleteSpaces(pV)
+			possibleValues[i] = utils.DeleteSpaces(pV)
 		}
 	}
 

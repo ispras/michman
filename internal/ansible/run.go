@@ -6,10 +6,9 @@ import (
 	clusterlogger "github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
-	"github.com/sirupsen/logrus"
 )
 
-func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) (string, error) {
+func (aL LauncherServer) Run(cluster *protobuf.Cluster, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) (string, error) {
 	//constructing ansible-playbook command
 	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, osConfig, action)
 	if err != nil {
@@ -24,7 +23,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(newAnsibleArgs)}
 
 	//saving cluster to database
-	logger.Info("Writing new cluster to db...")
+	aL.Logger.Info("Writing new cluster to db...")
 	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
 		return utils.RunFail, err
@@ -41,7 +40,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 		return utils.RunFail, err
 	}
 
-	logger.Info("Running ansible...")
+	aL.Logger.Info("Running ansible...")
 	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, buf, buf)
 	if err != nil {
 		return utils.RunFail, err
@@ -67,7 +66,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 			}
 			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
 
-			logger.Info("Running ansible for getting master IP...")
+			aL.Logger.Info("Running ansible for getting master IP...")
 			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			if err != nil {
 				return utils.RunFail, err
@@ -89,7 +88,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 			}
 			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
 
-			logger.Info("Running ansible for getting storage IP...")
+			aL.Logger.Info("Running ansible for getting storage IP...")
 			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			if err != nil {
 				return utils.RunFail, err
@@ -110,7 +109,7 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 			}
 			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
 
-			logger.Info("Running ansible for getting monitoring IP...")
+			aL.Logger.Info("Running ansible for getting monitoring IP...")
 			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
 			if err != nil {
 				return "", err
@@ -148,31 +147,30 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, logger *logrus.Logger, d
 		}
 
 		if monitoringIp != "" {
-			logger.Info("Monitoring IP is: ", monitoringIp)
+			aL.Logger.Info("Monitoring IP is: ", monitoringIp)
 		}
 
 		if masterIp != "" {
-			logger.Info("Master IP is: ", masterIp)
+			aL.Logger.Info("Master IP is: ", masterIp)
 			cluster.MasterIP = masterIp
 		}
 
 		if storageIp != "" {
-			logger.Info("Storage IP is: ", storageIp)
+			aL.Logger.Info("Storage IP is: ", storageIp)
 		}
 
-		logger.Info("Saving IPs and URLs for services...")
-		err = aL.Db.WriteCluster(cluster)
+		aL.Logger.Info("Saving IPs and URLs for services...")
+		err = aL.Db.UpdateCluster(cluster)
 		if err != nil {
 			return utils.RunFail, err
 		}
-
 	}
 
 	if res {
-		logger.Info("Launch: OK")
+		aL.Logger.Info("Launch: OK")
 		return utils.AnsibleOk, nil
 	} else {
-		logger.Info("Ansible has failed, check logs for more information.")
+		aL.Logger.Info("Ansible has failed, check logs for more information.")
 		return utils.AnsibleFail, nil
 	}
 }

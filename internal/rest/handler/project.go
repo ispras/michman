@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/ispras/michman/internal/rest/handler/response"
 	"github.com/ispras/michman/internal/rest/handler/validate"
+	response "github.com/ispras/michman/internal/rest/response"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -17,8 +17,8 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, _ *http.Request, _ h
 
 	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -34,40 +34,31 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	var project protobuf.Project
 	err := json.NewDecoder(r.Body).Decode(&project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		response.BadRequest(w, ErrJsonIncorrect)
+		err = ErrJsonIncorrect
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
-
-	hS.Logger.Info("Validating project...")
-	err, status := validate.ProjectCreate(hS.Db, &project)
-	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+	if err := validate.ProjectCreate(hS.Db, &project); err != nil {
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
-
-	project.Name = project.DisplayName
-
-	// generating UUID for new project
-	pUuid, err := uuid.NewRandom()
-	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", ErrUuidLibError.Error())
-		response.InternalError(w, ErrUuidLibError)
+	// Generate UUID for project ID
+	pUuid, uErr := uuid.NewRandom()
+	if uErr != nil {
+		err := ErrUuidLibError
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 	project.ID = pUuid.String()
-
+	project.Name = project.DisplayName
+	// Write new project
 	err = hS.Db.WriteProject(&project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -83,13 +74,8 @@ func (hS HttpServer) ProjectGet(w http.ResponseWriter, _ *http.Request, params h
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -105,13 +91,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	oldProj, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if oldProj.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -120,23 +101,18 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	var newProj protobuf.Project
 	err = json.NewDecoder(r.Body).Decode(&newProj)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusBadRequest, ": ", ErrJsonIncorrect.Error())
-		response.BadRequest(w, ErrJsonIncorrect)
+		err = ErrJsonIncorrect
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
 	hS.Logger.Info("Validating updated values of the project fields...")
-	err, status := validate.ProjectUpdate(hS.Db, &newProj)
+	err = validate.ProjectUpdate(hS.Db, &newProj)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	if newProj.GroupID != "" {
@@ -166,8 +142,8 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	err = hS.Db.UpdateProject(resProj)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
@@ -183,33 +159,22 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, _ *http.Request, param
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
-		return
-	}
-	if project.Name == "" {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusNotFound, ": ", ErrProjectNotFound.Error())
-		response.NotFound(w, ErrProjectNotFound)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 
-	err, status := validate.ProjectDelete(hS.Db, project)
+	err = validate.ProjectDelete(hS.Db, project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusBadRequest:
-			response.BadRequest(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.InternalError(w, err)
-			return
-		}
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-		response.InternalError(w, err)
+		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		response.Error(w, err)
 		return
 	}
 

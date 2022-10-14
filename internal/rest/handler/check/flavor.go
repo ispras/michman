@@ -3,12 +3,10 @@ package check
 import (
 	"github.com/ispras/michman/internal/database"
 	"github.com/ispras/michman/internal/protobuf"
-	"github.com/sirupsen/logrus"
 )
 
 // FlavorUsed checks whether the transferred flavor is used in other created clusters or projects
-func FlavorUsed(db database.Database, logger *logrus.Logger, flavorName string) (bool, error) {
-	logger.Print("Checking is flavor used...")
+func FlavorUsed(db database.Database, flavorName string) (bool, error) {
 	clusters, err := db.ReadClustersList()
 	if err != nil {
 		return false, err

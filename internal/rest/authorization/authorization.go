@@ -5,7 +5,7 @@ import (
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
-	"github.com/ispras/michman/internal/rest/handler/response"
+	response "github.com/ispras/michman/internal/rest/response"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -88,14 +88,14 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 					projectIdOrName, err := getProjectIdOrName(r.URL.Path)
 					if err != nil {
 						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-						response.InternalError(w, err)
+						response.Error(w, err)
 						return
 					}
 
 					project, err := auth.Db.ReadProject(projectIdOrName)
 					if err != nil {
 						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-						response.InternalError(w, err)
+						response.Error(w, err)
 						return
 					}
 
@@ -133,7 +133,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			res, err := e.EnforceSafe(role, r.URL.Path, r.Method)
 			if err != nil {
 				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-				response.InternalError(w, err)
+				response.Error(w, err)
 				return
 			}
 			if res {
@@ -141,7 +141,7 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			} else {
 				auth.Logger.Info(request)
 				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusForbidden, ": ", ErrUnauthorized.Error())
-				response.Forbidden(w, ErrUnauthorized)
+				response.Error(w, ErrUnauthorized)
 				return
 			}
 		}
@@ -161,10 +161,13 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 		auth.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
 		switch status {
 		case http.StatusUnauthorized:
-			response.Unauthorized(w, err)
+			response.Error(w, err)
+			return
+		case http.StatusBadRequest:
+			response.Error(w, err)
 			return
 		case http.StatusInternalServerError:
-			response.InternalError(w, err)
+			response.Error(w, err)
 			return
 		}
 	}
@@ -177,7 +180,7 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 
 	if groups == "" {
 		auth.Logger.Warn("Request ", request, " failed with status ", http.StatusUnauthorized, ": ", ErrAuthenticationUnsuccessful.Error())
-		response.Unauthorized(w, ErrAuthenticationUnsuccessful)
+		response.Error(w, ErrAuthenticationUnsuccessful)
 	} else {
 		message := "Authentication success! " + "You are a member of some groups"
 		auth.Logger.Info("Authentication success!")
