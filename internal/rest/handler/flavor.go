@@ -20,7 +20,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	err := json.NewDecoder(r.Body).Decode(&flavor)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -29,11 +29,11 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	_, err = hS.Db.ReadFlavor(flavor.Name)
 	if err == nil && response.ErrorClass(err) != utils.ObjectNotFound {
 		err = ErrObjectExists("flavor", flavor.Name)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	} else if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -41,7 +41,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	hS.Logger.Info("Validating flavor...")
 	err = validate.FlavorCreate(&flavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -50,7 +50,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
 		err = ErrUuidLibError
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -58,7 +58,7 @@ func (hS HttpServer) FlavorCreate(w http.ResponseWriter, r *http.Request, _ http
 
 	err = hS.Db.WriteFlavor(&flavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -74,7 +74,7 @@ func (hS HttpServer) FlavorsGetList(w http.ResponseWriter, _ *http.Request, _ ht
 
 	flavors, err := hS.Db.ReadFlavorsList()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -91,7 +91,7 @@ func (hS HttpServer) FlavorGet(w http.ResponseWriter, _ *http.Request, params ht
 
 	flavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -109,7 +109,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	// read flavor from database
 	oldFlavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -118,14 +118,14 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 	err = json.NewDecoder(r.Body).Decode(&newFlavor)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = validate.FlavorUpdate(hS.Db, oldFlavor, newFlavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -146,7 +146,7 @@ func (hS HttpServer) FlavorUpdate(w http.ResponseWriter, r *http.Request, params
 
 	err = hS.Db.UpdateFlavor(oldFlavor.ID, resFlavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -164,21 +164,21 @@ func (hS HttpServer) FlavorDelete(w http.ResponseWriter, _ *http.Request, params
 	// read flavor from database
 	flavor, err := hS.Db.ReadFlavor(flavorIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = validate.FlavorDelete(hS.Db, flavor)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = hS.Db.DeleteFlavor(flavor.Name)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}

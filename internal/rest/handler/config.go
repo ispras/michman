@@ -29,7 +29,7 @@ func (hS HttpServer) ConfigsServiceTypeGet(w http.ResponseWriter, r *http.Reques
 	if queryViewValue != "" {
 		if queryViewValue != QueryViewTypeSummary && queryViewValue != QueryViewTypeFull {
 			err := ErrGetQueryParams
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -38,7 +38,7 @@ func (hS HttpServer) ConfigsServiceTypeGet(w http.ResponseWriter, r *http.Reques
 	// read service type from database
 	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -67,7 +67,7 @@ func (hS HttpServer) ConfigsServiceTypesGetList(w http.ResponseWriter, _ *http.R
 
 	sTypes, err := hS.Db.ReadServicesTypesList()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -85,7 +85,7 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 	err := json.NewDecoder(r.Body).Decode(&sType)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -94,12 +94,12 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 	dbServiceType, err := hS.Db.ReadServiceType(sType.Type)
 	if dbServiceType != nil {
 		err = ErrObjectExists("service type", sType.Type)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 	if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -107,7 +107,7 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 	hS.Logger.Info("Validating service type for creation...")
 	err = validate.ServiceTypeCreate(hS.Db, &sType)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -123,7 +123,7 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 		vUuid, err := uuid.NewRandom()
 		if err != nil {
 			err = ErrUuidLibError
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -134,7 +134,7 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 	stUuid, err := uuid.NewRandom()
 	if err != nil {
 		err = ErrUuidLibError
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -143,7 +143,7 @@ func (hS HttpServer) ConfigsServiceTypeCreate(w http.ResponseWriter, r *http.Req
 	//saving new service type
 	err = hS.Db.WriteServiceType(&sType)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -163,7 +163,7 @@ func (hS HttpServer) ConfigsServiceTypeUpdate(w http.ResponseWriter, r *http.Req
 	// read service type from database
 	oldServiceType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -172,7 +172,7 @@ func (hS HttpServer) ConfigsServiceTypeUpdate(w http.ResponseWriter, r *http.Req
 	err = json.NewDecoder(r.Body).Decode(&newServiceType)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -180,7 +180,7 @@ func (hS HttpServer) ConfigsServiceTypeUpdate(w http.ResponseWriter, r *http.Req
 	hS.Logger.Info("Validating service type values for update...")
 	err = validate.ServiceTypeUpdate(oldServiceType, &newServiceType)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -223,7 +223,7 @@ func (hS HttpServer) ConfigsServiceTypeUpdate(w http.ResponseWriter, r *http.Req
 
 	err = hS.Db.UpdateServiceType(oldServiceType)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -241,7 +241,7 @@ func (hS HttpServer) ConfigsServiceTypeDelete(w http.ResponseWriter, _ *http.Req
 	// read service type from database
 	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -249,14 +249,14 @@ func (hS HttpServer) ConfigsServiceTypeDelete(w http.ResponseWriter, _ *http.Req
 	hS.Logger.Info("Validating service type values for delete...")
 	err = validate.ServiceTypeDelete(hS.Db, sType.Type)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = hS.Db.DeleteServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -277,7 +277,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionGet(w http.ResponseWriter, _ *http
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -285,7 +285,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionGet(w http.ResponseWriter, _ *http
 	// read service type version from database
 	version, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -303,7 +303,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionsGetList(w http.ResponseWriter, _ 
 	// read service type from database
 	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -321,7 +321,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	// read service type from database
 	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -330,7 +330,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeVersion)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -339,12 +339,12 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	sVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, newServiceTypeVersion.Version)
 	if sVersion != nil {
 		err = ErrObjectExists("service type version", newServiceTypeVersion.Version)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 	if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -352,7 +352,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	hS.Logger.Info("Validating service type version for creation...")
 	err = validate.ServiceTypeVersionCreate(hS.Db, sType.Versions, newServiceTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -368,7 +368,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	vUuid, err := uuid.NewRandom()
 	if err != nil {
 		err = ErrUuidLibError
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -379,7 +379,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionCreate(w http.ResponseWriter, r *h
 	//saving updated service type
 	err = hS.Db.UpdateServiceType(sType)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -398,7 +398,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionUpdate(w http.ResponseWriter, r *h
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -406,7 +406,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionUpdate(w http.ResponseWriter, r *h
 	// read service type version from database
 	oldServiceTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -415,7 +415,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionUpdate(w http.ResponseWriter, r *h
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeVersion)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -423,7 +423,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionUpdate(w http.ResponseWriter, r *h
 	hS.Logger.Info("Validating service type version values for update...")
 	err = validate.ServiceTypeVersionUpdate(newServiceTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -439,7 +439,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionUpdate(w http.ResponseWriter, r *h
 	//saving updated service type
 	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, oldServiceTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -458,7 +458,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDelete(w http.ResponseWriter, _ *h
 	// read service type from database to verify the existence
 	sType, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -466,7 +466,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDelete(w http.ResponseWriter, _ *h
 	// read service type version from database
 	serviceTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -474,14 +474,14 @@ func (hS HttpServer) ConfigsServiceTypeVersionDelete(w http.ResponseWriter, _ *h
 	hS.Logger.Info("Validating service type version values for delete...")
 	err = validate.ServiceTypeVersionDelete(hS.Db, sType, serviceTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = hS.Db.DeleteServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -503,7 +503,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigGet(w http.ResponseWriter, _
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -511,7 +511,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigGet(w http.ResponseWriter, _
 	// read service type version from database to verify the existence
 	_, err = hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -519,7 +519,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigGet(w http.ResponseWriter, _
 	// read service type version config from database
 	config, err := hS.Db.ReadServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, parameterName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -538,7 +538,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigsGetList(w http.ResponseWrit
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -546,7 +546,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigsGetList(w http.ResponseWrit
 	// read service type version from database
 	version, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -565,7 +565,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -573,7 +573,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 	// read service type version from database to verify the existence
 	version, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -582,7 +582,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeConfig)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -591,12 +591,12 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 	dbConfig, err := hS.Db.ReadServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, newServiceTypeConfig.ParameterName)
 	if dbConfig != nil {
 		err = ErrObjectExists("service type version config", newServiceTypeConfig.ParameterName)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 	if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -604,7 +604,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 	hS.Logger.Info("Validating service type version config for creation...")
 	err = validate.ServiceTypeVersionConfigCreate(newServiceTypeConfig, version.Configs)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -614,7 +614,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigCreate(w http.ResponseWriter
 
 	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, version)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -634,7 +634,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -642,7 +642,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 	// read service type version from database to verify the existence
 	_, err = hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -650,7 +650,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 	// read service type version config from database
 	oldConfig, err := hS.Db.ReadServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, parameterName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -659,7 +659,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeConfig)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -667,7 +667,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 	hS.Logger.Info("Validating service type version values for update...")
 	err = validate.ServiceTypeVersionConfigUpdate(newServiceTypeConfig, oldConfig)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -687,7 +687,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigUpdate(w http.ResponseWriter
 
 	err = hS.Db.UpdateServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, oldConfig)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -707,7 +707,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigDelete(w http.ResponseWriter
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -715,7 +715,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigDelete(w http.ResponseWriter
 	// read service type version from database to verify the existence
 	_, err = hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -723,7 +723,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigDelete(w http.ResponseWriter
 	// read service type version from database
 	sTypeVersionConfig, err := hS.Db.ReadServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, parameterName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -745,7 +745,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionConfigDelete(w http.ResponseWriter
 
 	err = hS.Db.DeleteServiceTypeVersionConfig(serviceTypeIdOrName, versionIdOrName, sTypeVersionConfig.ParameterName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -767,7 +767,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyGet(w http.ResponseWrite
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -775,7 +775,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyGet(w http.ResponseWrite
 	// read service type version from database to verify the existence
 	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -805,7 +805,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyGet(w http.ResponseWrite
 
 	if !exists {
 		err = check.ErrDependencyServiceTypeNotExists(dependencyType, sTypeVersion.Version)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -824,7 +824,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependenciesGetList(w http.Respons
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -832,7 +832,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependenciesGetList(w http.Respons
 	// read service type version from database
 	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -851,7 +851,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -859,7 +859,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 	// read service type version from database to verify the existence
 	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -868,7 +868,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeDependency)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -895,7 +895,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 
 	if dbDependency.ServiceType != "" {
 		err = errors.New("service type version config with this id or name already exists")
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -903,7 +903,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 	hS.Logger.Info("Validating service type version config for creation...")
 	err = validate.ServiceTypeVersionDependencyCreate(hS.Db, newServiceTypeDependency, sTypeVersion.Dependencies)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -912,7 +912,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyCreate(w http.ResponseWr
 
 	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -932,7 +932,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -940,7 +940,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 	// read service type version from database to verify the existence
 	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -970,7 +970,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 
 	if !exists {
 		err = check.ErrDependencyServiceTypeNotExists(dependencyType, sTypeVersion.Version)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -979,7 +979,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 	err = json.NewDecoder(r.Body).Decode(&newServiceTypeDependency)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -987,7 +987,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 	hS.Logger.Info("Validating service type version values for update...")
 	err = validate.ServiceTypeVersionDependencyUpdate(hS.Db, oldSTypeVersionVersionDependency, newServiceTypeDependency)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -1034,7 +1034,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyUpdate(w http.ResponseWr
 
 	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -1054,7 +1054,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyDelete(w http.ResponseWr
 	// read service type from database to verify the existence
 	_, err := hS.Db.ReadServiceType(serviceTypeIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -1062,7 +1062,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyDelete(w http.ResponseWr
 	// read service type version from database to verify the existence
 	sTypeVersion, err := hS.Db.ReadServiceTypeVersion(serviceTypeIdOrName, versionIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -1090,7 +1090,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyDelete(w http.ResponseWr
 
 	if sTypeVersionVersionDependency.ServiceType == "" {
 		err = errors.New("service type version config with this id or name not found")
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -1126,7 +1126,7 @@ func (hS HttpServer) ConfigsServiceTypeVersionDependencyDelete(w http.ResponseWr
 
 	err = hS.Db.UpdateServiceTypeVersion(serviceTypeIdOrName, sTypeVersion)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}

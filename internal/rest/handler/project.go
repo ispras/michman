@@ -17,7 +17,7 @@ func (hS HttpServer) ProjectsGetList(w http.ResponseWriter, _ *http.Request, _ h
 
 	projects, err := hS.Db.ReadProjectsList()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -35,7 +35,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	err := json.NewDecoder(r.Body).Decode(&project)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -57,7 +57,7 @@ func (hS HttpServer) ProjectCreate(w http.ResponseWriter, r *http.Request, _ htt
 	// Write new project
 	err = hS.Db.WriteProject(&project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -74,7 +74,7 @@ func (hS HttpServer) ProjectGet(w http.ResponseWriter, _ *http.Request, params h
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -91,7 +91,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	oldProj, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -102,7 +102,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	err = json.NewDecoder(r.Body).Decode(&newProj)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -110,7 +110,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 	hS.Logger.Info("Validating updated values of the project fields...")
 	err = validate.ProjectUpdate(hS.Db, &newProj)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -142,7 +142,7 @@ func (hS HttpServer) ProjectUpdate(w http.ResponseWriter, r *http.Request, param
 
 	err = hS.Db.UpdateProject(resProj)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -159,21 +159,21 @@ func (hS HttpServer) ProjectDelete(w http.ResponseWriter, _ *http.Request, param
 
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = validate.ProjectDelete(hS.Db, project)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = hS.Db.DeleteProject(project.ID)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}

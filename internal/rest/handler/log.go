@@ -28,7 +28,7 @@ func (hS HttpServer) ServeAnsibleServiceLog(w http.ResponseWriter, r *http.Reque
 	path := helpfunc.MakeLogFilePath(utils.LauncherLogFileName, hS.Config.LogsFilePath)
 
 	if exist, err := check.FileExists(path); !exist || err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -45,7 +45,7 @@ func (hS HttpServer) ServeHttpServerLog(w http.ResponseWriter, r *http.Request, 
 	path := helpfunc.MakeLogFilePath(utils.HttpLogFileName, hS.Config.LogsFilePath)
 
 	if exist, err := check.FileExists(path); !exist || err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -66,7 +66,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -74,7 +74,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -88,7 +88,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 			action = tmpAction
 		} else {
 			err = ErrLogsBadActionParam
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -97,7 +97,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	// initialize cluster logger
 	cLogger, err := clusterlogger.MakeNewClusterLogger(hS.Config, cluster.ID, action)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -105,7 +105,7 @@ func (hS HttpServer) ServeClusterLog(w http.ResponseWriter, r *http.Request, par
 	// read cluster logs from file or logstash (depending on 'logs_output' in configuration file)
 	clusterLogs, err := cLogger.ReadClusterLogs()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}

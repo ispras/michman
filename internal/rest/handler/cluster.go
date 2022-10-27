@@ -21,14 +21,14 @@ func (hS HttpServer) ClustersGetList(w http.ResponseWriter, _ *http.Request, par
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	clusters, err := hS.Db.ReadProjectClusters(project.ID)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -46,7 +46,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -55,7 +55,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	err = json.NewDecoder(r.Body).Decode(&resCluster)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -66,7 +66,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	hS.Logger.Infof("Validating cluster %s general info...", resCluster.Name)
 	err = validate.ClusterCreateGeneral(hS.Db, resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -74,7 +74,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	// check, that cluster with such name doesn't exist
 	clusterExists, oldCluster, retErr := check.ClusterExist(hS.Db, resCluster, project)
 	if retErr != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", retErr.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", retErr.Error())
 		response.Error(w, retErr)
 		return
 	}
@@ -101,7 +101,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 		// cluster should be validated after addition services from dependencies
 		err = validate.ClusterServices(hS.Db, resCluster)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -119,7 +119,7 @@ func (hS HttpServer) ClusterCreate(w http.ResponseWriter, r *http.Request, param
 	if !clusterExists {
 		err = hS.Db.WriteCluster(resCluster)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -140,7 +140,7 @@ func (hS HttpServer) ClusterGet(w http.ResponseWriter, _ *http.Request, params h
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -148,7 +148,7 @@ func (hS HttpServer) ClusterGet(w http.ResponseWriter, _ *http.Request, params h
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -167,7 +167,7 @@ func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, _ *http.Request, pa
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -175,7 +175,7 @@ func (hS HttpServer) ClusterStatusGet(w http.ResponseWriter, _ *http.Request, pa
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -194,7 +194,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -202,7 +202,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// reading cluster info from database
 	oldCluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -211,7 +211,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	err = json.NewDecoder(r.Body).Decode(&newCluster)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -219,7 +219,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	hS.Logger.Info("Validating updated values of the cluster fields...")
 	err = validate.ClusterUpdate(hS.Db, oldCluster, &newCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -229,7 +229,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// set existed services
 	serviceTypesOld, oldServiceNumber, err := helpfunc.SetServiceExistInfo(hS.Db, oldCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -238,7 +238,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	newHost, err := helpfunc.AppendNewServices(hS.Db, serviceTypesOld, &newCluster, resCluster)
 	if err != nil {
 		err = ErrUuidLibError
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -248,7 +248,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 		// updating range values of appended services
 		err = helpfunc.UpdateRangeValuesAppendedServices(hS.Db, oldServiceNumber, resCluster, utils.ActionUpdate)
 		if err != nil {
-			hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+			hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 			response.Error(w, err)
 			return
 		}
@@ -257,7 +257,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	// cluster should be validated after addition services from dependencies
 	err = validate.ClusterServices(hS.Db, resCluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -297,7 +297,7 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, _ *http.Request, para
 	// reading project info from database
 	project, err := hS.Db.ReadProject(projectIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -305,14 +305,14 @@ func (hS HttpServer) ClustersDelete(w http.ResponseWriter, _ *http.Request, para
 	// reading cluster info from database
 	cluster, err := hS.Db.ReadCluster(project.ID, clusterIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = validate.ClusterDelete(cluster)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}

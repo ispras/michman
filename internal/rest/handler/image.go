@@ -18,7 +18,7 @@ func (hS HttpServer) ImagesGetList(w http.ResponseWriter, _ *http.Request, _ htt
 
 	images, err := hS.Db.ReadImagesList()
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -35,7 +35,7 @@ func (hS HttpServer) ImageGet(w http.ResponseWriter, _ *http.Request, params htt
 
 	image, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -61,7 +61,7 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 	_, err = hS.Db.ReadImage(image.Name)
 	if err == nil && response.ErrorClass(err) != utils.ObjectNotFound {
 		err = ErrObjectExists("image", image.Name)
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	} else if err != nil && response.ErrorClass(err) != utils.ObjectNotFound {
@@ -72,7 +72,7 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 	hS.Logger.Info("Validating image...")
 	err = validate.ImageCreate(hS.Db, &image)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -81,7 +81,7 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 	iUuid, err := uuid.NewRandom()
 	if err != nil {
 		err = ErrUuidLibError
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -89,7 +89,7 @@ func (hS HttpServer) ImageCreate(w http.ResponseWriter, r *http.Request, _ httpr
 
 	err = hS.Db.WriteImage(&image)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -106,7 +106,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 
 	oldImage, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -115,7 +115,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	err = json.NewDecoder(r.Body).Decode(&newImage)
 	if err != nil {
 		err = ErrJsonIncorrect
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -123,7 +123,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 	hS.Logger.Info("Validating updated values of the image fields...")
 	err = validate.ImageUpdate(hS.Db, oldImage, &newImage)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -141,7 +141,7 @@ func (hS HttpServer) ImageUpdate(w http.ResponseWriter, r *http.Request, params 
 
 	err = hS.Db.UpdateImage(resImage)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
@@ -158,21 +158,21 @@ func (hS HttpServer) ImageDelete(w http.ResponseWriter, _ *http.Request, params 
 
 	image, err := hS.Db.ReadImage(imageIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = validate.ImageDelete(hS.Db, image)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
 
 	err = hS.Db.DeleteImage(imageIdOrName)
 	if err != nil {
-		hS.Logger.Warn("Request ", request, "failed with an error: ", err.Error())
+		hS.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 		response.Error(w, err)
 		return
 	}
