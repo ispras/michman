@@ -3,14 +3,33 @@ package ansible
 import (
 	"bytes"
 	"encoding/json"
-	clusterlogger "github.com/ispras/michman/internal/logger"
 	"github.com/ispras/michman/internal/protobuf"
 	"github.com/ispras/michman/internal/utils"
+	"io"
 )
 
-func (aL LauncherServer) Run(cluster *protobuf.Cluster, dockRegCreds *utils.DockerCredentials, osConfig *utils.Config, action string) (string, error) {
-	//constructing ansible-playbook command
-	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, osConfig, action)
+func (aL LauncherServer) RunGetIP(cluster *protobuf.Cluster, extendedRole string) (string, error) {
+	var outb bytes.Buffer
+	v := map[string]string{
+		"cluster_name":  cluster.Name,
+		"extended_role": extendedRole,
+	}
+	ipExtraVars, err := json.Marshal(v)
+	if err != nil {
+		return utils.RunFail, ErrMarshal
+	}
+	args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
+
+	aL.Logger.Info("Running ansible for getting IP...")
+	_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
+	if err != nil {
+		return utils.RunFail, err
+	}
+	return FindIP(outb.String()), nil
+}
+
+func (aL LauncherServer) RunServices(cluster *protobuf.Cluster, dockRegCreds *utils.DockerCredentials, action string, clusterLogsWriter io.Writer, serviceTypes []protobuf.ServiceType) (string, error) {
+	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, &aL.Config, dockRegCreds, action)
 	if err != nil {
 		return utils.RunFail, err
 	}
@@ -20,118 +39,51 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, dockRegCreds *utils.Dock
 		return utils.RunFail, ErrMarshal
 	}
 
-	cmdArgs := []string{"-vvv", utils.AnsibleMainRole, "--extra-vars", string(newAnsibleArgs)}
-
-	//saving cluster to database
-	aL.Logger.Info("Writing new cluster to db...")
-	err = aL.Db.UpdateCluster(cluster)
-	if err != nil {
-		return utils.RunFail, err
-	}
-
-	// initialize output log
-	cLogger, err := clusterlogger.MakeNewClusterLogger(*osConfig, cluster.ID, action)
-	if err != nil {
-		return utils.RunFail, err
-	}
-
-	buf, err := cLogger.PrepClusterLogsWriter()
-	if err != nil {
-		return utils.RunFail, err
-	}
+	cmdArgs := []string{"-vvv", utils.AnsibleServicesRole, "--extra-vars", string(newAnsibleArgs)}
 
 	aL.Logger.Info("Running ansible...")
-	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, buf, buf)
+	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
 	if err != nil {
 		return utils.RunFail, err
 	}
 
-	//write cluster logs
-	err = cLogger.FinClusterLogsWriter()
-	if err != nil {
-		return utils.RunFail, err
-	}
-
-	//post-deploy actions: get ip for master and storage nodes for Cluster create or update action
 	if res && (action == utils.ActionCreate || action == utils.ActionUpdate) {
-		masterIp := ""
-		if newExtraVars["create_master"] == true || newExtraVars["create_master_slave"] == true {
-			var outb bytes.Buffer
-			v := map[string]string{
-				"cluster_name": cluster.Name,
-			}
-			ipExtraVars, err := json.Marshal(v)
-			if err != nil {
-				return utils.RunFail, ErrMarshal
-			}
-			args := []string{"-v", utils.AnsibleMasterIpRole, "--extra-vars", string(ipExtraVars)}
-
-			aL.Logger.Info("Running ansible for getting master IP...")
-			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
-			if err != nil {
-				return utils.RunFail, err
-			}
-			masterIp = FindIP(outb.String())
-		}
-
-		storageIp := ""
-		//check if cluster has storage
-		if newExtraVars["create_storage"] == true {
-			var outb bytes.Buffer
-			v := map[string]string{
-				"cluster_name":  cluster.Name,
-				"extended_role": "storage",
-			}
-			ipExtraVars, err := json.Marshal(v)
-			if err != nil {
-				return utils.RunFail, ErrMarshal
-			}
-			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-
-			aL.Logger.Info("Running ansible for getting storage IP...")
-			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
-			if err != nil {
-				return utils.RunFail, err
-			}
-			storageIp = FindIP(outb.String())
-		}
-		monitoringIp := ""
-		//check if cluster has monitoring
-		if newExtraVars["create_monitoring"] == true {
-			var outb bytes.Buffer
-			v := map[string]string{
-				"cluster_name":  cluster.Name,
-				"extended_role": "monitoring",
-			}
-			ipExtraVars, err := json.Marshal(v)
-			if err != nil {
-				return utils.RunFail, ErrMarshal
-			}
-			args := []string{"-v", utils.AnsibleIpRole, "--extra-vars", string(ipExtraVars)}
-
-			aL.Logger.Info("Running ansible for getting monitoring IP...")
-			_, err = aL.RunAnsible(utils.AnsiblePlaybookCmd, args, &outb, nil)
-			if err != nil {
-				return "", err
-			}
-			monitoringIp = FindIP(outb.String())
-		}
-
-		//filling services URLs:
-		sTypes, err := aL.Db.ReadServicesTypesList()
-		if err != nil {
-			return utils.RunFail, err
-		}
-
 		for i, service := range cluster.Services {
-			for _, st := range sTypes {
+			for _, st := range serviceTypes {
 				if st.Type == service.Type {
+					storageIp := ""
+					//check if cluster has storage
+					if newExtraVars["create_storage"] == true {
+						ip, err := aL.RunGetIP(cluster, "storage")
+						if err != nil {
+							return utils.RunFail, err
+						}
+						storageIp = ip
+					}
+
+					monitoringIp := ""
+					//check if cluster has monitoring
+					if newExtraVars["create_monitoring"] == true {
+						ip, err := aL.RunGetIP(cluster, "monitoring")
+						if err != nil {
+							return utils.RunFail, err
+						}
+						monitoringIp = ip
+					}
+
+					if storageIp != "" {
+						aL.Logger.Info("Storage IP is: ", storageIp)
+					}
+					if monitoringIp != "" {
+						aL.Logger.Info("Monitoring IP is: ", monitoringIp)
+					}
+
 					//set service url for services on master host
-					if (st.Class == utils.ClassStandAlone || st.Class == utils.ClassMasterSlave) && masterIp != "" {
+					if (st.Class == utils.ClassStandAlone || st.Class == utils.ClassMasterSlave) && cluster.MasterIP != "" {
 						if st.AccessPort > 0 { //service has access port
-							cluster.Services[i].URL = SetServiceUrl(masterIp, st.AccessPort)
+							cluster.Services[i].URL = SetServiceUrl(cluster.MasterIP, st.AccessPort)
 						} else {
-							cluster.Services[i].URL = masterIp
+							cluster.Services[i].URL = cluster.MasterIP
 						}
 						//set service url for services on storage host
 					} else if st.Class == utils.ClassStorage && storageIp != "" {
@@ -145,24 +97,50 @@ func (aL LauncherServer) Run(cluster *protobuf.Cluster, dockRegCreds *utils.Dock
 				}
 			}
 		}
+	}
 
-		if monitoringIp != "" {
-			aL.Logger.Info("Monitoring IP is: ", monitoringIp)
+	if res {
+		aL.Logger.Info("Launch: OK")
+		return utils.AnsibleOk, nil
+	} else {
+		aL.Logger.Info("Ansible has failed, check logs for more information.")
+		return utils.AnsibleFail, nil
+	}
+}
+
+func (aL LauncherServer) RunInstances(cluster *protobuf.Cluster, dockRegCreds *utils.DockerCredentials, action string, clusterLogsWriter io.Writer) (string, error) {
+	newExtraVars, err := aL.MakeExtraVars(aL.Db, cluster, &aL.Config, dockRegCreds, action)
+	if err != nil {
+		return utils.RunFail, err
+	}
+
+	newAnsibleArgs, err := json.Marshal(newExtraVars)
+	if err != nil {
+		return utils.RunFail, ErrMarshal
+	}
+
+	cmdArgs := []string{"-vvv", utils.AnsibleInstancesRole, "--extra-vars", string(newAnsibleArgs)}
+
+	aL.Logger.Info("Running ansible...")
+	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
+	if err != nil {
+		return utils.RunFail, err
+	}
+
+	// get master IP
+	if res && (action == utils.ActionCreate || action == utils.ActionUpdate) {
+		masterIp := ""
+		if newExtraVars["create_master"] == true || newExtraVars["create_master_slave"] == true {
+			ip, err := aL.RunGetIP(cluster, "master")
+			if err != nil {
+				return utils.RunFail, err
+			}
+			masterIp = ip
 		}
 
 		if masterIp != "" {
 			aL.Logger.Info("Master IP is: ", masterIp)
 			cluster.MasterIP = masterIp
-		}
-
-		if storageIp != "" {
-			aL.Logger.Info("Storage IP is: ", storageIp)
-		}
-
-		aL.Logger.Info("Saving IPs and URLs for services...")
-		err = aL.Db.UpdateCluster(cluster)
-		if err != nil {
-			return utils.RunFail, err
 		}
 	}
 

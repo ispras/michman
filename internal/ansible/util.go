@@ -154,7 +154,7 @@ func (aL LauncherServer) ConvertParamValue(value string, vType string, flagLst b
 	return nil, ErrConvertParam
 }
 
-func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osConfig *utils.Config, action string) (InterfaceMap, error) {
+func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.Cluster, osConfig *utils.Config, dockRegCreds *utils.DockerCredentials, action string) (InterfaceMap, error) {
 	sTypes, err := db.ReadServicesTypesList()
 	if err != nil {
 		return nil, err
@@ -329,6 +329,25 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	extraVars["pip_trusted_host"] = osConfig.PipTrustedHost
 	extraVars["yum_mirror_address"] = osConfig.YumMirrorAddress
 
+	// DOCKER RELATED VARS
+	extraVars["docker_insecure_registry"] = osConfig.InsecureRegistry
+	extraVars["docker_selfsigned_registry"] = osConfig.SelfignedRegistry
+	extraVars["docker_gitlab_registry"] = osConfig.GitlabRegistry
+
+	extraVars["docker_insecure_registry_ip"] = osConfig.InsecureRegistryIp
+	extraVars["docker_selfsigned_registry_ip"] = osConfig.SelfsignedRegistryIp
+	extraVars["docker_selfsigned_registry_port"] = osConfig.SelfsignedRegistryPort
+	extraVars["docker_selfsigned_registry_url"] = osConfig.SelfsignedRegistryUrl
+	extraVars["docker_cert_path"] = osConfig.SelfsignedRegistryCert
+
+	if dockRegCreds != nil {
+		extraVars["docker_logins"] = [1]map[string]string{{
+			"url":      dockRegCreds.Url,
+			"user":     dockRegCreds.User,
+			"password": dockRegCreds.Password,
+		}}
+	}
+
 	//if no services in cluster -- create master-slave nodes
 	if len(cluster.Services) == 0 && cluster.NHosts > 0 {
 		extraVars["create_master_slave"] = true
@@ -425,13 +444,44 @@ func MakeOsCreds(keyName string, vaultClient *vaultapi.Client, version string) (
 func (aL LauncherServer) MakeDockerCreds(keyName string, vaultClient *vaultapi.Client) (*utils.DockerCredentials, error) {
 	secrets, err := vaultClient.Logical().Read(keyName)
 	if err != nil {
-		return nil, ErrCouchSecretsRead
+		return nil, ErrDockerRegistrySecretsRead
 	}
 	var res utils.DockerCredentials
 	res.Url = secrets.Data[utils.DockerLoginUlr].(string)
 	res.User = secrets.Data[utils.DockerLoginUser].(string)
+	if res.User == "" {
+		res.User = utils.DockerDefaultUser
+	}
 	res.Password = secrets.Data[utils.DockerLoginPassword].(string)
+	if res.Password == "" {
+		res.Password = utils.DockerDefaultPassword
+	}
 	return &res, nil
+}
+
+func (aL *LauncherServer) GetDockerCreds() (*utils.DockerCredentials, error) {
+	aL.Logger.Info("Getting vault secrets...")
+	vaultClient, vaultCfg, err := aL.VaultCommunicator.ConnectVault()
+	if vaultClient == nil || err != nil {
+		aL.Logger.Warn(err)
+		return nil, err
+	}
+
+	err = aL.CheckSshKey(vaultCfg.SshKey, vaultClient)
+	if err != nil {
+		aL.Logger.Warn(err)
+		return nil, err
+	}
+	var dockRegCreds *utils.DockerCredentials
+	if aL.Config.SelfignedRegistry || aL.Config.GitlabRegistry {
+		dockRegCreds, err = aL.MakeDockerCreds(vaultCfg.RegistryKey, vaultClient)
+		if err != nil {
+			aL.Logger.Warn(err)
+			return nil, err
+		}
+	}
+
+	return dockRegCreds, nil
 }
 
 func (aL LauncherServer) CheckSshKey(keyName string, vaultClient *vaultapi.Client) error {

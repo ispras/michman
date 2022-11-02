@@ -34,15 +34,16 @@ type Config struct {
 	PipTrustedHost   string `yaml:"pip_trusted_host,omitempty"`
 
 	// Registry
-	SelfignedRegistry bool `yaml:"docker_selfsigned_registry,omitempty"`
 	InsecureRegistry  bool `yaml:"docker_insecure_registry,omitempty"`
-	GitlabRegistry    bool `yaml:"gitlab_registry,omitempty"`
+	SelfignedRegistry bool `yaml:"docker_selfsigned_registry,omitempty"`
+	GitlabRegistry    bool `yaml:"docker_gitlab_registry,omitempty"`
 
-	SelfsignedRegistryIp string `yaml:"docker_selfsigned_registry_ip,omitempty"`
-	InsecureRegistryIp   string `yaml:"docker_insecure_registry_ip,omitempty"`
+	InsecureRegistryIp string `yaml:"docker_insecure_registry_ip,omitempty"`
 
-	SelfignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url,omitempty"`
-	SelfignedRegistryCert string `yaml:"docker_cert_path,omitempty"`
+	SelfsignedRegistryIp   string `yaml:"docker_selfsigned_registry_ip,omitempty"`
+	SelfsignedRegistryPort string `yaml:"docker_selfsigned_registry_port,omitempty"`
+	SelfsignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url,omitempty"`
+	SelfsignedRegistryCert string `yaml:"docker_cert_path,omitempty"`
 
 	//Authentication
 	UseAuth            bool   `yaml:"use_auth"`

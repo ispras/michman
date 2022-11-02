@@ -22,11 +22,9 @@ const (
 	//base path
 	BasePath = "michman"
 
-	//ansible main role path
-	AnsibleMainRole = "ansible/main.yml"
-
-	//ansible get master ip role path
-	AnsibleMasterIpRole = "ansible/get_master.yml"
+	//ansible main roles path
+	AnsibleInstancesRole = "ansible/instances.yml"
+	AnsibleServicesRole  = "ansible/services.yml"
 
 	//ansible get ip of any instance with role
 	AnsibleIpRole = "ansible/get_ip.yml"
@@ -36,9 +34,13 @@ const (
 	DockerLoginUser     = "user"
 	DockerLoginPassword = "password"
 
+	// Docker default credentials
+	DockerDefaultUser     = "docker"
+	DockerDefaultPassword = "rekcod"
+
 	//storage providers
 	StorageCouchbase = "couchbase"
-	StorageMySQL = "mysql"
+	StorageMySQL     = "mysql"
 
 	//Couchbase secret keys
 	CouchbasePath     = "path"
@@ -46,8 +48,8 @@ const (
 	CouchbasePassword = "password"
 
 	//mysql secret keys
-	MySqlAddress = "address"
-	MySqlUser = "user"
+	MySqlAddress  = "address"
+	MySqlUser     = "user"
 	MySqlPassword = "password"
 	MySqlDatabase = "database"
 

@@ -4,5 +4,7 @@
     registry: "{{ item.url }}"
     username: "{{ item.user }}"
     password: "{{ item.password }}"
+  become: yes
+  become_user: "{{ ansible_user }}"
   with_items: "{{ docker_logins | default([]) }}"
 #  when: docker_logins is defined and docker_logins != '' and docker_logins != []

@@ -1,12 +1,6 @@
 ---
-- name: Check prerequisites
-  import_playbook: check-prerequisites.yml
-
 - hosts: localhost
   tasks:
-    - include_role:
-        name: create
-      when: create_cluster is defined and create_cluster == true or act == "destroy"
     - include_role:
         name: os_facts
       when: act != "destroy"
@@ -19,30 +13,6 @@
   tasks:
     - name: wait for hosts to become reachable
       wait_for_connection:
-
-# TODO: task fails on CentOS because of python3
-- hosts: all
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-  tasks:
-    - include_role:
-        name: deploy_ssh
-      when: create_cluster is defined and create_cluster
-    - include_role:
-        name: cpus
-    - include_role:
-        name: mem_mb
-
-# TODO: task fails on CentOS because of python3
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
-  become: yes
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-  tasks:
-    - name: install base
-      include_role:
-        name: basic
-      when: create_cluster is defined and create_cluster
 
 - name: Import Kubespray deployment playbook
   import_playbook: "{{ 'kubespray-wrapper.yml' if deploy_kubernetes is defined and deploy_kubernetes else 'service-mock.yml' }}"
@@ -57,7 +27,7 @@
       include_role:
         name: consul
       when: deploy_consul is defined and deploy_consul
-    
+
     - name: Sleep for 30 seconds and continue with play
       wait_for:
         timeout: 15
@@ -114,9 +84,6 @@
     - include_role:
         name: openfaas
       when: deploy_openfaas is defined and deploy_openfaas
-    - include_role:
-        name: openpai
-      when: deploy_openpai is defined and deploy_openpai
 
 #When create_storage is true, such instance would be created
 - hosts: "{{ cluster_name }}_storage"
@@ -130,7 +97,7 @@
     - { role: postgresql, when: deploy_postgresql is defined and deploy_postgresql }
     - { role: redis, when: deploy_redis is defined and deploy_redis }
     - { role: mariadb, when: deploy_mariadb is defined and deploy_mariadb}
-   
+
 
 - hosts: "{{ cluster_name }}_storage"
   become: yes
@@ -138,7 +105,7 @@
     - include_role:
         name:  slurm_db
       when: slurm_use_db is defined and slurm_use_db
-    
+
 - hosts: "{{ cluster_name }}_master"
   tasks:
     - include_role:
@@ -159,13 +126,13 @@
 
 - hosts: all
   tasks:
-    - include_role: 
+    - include_role:
         name: slurm_openfoam
-      when: slurm_use_open_foam is defined and slurm_use_open_foam 
+      when: slurm_use_open_foam is defined and slurm_use_open_foam
 
 - hosts: "{{ cluster_name }}_master"
   tasks:
-    - include_role: 
+    - include_role:
         name: slurm_rest
       when: slurm_use_rest is defined and slurm_use_rest
 
@@ -237,24 +204,3 @@
         name: consul
         tasks_from: check
       when: create_monitoring is defined and create_monitoring
-
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
-  become: yes
-  tasks:
-    - include_role:
-        name: greenplum_installation
-      when: deploy_greenplum is defined and deploy_greenplum
-
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
-  become: yes
-  tasks:
-    - include_role:
-        name: greenplum_setssh
-      when: deploy_greenplum is defined and deploy_greenplum
-      
-- hosts: "{{ cluster_name }}_master"
-  become: yes
-  tasks:  
-    - include_role:
-        name: greenplum_run
-      when: deploy_greenplum is defined and deploy_greenplum

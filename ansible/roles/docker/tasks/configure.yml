@@ -24,6 +24,16 @@
   command: "update-ca-certificates"
   when: docker_selfsigned_registry is defined and docker_selfsigned_registry
 
+- name: Make sure directory for Docker certs exists
+  file:
+    path: "/etc/docker/certs.d/{{ docker_selfsigned_registry_url }}:{{ docker_selfsigned_registry_port }}"
+    state: directory
+
+- name: Copy selfsigned certificate to Docker certs directory
+  copy:
+    src: "{{ docker_cert_path }}"
+    dest: "/etc/docker/certs.d/{{ docker_selfsigned_registry_url }}:{{ docker_selfsigned_registry_port }}/ca.crt"
+
 - name: Add Docker users to the docker group
   user:
     name: "{{ item }}"

@@ -1,0 +1,45 @@
+---
+- name: Check prerequisites
+  import_playbook: check-prerequisites.yml
+
+- hosts: localhost
+  tasks:
+    - include_role:
+        name: create
+      when: create_cluster is defined and create_cluster == true or act == "destroy"
+    - include_role:
+        name: os_facts
+      when: act != "destroy"
+
+# TODO: task fails on CentOS because of python3
+- hosts: all
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - name: wait for hosts to become reachable
+      wait_for_connection:
+
+# TODO: task fails on CentOS because of python3
+- hosts: all
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - include_role:
+        name: deploy_ssh
+      when: create_cluster is defined and create_cluster
+    - include_role:
+        name: cpus
+    - include_role:
+        name: mem_mb
+
+# TODO: task fails on CentOS because of python3
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  become: yes
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  tasks:
+    - name: install base
+      include_role:
+        name: basic
+      when: create_cluster is defined and create_cluster
