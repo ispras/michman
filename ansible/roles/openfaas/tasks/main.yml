@@ -35,7 +35,7 @@
 
     - name: save password to file
       copy:
-        content: "{{ passsword.stdout }}\n"
+        content: "{{ password.stdout }}\n"
         dest: /home/ubuntu/OPF_password
 
     - name: create secrets
