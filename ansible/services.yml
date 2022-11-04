@@ -194,6 +194,24 @@
         name: cvat
       when: deploy_cvat is defined and deploy_cvat
 
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  become: yes
+  tasks:
+    - include_role:
+        name: greenplum_installation
+      when: deploy_greenplum is defined and deploy_greenplum
+    - include_role:
+        name: greenplum_setssh
+      when: deploy_greenplum is defined and deploy_greenplum
+
+- hosts: "{{ cluster_name }}_master"
+  become: yes
+  tasks:
+    - include_role:
+        name: greenplum_run
+      when: deploy_greenplum is defined and deploy_greenplum
+
+
 - hosts: all
   vars:
     ansible_python_interpreter: "/usr/bin/python3"

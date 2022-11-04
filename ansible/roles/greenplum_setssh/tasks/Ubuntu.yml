@@ -1,0 +1,18 @@
+---
+
+- name: get the public key
+  fetch:
+    src: "/home/{{ greenplum_admin_user }}/.ssh/id_rsa.pub"
+    dest: "files/keys/gp_{{ cluster_name }}.pub"
+    flat: yes
+  when:
+    - create_master is defined and create_master or create_master_slave is defined and create_master_slave
+    - inventory_hostname == active_master_inventory_hostname
+
+- name: deploy authorized keys
+  become: yes
+  authorized_key:
+    user: "{{ greenplum_admin_user }}"
+    key: "{{ lookup('file', 'files/keys/gp_{{ cluster_name }}.pub') }}"
+  when:
+    - create_master is defined and create_master or create_master_slave is defined and create_master_slave

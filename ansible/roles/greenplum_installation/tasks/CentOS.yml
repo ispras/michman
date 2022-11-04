@@ -1,0 +1,89 @@
+---
+
+- name: create greenplum admin user
+  user:
+    name: "{{ greenplum_admin_user }}"
+    password: "{{ greenplum_admin_password }}"
+    generate_ssh_key: yes
+    ssh_key_bits: 4096
+    ssh_key_comment: ""
+    ssh_key_passphrase: ""
+    force: yes
+    shell: /bin/bash
+
+- name: Download from the internet
+  get_url:
+    url: https://github.com/greenplum-db/gpdb/releases/download/{{greenplum_version}}/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
+    dest: /tmp
+
+- name: Update apt
+  yum:
+    update_cache: yes
+
+- name: Install greenplum from the tmp
+  yum:
+    name: /tmp/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
+    
+- name: cleanup package file from host
+  file:
+    path: /tmp/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
+    state: absent
+
+- name: find install directory
+  find:
+    paths: /usr/local
+    patterns: 'greenplum*'
+    file_type: directory
+  register: installed_dir
+
+- name: change install directory ownership
+  file:
+    path: '{{ item.path }}'
+    owner: "{{ greenplum_admin_user }}"
+    group: "{{ greenplum_admin_user }}"
+    recurse: yes
+  with_items: "{{ installed_dir.files }}"
+
+- name: update pam_limits
+  pam_limits:
+    domain: "{{ greenplum_admin_user }}"
+    limit_type: '-'
+    limit_item: "{{ item.key }}"
+    value: "{{ item.value }}"
+  with_dict:
+    nofile: "{{greenplum_pam_nofile}}"
+    nproc: "{{greenplum_pam_nproc}}"
+
+- name: find installed greenplum version
+  shell: "source /usr/local/greenplum-db/greenplum_path.sh && /usr/local/greenplum-db/bin/postgres --gp-version"
+  args:
+   executable: /bin/bash
+  register: postgres_gp_version
+
+- name: fail if the correct greenplum version is not installed
+  fail:
+    msg: "Expected greenplum version {{ greenplum_version }}, but found '{{ postgres_gp_version.stdout }}'"
+  when: "greenplum_version is not defined or greenplum_version not in postgres_gp_version.stdout"
+
+- name: create exkeys
+  template: 
+    src: greenplum-ip.j2
+    dest: /home/gpadmin/hostfile_exkeys
+    owner: gpadmin
+    group: gpadmin
+    mode: '0644'
+  become_user: gpadmin
+
+- name: Add source in .bashrc
+  lineinfile:
+    path: /home/gpadmin/.bashrc
+    line: "source /usr/local/greenplum-db-{{ greenplum_version }}/greenplum_path.sh"
+    insertafter: EOF
+  become_user: gpadmin
+
+- name: Create database dir's
+  file:
+    path: /home/gpadmin/data1
+    state: directory
+    mode: '0775'
+  become_user: gpadmin

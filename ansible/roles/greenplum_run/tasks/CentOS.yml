@@ -1,0 +1,160 @@
+---
+
+- name: Get lines
+  command: cat /home/{{ greenplum_admin_user }}/hostfile_exkeys
+  register: greenplum_rus
+
+- name: ssh
+  shell: "ssh-copy-id {{ item }} -o StrictHostKeyChecking=no"
+  args:
+    executable: /bin/bash
+  loop: "{{ greenplum_rus.stdout_lines }}"
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: gpssh cmd
+  shell: "source /usr/local/greenplum-db-{{ greenplum_version }}/greenplum_path.sh && /usr/local/greenplum-db/./bin/gpssh-exkeys -f /home/{{ greenplum_admin_user }}/hostfile_exkeys"
+  args:
+    executable: /bin/bash
+  become_user: "{{ greenplum_admin_user }}"
+  register: greenplum_result
+  failed_when: greenplum_result.stdout == ""
+
+- name: create gpconfigs dir
+  file:
+    path: /home/gpadmin/gpconfigs
+    state: directory
+    mode: '0775'
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Create hostfile_gpinitsystem
+  lineinfile:
+    path: "/home/{{ greenplum_admin_user }}/gpconfigs/hostfile_gpinitsystem"
+    line: "{{ item }}"
+    create: yes
+    insertafter: BOF
+  loop: "{{ greenplum_rus.stdout_lines[1:] }}"
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Config creation
+  shell: "source /usr/local/greenplum-db-{{greenplum_version}}/greenplum_path.sh && cp $GPHOME/docs/cli_help/gpconfigs/gpinitsystem_config /home/{{ greenplum_admin_user }}/gpconfigs/gpinitsystem_config"
+  args:
+    executable: /bin/bash
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: make configuration
+  template: 
+    src: greenplum-init.j2
+    dest: /home/gpadmin/gpconfigs/gpinitsystem_config
+    owner: "{{ greenplum_admin_user }}"
+    group: "{{ greenplum_admin_user }}"
+    mode: '0644'
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: ssh
+  shell: "ssh-copy-id {{ item }} -o StrictHostKeyChecking=no"
+  args:
+    executable: /bin/bash
+  loop: "{{ greenplum_rus.stdout_lines }}"
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: make temporary file
+  template: 
+    src: greenplum-ip2.j2
+    dest: /home/gpadmin/temp_ip
+    owner: "{{ greenplum_admin_user }}"
+    group: "{{ greenplum_admin_user }}"
+    mode: '0644'
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Get lines from temp file
+  command: "cat /home/{{ greenplum_admin_user }}/temp_ip"
+  register: greenplum_rusq
+
+- name: ssh ecdsa
+  shell: "ssh-keyscan -H {{ item }} >> ~/.ssh/known_hosts"
+  args:
+    executable: /bin/bash
+  loop: "{{ greenplum_rusq.stdout_lines }}"
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Remove file (delete file)
+  file:
+    path: "/home/{{ greenplum_admin_user }}/temp_ip"
+    state: absent
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Running database (needs some time to run)
+  shell: "source /usr/local/greenplum-db-{{ greenplum_version }}/greenplum_path.sh && /usr/local/greenplum-db/./bin/gpinitsystem -c /home/{{ greenplum_admin_user }}/gpconfigs/gpinitsystem_config -h /home/{{ greenplum_admin_user }}/gpconfigs/hostfile_gpinitsystem -a -e {{greenplum_db_password}}"
+  args:
+    executable: /bin/bash
+  become_user: "{{ greenplum_admin_user }}"
+  register: greenplum_result
+  failed_when: greenplum_result.stdout == ""
+
+- name: pg_hba.conf changing
+  lineinfile:
+    path: "/home/{{ greenplum_admin_user }}/gpseg-1/pg_hba.conf"
+    line: host  all  all  0.0.0.0/0  password
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: stopping gp
+  shell: "source /usr/local/greenplum-db/greenplum_path.sh && /usr/local/greenplum-db-{{greenplum_version}}/bin/gpstop -d /home/{{ greenplum_admin_user }}/gpseg-1/ -a"
+  args:
+    executable: /bin/bash
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: starting gp
+  shell: "source /usr/local/greenplum-db/greenplum_path.sh && /usr/local/greenplum-db-{{greenplum_version}}/bin/gpstart -d /home/{{ greenplum_admin_user }}/gpseg-1/ -a"
+  args:
+    executable: /bin/bash
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Install pip
+  dnf:
+    name: python2
+    state: present
+    
+- name: install pip3
+  dnf:
+    name: python3
+    state: present   
+
+- name: install "@Development tools"
+  yum:
+    name: "@Development tools"
+
+- name: install python3-devel
+  yum:
+    name: python3-devel
+
+- name: install postgresql-libs
+  yum:
+    name: postgresql-libs
+
+- name: install postgresql-devel
+  yum:
+    name: postgresql-devel
+
+- name: install python38-devel.x86_64
+  yum:
+    name: python38-devel.x86_64
+
+- name: install psycopg2
+  pip:
+    name: psycopg2
+
+- name: save master's ip
+  command: cat /home/gpadmin/hostfile_exkeys
+  register: greenplum_ipy
+  become_user: "{{ greenplum_admin_user }}"
+
+- name: Creating user with priveleges 
+  postgresql_user:
+    db: postgres
+    name: "{{greenplum_db_user}}"
+    password: "{{greenplum_db_password}}"
+    login_host: "{{greenplum_ipy.stdout_lines[0]}}"
+    login_password: "{{greenplum_db_password}}"
+    login_user: "{{ greenplum_admin_user }}"
+    role_attr_flags: SUPERUSER,CREATEDB,CREATEROLE
+  become_user: "{{ greenplum_admin_user }}"
