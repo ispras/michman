@@ -108,7 +108,7 @@ func (aL *LauncherServer) Update(ctx context.Context, cluster *protobuf.Cluster)
 	}
 
 	aL.Logger.Info("Saving IPs and URLs for services...")
-	err = aL.Db.WriteCluster(cluster)
+	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 	}
 
 	aL.Logger.Info("Saving IPs and URLs for services...")
-	err = aL.Db.WriteCluster(cluster)
+	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
 		return nil, err
 	}

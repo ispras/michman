@@ -328,7 +328,7 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 	}
 
 	q := `UPDATE cluster SET 
-                   Name = ?, DisplayName = ?, HostURL = ?, EntityStatus = ?, ClusterType = ?, 
+                   Name = ?, DisplayName = ?, MasterIP = ?, HostURL = ?, EntityStatus = ?, ClusterType = ?, 
                    NHosts = ?, Description = ?,  Image = ?, 
                    MasterFlavor = ?, SlavesFlavor = ?, StorageFlavor = ?, SSH_Keys = ?
           WHERE ID = ?`
@@ -339,7 +339,7 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 	}
 
 	_, err = tx.Exec(
-		q, cluster.Name, cluster.DisplayName, cluster.HostURL, cluster.EntityStatus, cluster.ClusterType,
+		q, cluster.Name, cluster.DisplayName, cluster.MasterIP, cluster.HostURL, cluster.EntityStatus, cluster.ClusterType,
 		cluster.NHosts, cluster.Description, cluster.Image,
 		cluster.MasterFlavor, cluster.SlavesFlavor, cluster.StorageFlavor, ssh_keys, cluster.ID)
 	if err != nil {
