@@ -5,23 +5,12 @@
         name: os_facts
       when: act != "destroy"
 
-# TODO: task fails on CentOS because of python3
-- hosts: all
-  gather_facts: no
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-  tasks:
-    - name: wait for hosts to become reachable
-      wait_for_connection:
-
 - name: Import Kubespray deployment playbook
   import_playbook: "{{ 'kubespray-wrapper.yml' if deploy_kubernetes is defined and deploy_kubernetes else 'service-mock.yml' }}"
   when: deploy_kubernetes is defined and deploy_kubernetes
 
 - hosts: all
   become: yes
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
   tasks:
     - name: Consul
       include_role:
@@ -71,10 +60,6 @@
       when: deploy_spark is defined and deploy_spark
     - include_role:
         name: jupyter
-      vars:
-        jupyter_irkernel_install: False
-        jupyter_sparkmagic_install: False
-        jupyter_install_as_jupyter_lab: False
       when: deploy_jupyter is defined and deploy_jupyter
     - include_role:
         name: jupyterhub

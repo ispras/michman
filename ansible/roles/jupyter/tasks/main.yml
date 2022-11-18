@@ -23,22 +23,13 @@
     jupyter_service_conf_path: "{{ jupyter_conf_dir }}/jupyter_notebook_config.py"
   when: jupyter_version == "jupyter-lab"
 
-- include_tasks: "{{ jupyter_version }}.yml"
+# TODO: manually set ansible_python_interpreter because ansible uses /usr/bin/python running pip module for some reason
+- name: include specific tasks for required jupyter version
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  include_tasks: "{{ jupyter_version }}.yml"
 
 - include_tasks: service.yml
-
-- name: Print
-  debug:
-    var: jupyter_install_irkernel
-
-- name: Print
-  debug:
-    var: jupyter_install_sparkmagic
-
-- name: Print
-  debug:
-    var: deploy_spark
-  when: deploy_spark is defined
 
 - include_tasks: IRkernel/main.yml
   when: jupyter_install_irkernel

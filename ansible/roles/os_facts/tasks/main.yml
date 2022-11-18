@@ -14,7 +14,7 @@
     groups: "{{ cluster_name }}_master"
     ansible_host: "{{ item.public_v4  if item.public_v4 != '' else item.private_v4 }}"
     ansible_ssh_host: "{{ item.interface_ip if item.interface_ip != '' else item.private_v4 }}"
-    ansible_user: "ubuntu"
+    ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
     - "{{ openstack_servers }}"
@@ -33,7 +33,7 @@
     groups: "{{ cluster_name }}_slaves"
     ansible_host: "{{ item.public_v4  if item.public_v4 != '' else item.private_v4 }}"
     ansible_ssh_host: "{{ item.interface_ip if item.interface_ip != '' else item.private_v4 }}"
-    ansible_user: "ubuntu"
+    ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
     - "{{ openstack_servers }}"
@@ -52,7 +52,7 @@
     groups: "{{ cluster_name }}_storage"
     ansible_host: "{{ item.public_v4  if item.public_v4 != '' else item.private_v4 }}"
     ansible_ssh_host: "{{ item.interface_ip if item.interface_ip != '' else item.private_v4 }}"
-    ansible_user: "ubuntu"
+    ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
     - "{{ openstack_servers }}"
@@ -71,7 +71,7 @@
     groups: "{{ cluster_name }}_monitoring"
     ansible_host: "{{ item.public_v4  if item.public_v4 != '' else item.private_v4 }}"
     ansible_ssh_host: "{{ item.interface_ip if item.interface_ip != '' else item.private_v4 }}"
-    ansible_user: "ubuntu"
+    ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
     - "{{ openstack_servers }}"

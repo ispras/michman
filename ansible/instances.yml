@@ -11,34 +11,31 @@
         name: os_facts
       when: act != "destroy"
 
-# TODO: task fails on CentOS because of python3
+# TODO: condition of ansible_python_interpreter choose should be based on target distribution,
+# but there is no such information: ansible can't gather facts
 - hosts: all
   gather_facts: no
   vars:
-    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_python_interpreter: "{% if ansible_user == 'ubuntu' %}/usr/bin/python3{% else %}/usr/libexec/platform-python{% endif %}"
   tasks:
     - name: wait for hosts to become reachable
       wait_for_connection:
 
-# TODO: task fails on CentOS because of python3
+# TODO: condition of ansible_python_interpreter choose should be based on target distribution,
+# but there is no such information: ansible can't gather facts
 - hosts: all
   vars:
-    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_python_interpreter: "{% if ansible_user == 'ubuntu' %}/usr/bin/python3{% else %}/usr/libexec/platform-python{% endif %}"
   tasks:
     - include_role:
         name: deploy_ssh
       when: create_cluster is defined and create_cluster
     - include_role:
         name: cpus
+      when: create_cluster is defined and create_cluster
     - include_role:
         name: mem_mb
-
-# TODO: task fails on CentOS because of python3
-- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
-  become: yes
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-  tasks:
+      when: create_cluster is defined and create_cluster
     - name: install base
       include_role:
         name: basic
