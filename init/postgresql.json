@@ -41,12 +41,27 @@
     {
       "Version":"9.6",
       "Description":"PostgreSQL 9.6 version",
-      "Configs": [{
+      "Configs": [
+        {
           "ParameterName": "db_password",
           "Type": "string",
           "DefaultValue": "dbpassword",
           "Required": true,
           "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "PGUSER",
+          "Required": true,
+          "Description": "Default db_user for postgresql, you can change it"
+        },
+        {
+          "ParameterName": "db_name",
+          "Type": "string",
+          "DefaultValue": "postgres",
+          "Required": true,
+          "Description": "Default db_name for postgresql, you can change it"
         }
       ]
     },
@@ -60,6 +75,20 @@
           "DefaultValue": "dbpassword",
           "Required": true,
           "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "PGUSER",
+          "Required": true,
+          "Description": "Default db_user for postgresql, you can change it"
+        },
+        {
+          "ParameterName": "db_name",
+          "Type": "string",
+          "DefaultValue": "postgres",
+          "Required": true,
+          "Description": "Default db_name for postgresql, you can change it"
         }
       ]
     },
@@ -73,6 +102,20 @@
           "DefaultValue": "dbpassword",
           "Required": true,
           "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "PGUSER",
+          "Required": true,
+          "Description": "Default db_user for postgresql, you can change it"
+        },
+        {
+          "ParameterName": "db_name",
+          "Type": "string",
+          "DefaultValue": "postgres",
+          "Required": true,
+          "Description": "Default db_name for postgresql, you can change it"
         }
       ]
     },
@@ -86,7 +129,22 @@
           "DefaultValue": "dbpassword",
           "Required": true,
           "Description": "Default user password for PostgreSQL DB for user postgres, you can change it"
+        },
+        {
+          "ParameterName": "db_user",
+          "Type": "string",
+          "DefaultValue": "PGUSER",
+          "Required": true,
+          "Description": "Default db_user for postgresql, you can change it"
+        },
+        {
+          "ParameterName": "db_name",
+          "Type": "string",
+          "DefaultValue": "postgres",
+          "Required": true,
+          "Description": "Default db_name for postgresql, you can change it"
         }
+
       ]
     }
   ]

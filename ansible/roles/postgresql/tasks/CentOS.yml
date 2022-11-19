@@ -1,20 +1,58 @@
 ---
 
-- name: "add yum repo for postgresql"
-  yum_repository:
-    baseurl: https://download.postgresql.org/pub/repos/yum/{{ postgresql_version }}/redhat/rhel-$releasever-$basearch
-    state: present
-    name: postgresql
-    description: postgresql repo
-    gpgcheck: no
-
-- name: install PostgreSQL
+- name: Ensure epel repo present
   yum:
-    name:
-      - postgresql{{ postgresql_version | replace('.','') }}
-      - postgresql{{ postgresql_version | replace('.','') }}-server
-    update_cache: yes
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     state: present
+
+- name: update cache
+  yum:
+    update_cache: yes
+    
+- name: Install pip
+  yum:
+    name: python2
+    state: present
+    
+- name: install pip3
+  yum:
+    name: python3
+    state: present   
+
+- name: install "@Development tools"
+  yum:
+    name: "@Development tools"
+
+- name: install python3-devel
+  yum:
+    name: python3-devel
+
+- name: install postgresql-libs
+  yum:
+    name: postgresql-libs
+
+- name: install postgresql-devel
+  yum:
+    name: postgresql-devel
+
+- name: install python-psycopg2
+  yum:
+    name: python-psycopg2
+    
+- name: add postgresql repo
+  shell: "sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  args:
+    executable: /bin/bash
+
+- name: yum-config-manager --disable postgresql
+  shell: "sudo yum-config-manager --disable postgresql"
+  args:
+    executable: /bin/bash
+
+- name: install postgres
+  shell: "sudo yum install -y postgresql{{ postgresql_version | replace('.','') }}-server"
+  args:
+    executable: /bin/bash
 
 - name: init database for 9.6
   command: /usr/pgsql-{{ postgresql_version }}/bin/postgresql{{ postgresql_version | replace('.','') }}-setup initdb

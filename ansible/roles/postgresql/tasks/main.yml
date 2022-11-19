@@ -40,3 +40,25 @@
 - name: set password for user postgres
   shell: "psql -c \"ALTER USER postgres WITH PASSWORD '{{ postgresql_db_password }}'\""
   become_user: postgres
+
+- name: Creating db
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  postgresql_db:
+    name: "{{postgresql_db_name}}"
+    login_password: "{{ postgresql_db_password }}"
+    login_user: postgres
+  become_user: postgres
+  when: postgresql_db_name != 'postgres'
+
+- name: Creating user with priveleges
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  postgresql_user:
+    db: "{{postgresql_db_name}}"
+    name: "{{postgresql_db_user}}"
+    password: "{{ postgresql_db_password }}"
+    login_password: "{{ postgresql_db_password }}"
+    login_user: postgres
+    role_attr_flags: SUPERUSER,CREATEDB,CREATEROLE
+  become_user: postgres

@@ -148,6 +148,15 @@
   register: greenplum_ipy
   become_user: "{{ greenplum_admin_user }}"
 
+- name: Creating db
+  postgresql_db:
+    name: "{{greenplum_db_name}}"
+    login_host: "{{greenplum_ipy.stdout_lines[0]}}"
+    login_password: "{{ greenplum_db_password }}"
+    login_user: "{{ greenplum_admin_user }}"
+  become_user: "{{ greenplum_admin_user }}"
+  when: greenplum_db_name != 'postgres'
+
 - name: Creating user with priveleges 
   postgresql_user:
     db: postgres
