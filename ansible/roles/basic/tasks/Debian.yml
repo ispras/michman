@@ -39,9 +39,10 @@
 - name: install python3
   become: yes
   apt:
-    pkg:
+    name:
       - python
       - python3-pip
+      - python3-setuptools
     update_cache: yes
 
 - name: Create .pip directory

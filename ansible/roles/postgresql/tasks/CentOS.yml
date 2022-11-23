@@ -1,81 +1,37 @@
 ---
 
-- name: Ensure epel repo present
-  yum:
-    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    state: present
-
-- name: update cache
-  yum:
-    update_cache: yes
-    
-- name: Install pip
-  yum:
-    name: python2
-    state: present
-    
-- name: install pip3
-  yum:
-    name: python3
-    state: present   
-
-- name: install "@Development tools"
-  yum:
-    name: "@Development tools"
-
-- name: install python3-devel
-  yum:
-    name: python3-devel
-
-- name: install postgresql-libs
-  yum:
-    name: postgresql-libs
-
-- name: install postgresql-devel
-  yum:
-    name: postgresql-devel
-
-- name: install python-psycopg2
-  yum:
-    name: python-psycopg2
-    
 - name: add postgresql repo
-  shell: "sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  become: yes
+  shell: "sudo dnf install -yq https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
   args:
-    executable: /bin/bash
+    executable: /bin/sh
 
-- name: yum-config-manager --disable postgresql
-  shell: "sudo yum-config-manager --disable postgresql"
+- name: disable built-in postgresql
+  become: yes
+  shell: "dnf -yq module disable postgresql"
   args:
-    executable: /bin/bash
+    executable: /bin/sh
 
 - name: install postgres
-  shell: "sudo yum install -y postgresql{{ postgresql_version | replace('.','') }}-server"
+  become: yes
+  dnf:
+    name: "postgresql{{ postgresql_version | replace('.','') }}-server"
+
+# TODO: replace 'ignore_errors' with correct check of repeated init
+- name: init postgresql cluster
+  become: yes
+  shell: "/usr/pgsql-{{ postgresql_version | replace('.','') }}/bin/postgresql-{{ postgresql_version | replace('.','') }}-setup initdb"
   args:
-    executable: /bin/bash
-
-- name: init database for 9.6
-  command: /usr/pgsql-{{ postgresql_version }}/bin/postgresql{{ postgresql_version | replace('.','') }}-setup initdb
-  when: postgresql_version == "9.6"
-  register: result
-  failed_when:
-    - result.rc != 0
-    - '"is not empty" not in result.stdout'
-  changed_when:
-    - result.rc == 0
-
-- name: init database for 10, 11 or 12
-  command: /usr/pgsql-{{ postgresql_version }}/bin/postgresql-{{ postgresql_version }}-setup initdb
-  when: postgresql_version | int >= 10
-  register: result
-  failed_when:
-    - result.rc != 0
-    - '"is not empty" not in result.stdout'
-  changed_when:
-    - result.rc == 0
+    executable: /bin/sh
+  ignore_errors: yes
 
 - name: enable and start postgresql server
   service:
     name: postgresql-{{ postgresql_version }}
     state: restarted
     enabled: yes
+
+- name: install psycopg2
+  become: yes
+  dnf:
+    name: python3-psycopg2

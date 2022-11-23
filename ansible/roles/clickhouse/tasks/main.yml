@@ -7,7 +7,7 @@
     path: "/etc/clickhouse-server/config.xml"
     regexp: '^<listen_host>0\.0\.0\.0</listen_host>'
     line: '<listen_host>0.0.0.0</listen_host>'
-    insertbefore: '</yandex>'
+    insertbefore: '</clickhouse>'
 
 - name: change password for default user
   lineinfile:

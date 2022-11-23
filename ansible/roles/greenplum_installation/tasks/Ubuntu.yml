@@ -11,24 +11,13 @@
     force: yes
     shell: /bin/bash
 
-- name: Download from the internet
-  get_url:
-    url: https://github.com/greenplum-db/gpdb/releases/download/{{greenplum_version}}/greenplum-db-{{greenplum_version}}-ubuntu18.04-amd64.deb
-    dest: /tmp
-
-- name: Update apt
-  apt:
-    update_cache: yes
-
+# TODO: replace 'ubuntu18.04' with ansible_distribution configuration (with assertion of supported distributions)
 - name: Install greenplum from the tmp
   apt: 
-    deb: /tmp/greenplum-db-{{greenplum_version}}-ubuntu18.04-amd64.deb
+    deb: "https://github.com/greenplum-db/gpdb/releases/download/{{greenplum_version}}/greenplum-db-{{greenplum_version}}-ubuntu18.04-amd64.deb"
     allow_unauthenticated: yes
-
-- name: cleanup package file from host
-  file:
-    path: /tmp/greenplum-db-{{greenplum_version}}-ubuntu18.04-amd64.deb
-    state: absent
+    update_cache: yes
+    state: present
 
 - name: find install directory
   find:

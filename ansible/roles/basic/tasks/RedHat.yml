@@ -22,11 +22,15 @@
     mode: 0644
   when: use_package_mirror
 
-- name: install python3
+- name: install dnf on centos7
   become: yes
   yum:
-    name: python3
+    name:
+      - "epel-release"
+      - dnf
     update_cache: yes
+  when:
+    - ansible_distribution_major_version == "7"
 
 - name: Create .pip directory
   file:
@@ -40,41 +44,57 @@
     dest: "/home/centos/.pip/pip.conf"
   when: use_pip_mirror
 
-- name: update yum cache
-  become: yes
-  yum: update_cache=yes
-  when: not skip_packages|default(False)
-
-- name: install dstat and rsync packages
-  become: yes
-  package: name={{ item }} state=present
-  with_items: ["dstat", "rsync"]
-  when: not skip_packages|default(False)
-
-- name: install Java
+- name: try to update dnf cache
   become: yes
   yum:
-    name: java
-    state: present
-  when: not skip_packages|default(False)
+    update_cache: yes
+  register: dnf_ok
+  ignore_errors: yes
+
+# TODO: add condition to ignore when mirror is used
+- name: set new AppStream repo if dnf update failed on centos8
+  become: yes
+  lineinfile:
+    path: "/etc/yum.repos.d/CentOS-Linux-AppStream.repo"
+    line: "baseurl=http://vault.centos.org/$contentdir/$releasever/AppStream/$basearch/os/"
+  when:
+    - dnf_ok.rc != 0
+    - ansible_distribution_major_version == "8"
+
+# TODO: add condition to ignore when mirror is used
+- name: set new BaseOS repo if dnf update failed on centos8
+  become: yes
+  lineinfile:
+    path: "/etc/yum.repos.d/CentOS-Linux-BaseOS.repo"
+    line: "baseurl=http://vault.centos.org/$contentdir/$releasever/BaseOS/$basearch/os/"
+  when:
+    - dnf_ok.rc != 0
+    - ansible_distribution_major_version == "8"
+
+- name: install python3, java, dstat and rsync packages, update systemd
+  become: yes
+  dnf:
+    name:
+      - python3
+      - python3-pip
+      - python3-setuptools
+      - dstat
+      - rsync
+      - systemd
+      - java
+    update_cache: yes
 
 - name: disable net.ipv6.conf.all.disable_ipv6
   become: yes
   sysctl: name=net.ipv6.conf.all.disable_ipv6 value=1 state=present
-  tags:
-    - prepare
 
 - name: disable net.ipv6.conf.lo.disable_ipv6
   become: yes
   sysctl: name=net.ipv6.conf.lo.disable_ipv6 value=1 state=present
-  tags:
-    - prepare
 
 - name: increase hard file limits
   become: yes
   pam_limits: domain=* limit_type=hard limit_item=nofile value=1000000
-  tags:
-    - prepare
 
 - name: increase soft file limits
   become: yes
@@ -83,11 +103,7 @@
 - name: create hadoop group
   become: yes
   group: name=hadoop state=present
-  tags:
-    - prepare
 
 - name: create hadoop user
   become: yes
   user: name={{ hadoop_user }} comment="Hadoop user" group=hadoop shell=/bin/bash
-  tags:
-    - prepare

@@ -11,24 +11,13 @@
     force: yes
     shell: /bin/bash
 
-- name: Download from the internet
-  get_url:
-    url: https://github.com/greenplum-db/gpdb/releases/download/{{greenplum_version}}/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
-    dest: /tmp
-
-- name: Update apt
-  yum:
+- name: Install greenplum package
+  dnf:
+    name: "https://github.com/greenplum-db/gpdb/releases/download/{{greenplum_version}}/open-source-greenplum-db-{{greenplum_version}}-rhel{{ ansible_distribution_major_version }}-x86_64.rpm"
+    state: present
     update_cache: yes
-
-- name: Install greenplum from the tmp
-  yum:
-    name: /tmp/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
+    disable_gpg_check: yes
     
-- name: cleanup package file from host
-  file:
-    path: /tmp/open-source-greenplum-db-{{greenplum_version}}-rhel8-x86_64.rpm
-    state: absent
-
 - name: find install directory
   find:
     paths: /usr/local

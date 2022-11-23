@@ -6,12 +6,6 @@
     update_cache: yes
   loop: ['unzip', 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common']
 
-- name: Install python
-  apt:
-    name: "{{ item }}"
-    state: latest
-  loop: ['python3','python3-pip', 'python3-setuptools']
-
 - name: Add docker repo key
   apt_key:
     url: "{{ docker_repo_key }}"
