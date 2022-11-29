@@ -22,16 +22,6 @@
     mode: 0644
   when: use_package_mirror
 
-- name: install dnf on centos7
-  become: yes
-  yum:
-    name:
-      - "epel-release"
-      - dnf
-    update_cache: yes
-  when:
-    - ansible_distribution_major_version == "7"
-
 - name: Create .pip directory
   file:
     path: /home/centos/.pip
@@ -71,6 +61,40 @@
     - dnf_ok.rc != 0
     - ansible_distribution_major_version == "8"
 
+# TODO: add condition to ignore when mirror is used
+- name: Enable powertools
+  become: true
+  shell: yum config-manager --set-enabled powertools
+  when: ansible_distribution_major_version == "8"
+
+# TODO: add condition to ignore when mirror is used
+- name: set new BaseOS repo if dnf update failed on centos8
+  become: yes
+  lineinfile:
+    path: "/etc/yum.repos.d/CentOS-Linux-PowerTools.repo"
+    line: "baseurl=http://vault.centos.org/$contentdir/$releasever/PowerTools/$basearch/os/"
+  when:
+    - dnf_ok.rc != 0
+    - ansible_distribution_major_version == "8"
+
+# TODO: add condition to ignore when mirror is used
+- name: install epel-release on centos
+  become: yes
+  yum:
+    name:
+      - "epel-release"
+    update_cache: yes
+
+# TODO: add condition to ignore when mirror is used
+- name: install dnf on centos7
+  become: yes
+  yum:
+    name:
+      - dnf
+    update_cache: yes
+  when:
+    - ansible_distribution_major_version == "7"
+
 - name: install python3, java, dstat and rsync packages, update systemd
   become: yes
   dnf:
@@ -82,6 +106,7 @@
       - rsync
       - systemd
       - java
+      - git
     update_cache: yes
 
 - name: disable net.ipv6.conf.all.disable_ipv6
