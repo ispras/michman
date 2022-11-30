@@ -29,7 +29,7 @@ message Cluster {
     string EntityStatus = 5;
     string ClusterType = 6;
     repeated Service Services = 7;
-    int32 NHosts = 8;
+    int32 NSlaves = 8;
     string MasterIP = 9;
     string ProjectID = 10;
     string OwnerID = 11;
@@ -68,7 +68,7 @@ message Template {
     string Name = 3;
     string DisplayName = 4;
     repeated Service Services = 5;
-    int32 NHosts = 6;
+    int32 NSlaves = 6;
     string Description = 7;
 }
 

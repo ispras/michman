@@ -249,7 +249,7 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 		extraVars["create_cluster"] = true
 	}
 
-	extraVars["n_slaves"] = cluster.NHosts
+	extraVars["n_slaves"] = cluster.NSlaves
 	extraVars["cluster_name"] = cluster.Name
 	extraVars["create_monitoring"] = cluster.Monitoring
 
@@ -349,15 +349,15 @@ func (aL LauncherServer) MakeExtraVars(db database.Database, cluster *protobuf.C
 	}
 
 	//if no services in cluster -- create master-slave nodes
-	if len(cluster.Services) == 0 && cluster.NHosts > 0 {
+	if len(cluster.Services) == 0 && cluster.NSlaves > 0 {
 		extraVars["create_master_slave"] = true
-	} else if len(cluster.Services) == 0 && cluster.NHosts == 0 {
+	} else if len(cluster.Services) == 0 && cluster.NSlaves == 0 {
 		extraVars["create_master"] = true
 		extraVars["create_master_slave"] = false
 	}
 
-	//create slaves if NHosts > 0 and master is created
-	if extraVars["create_master"] == true && cluster.NHosts > 0 {
+	//create slaves if NSlaves > 0 and master is created
+	if extraVars["create_master"] == true && cluster.NSlaves > 0 {
 		extraVars["create_master_slave"] = true
 	}
 

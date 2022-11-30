@@ -14,9 +14,9 @@ const (
 	errFlavorUsed           = "flavor already in use. it can't be modified or deleted"
 
 	// cluster:
-	errClusterNhostsZero         = "NHosts parameter must be number >= 0"
-	errClustersNhostsMasterSlave = "NHosts parameter must be number >= 1 because master-slave services will be installed"
-	errClusterStatus             = "cluster status must be 'ACTIVE' or 'FAILED' for UPDATE or DELETE"
+	errClusterNSlavesZero         = "NSlaves parameter must be number >= 0"
+	errClustersNSlavesMasterSlave = "NSlaves parameter must be number >= 1 because master-slave services will be installed"
+	errClusterStatus              = "cluster status must be 'ACTIVE' or 'FAILED' for UPDATE or DELETE"
 
 	// image:
 	errImageGeneratedField = "image ID is generated field. It can't be filled in by user"
@@ -41,9 +41,9 @@ const (
 
 var (
 	// cluster:
-	ErrClusterNhostsZero         = rest.MakeError(errClusterNhostsZero, utils.ValidationError)
-	ErrClustersNhostsMasterSlave = rest.MakeError(errClustersNhostsMasterSlave, utils.ValidationError)
-	ErrClusterStatus             = rest.MakeError(errClusterStatus, utils.ValidationError)
+	ErrClusterNSlavesZero         = rest.MakeError(errClusterNSlavesZero, utils.ValidationError)
+	ErrClustersNSlavesMasterSlave = rest.MakeError(errClustersNSlavesMasterSlave, utils.ValidationError)
+	ErrClusterStatus              = rest.MakeError(errClusterStatus, utils.ValidationError)
 
 	// flavor:
 	ErrFlavorGeneratedField = rest.MakeError(errFlavorGeneratedField, utils.ValidationError)

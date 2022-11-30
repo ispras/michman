@@ -71,7 +71,7 @@ func readClusterbyId(db MySqlDatabase, id string) (*protobuf.Cluster, error) {
 	//read cluster by Id
 	q := `SELECT
     		ID, Name, DisplayName, HostURL, EntityStatus, ClusterType,
-    		NHosts, MasterIP, ProjectID, Description, Image, Monitoring,
+    		NSlaves, MasterIP, ProjectID, Description, Image, Monitoring,
     		MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor, SSH_Keys
 		FROM cluster 
 		WHERE ID = ?`
@@ -80,7 +80,7 @@ func readClusterbyId(db MySqlDatabase, id string) (*protobuf.Cluster, error) {
 	var ssh_keys []byte
 	res := db.connection.QueryRow(q, id)
 	if err := res.Scan(&c.ID, &c.Name, &c.DisplayName, &c.HostURL, &c.EntityStatus, &c.ClusterType,
-		&c.NHosts, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
+		&c.NSlaves, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
 		&c.MasterFlavor, &c.SlavesFlavor, &c.StorageFlavor, &c.MonitoringFlavor, &ssh_keys); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrObjectNotFound("cluster", id)
@@ -132,7 +132,7 @@ func readClusterbyName(db MySqlDatabase, name string) (*protobuf.Cluster, error)
 	//read cluster by name
 	q := `SELECT 
     		ID, Name, DisplayName, HostURL, EntityStatus, ClusterType, 
-    		NHosts, MasterIP, ProjectID, Description, Image, Monitoring,
+    		NSlaves, MasterIP, ProjectID, Description, Image, Monitoring,
     		MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor, SSH_Keys 
 		FROM cluster
 		WHERE Name = ?`
@@ -141,7 +141,7 @@ func readClusterbyName(db MySqlDatabase, name string) (*protobuf.Cluster, error)
 	var ssh_keys []byte
 	res := db.connection.QueryRow(q, name)
 	if err := res.Scan(&c.ID, &c.Name, &c.DisplayName, &c.HostURL, &c.EntityStatus, &c.ClusterType,
-		&c.NHosts, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
+		&c.NSlaves, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
 		&c.MasterFlavor, &c.SlavesFlavor, &c.StorageFlavor, &c.MonitoringFlavor, &ssh_keys); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrObjectNotFound("cluster", name)
@@ -201,7 +201,7 @@ func (db MySqlDatabase) WriteCluster(cluster *protobuf.Cluster) error {
 	defer tx.Rollback()
 	q := `INSERT INTO cluster (
                      ID, Name, DisplayName, HostURL, EntityStatus, ClusterType, 
-                     NHosts, MasterIP, ProjectID, Description, Image, Monitoring,
+                     NSlaves, MasterIP, ProjectID, Description, Image, Monitoring,
                      MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor, SSH_Keys
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
@@ -212,7 +212,7 @@ func (db MySqlDatabase) WriteCluster(cluster *protobuf.Cluster) error {
 
 	_, err = tx.Exec(
 		q, cluster.ID, cluster.Name, cluster.DisplayName, cluster.HostURL, cluster.EntityStatus, cluster.ClusterType,
-		cluster.NHosts, cluster.MasterIP, cluster.ProjectID, cluster.Description, cluster.Image, cluster.Monitoring,
+		cluster.NSlaves, cluster.MasterIP, cluster.ProjectID, cluster.Description, cluster.Image, cluster.Monitoring,
 		cluster.MasterFlavor, cluster.SlavesFlavor, cluster.StorageFlavor, cluster.MonitoringFlavor, ssh_keys)
 	if err != nil {
 		return ErrTransactionQuery
@@ -329,7 +329,7 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 
 	q := `UPDATE cluster SET 
                    Name = ?, DisplayName = ?, MasterIP = ?, HostURL = ?, EntityStatus = ?, ClusterType = ?, 
-                   NHosts = ?, Description = ?,  Image = ?, 
+                   NSlaves = ?, Description = ?,  Image = ?, 
                    MasterFlavor = ?, SlavesFlavor = ?, StorageFlavor = ?, SSH_Keys = ?
           WHERE ID = ?`
 
@@ -340,7 +340,7 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 
 	_, err = tx.Exec(
 		q, cluster.Name, cluster.DisplayName, cluster.MasterIP, cluster.HostURL, cluster.EntityStatus, cluster.ClusterType,
-		cluster.NHosts, cluster.Description, cluster.Image,
+		cluster.NSlaves, cluster.Description, cluster.Image,
 		cluster.MasterFlavor, cluster.SlavesFlavor, cluster.StorageFlavor, ssh_keys, cluster.ID)
 	if err != nil {
 		return ErrTransactionQuery
@@ -354,7 +354,7 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 func (db MySqlDatabase) ReadClustersList() ([]protobuf.Cluster, error) {
 	//make a query to select all clusters
 	q := `SELECT ID, Name, DisplayName, HostURL, EntityStatus, ClusterType,
-			NHosts, MasterIP, ProjectID, Description, Image, Monitoring,
+			NSlaves, MasterIP, ProjectID, Description, Image, Monitoring,
 			MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor, SSH_Keys
 		  FROM cluster`
 
@@ -373,7 +373,7 @@ func (db MySqlDatabase) ReadClustersList() ([]protobuf.Cluster, error) {
 		var ssh_keys []byte
 		//select one cluster
 		if err := rows.Scan(&c.ID, &c.Name, &c.DisplayName, &c.HostURL, &c.EntityStatus, &c.ClusterType,
-			&c.NHosts, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
+			&c.NSlaves, &c.MasterIP, &c.ProjectID, &c.Description, &c.Image, &c.Monitoring,
 			&c.MasterFlavor, &c.SlavesFlavor, &c.StorageFlavor, &c.MonitoringFlavor, &ssh_keys); err != nil {
 			return nil, ErrQueryRows
 		}
@@ -509,7 +509,7 @@ func (db MySqlDatabase) ReadProjectsList() ([]protobuf.Project, error) {
 func (db MySqlDatabase) ReadProjectClusters(projectID string) ([]protobuf.Cluster, error) {
 	q := `SELECT 
 			ID, Name, DisplayName, HostURL, EntityStatus, ClusterType, 
-			NHosts, MasterIP, Description, ProjectID, Image, Monitoring,
+			NSlaves, MasterIP, Description, ProjectID, Image, Monitoring,
 			MasterFlavor, SlavesFlavor, StorageFlavor, MonitoringFlavor, SSH_Keys
 		  FROM cluster
 		  WHERE ProjectID = ?`
@@ -528,7 +528,7 @@ func (db MySqlDatabase) ReadProjectClusters(projectID string) ([]protobuf.Cluste
 		var c protobuf.Cluster
 		var ssh_keys []byte
 		if err := rows.Scan(
-			&c.ID, &c.Name, &c.DisplayName, &c.HostURL, &c.EntityStatus, &c.ClusterType, &c.NHosts, &c.MasterIP,
+			&c.ID, &c.Name, &c.DisplayName, &c.HostURL, &c.EntityStatus, &c.ClusterType, &c.NSlaves, &c.MasterIP,
 			&c.Description, &c.ProjectID, &c.Image, &c.Monitoring,
 			&c.MasterFlavor, &c.SlavesFlavor, &c.StorageFlavor, &c.MonitoringFlavor, &ssh_keys); err != nil {
 			return nil, ErrReadIncludedObject("cluster", "project", projectID)
@@ -638,12 +638,12 @@ func deleteProjectbyId(db MySqlDatabase, projectIdOrName string) error {
 // TODO: Common function for reading template
 func (db MySqlDatabase) ReadTemplate(id string) (*protobuf.Template, error) {
 	// TODO: get services
-	q := `SELECT ID, ProjectID, Name, DisplayName, NHosts, Description FROM template WHERE ID = ?`
+	q := `SELECT ID, ProjectID, Name, DisplayName, NSlaves, Description FROM template WHERE ID = ?`
 	template := protobuf.Template{ID: "", ProjectID: "", Name: ""}
 	res := db.connection.QueryRow(q, id)
 	if err := res.Scan(
 		&template.ID, &template.ProjectID, &template.Name,
-		&template.DisplayName, &template.NHosts, &template.Description); err != nil {
+		&template.DisplayName, &template.NSlaves, &template.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrObjectNotFound("template", id)
 		}
@@ -655,12 +655,12 @@ func (db MySqlDatabase) ReadTemplate(id string) (*protobuf.Template, error) {
 // TODO: Common function for reading template
 func (db MySqlDatabase) ReadTemplateByName(name string) (*protobuf.Template, error) {
 	// TODO: get services
-	q := `SELECT ID, ProjectID, Name, DisplayName, NHosts, Description FROM template WHERE Name = ?`
+	q := `SELECT ID, ProjectID, Name, DisplayName, NSlaves, Description FROM template WHERE Name = ?`
 	template := protobuf.Template{ID: "", ProjectID: "", Name: ""}
 	res := db.connection.QueryRow(q, name)
 	if err := res.Scan(
 		&template.ID, &template.ProjectID, &template.Name,
-		&template.DisplayName, &template.NHosts, &template.Description); err != nil {
+		&template.DisplayName, &template.NSlaves, &template.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrObjectNotFound("template", name)
 		}
@@ -671,11 +671,11 @@ func (db MySqlDatabase) ReadTemplateByName(name string) (*protobuf.Template, err
 
 func (db MySqlDatabase) WriteTemplate(template *protobuf.Template) error {
 	//todo: add services
-	q := `INSERT INTO template (ID, ProjectID, Name, DisplayName, Services, NHosts, Description) 
+	q := `INSERT INTO template (ID, ProjectID, Name, DisplayName, Services, NSlaves, Description) 
     	  VALUES (?,?,?,?,?,?,?)`
 
 	_, err := db.connection.Exec(q, template.ID, template.ProjectID, template.Name,
-		template.DisplayName, template.Services, template.NHosts, template.Description)
+		template.DisplayName, template.Services, template.NSlaves, template.Description)
 	if err != nil {
 		return ErrWriteObjectByKey
 	}
@@ -693,7 +693,7 @@ func (db MySqlDatabase) DeleteTemplate(TemplateId string) error {
 
 func (db MySqlDatabase) ListTemplates(projectID string) ([]protobuf.Template, error) {
 	//todo: add services
-	q := `SELECT ID, ProjectID, Name, DisplayName, NHosts, Description FROM template`
+	q := `SELECT ID, ProjectID, Name, DisplayName, NSlaves, Description FROM template`
 	rows, err := db.connection.Query(q)
 	if err != nil {
 		return nil, ErrReadObjectList
@@ -708,7 +708,7 @@ func (db MySqlDatabase) ListTemplates(projectID string) ([]protobuf.Template, er
 	for rows.Next() {
 		if err := rows.Scan(
 			&template.ID, &template.ProjectID, &template.Name, &template.DisplayName,
-			&template.NHosts, &template.Description); err != nil {
+			&template.NSlaves, &template.Description); err != nil {
 			return nil, ErrScanRows
 		}
 		templates = append(templates, template)

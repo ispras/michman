@@ -144,7 +144,7 @@ func (hS HttpServer) TemplateUpdate(w http.ResponseWriter, r *http.Request, para
 	//update fields
 	dbTemplate.DisplayName = t.DisplayName
 	dbTemplate.Services = t.Services
-	dbTemplate.NHosts = t.NHosts
+	dbTemplate.NSlaves = t.NSlaves
 	dbTemplate.Description = t.Description
 
 	err = hS.Db.WriteTemplate(dbTemplate)

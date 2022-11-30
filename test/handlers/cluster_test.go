@@ -25,7 +25,7 @@ var testService = protobuf.Service{
 
 var testCluster = protobuf.Cluster{
 	DisplayName: testClusterName,
-	NHosts:      3,
+	NSlaves:     3,
 	Image:       "ubuntu",
 	Services:    []*protobuf.Service{&testService},
 }
@@ -65,7 +65,7 @@ func TestAddDependencies(t *testing.T) {
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -96,7 +96,7 @@ func TestAddDependencies(t *testing.T) {
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -132,7 +132,7 @@ func TestAddDependencies(t *testing.T) {
 
 		var testClusterOk *protobuf.Cluster = &protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -230,7 +230,7 @@ func TestClusterCreate(t *testing.T) {
 	//		},
 	//		"Version":"2.1.0"
 	//	}],
-	//	"NHosts":1
+	//	"NSlaves":1
 	//}`)
 
 	testInvalidCluster := []byte(`{
@@ -413,7 +413,7 @@ func TestValidateCluster(t *testing.T) {
 
 		var testClusterOk = protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -443,7 +443,7 @@ func TestValidateCluster(t *testing.T) {
 
 		var testClusterBadName = protobuf.Cluster{
 			DisplayName: "#test#",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -465,7 +465,7 @@ func TestValidateCluster(t *testing.T) {
 
 		var testClusterQuantityofHosts = protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      0,
+			NSlaves:     0,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService},
 		}
@@ -493,7 +493,7 @@ func TestValidateCluster(t *testing.T) {
 
 		var testClusterService = protobuf.Cluster{
 			DisplayName: "test",
-			NHosts:      3,
+			NSlaves:     3,
 			Image:       "ubuntu",
 			Services:    []*protobuf.Service{&testService1},
 		}

@@ -961,7 +961,7 @@ func (db CouchDatabase) ReadTemplate(id string) (*protobuf.Template, error) {
 
 func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Template, error) {
 	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
-		" NHosts, Description FROM %v WHERE Name = '%v'",
+		" NSlaves, Description FROM %v WHERE Name = '%v'",
 		templateBucketName, templateName))
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {
@@ -978,7 +978,7 @@ func (db CouchDatabase) ReadTemplateByName(templateName string) (*protobuf.Templ
 
 func (db CouchDatabase) ListTemplates(projectID string) ([]protobuf.Template, error) {
 	query := gocb.NewN1qlQuery(fmt.Sprintf("SELECT ID, ProjectID, Name, DisplayName, Services,"+
-		" NHosts, Description FROM %v WHERE ProjectID = '%v'",
+		" NSlaves, Description FROM %v WHERE ProjectID = '%v'",
 		templateBucketName, projectID))
 	rows, err := db.couchCluster.ExecuteN1qlQuery(query, []interface{}{})
 	if err != nil {

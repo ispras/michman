@@ -21,7 +21,7 @@ CREATE TABLE `cluster` (
 	`HostURL` varchar(255), 
 	`EntityStatus` varchar(32) NOT NULL,
 	`ClusterType` varchar(255) NOT NULL, 
-	`NHosts` int NOT NULL,
+	`NSlaves` int NOT NULL,
 	`MasterIP` varchar(255),
 	`ProjectID` varchar(255) NOT NULL,
 	`Description` TEXT,
@@ -55,7 +55,7 @@ CREATE TABLE `template` (
 	`ProjectID` varchar(255),
 	`Name` varchar(255) NOT NULL UNIQUE,
 	`DisplayName` varchar(255) NOT NULL, 
-	`NHosts` int,
+	`NSlaves` int,
 	`Description` TEXT,
 	PRIMARY KEY (`ID`)
 );

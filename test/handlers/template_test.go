@@ -21,7 +21,7 @@ var commonTestTemplateRequest = protobuf.Template{
 	//Name:        "test1",
 	DisplayName: "test1",
 	Services:    nil,
-	NHosts:      1,
+	NSlaves:     1,
 	Description: "description1",
 }
 
@@ -31,7 +31,7 @@ var commonTestTemplateResponse = protobuf.Template{
 	Name:        "test1",
 	DisplayName: "test1",
 	Services:    nil,
-	NHosts:      1,
+	NSlaves:     1,
 	Description: "description1",
 }
 
@@ -63,7 +63,7 @@ func TestTemplatesGetList(t *testing.T) {
 			Name:        "test2",
 			DisplayName: "test2",
 			Services:    nil,
-			NHosts:      2,
+			NSlaves:     2,
 			Description: "description2",
 		}
 
@@ -99,7 +99,7 @@ func TestTemplatesGetList(t *testing.T) {
 			Name:        "test2",
 			DisplayName: "test2",
 			Services:    nil,
-			NHosts:      2,
+			NSlaves:     2,
 			Description: "description2",
 		}
 		testTemplate2 := protobuf.Template{
@@ -108,7 +108,7 @@ func TestTemplatesGetList(t *testing.T) {
 			Name:        "test2",
 			DisplayName: "test2",
 			Services:    nil,
-			NHosts:      2,
+			NSlaves:     2,
 			Description: "description2",
 		}
 

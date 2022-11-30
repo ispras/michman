@@ -1098,7 +1098,7 @@ definitions:
             "URL": "serviceURL"
           }
           ],
-          "NHosts":3,
+          "NSlaves":3,
           "MasterIP": "masterHost",
           "Description":"someDescription",
           "Image": "ubuntu"
@@ -1129,7 +1129,7 @@ definitions:
           "URL": "serviceURL"
         }
         ],
-        "NHosts":3,
+        "NSlaves":3,
         "MasterIP": "masterHost",
         "Description":"someDescription",
         "Image": "ubuntu"
@@ -1228,7 +1228,7 @@ definitions:
             "Description":"someDescription"
           }
           ],
-          "NHosts":3,
+          "NSlaves":3,
           "Description":"someDescription"
         }
         ]
@@ -1252,7 +1252,7 @@ definitions:
           "Description":"someDescription"
         }
         ],
-        "NHosts":3,
+        "NSlaves":3,
         "Description":"someDescription"
       }
   ServiceTypes:

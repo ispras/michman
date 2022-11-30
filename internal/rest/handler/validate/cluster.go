@@ -42,8 +42,8 @@ func ClusterCreateGeneral(db database.Database, cluster *protobuf.Cluster) error
 		return ErrGeneratedField("cluster", "ProjectID")
 	}
 
-	if cluster.NHosts < 0 {
-		return ErrClusterNhostsZero
+	if cluster.NSlaves < 0 {
+		return ErrClusterNSlavesZero
 	}
 
 	_, err = db.ReadImage(cluster.Image)
@@ -79,13 +79,13 @@ func ClusterCreateServices(db database.Database, cluster *protobuf.Cluster) erro
 		}
 	}
 
-	if cluster.NHosts == 0 {
+	if cluster.NSlaves == 0 {
 		res, err := check.MSServices(db, cluster)
 		if err != nil {
 			return err
 		}
 		if res {
-			return ErrClustersNhostsMasterSlave
+			return ErrClustersNSlavesMasterSlave
 		}
 	}
 
@@ -106,8 +106,8 @@ func ClusterUpdate(db database.Database, oldCluster *protobuf.Cluster, newCluste
 	if newCluster.EntityStatus != "" {
 		return ErrClusterUnmodFields("EntityStatus")
 	}
-	if newCluster.NHosts != 0 {
-		return ErrClusterUnmodFields("NHosts")
+	if newCluster.NSlaves != 0 {
+		return ErrClusterUnmodFields("NSlaves")
 	}
 	if newCluster.HostURL != "" {
 		return ErrClusterUnmodFields("HostURL")

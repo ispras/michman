@@ -277,7 +277,7 @@ func (hS HttpServer) ClustersUpdate(w http.ResponseWriter, r *http.Request, para
 	}
 
 	resCluster.EntityStatus = utils.StatusInited
-	if newCluster.NHosts != 0 || newHost {
+	if newCluster.NSlaves != 0 || newHost {
 		go hS.Gc.StartClusterCreation(resCluster)
 	} else {
 		go hS.Gc.StartClusterModification(resCluster)

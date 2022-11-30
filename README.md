@@ -329,7 +329,7 @@ curl {IP}:{PORT}/projects/{ProjectID}/clusters -XPOST -d '{
       "Type":"jupyter"
     }
   ],
-  "NHosts":1
+  "NSlaves":1
 }'
 ```
 
