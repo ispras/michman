@@ -26,8 +26,8 @@ type Config struct {
 	MySqlKey    string `yaml:"mysql_key"`
 
 	// Mirror
-	UsePackageMirror string `yaml:"use_package_mirror,omitempty"`
-	UsePipMirror     string `yaml:"use_pip_mirror,omitempty"`
+	UsePackageMirror bool   `yaml:"use_package_mirror,omitempty"`
+	UsePipMirror     bool   `yaml:"use_pip_mirror,omitempty"`
 	YumMirrorAddress string `yaml:"yum_mirror_address,omitempty"`
 	AptMirrorAddress string `yaml:"apt_mirror_address,omitempty"`
 	PipMirrorAddress string `yaml:"pip_mirror_address,omitempty"`

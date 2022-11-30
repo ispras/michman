@@ -3,6 +3,8 @@
 - include_tasks: "{{ansible_distribution}}.yml"
 
 - name: configure postgresql server
+  become: yes
+  become_user: postgres
   block:
     - name: get psql config file path
       shell: psql -c 'SHOW config_file' -tA
@@ -23,7 +25,6 @@
         path: "{{ hbafile.stdout }}"
         regexp: '^host all all 0.0.0.0/0 md5'
         line: host all all 0.0.0.0/0 md5
-  become_user: postgres
 
 - name: restart postgresql server
   service:

@@ -1,12 +1,11 @@
 ---
 
 - name: Register master facts
-  os_server_facts:
+  os_server_info:
     filters:
       metadata:
-        group: "{{ item }}"
-  with_items:
-    - "{{ cluster_name }}_master"
+        group: "{{ cluster_name }}_master"
+  register: master_info
 
 - name: Make up master inventory
   add_host:
@@ -17,15 +16,14 @@
     ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
-    - "{{ openstack_servers }}"
+    - "{{ master_info.openstack_servers }}"
 
 - name: Register slaves facts
-  os_server_facts:
+  os_server_info:
     filters:
       metadata:
-        group: "{{ item }}"
-  with_items:
-    - "{{ cluster_name }}_slaves"
+        group: "{{ cluster_name }}_slaves"
+  register: slaves_info
 
 - name: Make up slaves inventory
   add_host:
@@ -36,15 +34,15 @@
     ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
-    - "{{ openstack_servers }}"
+    - "{{ slaves_info.openstack_servers }}"
 
 - name: Register storage facts
-  os_server_facts:
+  os_server_info:
     filters:
       metadata:
-        group: "{{ item }}"
-  with_items:
-    - "{{ cluster_name }}_storage"
+        group: "{{ cluster_name }}_storage"
+  register: storage_info
+  when: create_storage is defined and create_storage
 
 - name: Make up storage inventory
   add_host:
@@ -55,15 +53,16 @@
     ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
-    - "{{ openstack_servers }}"
+    - "{{ storage_info.openstack_servers }}"
+  when: create_storage is defined and create_storage
 
 - name: Register monitoring facts
   os_server_facts:
     filters:
       metadata:
-        group: "{{ item }}"
-  with_items:
-    - "{{ cluster_name }}_monitoring"
+        group: "{{ cluster_name }}_monitoring"
+  register: monitoring_info
+  when: create_monitoring is defined and create_monitoring
 
 - name: Make up monitoring inventory
   add_host:
@@ -74,4 +73,5 @@
     ansible_user: "{{ hadoop_user }}"
     openstack: "{{ item }}"
   with_items:
-    - "{{ openstack_servers }}"
+    - "{{ monitoring_info.openstack_servers }}"
+  when: create_monitoring is defined and create_monitoring

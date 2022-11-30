@@ -14,7 +14,7 @@
       boot_from_volume: "{{ boot_from_volume }}"
       security_groups: "{{ cluster_name }}"
       auto_ip: False
-      meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master,owner={{ cluster_owner }}"
+      meta: "hostname={{ cluster_name }}-master,group={{ cluster_name }}_master,owner={{ cluster_owner }},cluster={{ cluster_name }}"
     retries: 3
     async: 300
     poll: 0
@@ -32,7 +32,7 @@
       boot_from_volume: "{{ boot_from_volume }}"
       security_groups: "{{ cluster_name }}"
       auto_ip: False
-      meta: "hostname={{ item }},group={{ cluster_name }}_slaves,owner={{ cluster_owner }}"
+      meta: "hostname={{ item }},group={{ cluster_name }}_slaves,owner={{ cluster_owner }},cluster={{ cluster_name }}"
     with_sequence: start=1 end={{ n_slaves if n_slaves > 0 else 1  }} format={{ cluster_name }}-slave-%d
     delay: 1
     retries: 3
@@ -52,7 +52,7 @@
       boot_from_volume: "{{ boot_from_volume }}"
       security_groups: "{{ cluster_name }}"
       auto_ip: False
-      meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage,owner={{ cluster_owner }}"
+      meta: "hostname={{ cluster_name }}-storage,group={{ cluster_name }}_storage,owner={{ cluster_owner }},cluster={{ cluster_name }}"
     retries: 3
     async: 300
     poll: 0
@@ -70,7 +70,7 @@
       boot_from_volume: "{{ boot_from_volume }}"
       security_groups: "{{ cluster_name }}"
       auto_ip: False
-      meta: "hostname={{ cluster_name }}-monitoring,group={{ cluster_name }}_monitoring,owner={{ cluster_owner }}"
+      meta: "hostname={{ cluster_name }}-monitoring,group={{ cluster_name }}_monitoring,owner={{ cluster_owner }},cluster={{ cluster_name }}"
     retries: 3
     async: 300
     poll: 0

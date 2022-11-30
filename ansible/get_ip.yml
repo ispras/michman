@@ -4,9 +4,10 @@
   gather_facts: no
   tasks:
     - name: Register server facts
-      os_server_facts:
+      os_server_info:
         filters:
           metadata:
             group: "{{ cluster_name }}_{{ extended_role }}"
       no_log: True
-    - debug: msg="{{ openstack_servers[0].interface_ip if openstack_servers[0].interface_ip != '' else openstack_servers[0].private_v4 }}"
+      register: ip
+    - debug: msg="{{ ip.openstack_servers[0].interface_ip if ip.openstack_servers[0].interface_ip != '' else ip.openstack_servers[0].private_v4 }}"
