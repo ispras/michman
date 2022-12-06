@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	authHeader = "Authorization"
-
+	authHeader        = "Authorization"
 	tokenReqPath      = "/oauth2/token"
 	uInfoReqPath      = "/userinfo"
 	introspectReqPath = "/oauth2/introspect"
@@ -60,7 +59,13 @@ type hydraUserInfo struct {
 }
 
 func NewHydraAuthenticate() (Authenticate, error) {
+	vaultCommunicator := utils.VaultCommunicator{}
+	err := vaultCommunicator.Init()
+	if err != nil {
+		return nil, err
+	}
 	hydra := new(HydraAuthenticate)
+	hydra.vaultCommunicator = &vaultCommunicator
 
 	config := utils.Config{}
 	if err := config.MakeCfg(); err != nil {
@@ -90,8 +95,7 @@ func NewHydraAuthenticate() (Authenticate, error) {
 }
 
 func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
-	var body []byte
-	body = []byte("token=" + token)
+	body := []byte("token=" + token)
 
 	req, err := http.NewRequest(http.MethodPost, hydra.hydraAdminUrl+introspectReqPath, bytes.NewBuffer(body))
 	if err != nil {
@@ -106,21 +110,21 @@ func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
 		return false, err
 	}
 
-	var intrBody *hydraIntrospect
-	err = json.NewDecoder(resp.Body).Decode(&intrBody)
+	var introBody *hydraIntrospect
+	err = json.NewDecoder(resp.Body).Decode(&introBody)
 	if err != nil {
 		return false, ErrParseRequest("introspect")
 	}
 
-	jBody, err := json.Marshal(intrBody)
+	jBody, err := json.Marshal(introBody)
 	if err != nil {
 		return false, err
 	}
 
-	if !intrBody.Active {
+	if !introBody.Active {
 		// Token is not active/valid
 		return false, ErrTokenActive(string(jBody))
-	} else if intrBody.TokenType != "access_token" {
+	} else if introBody.TokenType != "access_token" {
 		// Token is not an access token (probably a refresh token)
 		return false, ErrNotAccessToken(string(jBody))
 	}
@@ -128,7 +132,7 @@ func (hydra HydraAuthenticate) CheckAuth(token string) (bool, error) {
 	return true, nil
 }
 
-func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
+func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) error {
 	// set session manager
 	sessionManager = sm
 
@@ -136,12 +140,11 @@ func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) 
 
 	// get authorization code from url params
 	code := urlKeys.Get("code")
-
 	if code == "" {
-		return ErrAuthCodeNil, http.StatusUnauthorized
+		return ErrAuthCodeNil
 	}
 
-	// set body params for token request
+	// set body params for access token request
 	body := url.Values{}
 	body.Set("grant_type", "authorization_code")
 	body.Set("code", code)
@@ -149,69 +152,79 @@ func (hydra HydraAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) 
 	body.Set("client_id", hydra.hydraAuth.ClientId)
 	body.Set("client_secret", hydra.hydraAuth.ClientSecret)
 
-	tokenReq, err := http.NewRequest(http.MethodPost, hydra.hydraClientUrl+tokenReqPath, strings.NewReader(body.Encode()))
+	// prepare access token request
+	tokenRequest, err := http.NewRequest(http.MethodPost, hydra.hydraClientUrl+tokenReqPath, strings.NewReader(body.Encode()))
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
-	tokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	tokenReq.Header.Add("Accept", "application/json")
+	// set headers for access token request
+	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	tokenRequest.Header.Add("Accept", "application/json")
 
 	client := &http.Client{}
 
 	// make token request for getting information about access token
-	resp, err := client.Do(tokenReq)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return err, http.StatusInternalServerError
+	tokenResp, err := client.Do(tokenRequest)
+	if err != nil {
+		return ErrThirdParty(err.Error())
+	}
+	if tokenResp.StatusCode != http.StatusOK {
+		return ErrThirdParty("token request status is not OK")
 	}
 
 	var tokenBody *hydraToken
-	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
+	err = json.NewDecoder(tokenResp.Body).Decode(&tokenBody)
 	if err != nil {
-		return ErrParseRequest("token"), http.StatusInternalServerError
+		return ErrParseRequest("token")
 	}
 
-	// access token have to be not nil
 	if tokenBody.AccessToken == "" {
-		return ErrAccessTokenEmpty, http.StatusUnauthorized
+		return ErrAccessTokenEmpty
 	}
 
-	// set params for userinfo request
+	// prepare userinfo request
 	uInfoReq, err := http.NewRequest(http.MethodGet, hydra.hydraClientUrl+uInfoReqPath, nil)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
+	// set headers for userinfo request
 	uInfoReq.Header.Add("Authorization", "Bearer "+tokenBody.AccessToken)
 	uInfoReq.Header.Add("Accept", "application/json")
 
 	// make userinfo request for getting information about user group
 	uInfoResp, err := client.Do(uInfoReq)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
+	if uInfoResp.StatusCode != http.StatusOK {
+		return ErrThirdParty("userinfo request status is not OK")
+	}
+
+	//bytes, err := io.ReadAll(uInfoResp.Body) -- return struct which contained requested scopes
 
 	var uInfoBody *hydraUserInfo
 	err = json.NewDecoder(uInfoResp.Body).Decode(&uInfoBody)
 	if err != nil {
-		return ErrParseRequest("user info"), http.StatusInternalServerError
+		return ErrParseRequest("user info")
 	}
 
 	if uInfoBody.Groups == "" {
-		return ErrAccessTokenEmpty, http.StatusUnauthorized
+		return ErrUsrInfoGroupsEmpty
 	}
 
 	// init session for current user
 	err = sessionManager.RenewToken(r.Context())
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
 	// save in user session information about group and access token
 	sessionManager.Put(r.Context(), utils.GroupKey, uInfoBody.Groups)
 	sessionManager.Put(r.Context(), utils.AccessTokenKey, tokenBody.AccessToken)
 
-	return nil, http.StatusOK
+	return nil
 }
 
 func (hydra HydraAuthenticate) RetrieveToken(r *http.Request) (string, error) {
@@ -220,7 +233,7 @@ func (hydra HydraAuthenticate) RetrieveToken(r *http.Request) (string, error) {
 		return bToken, ErrAuthHeaderEmpty
 	}
 
-	regEx := regexp.MustCompile(utils.RegexPattern)
+	regEx := regexp.MustCompile(utils.HydraAuthorizationHeaderPattern)
 
 	if regEx.FindString(bToken) == "" {
 		return bToken, ErrAuthHeaderBadToken

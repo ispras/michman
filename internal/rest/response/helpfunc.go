@@ -38,12 +38,16 @@ func Error(w http.ResponseWriter, err error) {
 }
 
 func init() {
+	ErrorMap[utils.UnexpectedError] = InternalError
 	ErrorMap[utils.DatabaseError] = InternalError
 	ErrorMap[utils.LibError] = InternalError
 	ErrorMap[utils.LogsError] = InternalError
-	ErrorMap[utils.AuthorizationError] = InternalError
+	ErrorMap[utils.EnforcerError] = InternalError
+	ErrorMap[utils.ParseError] = InternalError
 
 	ErrorMap[utils.ObjectNotFound] = NotFound
+
+	ErrorMap[utils.AuthorizationError] = Forbidden
 
 	ErrorMap[utils.JsonError] = BadRequest
 	ErrorMap[utils.ValidationError] = BadRequest

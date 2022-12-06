@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	errNoProjectInURL             = "no project ID or name in URL path"
-	errUnauthorized               = "unauthorized to access the resource"
-	errAuthenticationUnsuccessful = "Authentication unsuccessful! You are not a member of any group (Bad token)"
+	errEnforcerSafe   = "failed to call Enforce in a safe way"
+	errNoProjectInURL = "no project ID or name in URL path"
+	errUnauthorized   = "unauthorized to access the resource"
 )
 
 var (
-	ErrAuthenticationUnsuccessful = rest.MakeError(errAuthenticationUnsuccessful, utils.AuthorizationError)
-	ErrNoProjectInURL             = rest.MakeError(errNoProjectInURL, utils.AuthorizationError)
-	ErrUnauthorized               = rest.MakeError(errUnauthorized, utils.AuthorizationError)
+	ErrEnforcerSafe   = rest.MakeError(errEnforcerSafe, utils.EnforcerError)
+	ErrNoProjectInURL = rest.MakeError(errNoProjectInURL, utils.InputIncorrect)
+	ErrUnauthorized   = rest.MakeError(errUnauthorized, utils.AuthorizationError)
 )

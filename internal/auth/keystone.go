@@ -71,43 +71,45 @@ func (keystone KeystoneAuthenticate) CheckAuth(_ string) (bool, error) {
 	return true, nil
 }
 
-func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) (error, int) {
+func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Request) error {
 	// set session manager
 	sessionManager = sm
 
-	// get auth and subject tokens from headers
+	// get X-Auth-Token from headers
 	authToken := r.Header.Get(authTokenKey)
 	if authToken == "" {
-		return ErrAuthTokenNil, http.StatusUnauthorized
+		return ErrAuthTokenNil
 	}
 
+	// get X-Subject-Token from headers
 	subToken := r.Header.Get(subTokenKey)
 	if subToken == "" {
-		return ErrSubjectTokenNil, http.StatusUnauthorized
+		return ErrSubjectTokenNil
 	}
 
-	// prepare request
-	tokenReq, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl+checkTokenPath, nil)
+	// prepare request for confirmation of user tokens
+	tokenRequest, err := http.NewRequest(http.MethodGet, keystone.keystoneUrl+checkTokenPath, nil)
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
-	tokenReq.Header.Add(authTokenKey, authToken)
-	tokenReq.Header.Add(subTokenKey, subToken)
+	// set headers for token confirmation request
+	tokenRequest.Header.Add(authTokenKey, authToken)
+	tokenRequest.Header.Add(subTokenKey, subToken)
 
 	client := &http.Client{}
 
-	// make token request for getting information about user roles
-	resp, err := client.Do(tokenReq)
+	// send user token confirmation request for getting information about user roles and userID
+	resp, err := client.Do(tokenRequest)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
-	// parse request body
+	// parse request response body
 	var tokenBody *keystoneToken
 	err = json.NewDecoder(resp.Body).Decode(&tokenBody)
 	if err != nil {
-		return ErrParseRequest("token"), http.StatusInternalServerError
+		return ErrParseRequest("token")
 	}
 
 	// get user ID from token request
@@ -127,7 +129,7 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Req
 	// init session for current user
 	err = sessionManager.RenewToken(r.Context())
 	if err != nil {
-		return err, http.StatusInternalServerError
+		return ErrThirdParty(err.Error())
 	}
 
 	// save in user session information about groups, tokens and user ID
@@ -138,7 +140,7 @@ func (keystone KeystoneAuthenticate) SetAuth(sm *scs.SessionManager, r *http.Req
 		sessionManager.Put(r.Context(), utils.GroupKey, userGroups.String())
 	}
 
-	return nil, http.StatusOK
+	return nil
 }
 
 func (keystone KeystoneAuthenticate) RetrieveToken(_ *http.Request) (string, error) {

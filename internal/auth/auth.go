@@ -12,7 +12,7 @@ var (
 
 type Authenticate interface {
 	CheckAuth(token string) (bool, error)
-	SetAuth(sm *scs.SessionManager, r *http.Request) (error, int)
+	SetAuth(sm *scs.SessionManager, r *http.Request) error
 	RetrieveToken(r *http.Request) (string, error)
 }
 

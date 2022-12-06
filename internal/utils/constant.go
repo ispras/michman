@@ -105,10 +105,10 @@ const (
 	LauncherLogFileName = "launcher.log"
 
 	//Pattern strings
-	ClusterNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
-	ProjectNamePattern = `^[A-Za-z][A-Za-z0-9-]+$`
-	ProjectPathPattern = `^/projects/`
-	RegexPattern       = "Bearer " + "[A-Za-z0-9\\-\\._~\\+\\/]+=*"
+	ClusterNamePattern              = `^[A-Za-z][A-Za-z0-9-]+$`
+	ProjectNamePattern              = `^[A-Za-z][A-Za-z0-9-]+$`
+	ProjectPathPattern              = `^/projects/`
+	HydraAuthorizationHeaderPattern = "Bearer " + "[A-Za-z0-9\\-\\._~\\+\\/]+=*"
 
 	//openstack secrets keys value names
 	OsAuthUrl            = "OsAuthUrl"

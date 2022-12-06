@@ -16,6 +16,8 @@ const (
 	AuthorizationError = 900
 	ObjectNotFound     = 1000
 	InputIncorrect     = 1100
+	EnforcerError      = 1200
+	ParseError         = 1300
 )
 
 const (

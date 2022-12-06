@@ -5,7 +5,7 @@ import (
 	"github.com/casbin/casbin"
 	"github.com/ispras/michman/internal/auth"
 	"github.com/ispras/michman/internal/database"
-	response "github.com/ispras/michman/internal/rest/response"
+	"github.com/ispras/michman/internal/rest/response"
 	"github.com/ispras/michman/internal/utils"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
@@ -15,9 +15,11 @@ import (
 )
 
 const (
-	admin         = "admin"
-	user          = "user"
-	projectMember = "project_member"
+	admin                 = "admin"
+	user                  = "user"
+	projectMember         = "project_member"
+	authSuccessMessage    = "Authentication success! You are a member of some groups"
+	authNoneGroupsMessage = "Authentication success! You aren't member of any group, have readonly rights"
 )
 
 type RespData struct {
@@ -47,7 +49,7 @@ func isProjectPath(path string) bool {
 func getProjectIdOrName(urlPath string) (string, error) {
 	urlKeys := strings.Split(urlPath, "/")
 
-	// if length of urlKeys less then 2 -- error
+	// if length of urlKeys less than 2 -- error
 	if len(urlKeys) < 2 {
 		return "", ErrNoProjectInURL
 	}
@@ -72,12 +74,12 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			request := r.Method + " " + r.URL.Path
 
-			// var for casbin role, set as user because user is default role
-			role := user
-
 			// add userID variable to the request header
 			userId := auth.SessionManager.GetString(r.Context(), utils.UserIdKey)
 			r.Header.Add(utils.UserIdKey, userId)
+
+			// var for casbin role, set as user because user is default role
+			role := user
 
 			groups := auth.getUserGroups(r, utils.GroupKey)
 			// check if user is a project member
@@ -87,44 +89,34 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 					// get project which user wants to access
 					projectIdOrName, err := getProjectIdOrName(r.URL.Path)
 					if err != nil {
-						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+						auth.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 						response.Error(w, err)
 						return
 					}
 
 					project, err := auth.Db.ReadProject(projectIdOrName)
 					if err != nil {
-						auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
+						auth.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
 						response.Error(w, err)
 						return
 					}
 
 					// check if one of user groups presents in project
-					projectMemberFlag := false
-					for _, g := range groups {
-						if g == project.GroupID {
-							projectMemberFlag = true
+					for _, group := range groups {
+						if group == project.GroupID {
+							// user is project member
+							role = projectMember
 							break
 						}
-					}
-
-					// user is project member
-					if projectMemberFlag {
-						role = projectMember
 					}
 				} else {
 					// check if user is admin -- admin group must present in groups list
-					adminFlag := false
-					for _, g := range groups {
-						if g == auth.Config.AdminGroup {
-							adminFlag = true
+					for _, group := range groups {
+						if group == auth.Config.AdminGroup {
+							// user is admin
+							role = admin
 							break
 						}
-					}
-
-					// user is admin
-					if adminFlag {
-						role = admin
 					}
 				}
 			}
@@ -132,15 +124,15 @@ func (auth *AuthorizeClient) Authorizer(e *casbin.Enforcer) func(next http.Handl
 			// casbin enforcer
 			res, err := e.EnforceSafe(role, r.URL.Path, r.Method)
 			if err != nil {
-				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusInternalServerError, ": ", err.Error())
-				response.Error(w, err)
+				auth.Logger.Warn("Request ", request, " failed with an error: ", ErrEnforcerSafe.Error())
+				response.Error(w, ErrEnforcerSafe)
 				return
 			}
 			if res {
 				next.ServeHTTP(w, r)
 			} else {
 				auth.Logger.Info(request)
-				auth.Logger.Warn("Request ", request, " failed with status ", http.StatusForbidden, ": ", ErrUnauthorized.Error())
+				auth.Logger.Warn("Request ", request, " failed with an error: ", ErrUnauthorized.Error())
 				response.Error(w, ErrUnauthorized)
 				return
 			}
@@ -156,20 +148,11 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 	auth.Logger.Info(request)
 
 	// set auth facts
-	err, status := auth.Auth.SetAuth(auth.SessionManager, r)
+	err := auth.Auth.SetAuth(auth.SessionManager, r)
 	if err != nil {
-		auth.Logger.Warn("Request ", request, " failed with status ", status, ": ", err.Error())
-		switch status {
-		case http.StatusUnauthorized:
-			response.Error(w, err)
-			return
-		case http.StatusBadRequest:
-			response.Error(w, err)
-			return
-		case http.StatusInternalServerError:
-			response.Error(w, err)
-			return
-		}
+		auth.Logger.Warn("Request ", request, " failed with an error: ", err.Error())
+		response.Error(w, err)
+		return
 	}
 
 	// get user groups(roles) from request response body
@@ -179,13 +162,11 @@ func (auth *AuthorizeClient) AuthGet(w http.ResponseWriter, r *http.Request, _ h
 	userId := auth.SessionManager.GetString(r.Context(), utils.UserIdKey)
 
 	if groups == "" {
-		auth.Logger.Warn("Request ", request, " failed with status ", http.StatusUnauthorized, ": ", ErrAuthenticationUnsuccessful.Error())
-		response.Error(w, ErrAuthenticationUnsuccessful)
+		auth.Logger.Info(authNoneGroupsMessage)
+		response.Ok(w, RespData{authNoneGroupsMessage, "none", userId}, request)
 	} else {
-		message := "Authentication success! " + "You are a member of some groups"
 		auth.Logger.Info("Authentication success!")
 		auth.Logger.Info("----User groups are: " + groups)
-		respData := RespData{message, groups, userId}
-		response.Ok(w, respData, request)
+		response.Ok(w, RespData{authSuccessMessage, groups, userId}, request)
 	}
 }
