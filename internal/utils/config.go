@@ -11,19 +11,25 @@ type Config struct {
 	// Openstack
 	Key            string `yaml:"os_key_name"`
 	VirtualNetwork string `yaml:"virtual_network"`
-	OsImage        string `yaml:"os_image"`
 	FloatingIP     string `yaml:"floating_ip_pool"`
 	OsVersion      string `yaml:"os_version"` //Now are supported only 'stein', 'ussuri' and 'liberty' versions
 
 	// Vault
-	Token       string `yaml:"token"`
 	VaultAddr   string `yaml:"vault_addr"`
+	Token       string `yaml:"token"`
 	OsKey       string `yaml:"os_key"`
 	SshKey      string `yaml:"ssh_key"`
+	Storage     string `yaml:"storage"` //couchbase or mysql
 	CbKey       string `yaml:"cb_key"`
+	MySqlKey    string `yaml:"mysql_key"`
 	RegistryKey string `yaml:"registry_key"`
 	HydraKey    string `yaml:"hydra_key"`
-	MySqlKey    string `yaml:"mysql_key"`
+
+	//Cluster logs
+	LogsOutput   string `yaml:"logs_output"`              //file or logstash
+	LogsFilePath string `yaml:"logs_file_path,omitempty"` //path to directory with cluster logs if file output is used
+	LogstashAddr string `yaml:"logstash_addr,omitempty"`  //logstash address if logstash output is used
+	ElasticAddr  string `yaml:"elastic_addr,omitempty"`   //elastic address if logstash output is used
 
 	// Mirror
 	UsePackageMirror bool   `yaml:"use_package_mirror,omitempty"`
@@ -34,12 +40,10 @@ type Config struct {
 	PipTrustedHost   string `yaml:"pip_trusted_host,omitempty"`
 
 	// Registry
-	InsecureRegistry  bool `yaml:"docker_insecure_registry,omitempty"`
-	SelfignedRegistry bool `yaml:"docker_selfsigned_registry,omitempty"`
-	GitlabRegistry    bool `yaml:"docker_gitlab_registry,omitempty"`
-
-	InsecureRegistryIp string `yaml:"docker_insecure_registry_ip,omitempty"`
-
+	InsecureRegistry       bool   `yaml:"docker_insecure_registry,omitempty"`
+	SelfignedRegistry      bool   `yaml:"docker_selfsigned_registry,omitempty"`
+	GitlabRegistry         bool   `yaml:"docker_gitlab_registry,omitempty"`
+	InsecureRegistryIp     string `yaml:"docker_insecure_registry_ip,omitempty"`
 	SelfsignedRegistryIp   string `yaml:"docker_selfsigned_registry_ip,omitempty"`
 	SelfsignedRegistryPort string `yaml:"docker_selfsigned_registry_port,omitempty"`
 	SelfsignedRegistryUrl  string `yaml:"docker_selfsigned_registry_url,omitempty"`
@@ -56,15 +60,6 @@ type Config struct {
 	KeystoneAddr       string `yaml:"keystone_addr,omitempty"`        //keystone service address
 	AuthConfigPath     string `yaml:"auth_config_path,omitempty"`     //path to auth_model.conf
 	PolicyPath         string `yaml:"policy_path,omitempty"`          //path to policy.csv
-
-	//Cluster logs
-	LogsOutput   string `yaml:"logs_output"`              //file or logstash
-	LogsFilePath string `yaml:"logs_file_path,omitempty"` //path to directory with cluster logs if file output is used
-	LogstashAddr string `yaml:"logstash_addr,omitempty"`  //logstash address if logstash output is used
-	ElasticAddr  string `yaml:"elastic_addr,omitempty"`   //elastic address if logstash output is used
-
-	//Storage provider
-	Storage string `yaml:"storage"` //couchbase or mysql
 }
 
 func SetConfigPath(configPath string) {

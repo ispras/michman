@@ -3,7 +3,7 @@ ansible-base==2.10.17
 appdirs==1.4.4
 certifi==2022.9.24
 cffi==1.15.1
-charset-normalizer==2.1.1
+charset-normalizer==2.0.12
 cryptography==2.8
 decorator==4.4.2
 dogpile.cache==1.1.8
@@ -25,10 +25,10 @@ pbr==5.4.4
 pycparser==2.21
 pyparsing==3.0.9
 PyYAML==6.0
-requests==2.28.1
+requests==2.27.1
 requestsexceptions==1.4.0
 ruamel.yaml==0.16.10
 ruamel.yaml.clib==0.2.3
 six==1.16.0
-stevedore==4.0.0
+stevedore==3.5.2
 urllib3==1.26.12

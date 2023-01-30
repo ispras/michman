@@ -2,19 +2,18 @@
 
 usage="usage: build.sh [OPTION...] [COMMAND] \n
 Available commands:\n
- proto - creates required protobuf code\n
+ proto - creates required protobuf code. Available options:\n
+ \t     -d|--docker - set USE_DOCKER=true
  mock - creates required mocks for testing\n
  test - run test\n
  compile - build binary files\n
  clean - remove all generated files\n
  reset - stop processes and remove all generated files\n
- start - run michman (launcher and rest api)\n
- status - check launch and http processes
- \tAvailable options:\n
+ start - run michman (launcher and rest api). Available options:\n
  \t     -c|--config - config path\n
  \t     -l|--launcher-port - launcher port (default value is 5000)\n
  \t     -r|--rest-port|--http-port - http port (default value is 8081)\n
- \t     -d|--docker - set USE_DOCKER=true
+ status - check launch and http processes\n
  help - show this message"
 
 LAUNCHER_BIN=launch

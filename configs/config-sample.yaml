@@ -1,51 +1,51 @@
 ## You can specify path to this file in the first arg of go run commands
 
 ## Openstack
-
-os_key_name: OS_KEY_NAME
-virtual_network: NETWORK
-os_image: OS_IMAGE
-floating_ip_pool: IP_POOL
-os_version: VERSION #stein or liberty or ussuri
-
+os_key_name: OS_KEY_NAME          # Name of OpenStack key-pair to use
+virtual_network: NETWORK          # Name or ID of OpenStack virtual network to use
+floating_ip_pool: IP_POOL         # Name of floating ip pool to use
+os_version: VERSION               # OpenStack version: "stein" or "liberty" or "ussuri"
 
 ## Vault
+vault_addr: VAULT_ADDR            # Vault address (e.g. http://127.0.0.1:8200)
+token: ROOT_TOKEN                 # Root token to access Vault
+os_key: BUCKET_PATH               # Path to Vault secret with OpenStack credentials (e.g. kv/openstack)
+ssh_key: BUCKET_PATH              # Path to Vault secret with private ssh key (e.g. kv/ssh_key)
+storage: DATABASE_TYPE            # Database type: "couchbase" or "mysql"
+cb_key: BUCKET_PATH               # Path to Vault secret with Couchbase credentials (e.g. kv/couchbase). Required if "couchbase" storage is specified
+mysql_key: BUCKET_PATH            # Path to Vault secret with MySQL credentials (e.g. kv/mysql). Required if "mysql" storage is specified
+registry_key: BUCKET_PATH         # Path to Vault secret with Docker registry credentials. Required if gitlab registry is used
+hydra_key: BUCKET_PATH            # Path to Vault secret with Ory Hydra credentials (e.g. kv/hydra). Required if "oauth2" authorization model is specified
 
-token: ROOT_TOKEN
-vault_addr: VAULT_ADDR
-os_key: BUCKET_PATH
-cb_key: BUCKET_PATH
-ssh_key: BUCKET_PATH
-hydra_key: BUCKET_PATH
+## Michman logs
+logs_output: file                 # Log storage type: "file" or "logstash"
+logs_file_path: PATH              # Local directory path to store logs. Required if file logs_output is used
+logstash_addr: LOGSTASH_ADDR      # Logstash address to store logs. Required if logstash logs_output is used
+elastic_addr: ELASTIC_ADDR        # ElasticStash address to store logs. Required if logstash logs_output is used
 
-## Mirrors
+## Mirror and docker registries (Optional)
+use_package_mirror: false                      # Flag indicating usage of local system packages mirror
+use_pip_mirror: false                          # Flag indicating usage of local pip mirror
+apt_mirror_address: URL                        # Address to local apt packages mirror. Required if use_package_mirror is set to `true`
+yum_mirror_address: URL                        # Address to local yum/dnf packages mirror. Required if use_package_mirror is set to `true`
+pip_mirror_address: URL                        # Address to local pip packages mirror. Required if use_pip_mirror is set to `true`
+pip_trusted_host: IP                           # IP of used pip packages mirror. Required if use_pip_mirror is set to `true`
+docker_insecure_registry: false                # Flag indicating usage of insecure docker registry
+docker_selfsigned_registry: false              # Flag indicating usage of selfsigned docker registry
+docker_gitlab_registry: false                  # Flag indicating usage of gitlab (or same) docker registry
+docker_insecure_registry_ip: IP                # IP of insecure registry. Required if docker_insecure_registry is set to `true`
+docker_selfsigned_registry_ip: IP              # IP of selfsigned registry. Required if docker_selfsigned_registry is set to `true`
+docker_selfsigned_registry_port: PORT_NUM      # IP of selfsigned registry. Required if docker_selfsigned_registry is set to `true`
+docker_selfsigned_registry_url: URL            # Address of selfsigned registry. Required if docker_selfsigned_registry is set to `true`
+docker_cert_path: PATH                         # Local path with docker registry certificate. Required if docker_selfsigned_registry is set to `true`
 
-use_mirror: true
-mirror_address: MIRROR_ADDR
-
-registry_key: BUCKET_PATH
-docker_selfsigned_registry: true
-docker_selfsigned_registry_ip: DOCKER_ADDR
-docker_selfsigned_registry_url: URL
-docker_cert_path: PATH
-
-#auth
-use_auth: true
-authorization_model: none #none or oauth2 or keystone
-admin_group: admin
-session_idle_timeout: 480 #time in minutes, controls the maximum length of time a session can be inactive before it expires
-session_lifetime: 960 #time in minutes, controls the maximum length of time that a session is valid for before it expires
-
-
-#hydra auth params
-hydra_admin: HYDRA_ADDR
-hydra_client: HYDRA_ADDR
-
-#keystone params
-keystone_addr: KEYSTONE_ADDR
-
-#cluster logs
-logs_output: file #file or logstash
-logs_file_path: PATH
-logstash_addr: LOGSTASH_ADDR
-elastic_addr: ELASTIC_ADDR
+## Authorization (Optional)
+use_auth: false                   # Flag indicating usage of authorization
+authorization_model: none         # Authorisation model: "none", "oauth2" or "keystone". Required of use_auth is set to `true`
+policy_path: PATH                 # Local path to policy configuration. Required of use_auth is set to `true`
+admin_group: admin                # Admin group name used in policy configuration. Required of use_auth is set to `true`
+session_idle_timeout: 480         # Time in minutes, controls the maximum length of time a session can be inactive before it expires. Required of use_auth is set to `true`
+session_lifetime: 960             # Time in minutes, controls the maximum length of time that a session is valid for before it expires. Required of use_auth is set to `true`
+hydra_admin: HYDRA_ADDR           # Ory Hydra admin address. Required if oauth2 authorization model is used
+hydra_client: HYDRA_ADDR          # Ory Hydra client address. Required if oauth2 authorization model is used
+keystone_addr: KEYSTONE_ADDR      # Keystone address. Required if keystone authorization model is used
