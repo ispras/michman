@@ -307,22 +307,24 @@ func (db MySqlDatabase) UpdateCluster(cluster *protobuf.Cluster) error {
 				}
 
 				_, err = tx.Exec(
-					scq, sId.String(), s.Name, s.Type, s.ClusterRef, string(sConfig),
+					scq, sId.String(), s.Name, s.Type, cluster.ID, string(sConfig),
 					s.DisplayName, s.EntityStatus, s.Version, s.URL, s.Description)
 				if err != nil {
 					return ErrTransactionQuery
 				}
 			} else {
-				suq := `UPDATE service SET 
+				return ErrReadObjectByKey
+			}
+		} else {
+			suq := `UPDATE service SET 
 						   Name = ?, Type = ?, ClusterRef = ?, DisplayName = ?, 
 						   EntityStatus = ?, Version = ?, URL = ?, Description = ?
                			WHERE ID = ?`
-				_, err = tx.Exec(
-					suq, s.Name, s.Type, s.ClusterRef, s.DisplayName,
-					s.EntityStatus, s.Version, s.URL, s.Description, s.ID)
-				if err != nil {
-					return ErrTransactionQuery
-				}
+			_, err = tx.Exec(
+				suq, s.Name, s.Type, cluster.ID, s.DisplayName,
+				s.EntityStatus, s.Version, s.URL, s.Description, s.ID)
+			if err != nil {
+				return ErrTransactionQuery
 			}
 		}
 	}

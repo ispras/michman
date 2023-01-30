@@ -131,16 +131,19 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 	aL.Logger.Info("Writing new cluster to db...")
 	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 
 	cLogger, err := clusterlogger.MakeNewClusterLogger(aL.Config, cluster.ID, utils.ActionCreate)
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 
 	cLogsWriter, err := cLogger.PrepClusterLogsWriter()
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 
@@ -152,6 +155,7 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 
 	sTypes, err := aL.Db.ReadServicesTypesList()
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 
@@ -163,12 +167,14 @@ func (aL *LauncherServer) Create(ctx context.Context, cluster *protobuf.Cluster)
 
 	err = cLogger.FinClusterLogsWriter()
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 
 	aL.Logger.Info("Saving IPs and URLs for services...")
 	err = aL.Db.UpdateCluster(cluster)
 	if err != nil {
+		aL.Logger.Warn(err)
 		return nil, err
 	}
 

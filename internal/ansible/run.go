@@ -34,49 +34,33 @@ func (aL LauncherServer) RunServices(cluster *protobuf.Cluster, dockRegCreds *ut
 		return utils.RunFail, err
 	}
 
-	newAnsibleArgs, err := json.Marshal(newExtraVars)
-	if err != nil {
+	newAnsibleArgs, jErr := json.Marshal(newExtraVars)
+	if jErr != nil {
 		return utils.RunFail, ErrMarshal
 	}
 
 	cmdArgs := []string{"-vvv", utils.AnsibleServicesRole, "--extra-vars", string(newAnsibleArgs)}
 
 	aL.Logger.Info("Running ansible...")
-	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
-	if err != nil {
-		return utils.RunFail, err
+	res, runErr := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
+	if runErr != nil {
+		aL.Logger.Warn(runErr)
+		return utils.RunFail, runErr
 	}
 
 	if res && (action == utils.ActionCreate || action == utils.ActionUpdate) {
+		storageIp := ""
+		//check if cluster has storage
+		if newExtraVars["create_storage"] == true {
+			ip, err := aL.RunGetIP(cluster, "storage")
+			if err != nil {
+				return utils.RunFail, err
+			}
+			storageIp = ip
+		}
 		for i, service := range cluster.Services {
 			for _, st := range serviceTypes {
 				if st.Type == service.Type {
-					storageIp := ""
-					//check if cluster has storage
-					if newExtraVars["create_storage"] == true {
-						ip, err := aL.RunGetIP(cluster, "storage")
-						if err != nil {
-							return utils.RunFail, err
-						}
-						storageIp = ip
-					}
-
-					monitoringIp := ""
-					//check if cluster has monitoring
-					if newExtraVars["create_monitoring"] == true {
-						ip, err := aL.RunGetIP(cluster, "monitoring")
-						if err != nil {
-							return utils.RunFail, err
-						}
-						monitoringIp = ip
-					}
-
-					if storageIp != "" {
-						aL.Logger.Info("Storage IP is: ", storageIp)
-					}
-					if monitoringIp != "" {
-						aL.Logger.Info("Monitoring IP is: ", monitoringIp)
-					}
 
 					//set service url for services on master host
 					if (st.Class == utils.ClassStandAlone || st.Class == utils.ClassMasterSlave) && cluster.MasterIP != "" {
@@ -114,17 +98,18 @@ func (aL LauncherServer) RunInstances(cluster *protobuf.Cluster, dockRegCreds *u
 		return utils.RunFail, err
 	}
 
-	newAnsibleArgs, err := json.Marshal(newExtraVars)
-	if err != nil {
+	newAnsibleArgs, jErr := json.Marshal(newExtraVars)
+	if jErr != nil {
 		return utils.RunFail, ErrMarshal
 	}
 
 	cmdArgs := []string{"-vvv", utils.AnsibleInstancesRole, "--extra-vars", string(newAnsibleArgs)}
 
 	aL.Logger.Info("Running ansible...")
-	res, err := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
-	if err != nil {
-		return utils.RunFail, err
+	res, runErr := aL.RunAnsible(utils.AnsiblePlaybookCmd, cmdArgs, clusterLogsWriter, clusterLogsWriter)
+	if runErr != nil {
+		aL.Logger.Warn(runErr)
+		return utils.RunFail, runErr
 	}
 
 	// get master IP
