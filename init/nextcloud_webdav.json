@@ -1,0 +1,27 @@
+{
+  "Type": "nextcloud_webdav",
+  "Description": "Nextcloud WebDAV client",
+  "DefaultVersion": "default",
+  "Class": "master-slave",
+  "HealthCheck":[
+    {
+      "CheckType": "NotSupported",
+      "Configs": []
+    }
+  ],
+  "Versions": [
+    {
+      "Version": "default",
+      "Description": "webdav installation for ubuntu nodes",
+      "Configs":
+      [
+        {
+          "ParameterName": "mountpoint",
+          "Type": "string",
+          "Required": true,
+          "Description": "Nextcloud directory for the mountpoint"
+        }
+      ]
+    }
+  ]
+}

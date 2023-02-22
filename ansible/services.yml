@@ -196,6 +196,11 @@
         name: greenplum_run
       when: deploy_greenplum is defined and deploy_greenplum
 
+- hosts: "{{ cluster_name }}_master:{{ cluster_name }}_slaves"
+  tasks:
+    - include_role:
+        name: nextcloud_webdav
+      when: deploy_nextcloud_webdav is defined and deploy_nextcloud_webdav
 
 - hosts: all
   vars:

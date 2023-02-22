@@ -1,0 +1,51 @@
+---
+- name: configure selected value for davfs2 package configuration
+  become: yes
+  debconf:
+    name: davfs2
+    question: davfs2/suid_file
+    value: 'true'
+    vtype: select
+
+- name: install webdav filesystem driver
+  become: yes
+  package:
+    name: davfs2
+    state: present
+
+- name: add user to the davfs2 group
+  become: yes
+  user: name={{ ansible_user }} comment="Hadoop user" group=davfs2 shell=/bin/bash
+
+- name: create a nextcloud directory for the mountpoint
+  become: yes
+  file:
+    path: "{%- if nextcloud_webdav_mountpoint | length == 0 -%}/home/{{ ansible_user }}/nextcloud{%- else -%}{{ nextcloud_webdav_mountpoint }}{%- endif -%}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    force: yes
+    mode: '0755'
+
+- name: create a directory for configuration file
+  file:
+    path: "/home/{{ ansible_user }}/.davfs2"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: copy /etc/davfs2/secrets to ~/.davfs2
+  become: yes
+  copy:
+    src: /etc/davfs2/secrets
+    dest: "/home/{{ ansible_user }}/.davfs2/secrets"
+    remote_src: yes
+
+- name: set the owner and make the permissions read-write owner only
+  become: yes
+  file:
+    path: "/home/{{ ansible_user }}/.davfs2/secrets"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
