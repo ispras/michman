@@ -13,4 +13,4 @@
     dest: /etc/fstab
     state: present 
     insertafter: EOF
-    line: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 }}:{{ nfs_server_dir_to_share }}  {{ nfs_server_dir_to_share }}       nfs     auto,nofail,rw,nodev       0       0"
+    line: "{{ hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 if hostvars[groups[cluster_name + '_storage'][0]].openstack.public_v4 != '' else hostvars[groups[cluster_name + '_storage'][0]].openstack.private_v4 }}:{{ nfs_server_dir_to_share }}  {{ nfs_server_dir_to_share }}       nfs     auto,nofail,rw,nodev       0       0"
